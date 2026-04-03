@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.10549v1/fig-001.webp",
+      "caption": "Fig. 1: Front-side view of the impacted specimens, subjected to low-velocity impact at 5 J and 15 J.",
+      "page": 3,
+      "index": 1,
+      "width": 450,
+      "height": 306
+    },
+    {
+      "url": "assets/figures/arxiv/2603.10549v1/fig-002.webp",
+      "caption": "Fig. 2: Top: Front-side heating with pulsed flash lamps (A.1-A.2) and front-side long-pulse halogen heating (A.3). Bottom: Schematic representation of inspection setup.",
+      "page": 3,
+      "index": 2,
+      "width": 370,
+      "height": 485
+    },
+    {
+      "url": "assets/figures/arxiv/2603.10549v1/fig-003.webp",
+      "caption": "TABLE II: Qualitative comparisons between state-of-the-art AIRT dimensionality reduction techniques: TSR [33], PCA [34], DAT [22], 1D-DCAE-AIRT [23], C-AET [29], and the proposed AIRT-VLM adapter representation, under ambient and low-temperature (−70◦C) conditions.",
+      "page": 8,
+      "index": 3,
+      "width": 1038,
+      "height": 1204
+    },
+    {
+      "url": "assets/figures/arxiv/2603.10549v1/fig-004.webp",
+      "caption": "Fig. 3: Top: Backside heating with flash (B.1) and halogen lamp (B.2). Bottom: Schematic representation of transmission inspection setup.",
+      "page": 4,
+      "index": 4,
+      "width": 370,
+      "height": 541
+    },
+    {
+      "url": "assets/figures/arxiv/2603.10549v1/fig-005.webp",
+      "caption": "TABLE III: Defect detection results of Qwen-VL, CogVLM, and GroundingDINO coupled with the AIRT-VLM adapter, under ambient and low-temperature. The results show consistent defect detection performances across all samples.",
+      "page": 9,
+      "index": 5,
+      "width": 1068,
+      "height": 581
+    },
+    {
+      "url": "assets/figures/arxiv/2603.10549v1/fig-006.webp",
+      "caption": "Fig. 6: IoU and normalized center distance achieved by Qwen-VL, CogVLM, and GroundingDINO when coupled with AIRT-VLM adapter on all 25 CFRP inspection sequences. The performances of these models are also presented when coupled with state-of-the-art AIRT dimensionality reduction methods.",
+      "page": 9,
+      "index": 6,
+      "width": 1076,
+      "height": 283
+    },
+    {
+      "url": "assets/figures/arxiv/2603.10549v1/fig-007.webp",
+      "caption": "Fig. 4: Overview of the defect analysis framework. The inspection sequence is preprocessed to generate a compact single image representation similar to the VLMs pretraining domain. Consequently, a VLM generates bounding boxes for defects.",
+      "page": 5,
+      "index": 7,
+      "width": 1076,
+      "height": 554
+    }
+  ]
+}

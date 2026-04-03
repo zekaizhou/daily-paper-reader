@@ -20,5 +20,14 @@ conclusion: HistoSB-Net为预训练VLM在数据受限的数字病理任务中的
 ## 摘要
 视觉语言模型（VLMs）为多模态推理提供了一个统一的框架，但其表示主要学习自自然图像-文本语料库，在迁移到组织病理学领域时，尤其是在数据受限的诊断场景下，往往表现出语义失配。为了解决这一局限性，我们提出了 HistoSB-Net，这是一种语义桥接网络，旨在将预训练的 VLMs 适配到多模态组织病理学诊断中，同时保留其原始语义结构。HistoSB-Net 引入了一个约束语义桥接（CSB）模块，该模块在视觉和文本编码器的自注意力投影空间内运行。CSB 并非采用显式的交叉注意力或全量微调，而是通过一个轻量级的非线性语义瓶颈自适应地调节预训练的注意力投影，从而以有限的额外参数实现结构化的跨模态调节。该框架在统一架构内支持图像块（patch）级和全视野数字切片（WSI）级的诊断。在包含两个 WSI 级和四个图像块级数据集的六个病理学基准测试上的实验表明，在有限监督下，36 种骨干网络-数据集组合相比于零样本推理均有一致的提升。对基于原型的间隔分布和混淆矩阵的进一步分析表明，这些改进伴随着嵌入空间中类内紧凑性的增强和类间分离度的增加。这些结果表明，CSB 为将预训练的 VLMs 适配到数据受限的数字病理学任务提供了一种有效且计算开销适中的策略。
 
+## 速览
+**TLDR**：针对预训练视觉语言模型（VLM）在病理诊断中存在的语义失配及数据受限问题，本文提出HistoSB-Net。该框架引入受限语义桥接（CSB）模块，在不改变原始语义结构的前提下，通过轻量化非线性瓶颈动态调节注意力投影，实现跨模态语义对齐。该方法支持切片级和全视野图像级诊断，在多个基准测试中显著提升了模型性能和特征表示的区分度。 \
+**Motivation**：预训练VLM在自然图像上学习的表示与病理图像存在语义偏差，且在小样本病理诊断中难以直接应用。 \
+**Method**：提出一种受限语义桥接模块（CSB），在视觉和文本编码器的自注意力投影空间内进行轻量化非线性调节。 \
+**Result**：在6个病理数据集的36种配置下，该方法一致优于零样本推理，并显著提升了类内紧凑性和类间分离度。 \
+**Conclusion**：HistoSB-Net为数据受限下的多模态病理诊断提供了一种计算高效且性能优越的语义适配方案。
+
+---
+
 ## Abstract
 Vision-language models (VLMs) provide a unified framework for multimodal reasoning, yet their representations are primarily learned from natural image-text corpora and often exhibit semantic misalignment when transferred to histopathology, particularly under data-limited diagnostic settings. To address this limitation, we propose HistoSB-Net, a semantic bridging network designed to adapt pre-trained VLMs to multimodal histopathological diagnosis while preserving their original semantic structure. HistoSB-Net introduces a constrained semantic bridging (CSB) module that operates within the self-attention projection space of both vision and text encoders. Instead of employing explicit cross-attention or full fine-tuning, CSB adaptively modulates pre-trained attention projections through a lightweight nonlinear semantic bottleneck, enabling structured cross-modal regulation with limited additional parameters. The framework supports both patch-level and whole-slide image (WSI)-level diagnosis within a unified architecture. Experiments on six pathology benchmarks, comprising two WSI-level and four patch-level datasets, demonstrate consistent improvements over zero-shot inference across 36 backbone-dataset combinations under limited supervision. Further analysis of prototype-based margin distributions and confusion matrices shows that these improvements are accompanied by enhanced intra-class compactness and increased inter-class separation in the embedding space. These results indicate that CSB provides an effective and computationally manageable strategy for adapting pre-trained VLMs to data-limited digital pathology tasks.

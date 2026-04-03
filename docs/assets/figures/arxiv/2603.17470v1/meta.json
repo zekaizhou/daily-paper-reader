@@ -1,0 +1,86 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.17470v1/fig-001.webp",
+      "caption": "Figure 1. Comparison of weak supervision labels for monocular 3D detection. To mitigate label scarcity, we propose an adaptive multi-modal pretraining paradigm that leverages visuallyreferred probabilistic prompts as auxiliary labels and can be seamlessly integrated into existing WS-M3D pipelines.",
+      "page": 1,
+      "index": 1,
+      "width": 496,
+      "height": 519
+    },
+    {
+      "url": "assets/figures/arxiv/2603.17470v1/fig-002.webp",
+      "caption": "Figure 4. Qualitative results on the KITTI validation set comparing ours to the GGA+PGD baseline. GGA [55] + PGD [42] is a WS-M3D baseline employing both 3D pseudo-labels and static textual prompts. Predicted boxes are rendered in green, and ground-truth boxes are shown in red.",
+      "page": 6,
+      "index": 2,
+      "width": 1036,
+      "height": 602
+    },
+    {
+      "url": "assets/figures/arxiv/2603.17470v1/fig-003.webp",
+      "caption": "Figure 3. Qualitative results on the KITTI validation set comparing ours to the WeakM3D baseline. WeakM3D [31] is a WS-M3D work with pure 3D pseudo-labels. Predicted boxes are rendered in green, and ground-truth boxes are shown in red.",
+      "page": 6,
+      "index": 3,
+      "width": 1036,
+      "height": 604
+    },
+    {
+      "url": "assets/figures/arxiv/2603.17470v1/fig-004.webp",
+      "caption": "Figure 8. Qualitative results on the KITTI validation set comparing ours on the ”Cyclsit” category. Predicted boxes are rendered in green, and ground-truth boxes are shown in red.",
+      "page": 15,
+      "index": 4,
+      "width": 1004,
+      "height": 568
+    },
+    {
+      "url": "assets/figures/arxiv/2603.17470v1/fig-005.webp",
+      "caption": "Figure 7. Qualitative results on the KITTI validation set comparing ours on the ”Pedestrian” category. Predicted boxes are rendered in green, and ground-truth boxes are shown in red.",
+      "page": 15,
+      "index": 5,
+      "width": 1004,
+      "height": 568
+    },
+    {
+      "url": "assets/figures/arxiv/2603.17470v1/fig-006.webp",
+      "caption": "Figure 6. Training loss comparison between VirPro+GGA+PGD and GGA+PGD. The depth loss supervises the predicted 3D depth of the object to ensure accurate distance estimation from the camera. The offset loss constrains the projected 2D center offset. The centerness loss encourages confident predictions near object centers while suppressing noisy peripheral responses. The total loss is the weighted sum of all objectives.",
+      "page": 14,
+      "index": 6,
+      "width": 938,
+      "height": 506
+    },
+    {
+      "url": "assets/figures/arxiv/2603.17470v1/fig-007.webp",
+      "caption": "Figure 2. Overview of the VirPro paradigm. We propose an adaptive pretraining paradigm that generates scene-aware probabilistic prompts enriched with visual context, which can be seamlessly integrated into diverse WS-M3D frameworks. An Adaptive Prompt Bank includes diverse learnable prompts for each object, while Multi-Gaussian Prompt Modeling injects scene-specific visual features into textual embeddings and encodes prompts as a multivariate Gaussian distribution. The sampled probabilistic prompts are max-pooled for RoI-level contrastive learning to align semantics across modalities.",
+      "page": 3,
+      "index": 7,
+      "width": 1034,
+      "height": 564
+    },
+    {
+      "url": "assets/figures/arxiv/2603.17470v1/fig-008.webp",
+      "caption": "Figure 5. Comparison of Inter-Scene Centroid Distances in Latent Space Between CAW3D and Our Proposed VirPro. We extract RoI visual embeddings for the ”Car” category from 15 scenes randomly chosen from KITTI val set. Then we compute the centroid of the embedding distribution and calculate pairwise distances between scene centroids.",
+      "page": 8,
+      "index": 8,
+      "width": 467,
+      "height": 374
+    },
+    {
+      "url": "assets/figures/arxiv/2603.17470v1/fig-009.webp",
+      "caption": "Table 1. Performance comparison conducted on the KITTI val set for the ”Car” category. All results are evaluated using the AP|R40 metric with an IoU threshold of 0.5. For the result of ”Pedestrian” and ”Cyclist” category, please refer to the supplementary. The best and second-best results are highlighted in red and blue, respectively.",
+      "page": 5,
+      "index": 9,
+      "width": 1018,
+      "height": 542
+    },
+    {
+      "url": "assets/figures/arxiv/2603.17470v1/fig-010.webp",
+      "caption": "Figure 9. PCA Visualization of RoI Embeddings from CAW3D and Our Proposed VirPro. We compare the RoI embeddings distribution projected via PCA from CAW3D and our proposed VirPro, where our work exhibits better-separated clusters across scenes, indicating stronger scene discrimination and improved latent space structuring.",
+      "page": 16,
+      "index": 10,
+      "width": 496,
+      "height": 495
+    }
+  ]
+}

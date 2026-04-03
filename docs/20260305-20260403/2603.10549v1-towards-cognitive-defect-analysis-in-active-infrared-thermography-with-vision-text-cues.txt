@@ -1,0 +1,334 @@
+Title: Towards Cognitive Defect Analysis in Active Infrared Thermography with Vision-Text Cues
+
+URL Source: https://arxiv.org/pdf/2603.10549v1
+
+Published Time: Thu, 12 Mar 2026 01:02:35 GMT
+
+Number of Pages: 11
+
+Markdown Content:
+> 1
+
+# Towards Cognitive Defect Analysis in Active Infrared Thermography with Vision-Text Cues 
+
+Mohammed Salah, Eman Ouda, Giuseppe Dell’Avvocato, Fabrizio Sarasini, Ester D’Accardi, Jorge Dias, Davor Svetinovic, Stefano Sfarra, and Yusra Abdulrahman 
+
+Abstract —Active infrared thermography (AIRT) is currently witnessing a surge of artificial intelligence (AI) methodologies being deployed for automated subsurface defect analysis of high performance carbon fiber-reinforced polymers (CFRP). Deploying AI-based AIRT methodologies for inspecting CFRPs requires the creation of time consuming and expensive datasets of CFRP inspection sequences to train neural networks. To address this challenge, this work introduces a novel language-guided framework for cognitive defect analysis in CFRPs using AIRT and vision-language models (VLMs). Unlike conventional learning-based approaches, the proposed framework does not require developing training datasets for extensive training of defect detectors, instead it relies solely on pretrained multimodal VLM encoders coupled with a lightweight adapter to enable generative zero-shot understanding and localization of subsur-face defects. By leveraging pretrained multimodal encoders, the proposed system enables generative zero-shot understanding of thermographic patterns and automatic detection of subsurface defects. Given the domain gap between thermographic data and natural images used to train VLMs, an AIRT-VLM Adapter is proposed to enhance the visibility of defects while aligning the thermographic domain with the learned representations of VLMs. The proposed framework is validated using three representative VLMs; specifically, GroundingDINO, Qwen-VL-Chat, and CogVLM. Validation is performed on 25 CFRP inspection sequences with impacts introduced at different en-ergy levels, reflecting realistic defects encountered in industrial scenarios. Experimental results demonstrate that the AIRT-VLM adapter achieves signal-to-noise ratio (SNR) gains exceeding 10 dB compared with conventional thermographic dimensionality-reduction methods, while enabling zero-shot defect detection with intersection-over-union (IoU) values reaching approximately 70%. These findings indicate that coupling pretrained VLMs with the proposed adapter enables reliable localization of subsurface CFRP defects without defect-specific training and extensive dataset preparation. 
+
+Index Terms —Infrared thermography, non-destructive testing, 
+
+This research was funded by Khalifa University of Science and Technology through the [Advancing Non-Destructive Testing (NDT) through Innova-tive Integration of Infrared Thermography (IRT) and Emerging Technolo-gies in Aerospace Applications] under Project ID: KU-[INT]-[FSU]-[2024]-[8474000660]. M. Salah, E. Ouda, and Y. Abdulrahman are with the Department of Aerospace Engineering, Khalifa University, Abu Dhabi, UAE. Y. Abdulrah-man is also with the Advanced Research and Innovation Center (ARIC), Khalifa University, Abu Dhabi, UAE. G. Dell’Avvocato ans S. Sfarra are with the Department of Industrial and Information Engineering and Economics (DIIIE), University of L’Aquila, Piazzale E. Pontieri 1, 67100 L’Aquila, Italy. F. Sarasini is with the Department of Chemical Engineering Materials Environment & UDR INSTM, Sapienza University of Rome, Rome, Italy. E. D’Accardi is with the Department of Mechanics, Mathematics and Management (DMMM), Polytechnic University of Bari, Via 5 Orabona 4, 70125 Bari, Italy. J. Dias is with the College of Computing and Mathematical Sciences, Khalifa University, Abu Dhabi, 127788, UAE. D. Svetinovic is with the Department of Computer Science, Khalifa University of Science and Technology, Abu Dhabi, UAE. Yusra Abdulrahman is the corresponding author (email: yusra.abdulrahman@ku.ac.ae). 
+
+vision-language models, dimensionality reduction, defect detec-tion 
+
+I. I NTRODUCTION 
+
+Carbon fiber reinforced polymers (CFRPs) are valued in the aerospace industry for their exceptional strength-to-weight ratio, corrosion resistance, and fatigue performance, enabling lighter airframes, improved fuel efficiency, and extended service life. Modern transport aircraft now rely heavily on CFRPs in primary load-bearing structures such as fuselage skins, wings, spars, ribs, and tail sections, as well as in secondary components, including control surfaces, fairings, doors, nacelles, and interior panels [1], [2]. However, dur-ing manufacturing and in service, CFRP parts can develop a variety of defects and damage modes, such as porosity, resin-rich areas, fiber waviness or wrinkling, matrix cracking, debonding, delaminations, and impact-induced barely visible impact damage, which degrade stiffness, strength, and fatigue life and may remain hidden from visual inspection [3]. To assess material properties, structural integrity, and sub-surface defects without causing damage, nondestructive testing (NDT) techniques are employed, particularly in safety-critical fields such as aerospace. Commonly used NDT methods for CFRP inspection include ultrasonic testing, radiographic inspection, and infrared thermography (IRT), all of which can detect hidden anomalies and subsurface damage [4]. Among these techniques, IRT has emerged as a valuable tool for identifying both surface and subsurface defects by analyzing the thermal response of CFRP structures [5]. IRT is based on monitoring the propagation of heat on the surface of a material, where disturbances in thermal patterns indicate the presence of internal anomalies [6]. In partic-ular, active infrared thermography (AIRT) improves defect detectability by applying external thermal excitation, such as flash lamps, halogen heaters, or lasers, which increases the thermal contrast between sound and defective regions [7]. As a result, AIRT is especially suitable for inspecting non-metallic and multilayered materials where conventional inspection methods may be limited. AIRT has been widely adopted in sectors such as aerospace, energy, and civil infras-tructure, where large-scale and on-site inspections are often required. Furthermore, recent advances in artificial intelligence (AI) have enabled automated defect characterization in AIRT. AI-based pulsed thermography (PT) algorithms have been proposed for defect classification [8], segmentation [9], [10], and depth estimation [11]. In addition, to accelerate thermo-graphic inspection processes and enable coverage of large structures, robotic and line-scan thermography systems have been introduced [12]. 
+
+> arXiv:2603.10549v1 [cs.CV] 11 Mar 2026 2
+
+Although AI methodologies are currently being investigated in AIRT, a challenge in AI-based AIRT is the scarcity of datasets and the need to prepare costly datasets for training AI models for defect analysis. Vision–Language Models (VLMs) offer a promising paradigm for zero-shot defect detection in AIRT; however, current thermographic representations pro-duced by conventional dimensionality-reduction techniques are not designed to generate image representations aligned with the natural-image domain of foundation VLMs, limiting their direct applicability for zero-shot reasoning. To address these challenges, this work proposes a zero-shot cognitive framework for defect analysis in AIRT using vision and text cues, leveraging the strong reasoning capabilities of pretrained multimodal VLMs. Specifically, an AIRT–VLM adapter is introduced to transform thermographic information into VLM-compatible representations, enabling off-the-shelf VLMs to perform zero-shot subsurface defect localization without thermography-specific training or large annotated datasets. As such, the focus of this work is methodological and AI-driven, applying multimodal VLMs to thermographic data for zero-shot defect localization, rather than advancing the physical modeling of infrared thermography. The key contributions of this work are as follows: 1) A novel zero-shot cognitive defect analysis framework for CFRP components is introduced, addressing the challenge of preparing time-consuming, costly datasets for AI-based thermographic inspection. 2) The AIRT-VLM Adapter is proposed to bridge the domain gap between thermographic data and natural image distributions used in pretrained Vision–Language Models, enhancing the visibility of the defect and rep-resentation alignment. 3) The proposed framework is tested to detect impact damage at different energy levels. The results show that VLMs coupled with the AIRT-VLM adapter enable reliable grounding of subsurface defects. 
+
+A. Related Work 
+
+Compared to earlier NDT techniques, such as radiography, eddy current testing, and ultrasonic testing, AIRT offers higher efficiency, faster evaluation, and fully non-contact inspection [13]. This growing interest has spurred extensive research into learning-based models for defect detection, including adaptations of Faster R-CNN and YOLOv5 for IRT data [8], as well as ConvLSTM architectures to better capture temporal dependencies [14]. For defect segmentation, various neural network architectures have been explored, such as U-Net variants for composites and forged components [15], [16], and ConvLSTM-based models for 3D defect depth reconstruction. However, many approaches rely mainly on spatial informa-tion and underutilize temporal dynamics in thermographic sequences. To address this limitation, 3D CNNs have been introduced to explicitly model spatiotemporal features and improve subsurface defect segmentation [11]. However, the aforementioned models are supervised and their performance depends heavily on the availability of large, carefully anno-tated thermographic datasets, whose acquisition and labeling are costly, time-consuming, and often limited in generalizabil-ity across varying inspection conditions. In these methods, AIRT dimensionality reduction techniques are primarily used as preprocessing steps to generate compact thermographic representations suitable for deep neural network input, since raw inspection sequences are highly dimensional and computationally expensive to process. AIRT dimension-ality reduction is used to generate compact thermographic representations suitable for deep neural network input, as raw inspection sequences are highly dimensional and com-putationally expensive to process. Such techniques serve two main purposes: compressing thousands of frames into low-dimensional feature vectors and enhancing defect visibility by improving the typically low signal-to-noise ratio of raw thermal images, which otherwise degrades defect character-ization performance [17]. Common dimensionality reduction methods include Thermal Signal Reconstruction (TSR) [18], Pulsed Phase Thermography (PPT) [19], and Principal Com-ponent Analysis (PCA) [20]. Physics-informed PCA variants have been proposed to improve AIRT analysis [21], and such representations are widely used as preprocessing in AI-based pipelines, including multimodal fusion approaches [17]. More recently, data-driven autoencoders, particularly CNN-based models, have been employed to learn compact latent features that capture nonlinear spatial and temporal patterns in thermographic data [17], [22]–[24]. Therefore, defect detection is feasible with learning-based AIRT, which follows the traditional deep neural network training pipeline: inspection sequences are first collected as training data, then processed through dimensionality reduction to obtain compact thermographic representations, and finally used to train networks that are later deployed for downstream tasks. However, this pipeline suffers from two major draw-backs: preparing AIRT datasets for neural network training is costly and time-consuming, and traditional dimensionality-reduction methods do not guarantee a unified, image-like rep-resentation suitable for foundation-level, generalizable models capable of zero-shot defect detection. Moreover, the resulting thermographic representations are not inherently aligned with the natural-image domain on which vision–language models (VLMs) are pretrained, further limiting their direct applicabil-ity to zero-shot cognitive analysis. Hence, instead of relying on extensive data preparation and hand-crafted dimensionality-reduction methods, this work proposes a zero-shot cognitive framework for defect analysis in AIRT using vision–text cues, without the need for large-scale data collection, preparation, or defect-specific training. The remaining sections of this paper are organized as fol-lows. Section II outlines the sample preparation and method-ology. Section III presents the experimental validations of the proposed methodology. Finally, section IV presents conclu-sions, findings, and future aspects of the proposed framework. II. M ATERIALS AND METHODS 
+
+A. Specimens and Data Collection 1) Specimens: Two types of additively manufactured car-bon fiber reinforced polymer specimens were investigated: 3
+
+Fig. 1: Front-side view of the impacted specimens, subjected to low-velocity impact at 5 J and 15 J. a PEKK matrix reinforced with continuous carbon fibers (PEKK-CF) and a PA12 matrix reinforced with short carbon fibers (PA12-CF). The PEKK-CF material consisted of a cross-ply lay-up obtained by stacking six 0°/90° plies containing continuous fibers, separated by intermediate layers of PEKK with short fiber reinforcement. Subsequently, it was consoli-dated by hot pressing at approximately 450 °C to achieve a symmetric laminate and satisfactory interlaminar bonding. The PA12-CF specimens were produced by fused filament fabrica-tion through alternating 0°/90° deposition, resulting in a layer-by-layer architecture with a relatively homogeneous in-plane fiber distribution and reduced through-thickness continuity as described in previous work [25]. All specimens had nominal dimensions of approximately 75 × 75 mm 2 and a thickness of about 4 mm . Low-velocity impact tests were carried out on the central area of each specimen using a drop-tower configuration. In the present work, specimens impacted at 5 J and 15 J were analyzed, with two PEKK samples tested at −70 ◦C and the remaining ones impacted at room temperature. The specimens were inspected with the surface as it is, i.e., in the same condition shown in the Fig. 1. The visible indentation marks correspond to the main impact location and were used as a reference when defining the inspection area in the thermographic tests. In the PEKK-CF laminate, the cross-ply arrangement of continuous fibers produces direction-dependent thermal trans-port within the plane. In contrast, in the PA12-CF specimens, the use of short fibers yields an almost isotropic response in the x–y plane and comparatively low diffusivity [26]. 
+
+2) Data Collection: The specimens were tested under dif-ferent heating configurations involving both reflection and transmission modes. The reflection modes involve inspection from the front side with pulsed flash heating and long-pulse heating, and the back side with pulsed flash heating using halogen lamps (see Fig. 2). On the other hand, the transmission mode involves inspection from the front side with pulsed flash heating and long-pulse heating using halogen lamps, see Fig. 3. In configurations A.1 and A.2, the specimen surface was heated using two flash lamps with a nominal energy of 3 kJ each. The lamps were placed laterally with respect to the infrared camera, which was positioned orthogonally to the inspected surface. This central positioning was selected to minimize dimensional errors due to perspective effects. The lamp arrangement, schematically illustrated in Fig. 2, was defined to ensure sufficiently uniform heating of the specimen surface and to limit non-uniform heating artifacts. The sur-face was heated for approximately 4 ms, which, considering specimen thickness and previously estimated thermophysical properties [26], is short enough to satisfy the impulsive heating assumption and justify the Dirac pulse approximation. The difference between A.1 and A.2 lies solely in the inspected surface: A.1 corresponds to the front surface (the impacted side), whereas A.2 corresponds to the rear surface. Configu-ration A.3 employed the same optical arrangement, i.e., two halogen lamps positioned laterally to the infrared camera and oriented as shown in Fig. 2. In this case, two halogen sources with a nominal power of 650 W each were used. The surface was heated for a total duration of 20 s. Only the front surface was inspected in this configuration. In configuration B.1, Fig. 3, a single flash lamp with a nominal energy of 3 kJ was positioned at the minimum possible distance from the back surface of the specimen to maximize energy density transfer. To shield the infrared sensor and prevent pixel saturation from direct exposure to the light source, a cardboard frame was placed between the camera and the specimen. On the other hand, configuration B.2 used the same geometry adopted in B.1, with the only difference being the replacement of the flash source with a halogen lamp of 650 W nominal power. The back surface was heated for a duration of 40 s. Surface temperature evolution was recorded for all configurations using a FLIR A655sc microbolometric infrared camera operating in the 7–14 μm spectral range, with an acquisition frequency of 50 Hz. The resulting spatial 
+
+Fig. 2: Top: Front-side heating with pulsed flash lamps (A.1-A.2) and front-side long-pulse halogen heating (A.3). Bottom: Schematic representation of inspection setup. 4
+
+Fig. 3: Top: Backside heating with flash (B.1) and halogen lamp (B.2). Bottom: Schematic representation of transmission inspection setup. resolution for reflection configuration A is 0.22 mm/pixel and for transmission configuration B is 0.19 mm/pixel. 
+
+B. Methodology 
+
+An overview of the proposed framework is shown in Fig. 4. The input inspection sequence is first standardized to nor-malize its temporal and spatial dynamics across specimens. To interface AIRT data with VLMs, which are pretrained on natural RGB imagery, the AIRT-VLM adapter is devised as a dimensionality reduction module designed to compress the full thermal sequence into a single image representation with a denoised defect signal. The AIRT-VLM adapter is a masked autoencoder that extracts the dominant spatiotemporal features associated with subsurface defects. The autoencoder generates 
+
+l latent images that are pooled into a 2-D, single domain-aligned, thermal image that preserves defect visibility while re-maining semantically closer to the distribution of images seen by VLMs during pre-training. Note that the domain-aligned image representation does not retain the full spatiotemporal physical information of the original AIRT sequence, but is in-stead optimized to enhance defect saliency and improve zero-shot localization performance when interfaced with VLMs. Accordingly, the domain-aligned image is subsequently fed into a VLM to generate a prediction of the bounding box 
+
+(x1, y 1, x 2, y 2). Through this two-stage pipeline, a domain-adaptive reduction followed by VLM-driven reasoning, the framework enables a zero-shot VLM-compatible inspection process capable of detecting and localizing defects directly from thermographic sequences. 
+
+1) AIRT-VLM Adapter: Let S = {Ik}Nt 
+
+> 1
+
+, of shape 
+
+(Nt, N y , N x), be the 3D matrix representing the inspection sequence, where Ik is a thermogram timestamped at k =1, 2, . . . , N t, Ny is the image height, and Nx is its width. 
+
+S is reshaped to (Nt, N y × Nx) by a raster-like operation and standardized by ˆS = S − μk, where 
+
+μk = 1
+
+NtNtX
+
+> k=1
+
+S(k), (1) and ˆS = {S(n)}Nx×Ny 
+
+> 1
+
+is a matrix consisting of the centered pixel-wise thermal responses. This operation is essential to ensure that the subsequent dimensionality reduction module focuses on the relative thermal variations induced by defects rather than absolute temperature offsets, thereby enhancing the discriminability of subtle defect signatures across different specimens and acquisition conditions. Afterwards, the ˆS is used to train the masked autoencoder to generate the compact latent representation. The architecture of the autoencoder is the AIRT-Masked-CAAE, outlined in [27], leveraging the masked sequence autoencoding strategy for fast training. To ensure that the network avoids learning trivial, identity reconstruction, and focus on input signal features, S(n) is subjected to a binary masking operation with additive Gaussian noise, yielding a corrupted sequence, ˆS(n) by 
+
+ˆS(n) = M ⊙ S(n) + N (0 , σ 2), (2) where M is a 1-D binary mask indicating visible ( 1) and masked ( 0) patches, and N (0 , σ 2) represents additive Gaussian noise with zero mean and variance σ2. Consequently, ˆS(n) is passed through the encoder, f (·), as 
+
+zn = fθ ( ˆS(n)), (3) generating the latent representation zn. The decoder, g(·) aims to reconstruct the original, uncorrupted signal ˜S(n) as 
+
+˜S(n) = gϕ(zn). (4) The reconstruction strategy serves as guidance to train the network as 
+
+L = 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+∥ ˜S(n) 
+
+> i
+
+− S(n) 
+
+> i
+
+∥22. (5) Note that the training loss defined in [28] is the combined reconstruction-knowledge distillation loss to generate a struc-tured latent space. For this work, we opt for a reconstruction focused loss function as it is aimed to generate a single domain-aligned image representation. In addition, the AIRT-Masked-CAAE is trained on the inspection sequence, com-pressed to a latent size of l = 10 , which is then pooled to gen-erate the domain-aligned image. During training, optimization is performed using the Adam optimizer with a fixed learning rate of 10 −3, a batch size of 32 , and training is conducted for 
+
+100 epochs. After online training, each z(n) ∈ zn is utilized as a pixel value, and its length is the number of channels, formulating 
+
+T = {T1, T 2, · · · , T l}, where l is the latent vector size. Thus, 5
+
+Fig. 4: Overview of the defect analysis framework. The inspection sequence is preprocessed to generate a compact single image representation similar to the VLMs pretraining domain. Consequently, a VLM generates bounding boxes for defects. from all K frames in the original image sequence, now the autoencoder latent images are only a few l images. After obtaining the latent representation set T = {T1, T 2, . . . , T l}
+
+from the autoencoder, a global average pooling operation is applied to aggregate the multi-channel latent features into a single enhanced thermogram by 
+
+IVLM = Pool (T) = 1
+
+l
+
+> l
+
+X
+
+> i=1
+
+Ti, (6) where IVLM represents the high-SNR, domain-aligned thermal image, where the higher the contrast and SNR of IVLM , the higher the detection accuracy and lower the uncertainty of the VLMs generated predictions. The domain-aligned image, IVLM 
+
+is then fed to VLMs for generating the bounding box location of the subsurface defects. 
+
+2) Cognitive Defect Analysis: VLMs possess multimodal reasoning capabilities of large pretrained models to detect and localize defects in a zero-shot manner. Given that IVLM 
+
+is both high in contrast and semantically aligned to the statistics of natural images, it can be reliably interpreted by VLMs conditioned through natural-language prompts. The VLMs output the bounding box of the defect, identifying its location in the domain-aligned image. Let P denote the textual inspection instruction provided to the model, and let 
+
+Φ( ·) represent a generic VLM composed of a visual encoder, a text encoder, and a multimodal fusion module. The VLM receives the paired input (IVLM , P) and produces a bounding-box estimate through 
+
+b = Φ  IVLM , P, b = ⟨x1, y 1, x 2, y 2⟩, (7) where b contains the predicted defect localization coordinates. The visual encoder fvis (·) extracts a feature representation of the thermal image, 
+
+v = fvis (IVLM ), (8) while the text encoder ftext (·) embeds the tokenized inspection prompt, 
+
+t = ftext (P). (9) These unimodal representations are combined by a generic multimodal fusion operator F(·, ·) that aligns the semantic information in the prompt with the visual content of the thermal image as 
+
+u = F(v, t). (10) The fused representation u captures the joint visual–linguistic understanding required to infer the presence and extent of subsurface defects. A prediction head ψ(·) operating on u
+
+yields the bounding-box estimate by 
+
+b = ψ(u). (11) This formulation is intentionally model-agnostic, allowing the VLM to be instantiated by any multimodal architecture, in-cluding those based on transformer cross-attention, region–text matching, or grounding-based detection heads. Regardless of the specific architecture, the VLM associates the high-SNR defect structures in IVLM with the semantic concept of a “defect” as defined in the inspection prompt. In this work, the prompt P takes the form 
+
+Inspect the thermal image of a CFRP sheet and output the defect bounding box as ⟨x1, y 1, x 2, y 2⟩.6
+
+This standardized instruction constrains the model’s output format and reduces ambiguity. Importantly, the VLM-driven analysis requires no thermal-domain fine-tuning or labeled thermographic data, as the reasoning capability emerges from the model’s large-scale multimodal pretraining. Consequently, the proposed approach enables flexible, data-efficient, and gen-eralizable defect localization directly from pulse-thermography sequences through the AIRT-VLM adapter. III. E XPERIMENTS 
+
+A. Experimental Evaluation 
+
+The proposed framework is tested with three VLMs coupled with the proposed AIRT-VLM adapter; namely, CogVLM [30], Qwen-VL Chat [31], and GroundingDINO [32]. The experimental validation follows by evaluating the efficacy of the AIRT-VLM adapter in enhancing the defect signal and clarity in terms of contrast and SNR. Each is calculated as Contrast =
+
+ 1
+
+> N
+
+PNp=1 Yd(p)
+
+
+
+−
+
+ 1
+
+> M
+
+PMq=1 Ys(q)
+
+ 1
+
+> N
+
+PNp=1 Yd(p)
+
+
+
++
+
+ 1
+
+> M
+
+PMq=1 Ys(q)
+
+ , (12) SNR =
+
+ 1
+
+> N
+
+PNp=1 Yd(p)
+
+
+
+−
+
+ 1
+
+> M
+
+PMq=1 Ys(q)
+
+
+
+σs
+
+, (13) where N denotes the total number of pixels in the defective region Yd, with Yd(p) representing the pth pixel intensity in that region. M refers to the number of pixels in the sound region Ys, with Ys(q) being the qth pixel intensity, while σs
+
+corresponds to the standard deviation of pixel values in the sound region Ys. Note that the sound ROIs were obtained manually, while the ROI of the defective area is obtained from the labels. This evaluation is discussed in Section III-B. In addition to signal enhancement evaluation, the more important task is assessing the defect-detection performance of the VLMs, as this represents the main objective and motivation of this work. The evaluation is performed using two metrics: the Intersection-over-Union (IoU) and the normalized center distance (NCD), defined respectively as IoU = |B pred ∩ B gt ||B pred ∪ B gt | , (14) NCD =
+
+q
+
+(xpred  
+
+> c
+
+− xgt  
+
+> c
+
+)2 + ( ypred  
+
+> c
+
+− ygt  
+
+> c
+
+)2
+
+q
+
+W 2 
+
+> gt
+
++ H2
+
+> gt
+
+, (15) where Bpred and Bgt represent the predicted and ground truth bounding boxes, respectively. The center coordinates of each bounding box are given by (xpred  
+
+> c
+
+, y pred  
+
+> c
+
+) and (xgt  
+
+> c
+
+, y gt  
+
+> c
+
+), while 
+
+Wgt and Hgt denote the width and height of the ground truth box. The defect bounding boxes have been labeled manually and verified multiple times for consistency and spatial ac-curacy by cross-checking the annotations across independent review passes, ensuring reliable ground-truth localization for quantitative evaluation. This evaluation is discussed in Sec-tion III-C. Sections III-D and III-E discuss ablation studies and highlight some limitations in the proposed framework, respectively. 
+
+B. AIRT-VLM Adapter Evaluation 
+
+The purpose of the AIRT-VLM adapter is to mitigate the domain shift between thermal inspection data and the natural-image distributions on which VLMs are pretrained. For a thermal representation to be interpretable by a VLM, the defect patterns in the domain-aligned image must be visually distinct and sufficiently clear. This clarity reflects how effectively the AIRT-VLM adapter enhances defect-relevant signals while suppressing background noise and acquisition artifacts. To quantitatively assess this improvement, contrast and SNR met-rics are used to evaluate the perceptual quality of the domain-aligned image. Table I reports the contrast and SNR values obtained after applying the AIRT-VLM adapter and compares them against the raw thermogram as well as several state-of-the-art AIRT dimensionality reduction techniques, including PCA [34], TSR [33], DAT [22], 1D-DCAE-AIRT [23], and C-AET [29]. Fig. 5 summarizes the aggregated contrast and SNR performance across all methods, while Table II presents qualitative comparisons illustrating the visual differences be-tween the proposed AIRT-VLM representation and existing dimensionality reduction approaches. The results in Table I and Fig. 5 show that the defect signal tends to increase with increasing impact energies across all sequences. This is expected since high impact energies create distinct defects that are easily identifiable compared to low impact defects. Nevertheless, the significant contrasts and SNR obtained for all defect classes are of the same order of magnitude. For instance, the proposed AIRT-VLM adapter increases the contrast by approximately 50% and the SNR by 20 dB compared to the raw thermograms. On the other hand, the proposed framework outperforms traditional and learning-based AIRT dimensionality reduction methods. According to Table II, the visualizations highlight sharper defect boundaries, reduced halo artifacts, and superior suppres-sion of background weave and non-uniform heating effects. Quantitatively, contrast improvements of up to 25% and SNR gains exceeding 10 dB are observed compared to the strongest baseline, such as 1D-DCAE-AIRT. These improvements stem from the masked feature autoencoding strategy, which prevents trivial identity reconstruction and compels the network to focus on defect-relevant cues, the multi-level feature attention that amplifies salient channels across convolutional layers, and the self-attention block that captures long-range spatial and temporal dependencies. The obtained results also highlight that the AIRT-VLM adapter is capable of compressing a thermographic sequence to a single image, while exposing defect relevant features effectively. This is essential for reliable defect grounding, which is further discussed in the following section. 
+
+C. Defect Detection Evaluation 
+
+The previous evaluation evaluated the AIRT-VLM adapter in terms of enhancing the clarity of the defects. Consequently, three different VLMs, Qwen-VL, CogVLM, and Ground-ingDINO, are evaluated on the AIRT-VLM adapter represen-tation. The evaluation is based on the IoU and the normalized distance between the generated and ground truth bounding 7
+
+TABLE I: Quantified contrast and SNR for the AIRT-VLM adapter representation benchmarked against state-of-the-art thermography dimensionality reduction methods, TSR, PCA, DAT [22], 1D-DCAE-AIRT [23], and C-AET [29], under ambient and low-temperature ( −70 ◦C) conditions.                                                                           
+
+> Defect Class Temp. Samples Metric Raw TSR PCA DAT 1D-DCAE-AIRT C-AET Ours 5 J
+> Ambient 6Contrast 0.207 0.241 0.302 0.366 0.383 0.361 0.478
+> SNR (dB) 21.75 24.50 30.71 33.48 35.83 34.11 42.18
+> −70 ◦C7Contrast 0.198 0.229 0.289 0.351 0.366 0.344 0.456
+> SNR (dB) 20.90 23.62 29.40 32.05 34.21 32.88 40.27 15 J
+> Ambient 7Contrast 0.227 0.287 0.387 0.395 0.436 0.387 0.534
+> SNR (dB) 22.11 24.74 32.95 38.29 38.37 36.58 43.19
+> −70 ◦C6Contrast 0.216 0.271 0.366 0.378 0.415 0.369 0.508
+> SNR (dB) 21.08 23.90 31.42 36.10 36.84 35.02 41.36
+
+Fig. 5: Aggregate a) contrast and b) SNR on all 25 CFRP inspection sequences. boxes. Note that the enhanced defect signal of the domain-aligned image results in a higher detection success rate and IoU. Table III shows the detected bounding boxes on two de-fective CFRP samples with impact damages at 5 J and 15 J. In addition, Fig. 6 displays the aggregate IoU and the normalized center distance of the VLMs on all sequences of each impact damage class. The figure also presents benchmarks, comparing the proposed framework against state-of-the-art dimensionality reduction methods coupled with the three VLMs for defect detection and grounding. The results in Fig. 6 show that Qwen-VL, CogVLM, and GroundingDINO achieve IoUs higher than 60%. when coupled with the AIRT-VLM adapter. Note that the size of the defects in the thermograms tends to be relatively small, approximately covering 5-10% of the image size. As such, models that achieve IoUs exceeding 50% tend to be within the acceptable range. Similarly, achieving a normalized center distance less than 0.05 Px provides emphasis on the model’s grounding capabilities. Accordingly, coupling the VLMs with the AIRT-VLM adapter highlights strong zero-shot grounding capabilities with IoUs reaching to approximately 70% and normalized center distance ≈ 0.015 . In addition, it is worth mentioning that all the models achieve consistent perfor-mances, demonstrating that the framework relies heavily on the domain-aligned input. If the performances are compared with the models’ performance when coupled with the state-of-the-art AIRT dimensionality reduction techniques, the obtained IoUs do not exceed 50%, demonstrating the importance of the AIRT-VLM adapter to generate domain-aligned images for stable and reliable subsurface defect grounding. These results show that defect detection in AIRT is attainable, where the subsurface defects are detected in a zero-shot manner, mitigating the challenge in time consuming preparation of AIRT training datasets. 
+
+D. Ablation Studies 
+
+In addition to the previous evaluation routines, two studies are conducted on the proposed framework. The analysis in this section has been carried out on all 25 CFRP inspection seqe-unces to ensure comprehensive and representative assessment. The first study studies the effect of pooling on latent image representation. As mentioned in Section II, global average pooling is applied on the autoencoder latent space to generate a domain-aligned image representation for cognitive defect analysis. As such, the performance of the VLMs is analyzed when max pooling and PCA are applied on the latent images instead of average pooling. Table IV outlines the contrast, SNR, IoU, and normalized center distance when utilizing the aforementioned pooling operations. Note that the IoU and 8
+
+TABLE II: Qualitative comparisons between state-of-the-art AIRT dimensionality reduction techniques: TSR [33], PCA [34], DAT [22], 1D-DCAE-AIRT [23], C-AET [29], and the proposed AIRT-VLM adapter representation, under ambient and low-temperature ( −70 ◦C) conditions.     
+
+> Method 5 J 5 J ( −70 ◦C) 15 J 15 J ( −70 ◦C) Raw
+> TSR
+> PCA
+> DAT
+> 1D-DCAE-AIRT
+> C-AET
+> Ours 9
+
+Fig. 6: IoU and normalized center distance achieved by Qwen-VL, CogVLM, and GroundingDINO when coupled with AIRT-VLM adapter on all 25 CFRP inspection sequences. The performances of these models are also presented when coupled with state-of-the-art AIRT dimensionality reduction methods. TABLE III: Defect detection results of Qwen-VL, CogVLM, and GroundingDINO coupled with the AIRT-VLM adapter, under ambient and low-temperature. The results show consistent defect detection performances across all samples.     
+
+> Model 5 J 5 J ( −70 ◦C) 15 J 15 J ( −70 ◦C) Qwen-VL
+> CogVLM
+> GroundingDINO
+
+normalized center distance are reported when using Qwen-VL. The results in Table IV show that max pooling results in consistently lower defect detection performance across all metrics. This is because max pooling amplifies noise even in the presence of defective signals. On the other hand, average pooling exhibits similar performance to PCA. Both methods can be applied; however, the proposed framework opts for average pooling for its computational efficiency compared to PCA. In the second study, the elimination of the pooling operation is studied. The autoencoder generates l = 10 latent images. Instead of reducing the latent space to a single domain-aligned image fed to the VLM, all l = 10 images are fed to the VLMs, and then non-maximum suppression (NMS) is, consequently, TABLE IV: Quantified performances of average, max, and PCA pooling operations.                
+
+> Metric Average Pooling Max Pooling PCA Contrast 0.522 0.471 0.547
+> SNR (dB) 42.87 39.18 42.41
+> IoU 0.691 0.539 0.701
+> Normalized Center Distance 0.0138 0.0378 0.0118
+
+applied to generate the defect bounding box. This acts as an ensemble operator to aggregate all bounding boxes from the inspection run on each latent image. Table V shows the performance of Qwen-VL when utilizing both aforementioned defect detection methods in terms of IoU, normalized center distance, and total execution time. The model performances 10 
+
+TABLE V: Defect detection performance when the pooling operation is replaced with non-maximum suppression (NMS). 
+
+Metric Average Pooling NMS IoU 0.691 0.707 
+
+Normalized Center Distance 0.0138 0.0136 
+
+Execution Time (s) 4.3 37.8 
+
+show consistency across the two methods. Although the pool-ing operation tends to flatten the latent space to a single dimension, this comes at the cost of a 10-fold increase in execution time. Thus, the proposed multimodal defect analysis framework utilizes average pooling, which ensures comparable performance with less computational demands. 
+
+E. Limitations 
+
+While the previous results show that zero-shot grounding of subsurface defects is attainable with the proposed framework, the work still has one limitation that opens the door to future research. Since the approach relies on dimensionality reduction and compresses the entire inspection sequence into a single image representation for VLMs, depth estimation of defects cannot be carried out. This is because the framework is designed to generate a domain-aligned image that resembles the type of data seen during VLM pretraining, which naturally leaves out the physics-based intuition contained in the full AIRT sequence. Another limitation; the framework cannot differentiate between defect types, such as delaminations, voids, or impact damage, which are common in real industrial settings. To differentiate between the aforementioned defect types, language-guided defect analysis cues need to be carried out in the spatiotemporal domain. At this stage, the method only identifies the presence of a defect. Future work will focus on fine-tuning VLMs to better capture the underlying physics of AIRT, enabling more generalizable defect analysis that includes identifying defect types and estimating defect depths to assess their severity. Yet, experimental validation across multiple impact energy levels—corresponding to de-fects with different geometrical characteristics—demonstrates that the proposed framework remains robust to variations in defect geometry and can reliably localize subsurface anomalies despite these structural differences. IV. C ONCLUSIONS 
+
+AI-driven active infrared thermography (AIRT) is increas-ingly adopted for automated inspection of composite materials; however, existing AI-based pipelines remain constrained by the need for large, labeled thermographic datasets and setup-specific training. To address these limitations, this work intro-duced a zero-shot cognitive defect analysis framework that in-tegrates AIRT with off-the-shelf multimodal vision–language models (VLMs) through a lightweight AIRT–VLM adapter that produces domain-aligned thermal image representations. Experimental validation on 25 CFRP inspection sequences us-ing Qwen-VL-Chat, CogVLM, and GroundingDINO demon-strates that the proposed method can localize subsurface de-fects without thermography-specific training or curated ther-mal datasets, achieving intersection-over-union (IoU) values of approximately 0.7 and normalized center distances (NCD) around 0.015. In practice, this enables accurate defect localiza-tion without curated thermal datasets, labeling procedures, or additional model retraining, resulting in a significant reduction in inspection setup time and overall analysis cost. From an industrial perspective, the proposed framework removes the dataset bottleneck that currently limits the deploy-ment of AI in thermography-based quality assurance, allowing rapid integration into existing inspection chains and providing repeatable, operator-independent defect localization. Overall, the proposed method bridges high-performing AIRT defect detection with the flexibility of multimodal AI, offering a viable route to scalable, training-free thermographic inspec-tion. The combination of robust signal enhancement, zero-shot grounding, and minimal computational overhead positions this framework as a strong candidate for next-generation NDT systems, suitable for continuous monitoring, fast screening, and automated quality control of CFRP components. While effective for defect localization, future research will focus on fine-tuning VLMs with physics-informed objectives and leveraging richer temporal cues from AIRT sequences, en-abling more generalizable cognitive defect analysis capable of identifying defect types and estimating their depth to assess severity. REFERENCES [1] A. Hamzat, M. S. Murad, I. Adediran, E. Asmatulu, and R. Asmatulu, “Fiber-reinforced composites for aerospace, energy, and marine appli-cations: an insight into failure mechanisms under chemical, thermal, oxidative, and mechanical load conditions,” Advanced Composites and Hybrid Materials , vol. 8, 01 2025. [2] X. Xu, G. Peng, B. Zhang, F. Shi, L. Gao, and J. Gao, “Material performance, manufacturing methods, and engineering applications in aviation of carbon fiber reinforced polymers: A comprehensive review,”                                                                                   
+
+> Thin-Walled Structures , vol. 209, p. 112899, 2025. [Online]. Available: https://www.sciencedirect.com/science/article/pii/S0263823124013387 [3] M. Boztepe, “An overview of non-destructive testing for composites materials,” ALK ¨ U Fen Bilimleri Dergisi , vol. 7, pp. 43–54, 04 2025. [4] J. L. Tai, M. T. H. Sultan, A. Łukaszewicz, J. J´ ozwik, Z. Oksiuta, and F. S. Shahar, “Recent trends in non-destructive testing approaches for composite materials: Areview of successful implementations,”
+> Materials , vol. 18, no. 13, 2025. [Online]. Available: https://www.mdpi. com/1996-1944/18/13/3146 [5] H. Hu, X. Chen, J. Zhao, G. Hu, H. Zhang, X. Maldague, H. Wang, Y. He, D. Pan, C. Shu, and Y. Duan, “Stft-cnn enabled quantitative detection of liquid ingress in honeycomb composites via infrared thermography,” Quantitative InfraRed Thermography Journal ,vol. 0, no. 0, pp. 1–17, 2025. [Online]. Available: https://doi.org/10.1080/17686733.2025.2533739 [6] N. Saeed, Y. Abdulrahman, S. Amer, and M. A. Omar, “Experimentally validated defect depth estimation using artificial neural network in pulsed thermography,” Infrared Physics & Technology , vol. 98, pp. 192–200, 2019. [Online]. Available: https://www.sciencedirect.com/ science/article/pii/S1350449519300532 [7] N. Saeed, M. A. Omar, Y. Abdulrahman, S. Salem, and A. Mayyas, “Ir thermographic analysis of 3d printed cfrp reference samples with back-drilled and embedded defects,” Journal of Nondestructive Evaluation ,vol. 37, no. 3, p. 59, Jul 2018. [Online]. Available: https://doi.org/10.1007/s10921-018-0512-2 [8] Z. Tong, L. Cheng, S. Xie, and M. Kersemans, “A flexible deep learning framework for thermographic inspection of composites,” NDT & E International , vol. 139, p. 102926, 2023. [Online]. Available: https://www.sciencedirect.com/science/article/pii/S096386952300141X 11
+
+[9] G. Zhou, Z. Zhang, W. Yin, H. Chen, L. Wang, D. Wang, and H. Ma, “Surface defect detection of cfrp materials based on infrared thermography and attention u-net algorithm,” Nondestructive Testing and Evaluation , vol. 39, no. 2, pp. 238–257, 2024. [Online]. Available: https://doi.org/10.1080/10589759.2023.2191954 [10] Z. Wei, A. Osman, B. Valeske, and X. Maldague, “A dataset of pulsed thermography for automated defect depth estimation,” 
+
+Applied Sciences , vol. 13, no. 24, 2023. [Online]. Available: https://www.mdpi.com/2076-3417/13/24/13093 [11] Y. Dong, C. Xia, J. Yang, Y. Cao, Y. Cao, and X. Li, “Spatio-temporal 3-d residual networks for simultaneous detection and depth estimation of cfrp subsurface defects in lock-in thermography,” IEEE Transactions on Industrial Informatics , vol. 18, no. 4, pp. 2571–2581, 2022. [12] P. Nooralishahi, C. Ibarra-Castanedo, S. Deane, F. L´ opez, S. Pant, M. Genest, N. P. Avdelidis, and X. P. V. Maldague, “Drone-based non-destructive inspection of industrial sites: A review and case studies,” Drones , vol. 5, no. 4, 2021. [Online]. Available: https://www.mdpi.com/2504-446X/5/4/106 [13] M. Omar, Z. Said, A. Raisi, Y. Abdulrahman, A. Abusafieh, and G. Sankaran, “The calibration and sensitivity aspects of a self-referencing routine when applied to composites inspection: Using a pulsed thermographic setup,” Journal of Nondestructive Evaluation ,vol. 35, p. 51, 08 2016. [14] U. N. David M¨ uller and B. Valeske, “Defect shape detection and defect reconstruction in active thermography by means of two-dimensional convolutional neural network as well as spatiotemporal convolutional lstm network,” Quantitative InfraRed Thermography Journal , vol. 19, no. 2, pp. 126–144, 2022. [Online]. Available: https://doi.org/10.1080/17686733.2020.1810883 [15] Z. Zhang, J. Hu, R. Wang, X. Chen, D. Yang, V. P. Vavilov, Y. Duan, and H. Zhang, “Automatic segmentation of microporous defects in composite film materials based on the improved attention u-net module,” 
+
+Quantitative InfraRed Thermography Journal , vol. 22, no. 4, pp. 313– 328, 2025. [16] D. Mueller, U. Netzelmann, and B. Valeske, “Defect shape detection and defect reconstruction in active thermography by means of two-dimensional convolutional neural network as well as spatiotemporal con-volutional lstm network,” Quantitative InfraRed Thermography Journal ,vol. 19, no. 2, pp. 126–144, 2022. [17] M. Salah, N. Werghi, D. Svetinovic, and Y. Abdulrahman, “Multi-modal attention networks for enhanced segmentation and depth estimation of subsurface defects in pulse thermography,” 2025. [Online]. Available: https://arxiv.org/abs/2501.09994 [18] C. Bo, H. Hu, G. Lei, Z. Liu, and J. Shao, “Non-destructive testing of airfoil based on infrared lock-in thermography,” in 2018 IEEE International Conference on Information and Automation (ICIA) , 2018, pp. 1623–1628. [19] U. Netzelmann and D. M¨ uller, “Modified pulse-phase thermography algorithms for improved contrast-to-noise ratio from pulse-excited thermographic sequences,” NDT & E International , vol. 116, p. 102325, 2020. [Online]. Available: https://www.sciencedirect.com/ science/article/pii/S0963869519307546 [20] S. Ebrahimi, J. Fleuret, M. Klein, L.-D. Th´ eroux, M. Georges, C. Ibarra-Castanedo, and X. Maldague, “Robust principal component thermography for defect detection in composites,” Sensors , vol. 21, no. 8, 2021. [Online]. Available: https://www.mdpi.com/1424-8220/21/8/2682 [21] J.-Y. Wu, S. Sfarra, and Y. Yao, “Sparse principal component ther-mography for subsurface defect detection in composite products,” IEEE Transactions on Industrial Informatics , vol. 14, no. 12, pp. 5594–5600, 2018. [22] K. Liu, M. Zheng, Y. Liu, J. Yang, and Y. Yao, “Deep autoencoder thermography for defect detection of carbon fiber composites,” IEEE Transactions on Industrial Informatics , vol. 19, no. 5, pp. 6429–6438, 2023. [23] Y. Zhang, C. Xu, P. Liu, J. Xie, Y. Han, R. Liu, and L. Chen, “One-dimensional deep convolutional autoencoder active infrared thermog-raphy: Enhanced visualization of internal defects in frp composites,” 
+
+Composites Part B Engineering , p. 111216, 03 2024. [24] Y. A. Abdulrahman, M. A. Omar, Z. Said, F. Obeideli, A. Abusafieh, and G. N. Sankaran, “A taguchi design of experiment approach to pulse and lock in thermography, applied to cfrp composites,” Journal of Nondestructive Evaluation , vol. 36, no. 4, p. 72, Oct 2017. [Online]. Available: https://doi.org/10.1007/s10921-017-0450-4 [25] A. Moskovchenko, G. Dell’Avvocato, M. ˇSvantner, F. Sarasini, and S. Sfarra, “Data processing methods for thermographic ndt with localised cryogenic cooling,” Nondestructive Testing and Evaluation ,vol. 0, no. 0, pp. 1–22, 2025. [Online]. Available: https://doi.org/10. 1080/10589759.2025.2595519 [26] G. Dell’Avvocato, A. Moskovchenko, F. Sarasini, G. D’Alessandro, E. Mancini, and S. Sfarra, “Nondestructive thermographic evaluation of thermal diffusivity in additively manufactured fiber-reinforced compos-ites using low-cost cooling: an early-stage analysis,” in Thermosense: Thermal Infrared Applications XLVII , vol. 13470. SPIE, 2025, pp. 216–223. [27] M. Salah, E. Ouda, S. Sfarra, D. Svetinovic, and Y. Abdulrahman, “Masked sequence autoencoding for enhanced defect visualization in active infrared thermography,” 2025. [Online]. Available: https: //arxiv.org/abs/2512.23000 [28] M. Salah, N. Saeed, D. Svetinovic, S. Sfarra, M. Omar, and Y. Abdulrahman, “Pca-guided autoencoding for structured dimensionality reduction in active infrared thermography,” 2025. [Online]. Available: https://arxiv.org/abs/2508.07773 [29] K. Kaur, R. Mulaveesala, and P. Mishra, “Constrained autoencoder-based pulse compressed thermal wave imaging for sub-surface defect detection,” IEEE Sensors Journal , vol. 22, no. 18, pp. 17 335–17 342, 2022. [30] W. Wang, Q. Lv, W. Yu, W. Hong, J. Qi, Y. Wang, J. Ji, Z. Yang, L. Zhao, X. Song, J. Xu, B. Xu, J. Li, Y. Dong, M. Ding, and J. Tang, “Cogvlm: Visual expert for pretrained language models,” 2023. [31] J. Bai, S. Bai, S. Yang, S. Wang, S. Tan, P. Wang, J. Lin, C. Zhou, and J. Zhou, “Qwen-vl: A versatile vision-language model for understanding, localization, text reading, and beyond,” 2023. [Online]. Available: https://arxiv.org/abs/2308.12966 [32] S. Liu, Z. Zeng, T. Ren, F. Li, H. Zhang, J. Yang, C. Li, J. Yang, H. Su, J. Zhu et al. , “Grounding dino: Marrying dino with grounded pre-training for open-set object detection,” arXiv preprint arXiv:2303.05499 ,2023. [33] A. Schager, G. Zauner, G. Mayr, and P. Burgholzer, “Extension of the thermographic signal reconstruction technique for an automated segmentation and depth estimation of subsurface defects,” Journal of Imaging , vol. 6, no. 9, 2020. [Online]. Available: https: //www.mdpi.com/2313-433X/6/9/96 [34] C.-M. Wen, S. Sfarra, G. Gargiulo, and Y. Yao, “Thermographic data analysis for defect detection by imposing spatial connectivity and sparsity constraints in principal component thermography,” IEEE Transactions on Industrial Informatics , vol. 17, no. 6, pp. 3901–3909, 2021.

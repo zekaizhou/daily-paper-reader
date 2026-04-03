@@ -1,0 +1,78 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.18764v1/fig-001.webp",
+      "caption": "Fig. 1. Illustration of the effect of neighborhood distribution calibration. (a) Direct optimization with neighborhood constraints may lead to source knowledge forgetting and overfitting to noisy local target structures. (b) Neighborhood distribution calibration mitigates these issues and yields better generalization.",
+      "page": 1,
+      "index": 1,
+      "width": 518,
+      "height": 354
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18764v1/fig-002.webp",
+      "caption": "TABLE III CLASSIFICATION ACCURACIES (%) USING RESNET-50 ON THE DOMAINNET-126 DATASET.",
+      "page": 6,
+      "index": 2,
+      "width": 966,
+      "height": 348
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18764v1/fig-003.webp",
+      "caption": "TABLE II CLASSIFICATION ACCURACIES (%) USING RESNET-50 ON THE OFFICE-HOME DATASET. THE BOLDFACE DENOTES TOP PERFORMANCE, WHILE UNDERLINED VALUES INDICATE RUNNER-UP RESULTS.",
+      "page": 6,
+      "index": 3,
+      "width": 1064,
+      "height": 396
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18764v1/fig-004.webp",
+      "caption": "TABLE IV CLASSIFICATION ACCURACIES (%) USING RESNET-101 ON THE VISDA-C DATASET (SYNTHESIS → REAL).",
+      "page": 7,
+      "index": 4,
+      "width": 958,
+      "height": 385
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18764v1/fig-005.webp",
+      "caption": "TABLE V CLASSIFICATION ACCURACIES (%) ON OFFICE-31.",
+      "page": 7,
+      "index": 5,
+      "width": 516,
+      "height": 379
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18764v1/fig-006.webp",
+      "caption": "Fig. 4. Sensitivity analysis of the hyperparameters γ1, β1, and k on Office-31, VisDA-C, and Office-Home. Although the performance varies to some extent with different hyperparameter choices, it remains relatively stable in the vicinity of the selected values, suggesting that the proposed method is not overly sensitive to hyperparameter tuning.",
+      "page": 10,
+      "index": 6,
+      "width": 1072,
+      "height": 300
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18764v1/fig-007.webp",
+      "caption": "Fig. 2. Training dynamics on the Ar→Cl task of Office-Home. Compared with SHOT and AaD, ProCal consistently exhibits a lower source forgetting rate and a lower incorrect supervision rate throughout training, while achieving the highest target accuracy. This suggests that ProCal better preserves transferable source knowledge and reduces harmful target supervision during adaptation.",
+      "page": 3,
+      "index": 7,
+      "width": 1074,
+      "height": 219
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18764v1/fig-008.webp",
+      "caption": "TABLE VI CLASSIFICATION ACCURACIES (%) ON THE OFFICE-HOME DATASETS UNDER PARTIAL-SET AND OPEN-SET SETTINGS (RESNET-50 BACKBONE).",
+      "page": 8,
+      "index": 8,
+      "width": 1090,
+      "height": 391
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18764v1/fig-009.webp",
+      "caption": "Fig. 3. Feature space visualizations of the representations learned by (a) the source model, (b) AaD [19], and (c) our ProCal on the Ar→Cl task of OfficeHome. ProCal produces more compact and better-separated class clusters.",
+      "page": 9,
+      "index": 9,
+      "width": 1066,
+      "height": 279
+    }
+  ]
+}

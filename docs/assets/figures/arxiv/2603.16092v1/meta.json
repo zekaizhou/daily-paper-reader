@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.16092v1/fig-001.webp",
+      "caption": "Figure 3. Performance trend of Parallel-ICL. Parallel-ICL (K > 1) consistently reduces latency across models. Notably, at N = 32, K = 2 and K = 4 can outperform full-context MM-ICL (K = 1) in accuracy, potentially alleviating the “lost in the middle” problem [36].",
+      "page": 6,
+      "index": 1,
+      "width": 982,
+      "height": 479
+    },
+    {
+      "url": "assets/figures/arxiv/2603.16092v1/fig-002.webp",
+      "caption": "Figure 2. Pipeline of Parallel-ICL. We cluster demonstrations in a multi-modal feature space and utilize each cluster as chunks (context chunking). Then, we process chunk-wise contexts with LVLMs and weight their outputs (logits) based on query-chunk similarity, composing an ensemble for the final prediction as PoE (context compilation). This can be computed by the weighted sum of outputs at the logit level.",
+      "page": 3,
+      "index": 2,
+      "width": 1023,
+      "height": 251
+    }
+  ]
+}
