@@ -1,0 +1,102 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.12816v1/fig-001.webp",
+      "caption": "Fig. 7: Residual SODAP prompt pool analysis: (a) stage-wise prompt count (60 → 84 → 94), (b) prompt selection ratio on 100 random samples, and (c) prompt cosine similarity.",
+      "page": 25,
+      "index": 1,
+      "width": 725,
+      "height": 518
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12816v1/fig-002.webp",
+      "caption": "Table 6: Experimental Settings.",
+      "page": 21,
+      "index": 2,
+      "width": 402,
+      "height": 555
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12816v1/fig-003.webp",
+      "caption": "Fig. 10: Supplementary analysis on the CORe50 benchmark.",
+      "page": 29,
+      "index": 3,
+      "width": 725,
+      "height": 698
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12816v1/fig-004.webp",
+      "caption": "Table 7: Key hyperparameters for continual learning baselines.",
+      "page": 22,
+      "index": 4,
+      "width": 721,
+      "height": 605
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12816v1/fig-005.webp",
+      "caption": "Fig. 5: Results of cross-stage backbone–classifier compositions (3× 3) under the skincancer DIL protocol. The baseline visualization follows the prompt-based continual learning method of [14].",
+      "page": 23,
+      "index": 5,
+      "width": 725,
+      "height": 558
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12816v1/fig-006.webp",
+      "caption": "Fig. 9: Supplementary analysis on the CORe50 benchmark.",
+      "page": 28,
+      "index": 6,
+      "width": 725,
+      "height": 486
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12816v1/fig-007.webp",
+      "caption": "Table 2: Sequential ablation on the DR continual learning benchmark (APTOS → DDR → DRD). We remove one component at a time from the full model. ∆ reports the absolute change from the full model in percentage points (pp): ∆AvgACC = 100 × (AvgACC − 0.850) and ∆AvgF = 100 × (AvgF − 0.047) (higher AvgACC and lower AvgF are better). ✓ indicates the component is enabled.",
+      "page": 13,
+      "index": 7,
+      "width": 725,
+      "height": 221
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12816v1/fig-008.webp",
+      "caption": "Fig. 2: Overview of Residual SODAP.",
+      "page": 4,
+      "index": 8,
+      "width": 581,
+      "height": 329
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12816v1/fig-009.webp",
+      "caption": "Fig. 3: Stage-wise prompt selection with PUDD-triggered pool expansion (60→84→94) and sparse α-entmax routing on the DR dataset. Corresponding results on the other datasets are provided in Sup. E.",
+      "page": 12,
+      "index": 9,
+      "width": 438,
+      "height": 280
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12816v1/fig-010.webp",
+      "caption": "Fig. 8: Supplementary analysis on the skin-cancer benchmark.",
+      "page": 27,
+      "index": 10,
+      "width": 725,
+      "height": 606
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12816v1/fig-011.webp",
+      "caption": "Fig. 6: Results of cross-stage backbone–classifier compositions (3 × 3) under the skin-cancer DIL protocol. This figure visualizes our method using the same crosscomposition protocol; the corresponding baseline visualization based on [14] is provided in Sup. Fig. 5.",
+      "page": 24,
+      "index": 11,
+      "width": 725,
+      "height": 558
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12816v1/fig-012.webp",
+      "caption": "Table 5: Per-class training sample counts for each session in CORe50 [22]. Each session serves as one stage in our 11-stage domain-incremental continual learning setup (70/15/15 split).",
+      "page": 20,
+      "index": 12,
+      "width": 725,
+      "height": 189
+    }
+  ]
+}

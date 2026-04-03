@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.11617v1/fig-001.webp",
+      "caption": "Table 1. Comparison of methods under symmetric and asymmetric noise on five datasets. (%)",
+      "page": 6,
+      "index": 1,
+      "width": 1014,
+      "height": 740
+    },
+    {
+      "url": "assets/figures/arxiv/2603.11617v1/fig-002.webp",
+      "caption": "Table 3. Ablation studies on DTD. (%)",
+      "page": 7,
+      "index": 2,
+      "width": 475,
+      "height": 296
+    },
+    {
+      "url": "assets/figures/arxiv/2603.11617v1/fig-003.webp",
+      "caption": "Figure 2. Overview of the NA-MVP framework. Our framework consists of two key modules: (1) Noise-aware alignment (blue arrows): Multiple clean and noise-aware prompts per class are encoded and aligned with local image patches via UOT to generate clean/noisy probabilities. (2) Selective label refinement (green arrows): An adaptive threshold ϕ derived from these probabilities identifies mislabeled samples, which are refined via classical OT by aligning global image features with clean text features. The two modules work together to iteratively update the training set while optimizing the prompts, producing a denoised dataset for robust prediction under noisy supervision.",
+      "page": 3,
+      "index": 3,
+      "width": 1019,
+      "height": 341
+    }
+  ]
+}

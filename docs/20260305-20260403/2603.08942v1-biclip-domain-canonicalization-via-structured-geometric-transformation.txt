@@ -1,0 +1,341 @@
+Title: BiCLIP: Domain Canonicalization via Structured Geometric Transformation
+
+URL Source: https://arxiv.org/pdf/2603.08942v1
+
+Published Time: Wed, 11 Mar 2026 00:12:41 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# BiCLIP: Domain Canonicalization via Structured Geometric Transformation 
+
+# Pranav Mantini University of Houston Department of Computer Science 
+
+> pmantini@uh.edu
+
+# Shishir K. Shah The University of Oklahoma Department of Computer Science 
+
+> sshah@ou.edu
+
+# Abstract 
+
+Recent advances in vision-language models (VLMs) have demonstrated remarkable zero-shot capabilities, yet adapting these models to specialized domains remains a significant challenge. Building on recent theoretical insights suggesting that independently trained VLMs are related by a canonical transformation, we extend this understanding to the concept of domains. We hypothesize that image features across disparate domains are related by a canonicalized geometric transformation that can be recovered using a small set of anchors. Few-shot classifi-cation provides a natural setting for this alignment, as the limited labeled samples serve as the anchors required to estimate this transformation. Motivated by this hypothesis, we introduce BiCLIP, a framework that applies a targeted transformation to multimodal features to enhance cross-modal alignment. Our approach is characterized by its extreme simplicity and low parameter footprint. Extensive evaluations across 11 standard benchmarks, including Eu-roSAT, DTD, and FGVCAircraft, demonstrate that BiCLIP consistently achieves state-of-the-art results. Furthermore, we provide empirical verification of existing geometric findings by analyzing the orthogonality and angular distribution of the learned transformations, confirming that structured alignment is the key to robust domain adap-tation. Code is available at https : / / github . com / QuantitativeImagingLaboratory /BilinearCLIP 
+
+# 1. Introduction 
+
+Few-shot classification : Image classification is a funda-mental problem in computer vision, where the objective is to categorize images into predefined semantic classes. Few-shot classification is a more restrictive formulation where a limited number of samples are available for train-ing—a constraint more representative of real-world scenar-ios. Recent methods focus on leveraging foundational mod-els trained on large-scale generalized datasets and adapt-ing their learned representations for domain-specific down-stream tasks [9, 18, 20, 40]. Vision language models (VLMs) [33–35], specifically based on the Contrastive Language-Image Pre-training (CLIP, SigLIP) [26, 36], have demonstrated that high-dimensional features extracted from such models are inherently discriminative [26]. At-tributing to this, they exhibit remarkable zero-shot capa-bilities; however, their performance degrades in domain-specific fine-grained scenarios where the models struggle to distinguish between similar intra-class objects. 
+
+Principles for Few-Shot Adaptation of VLMs : While contrastive VLMs like CLIP and SigLIP provide a ro-bust starting point, the transition to few-shot classifica-tion requires an adaptation strategy that is computation-ally efficient and geometrically well defined. Recent meth-ods [8, 13, 38, 39] have focused on adapter-based strate-gies that refine the high-dimensional feature space without deconstructing the foundational knowledge acquired during large-scale pre-training. These models converge upon the following shared design principles: 1. Minimal Parameter Overhead : Majority of adaptation strategies refrain from initializing parameter-intensive architectures and favor techniques for Parameter-Efficient Fine-Tuning (PEFT) [32]. Prompt Learning (CoOp, CoCoOp, MaPLe) [13, 38, 39], a largely suc-cessful approach, only learns a few tokens ( < 0.1% of total parameters). CLIP-Adapter [7] and DAC [8] use a bottleneck or a single linear layer. 2. Preservation of Foundational Knowledge : Majority of the methods agree that the pre-trained weights encase a more generalized understanding of the correlation be-tween image and text modalities. These methods em-ploy a frozen VLM backbone and utilize residual con-nections to ensure that the features extracted from pre-trained weights remain the dominant part of the final rep-resentation for downstream tasks. 3. Rapid Convergence : Modern research increasingly pri-oritizes quick adaptation for of VLMs for downstream tasks. State-of-the-art methods allow for instantaneous adaptation without the need for training. For instance, 1
+
+> arXiv:2603.08942v1 [cs.CV] 9 Mar 2026
+
+Tip-Adapter [37] and SuS-X [30] introduce training-free frameworks that perform classification through cache re-trieval. 4. Maintaining Cross-Modal Alignment : Contrastive learning aligns image and text features in higher-dimensional space. Recent methods have identified the need to maintain this alignment while addressing down-stream tasks. For instance, MaPLe [13] utilizes branch-aware coupling to ensure both encoders remain syn-chronised. Similarly, Domain Aligned CLIP (DAC) [8] optimises both intra-modal (image-to-image) and inter-modal (image-to-text) relationships. By adhering to these four principles, the few-shot method using CLIP refines the high-dimensional manifold with-out compromising the inherent multimodal structure of the foundation models. 
+
+Modality Gap : The existence of a ”modality gap” be-tween image and text features is a well-understood phe-nomenon in vision-language models [16]. Recent studies [16] have shown that image and text embeddings reside in two distinct and isolated conical regions within the high-dimensional feature space. Zero-shot classification using CLIP computes the dot product between these features and considers them as posteriors for class assignment. How-ever, the range of these values is fundamentally constrained by the geometry of these two conic sections, which inher-ently creates ambiguity between corresponding image-text (positive) pairs and unmatched (negative) pairs. This limits the model’s ability for classification. This can be quantified by computing the overlap of the angular distribution of positive and negative pairs. Fig. 1 shows the probability distribution of angles computed between positive and negative image pairs on the DTD dataset [4]. DTD is a challenging fine-grained texture dataset with subtle semantic differences and complex visual patterns. Fig. 1a reveals that in the zero-shot CLIP, there is a significant overlap (area: 0.539 ) in the positive and neg-ative distributions. The model essentially fails to decouple matching pairs from the surrounding unmatched pairs, indi-cating that a simple dot product (·) is inadequate for reliable classification.    
+
+> (a) Zero-Shot (overlap: 0.539 )(b) BiCLIP (Overlap: 0.167 )
+> Figure 1. Quantitative analysis of angular distribution on DTD [4] dataset. The zero-shot CLIP (a) shows significant overlap between positive and negative pairs. A structured geometric transformation on the image features (b) reduces the overlap area significantly.
+
+Canonical Alignment : Gupta et al. [10] theorize that multimodal models trained on independent web-scale data share a latent geometric structure, where the representa-tions of different models—or different modalities within the same model—are related by a canonical transforma-tion. Specifically, they suggest that the misalignment be-tween image and text manifolds can be largely reconciled through orthogonal mappings. If the modality gap is fun-damentally a problem of relative rotation and scaling be-tween these manifolds, then a targeted rotation on individ-ual modalities can achieve precise alignment in downstream tasks. 
+
+Bilinear Adaptation of Contrastive VLMs : We pro-pose Bilinear CLIP (BiCLIP), a second-order lightweight architectural unit designed to explicitly bridge this gap through geometric transformation. Moving away from tra-ditional additive residual adapters, we hypothesize that the optimal way to achieve the canonical alignment suggested by Gupta et al. [10] is by learning a weight matrix W that performs a targeted geometric transformation of the high-dimensional manifold of the image and the text features. The primary strength of BiCLIP lies in its extreme sim-plicity. It introduces a single multimodal interaction layer, allowing the model to widen the gap in angular distribution without compromising the integrity of CLIP’s pre-trained features. This design ensures that the model remains pa-rameter and computationally efficient, requiring minimal training epochs for convergence, thus adhering to the prin-ciples of Few-Shot Adaptation. Fig. 1(b) shows the angular distribution of positive and negative pairs after applying a learned transformation on the image feature. These results demonstrate that this simple geometric adjustment allows the model to explicitly mitigate confusion and enhance clas-sification accuracy. 
+
+Contributions : We demonstrate that domain adaptation in VLMs can be framed as a geometric recovery problem. By utilizing a few-shot sample as anchors, BiCLIP recovers the underlying canonical transformations between disparate domains via a structured geometric rotation. The core contributions of this work are as follows: 1. We extend multimodal canonicalization to domain shifts, hypothesizing that disparate domains are related by canonical geometric transformations that can be esti-mated via limited anchors. 2. We introduce a simple bilinear unit that performs a non-destructive manifold transformation for better align-ment. 3. We provide a quantitative analysis of how BiCLIP re-duces overlap of angular distributions in contrastive VLMs. 4. We demonstrate SOTA or competitive performance across eleven standard benchmarks, including Ima-geNet [5], EuroSAT [11], and FGVC-Aircraft [19], 2proving the robustness and generalizability of BiCLIP. 
+
+# 2. Related Work 
+
+2.1. Adaptation of Vision-Language Models 
+
+Contrastive pre-trained VLMs like CLIP [26], and SigLIP [36] have found immense success attributing their exten-sive training on web-scale datasets and showcase excellent classification capabilities out-of-the-box. However, these models underperform in specialized downstream tasks due to the domain gap between general web data and specific visual distributions (e.g., satellite imagery or fine-grained textures). To bridge this gap, Parameter-Efficient Fine-Tuning (PEFT) [32] has emerged as the standard paradigm, primar-ily categorized into: Prompt Learning-based [2, 12, 17, 28, 39, 39], and Adapter-based Methods [7, 37]. Zhou et al. proposed CoOp [38], a prompt learning-based approach with a frozen CLIP backbone that opti-mizes learnable context vectors in the text encoder. Sub-sequent iterations like CoCoOp [39] and MaPLe [13] intro-duced input-conditional and multimodal prompting to im-prove generalization. However, these methods often require multiple extensive training strategies, complex architectural enhancements, and can be sensitive to hyperparameter tun-ing. Adapter-based Methods such as CLIP-Adapter [7] and Tip-Adapter [37] introduce lightweight modules—typically bottleneck MLPs—into the frozen backbone. Tip-Adapter leverages a cache model of few-shot features to perform training-free adaptation. Our work diverges from these ap-proaches and proposes a structured bilinear head that di-rectly operates on the multimodal feature geometry. We achieve SOTA results with a significantly smaller parameter footprint and better preservation of the pre-trained semantic structure than traditional adapter-based methods. 
+
+2.2. Geometric Representation and Multimodal Alignment 
+
+Recent studies on the geometric properties of multimodal latent spaces have gained significant traction and allowed for documentation of the ”modality gap”, where image and text embeddings occupy disjoint regions of the hypersphere [16]. This separation leads to suboptimal feature alignment for downstream tasks. Materzynska et al. [21] investigated the entanglement of concepts in image encoders, utilizing orthogonal projections to disentangle visual and written in-formation. Similarly, Mistretta et al. [22] proposed Modal-ity Inversion (OVI) to bridge this gap by transforming intra-modal tasks into inter-modal ones, thereby enhancing align-ment. In specialized domains, CP-CLIP maps embeddings to a unified ”core-periphery” space to improve matching for medical zero-shot classification [27]. While previous attempts have explored orthogonal con-straints to maintain the semantic integrity of pre-trained spaces, these methods are often computationally intensive or require extensive structural adaptation. Our work builds on the foundational insight by Gupta et al. [10], who sug-gested that independently trained multimodal manifolds are related by a shared orthogonal transformation—a principle known as multimodal canonicalization. We extend this theory to the domain-specific setting. Un-like existing methods, our approach utilizes an identity-initialized bilinear transformation to inherit the pre-trained capabilities and is constrained by an upper triangular struc-ture to mitigate overfitting for learning task-specific geo-metric refinements. By analyzing the angular distribution and orthogonality deviation, we demonstrate that maintain-ing these geometric properties is essential for stable, high-performance few-shot classification 
+
+# 3. Preliminaries 
+
+3.1. Contrastive Language-Image Pre-training Models (CLIP) 
+
+CLIP [26] is a dual-encoder architecture with an image en-coder fi and a text encoder ft. The encoders map the raw image x and textual prompt t into a common embedding space. CLIP model are extensively trained on large-scale datasets [26] using contrastive loss such that matching pairs of image-text are closer to each other and unmatched pairs are farther away. CLIP exhibits excellent zero-classification capabilities due to this contrastive training. During inference, image features are extracted as i =
+
+fi(x), where i ∈ R1XD , where D is the dimensionality of the embedding space. In a classification scenario with 
+
+K classes, text features {tk}Kk=1 are extracted as tk =
+
+ft(prompt k), where tk ∈ R1XD . Typically both the fea-tures are first normalized such that || i|| = || t|| = 1 . Then the posterior of a class k is calculated as the softmax of the cosine similarity between i and tk.
+
+P (y = k|x) = exp( es · cos( i, tk)) 
+
+PKj=1 exp( es · cos( i, tj )) (1) where es is the logit scale (with s being the learnable pa-rameter), and both i and t are ℓ2-normalized such that 
+
+cos( i, tk) = it ⊤ 
+
+> k
+
+.
+
+3.2. Sigmoid Loss for Language-Image Pre-training (SigLIP) 
+
+SigLIP [36] treats each image-text pair as an independent binary classification task. Given a batch of N image fea-tures {in}Nn=1 and M text features {tn}Mn=1 , the similarity score for any pair (j, k ) is defined as: 
+
+sj,k = es · (ij t⊤ 
+
+> k
+
+) + b (2) 3where es is the logit scale and b is a learnable bias. The training objective minimizes the binary cross-entropy loss. During zero-shot inference, while the training objective is sigmoid-based, the posterior probability that image ij be-longs to class k is typically computed using a softmax over the similarity scores of all K candidate classes to maintain consistency with the classification task: 
+
+P (y = k|x) = exp( sj,k )
+
+PKl=1 exp( sj,l ) (3) While SigLIP achieves a stable embedding geometry at scale, like CLIP, it still exhibits a characteristic modality gap. BiCLIP seeks to canonicalize this space by learning a structured transformation to align these disparate domains. 
+
+3.3. Shortcoming of the zero-shot CLIP 
+
+In CLIP and SigLIP, probabilities are derived through a sim-ple dot product between fixed image and text embeddings. In zero-shot CLIP, the relationship between i and tk is de-termined by the pre-trained weights. As we demonstrated in Section 1, the angular distribution on the DTD dataset shows a significant overlap (area: 0.539 ), which severely degrades classification performance. This overlap suggests that the features are constrained to a manifold that fails to account for the semantic shifts inher-ent in specialized downstream tasks. This necessitates an adaptation strategy that provides the flexibility to ”warp” or ”align” these features. Such a mechanism would effectively canonicalize the domain-specific space, narrowing the an-gular distribution of positive pairs and reducing the mani-fold overlap. 
+
+# 4. BiCLIP: Structured Bilinear Alignment 
+
+To overcome the inherent shortcomings of zero-shot con-trastive VLMs, we propose BiCLIP. Our core hypothesis is that the modality gap is a rotational misalignment that can be resolved through a targeted geometric transforma-tion that allows image features to be dynamically ”rotated” and ”canonicalized” into alignment with textual anchors. 
+
+4.1. BiCLIP Theory 
+
+The motivation for BiCLIP is to apply a learnable geomet-ric transformation to the image feature vector before it in-teracts with the text embeddings. Let ij ∈ R1×D be the jth 
+
+image features and tk ∈ R1×D be the kth text features. In-stead of a direct dot product, we first transform the image feature using a weight matrix W ∈ RD×D, resulting in a transformed feature ij
+
+> ′
+
+= ijW. The similarity score sbi is then computed as the dot product between this transformed image feature and the textual features as: 
+
+sbi j,k = ij
+
+> ′
+
+· tk⊤ = ( ijW)tk⊤ (4) By the associative property, this is equivalent to the bi-linear form: 
+
+S(i, t) = iWt ⊤ (5) This equivalence demonstrates that cross-modal bilinear interaction is, in effect, a learnable alignment operator. By optimizing W, the network learns to align the feature space, narrowing the modality gap by orienting the image features toward their corresponding targets in the latent space. 
+
+4.2. Upper Triangular Structured Constraint 
+
+A significant challenge in few-shot learning, especially in high-dimensional spaces, is the risk of overfitting. The 
+
+W matrix contains D2 parameters; for SigLIP with 768-dimensional embedding, this results in 5.9 × 10 5 trainable weights. To mitigate the risk of manifold collapse, we im-pose a structural constraint by restricting W to be an upper triangular matrix. This serves as a regularizer in two ways: 
+
+Hierarchical Dependence : The constraint ensures that each dimension of the transformed feature i′ 
+
+> j
+
+is a linear combination of its original value and only the subsequent dimensions. 
+
+Parameter Reduction : This constraint reduces the total number of trainable parameters by nearly half, to D(D+1) 2 ,mitigating overfitting. In the context of BiCLIP, this pre-vents the matrix from performing extreme non-rigid warp-ing that would otherwise displace the foundational knowl-edge of the frozen backbone. This form of structural regu-larization is inspired by the Cholesky decompositionlearn-ing [25] and studies in sparse matrix . In this work, we frequently utilize the term ”rotation” to describe the geometric effect of W on the image mani-fold. We clarify that this is not a pure rigid rotation in the sense of an orthogonal matrix ( R⊤R = I). Instead, our use of an Upper Triangular constraint is a choice of Geometric Canonicalization. To be precise W performs a soft rotation that aligns the modalities, its primary role is the canonical-ization and alignment of the target domain feature space. 
+
+4.3. BiCLIP: Bilinear Adaptation for CLIP 
+
+To integrate BiCLIP into modern vision-language frame-works, we substitute the standard dot-product similarity with the bilinear term. This adaptation is agnostic to the underlying objective function, allowing BiCLIP to enhance both symmetric softmax and pairwise sigmoid architec-tures. In the standard CLIP framework, the model is trained to maximize the cosine similarity between positive image-text pairs in a batch while minimizing it for negative combina-tions. By introducing the transformation weight matrix W,the similarity score for an image feature ij and text feature 
+
+tk is computed as: Sbi  
+
+> j,k
+
+= es · (ij Wt ⊤ 
+
+> k
+
+). As illustrated in Figure 2, we transition from the standard dot-product simi-larity used in CLIP to a learnable bilinear formulation. 4Text                         
+
+> Encoder
+> Image
+> Encoder
+> I1WT 1I1WT 2I1WT 3... I1WT N
+> I2WT 1I2WT 2I2WT 3... I2WT N
+> I3WT 1I3WT 2I3WT 3... I3WT N
+> ... ... ... ... ...
+> INWT 1INWT 2INWT 3... INWT N
+> T1T2T3... TN
+> I1
+> I2
+> I3
+> ...
+> IN
+> Prompts
+> Images
+
+Figure 2. The BiCLIP Adaptation Framework. Unlike standard CLIP which relies on a fixed dot product, BiCLIP introduces a trainable, structured transformation matrix W between the image and text modalities. 
+
+We maintain the symmetric cross-entropy loss, which treats the classification as both an image-to-text and a text-to-image retrieval task. For a batch of N pairs, the loss is defined as: 
+
+LBiCLIP = − 12N
+
+> N
+
+X
+
+> n=1
+
+h
+
+log exp( Sbi 
+
+> n,n
+
+)
+
+PNj=1 exp( Sbi  
+
+> n,j
+
+)+ log exp( Sbi 
+
+> n,n
+
+)
+
+PNj=1 exp( Sbi 
+
+> j,n
+
+)
+
+i (6) By using Sn,j in place of the dot product, the softmax competition forces W to learn a transformation that pushes the image and text pairs into alignment. 
+
+4.4. BiSigLIP: Bilinear Adaptation for SigLIP 
+
+The adaptation for SigLIP involves embedding the bilinear transformation directly into the sigmoid logit calculation. The modified similarity score Sbi  
+
+> j,k
+
+incorporates the SigLIP-specific learnable bias b:
+
+Sbi  
+
+> j,k
+
+= es · (ij Wt ⊤ 
+
+> k
+
+) + b (7) where es is the logit scale. The model is then optimized using the pairwise binary cross-entropy (sigmoid) loss: 
+
+LBiSigLIP = − 1
+
+N
+
+X
+
+> j,k
+
+log σ(yj,k · Sbi 
+
+> j,k
+
+) (8) where yj,k = 1 for positive pairs ( j = k) and yj,k = −1
+
+for negative pairs ( j̸ = k). Because the sigmoid loss treats each pair as an independent binary classification task, the bilinear matrix W can more precisely target the domain-specific modality gap for each specific class. This facilitates a robust alignment of the multimodal features for special-ized domains. 
+
+# 5. Experimental Methodology 
+
+5.1. Datasets 
+
+We evaluate BiCLIP across the standard few-shot image recognition datasets[38]. These include: ImageNet [5] and 
+
+Caltech101 [6] for generic objects; OxfordPets [24], Stan-fordCars [15], Flowers102 [23], and FGVCAircraft [19] for fine-grained classification; SUN397 [31] for scene recognition; DTD [4] for texture analysis; EuroSAT [11] for satellite imagery; UCF101 [29] for action recognition; and Food101 [1] for food classification. For each dataset, we follow the standard few-shot evaluation protocol, using 1, 2, 4, 8, and 16 shots for training and evaluating on the full test sets. 
+
+5.2. Implementation Details 
+
+All experiments are conducted using CLIP (ViT-B/16) 
+
+and SigLIP (ViT-B/16) . SigLIP is trained on the WebLI 
+
+dataset [3]. Both models share the same Vision Transformer (ViT) architecture. However, SigLIP (ViT-B/16) produces richer high-dimensional features ( D = 768 ) compared to the OpenAI’s CLIP ( D = 512 ) model. SigLIP embeddings are generally more robust and demonstrate superior zero-shot performance, a result of the Sigmoid loss and the massive scale of the WebLI dataset. By evaluating BiCLIP on both backbones, we demonstrate the generalizability of BiCLIP across varying feature di-mensionalities and pre-training objectives. We utilize the AdamW optimizer with a weight decay of 0.1 and an initial learning rate of 10 −4 for training. All experiments are conducted on a NVIDIA 2080Ti GPU. De-pending on the complexity and size of the dataset, we train for a range of 20 to 50 epochs to ensure convergence of the bilinear transformation matrix W.
+
+5.3. Identity Initialization 
+
+To preserve the zero-shot capabilities of the pre-trained backbones, we initialize the transformation matrix W as an Identity matrix I ∈ RD×D. Let X ∈ RB×D represent a batch of B image features and T ∈ RC×D denote the text features for C classes. The similarity score in the zero-shot setting is computed as S = XT ⊤. For BiCLIP versions, the score is computed as Sbi = ( XW )T⊤.Under an identity initialization, the similarity score (XIT ⊤ = XT ⊤) simplifies to the zero-shot score. This en-sures that the model’s performance is identical to the zero-shot baseline at the onset of training and provides a robust initialization. 
+
+# 6. Experimental Results 
+
+We present results in three main subsections: overall perfor-mance in a 16-shot setting, comparison to state-of-the-art in standard (1, 2, 4, 8, and 16 shot) settings, and analysis of 5the geometric and structural properties of the transforma-tion matrix W .
+
+6.1. Main Results: 16-Shot Performance 
+
+First, we present a detailed comparison of our proposed bi-linear adaptation methods against their respective zero-shot baselines. Table 1 summarizes the performance across all datasets using 16 training shots per class. 
+
+Performance Gain over Baselines: Bilinear adaptation of CLIP and SigLIP shows notable and consistent improve-ment across all the datasets. BiCLIP achieves an average accuracy of 80 .55% , marking a substantial +15 .24% ab-solute improvement over the zero-shot baseline ( 63 .31% ). Similarly, BiSigLIP pushes the already strong SigLIP base-line from 72 .33% to 81 .92% , a gain of +8 .69% . These results confirm that a learnable geometric transformation of the image manifold is highly effective for aligning pre-trained multimodal features. 
+
+Adaptability to Fine-Grained Tasks : Zero-shot mod-els struggle to generalize in domains where the images dif-fer significantly from general web-scale pre-training data. BiCLIP and BiSigLIP methods demonstrate a particular ap-titude in these specialized fine-grained tasks. They show significant improvements of +36 .91% and +42 .15% on the Eurosat (satellite imagery classification). Similar perfor-mance improvements are observed on Flowers102, FGV-CAircraft, and the DTD dataset. These results suggest that BiCLIP and BiSigLIP capture the intra-class features re-quired for fine-grained recognition. 
+
+Generalizability : It is of significance that bilinear adap-tation remains consistent across both CLIP and SigLIP. Even on datasets where zero-shot performance is already high, such as Caltech101 and StanfordCars, Bilinear adap-tation manages to refine the feature space further, yielding consistent improvements. This suggests that bilinear adap-tation is agnostic to the VLM backbone and shows general-ization characteristics. 
+
+6.2. Comparison to SOTA: Few-Shot Performance Analysis 
+
+We conduct experiments across the standard 1, 2, 4, 8, and 16 shots settings. Figure 3 illustrates the performance curves of BiCLIP and BiSigLIP compared to five state-of-the-art baselines, including classic Linear Probe adaptation methods, prompt tuning variants CoOp [38] and CoCoOp [39], and more recent multimodal prompt learning tech-niques like MaPLe [13] and PromptSRC [14]. 
+
+Performance over 1,2-shot settings : BiCLIP and BiSigLIP maintain a predictable high performance in low 1,2-shot settings. Fig. 3 (a) shows the average scores over all datasets, where BiCLIP and BiSigLIP outperform in 1-shot and 2-shot settings. This can be attributed to the identity initialization of the rotation matrix that enables the model to start with an optimal zero-shot performance. Prompt-based methods like CoOp and MaPLe often require more samples for stable training and struggle in 1 and 2-shot regimes. 
+
+Simplicity and efficiency : Bilinear adaptation offers a simple and efficient approach by applying a single matrix multiplication directly in the latent space. State-of-the-art methods such as MaPLe [13] and CoCoOp [39] require in-tensive training, complex optimization schedules, and are highly sensitive to the initialization choices. Furthermore, deep prompt injection across multiple transformer layers can become computationally expensive during inference. Bilinear adaptation adheres to the few-shot adaptation prin-ciples as it incorporates a simple transformation W ma-trix with a minimal parameter footprint and requires limited training cycles. 
+
+Consistency across domains : BiCLIP shows resilience to domain shifts. On complex datasets such as EuroSAT, DTD, and FGVCAircraft, it shows a consistent performance trajectory. This underscores the effectiveness of geometric feature alignment, which can capture the visual discrimina-tive cues required for specialized domains. 
+
+6.3. Analysis and Ablation 
+
+Angular Distribution : To better understand the effective-ness of the BiCLIP, we analyze the angular distribution be-tween positive and negative image-text pairs. The over-lap between the angular distributions is indicative of bet-ter alignment of matching image-text pairs for better clas-sification. We first extract L2-normalized image and text features to calculate the angular distance in degrees via 
+
+θ = arccos 
+
+ i·t
+
+> ∥i∥∥ t∥
+
+
+
+. We compute the angle between all positive pairs, and randomly sample n ( n = 5 ) negative samples per image in the test set. We estimate continu-ous probability density functions, ppos (θ) and pneg (θ) us-ing Kernel Density Estimation (KDE). The overlap is then calculated as the area under the curve using Simpson’s Rule numerical integration: R min( ppos (θ), p neg (θ)) dθ . A high overlap area indicates a congested latent space where cor-rect and incorrect classes are geometrically indistinguish-able, while a reduction signifies a more discriminative and well-aligned image and text features. As illustrated in Fig. 1(a) for the DTD dataset, zero-shot CLIP suffers from significant overlap (area: 0.539 ), where the distributions for positive and negative pairs are largely indistinguishable. Bilinear adaptation effectively applies a targeted transformation on the image features, thus decreas-ing the overlap in the latent space. As shown in Fig. 1(b), BiCLIP strategically shifts and narrows these distributions, reducing the overlap area to 0.167 on DTD. As shown in Table 2, this trend is observed across all datasets; BiCLIP reduces the average overlap from 0.209 to 0.077 .
+
+Orthogonality of the W matrix : Recent analysis of 6Dataset Zero-Shot BiCLIP Delta Zero-Shot BiSigLIP Delta CLIP (Ours) ∆ SigLIP (Ours) ∆
+
+ImageNet 68.84 71.69 +2.85 74.89 76.73 +1.83 DTD 42.82 71.86 +29.04 62.23 73.94 +11.70 EuroSAT 48.22 85.13 +36.91 35.35 77.50 +42.15 Flowers102 70.99 94.97 +23.99 81.15 96.11 +14.96 FGVCAircraft 24.60 45.21 +20.61 45.99 49.41 +3.42 OxfordPets 89.04 93.30 +4.24 92.31 92.80 +0.49 Food101 88.73 90.09 +1.36 92.19 92.33 +0.14 Caltech101 89.93 93.97 +4.04 95.23 97.06 +1.83 SUN397 63.50 74.27 +10.77 65.85 74.24 +8.38 UCF101 68.07 82.95 +14.88 71.50 78.85 +7.35 StanfordCars 63.71 82.63 +18.92 88.81 92.12 +3.31 
+
+Average 63.31 80.55 +15.24 72.33 81.92 +8.69 
+
+Table 1. Main Results: 16-Shot Performance Comparison. We report Top-1 Accuracy (%) for Zero-Shot baselines and our proposed Bilinear adaptation (BiCLIP and BiSigLIP). ∆ represents the gain over the respective zero-shot baseline.          
+
+> (a) Average (b) Imagenet (c) DtD (d) Eurosat
+> (e) Flowers102 (f) FGVCAircraft (g) Oxfordpets (h) Food101
+> (i) Caltech101 (j) Sun397 (k) UCF101 (l) Stanfordcars
+
+Figure 3. Few-shot performance comparison on various datasets. Our methods BiCLIP (black) and BiSigLIP (red) significantly outperform existing prompt tuning baselines across 1, 2, 4, 8, and 16 shots. 
+
+contrastive VLM models by Gupta et al. [10] demonstrate that independently trained contrastive models are related by a shared orthogonal map. This suggests that the un-derlying semantic structure across modalities is preserved through rotations. Inspired by this, we compute the nor-malized Frobenius norm ∥W⊤W − I∥F /D of the trained rotation matrix W.Tab. 3 shows the orthogonal error for all datasets. Our analysis confirms that W maintains orthogonality after con-vergence. On datasets like ImageNet (0.009) and Food101 (0.006), the normalized error is nearly negligible, indicat-ing that the zero-shot manifold is already near the canon-ical state. However, on fine-grained datasets, we observe a slight departure from pure orthogonality. For instance, EuroSAT (0.024) and DTD (0.055) seem to require more non-rigid transformation. These finding aligns with recent work on multimodal canonicalization [10], which shows that independently trained contrastive models are related by a global orthogonal map. We extend this notion to the domain-specific setting. 7Dataset CLIP BiCLIP ∆ (Reduction) 
+
+FGVCAircraft 0.327 0.175 0.152 OxfordPets 0.100 0.044 0.056 Flowers102 0.181 0.026 0.155 StanfordCars 0.071 0.048 0.023 Food101 0.056 0.041 0.015 DTD 0.539 0.167 0.372 EuroSAT 0.596 0.187 0.409 SUN397 0.127 0.037 0.090 Caltech101 0.073 0.016 0.057 UCF101 0.161 0.062 0.099 ImageNet 0.068 0.039 0.029 
+
+Average 0.209 0.077 0.133                
+
+> Table 2. Comparison of average angular distance between image and text embeddings for zero-shot CLIP and BiCLIP. Lower values indicate better separation.
+> Normalized Dataset Orthogonal Error
+> FGVCAircraft 0.008 OxfordPets 0.007 Flowers102 0.027 StanfordCars 0.074 Food101 0.006 DTD 0.055 EuroSAT 0.024 SUN397 0.017 Caltech101 0.006 UCF101 0.008 ImageNet 0.009
+> Average 0.022
+> Table 3. Orthogonality of Wmatrix: We report the normalized Frobenius norm deviation from orthogonality.
+
+Ablation Study : We conduct ablation experiments to isolate the contributions of two primary design choices: Identity Initialization and the Upper Triangular constraint of the W matrix. We evaluate these components on three datasets—EuroSAT (remote sensing), DTD (texture), and FGVCAircraft (fine-grained)—using a 16-shot setting. As shown in Table 4, starting from a random initializa-tion with an unconstrained dense matrix serves as a base-line. The struggles to maintain the zero-shot alignment of the pre-trained CLIP space. While restricting the matrix to a structured upper triangular form with random weights yields a +3.24% improvement on EuroSAT. Conversely, us-ing identity initialization with a dense matrix ensures that the model starts at the canonical zero-shot state, but the lack of structural constraint allows for excessive manifold drift during fine-tuning. Our proposed configuration (Identity + Upper Triangle) achieves the highest performance across the three datasets. This suggests that initializing W with identity preserves the pre-trained knowledge, and the upper triangular structure acts as a geometric regularization constraint.                      
+
+> Initialization Structure EuroSAT DTD Aircraft
+> Random Dense 81.04 69.63 44.88 Random Upper Tri 84.28 69.57 44.55 Identity Dense 82.54 70.74 45.18
+> Identity (Ours) Upper Tri 85.13 71.01 45.21
+> Table 4. Ablation study on EuroSAT, DTD, and FGVCAircraft (16-shot). We evaluate the impact of Identity Initialization and the Upper Triangular (Upper Tri) structural constraint. The combina-tion of both components (Proposed) yields the highest accuracy across all domains.
+
+# 7. Conclusion 
+
+In this work, we introduced a novel geometric perspec-tive on adapting vision-language models through a struc-tured bilinear transformation. By constraining the adapta-tion layer to an upper triangular form and initializing it with the identity matrix, we have demonstrated that it is possible to achieve state-of-the-art few-shot performance while pre-serving the rich, pre-trained semantic integrity of the latent space. Our findings suggest that the challenge of domain-specific adaptation is not merely one of feature extraction, but of alignment. Through extensive angular and orthogonality analysis, we have provided a deeper understanding of the underlying structure of contrastive VLMs. We show that these mod-els reside in a delicate ”canonical” state where image and text modalities are related by latent geometric transforma-tions. BiCLIP effectively leverages this relationship for spe-cialized domains—such as remote sensing and fine-grained textures—by performing a controlled, non-destructive re-shaping of the feature space. Finally, this research high-lights that the modality gap is not a barrier for downstream tasks, but a geometric property to be navigated. By mov-ing away from ”black-box” MLP adapters toward struc-tured, geometrically-informed heads, we can build adapta-tion strategies that are more parameter-efficient, mathemat-ically interpretable, and robust to the challenges of low-data regimes. 
+
+# References  
+
+> [1] Lukas Bossard, Matthieu Guillaumin, and Luc Van Gool. Food-101–mining discriminative components with random forests. In European conference on computer vision , pages 446–461. Springer, 2014. 5
+
+8[2] Guangyi Chen, Weiran Yao, Xiangchen Song, Xinyue Li, Yongming Rao, and Kun Zhang. Plot: Prompt learning with optimal transport for vision-language models, 2023. 3 [3] Xi Chen, Josip Djolonga, Piotr Conway, Basil Mustafa, Ibrahim Alabdulmohsin, Kasia Rodge, Golnaz Ghiasi, Ak-shat Shah, Basil Mustafa, et al. Pali: A jointly-scaled multilingual language-image model. In arXiv preprint arXiv:2209.06794 , 2022. 5 [4] Mircea Cimpoi, Subhransu Maji, Iasonas Kokkinos, Sammy Mohamed, and Andrea Vedaldi. Describing textures in the wild. In Proceedings of the IEEE conference on computer vision and pattern recognition , pages 3606–3613, 2014. 2, 5 [5] Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li, and Li Fei-Fei. Imagenet: A large-scale hierarchical image database. In 2009 IEEE Conference on Computer Vision and Pattern Recognition , pages 248–255, 2009. 2, 5 [6] Li Fei-Fei, Rob Fergus, and Pietro Perona. Learning gener-ative visual models from few training examples: An incre-mental bayesian approach tested on 101 object categories. In 
+
+2004 conference on computer vision and pattern recognition workshop , pages 178–178. IEEE, 2004. 5 [7] Peng Gao, Shijie Geng, Renrui Zhang, Teli Ma, Rongyao Fang, Yongfeng Zhang, Hongsheng Li, and Yu Qiao. Clip-adapter: Better vision-language models with feature adapters, 2025. 1, 3 [8] Muhammad Waleed Gondal, Jochen Gast, Inigo Alonso Ruiz, Richard Droste, Tommaso Macri, Suren Kumar, and Luitpold Staudigl. Domain aligned clip for few-shot classi-fication. In Proceedings of the IEEE/CVF Winter conference on applications of computer vision , pages 5721–5730, 2024. 1, 2 [9] Xiuye Gu, Tsung-Yi Lin, Weicheng Kuo, and Yin Cui. Open-vocabulary object detection via vision and language knowledge distillation, 2022. 1 [10] Sharut Gupta, Sanyam Kansal, Stefanie Jegelka, Phillip Isola, and Vikas Garg. Canonicalizing multimodal con-trastive representation learning, 2026. 2, 3, 7 [11] Patrick Helber, Benjamin Bischke, Andreas Dengel, and Damian Borth. Eurosat: A novel dataset and deep learning benchmark for land use and land cover classification. IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing , 12(7):2217–2226, 2019. 2, 5 [12] Tony Huang, Jack Chu, and Fangyun Wei. Unsupervised prompt learning for vision-language models, 2022. 3 [13] Muhammad Uzair Khattak, Hanoona Rasheed, Muhammad Maaz, Salman Khan, and Fahad Shahbaz Khan. Maple: Multi-modal prompt learning, 2023. 1, 2, 3, 6 [14] Muhammad Uzair Khattak, Syed Talal Wasim, Muzammal Naseer, Salman Khan, Ming-Hsuan Yang, and Fahad Shah-baz Khan. Self-regulating prompts: Foundational model adaptation without forgetting, 2023. 6 [15] Jonathan Krause, Michael Stark, Jia Deng, and Li Fei-Fei. 3d object representations for fine-grained categorization. In 
+
+Proceedings of the IEEE international conference on com-puter vision workshops , pages 554–561, 2013. 5 [16] Weixin Liang, Yuhui Zhang, Yongchan Kwon, Serena Ye-ung, and James Zou. Mind the gap: Understanding the modality gap in multi-modal contrastive representation learning, 2022. 2, 3 [17] Yuning Lu, Jianzhuang Liu, Yonggang Zhang, Yajing Liu, and Xinmei Tian. Prompt distribution learning, 2022. 3 [18] Muhammad Maaz, Hanoona Rasheed, Salman Khan, Fa-had Shahbaz Khan, Rao Muhammad Anwer, and Ming-Hsuan Yang. Class-agnostic object detection with multi-modal transformer, 2022. 1 [19] Subhransu Maji, Esa Rahtu, Juho Kannala, Matthew Blaschko, and Andrea Vedaldi. Fine-grained visual classi-fication of aircraft. arXiv preprint arXiv:1306.5151 , 2013. 2, 5 [20] Muhammad Arslan Manzoor, Sarah Albarri, Ziting Xian, Za-iqiao Meng, Preslav Nakov, and Shangsong Liang. Mul-timodality representation learning: A survey on evolution, pretraining and its applications, 2024. 1 [21] Joanna Materzynska, Antonio Torralba, and David Bau. Dis-entangling visual and written concepts in clip, 2022. 3 [22] Marco Mistretta, Alberto Baldrati, Lorenzo Agnolucci, Marco Bertini, and Andrew D. Bagdanov. Cross the gap: Exposing the intra-modal misalignment in clip via modality inversion, 2025. 3 [23] Maria-Elena Nilsback and Andrew Zisserman. Automated flower classification over a large number of classes. In 2008 Sixth Indian conference on computer vision, graphics & im-age processing , pages 722–729. IEEE, 2008. 5 [24] Omkar M Parkhi, Andrea Vedaldi, Andrew Zisserman, and CV Jawahar. Cats and dogs. In 2012 IEEE conference on computer vision and pattern recognition , pages 3498–3505. IEEE, 2012. 5 [25] Mohsen Pourahmadi. Covariance estimation: The glm and regularization perspectives. Statistical Science , 26(3), 2011. 4[26] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen Krueger, and Ilya Sutskever. Learning transferable visual models from natural language supervision, 2021. 1, 3 [27] Simone Ricci, Niccol` o Biondi, Federico Pernici, Ioannis Pa-tras, and Alberto Del Bimbo. λ-orthogonality regularization for compatible representation learning, 2025. 3 [28] Manli Shu, Weili Nie, De-An Huang, Zhiding Yu, Tom Goldstein, Anima Anandkumar, and Chaowei Xiao. Test-time prompt tuning for zero-shot generalization in vision-language models, 2022. 3 [29] Khurram Soomro, Amir Roshan Zamir, and Mubarak Shah. Ucf101: A dataset of 101 human actions classes from videos in the wild. arXiv preprint arXiv:1212.0402 , 2012. 5 [30] Vishaal Udandarao, Ankush Gupta, and Samuel Albanie. Sus-x: Training-free name-only transfer of vision-language models, 2023. 2 [31] Jianxiong Xiao, James Hays, Krista A Ehinger, Aude Oliva, and Antonio Torralba. Sun database: Large-scale scene recognition from abbey to zoo. In 2010 IEEE computer so-ciety conference on computer vision and pattern recognition ,pages 3485–3492. IEEE, 2010. 5 
+
+9[32] Lingling Xu, Haoran Xie, Si-Zhao Joe Qin, Xiaohui Tao, and Fu Lee Wang. Parameter-efficient fine-tuning methods for pretrained language models: A critical review and assess-ment, 2023. 1, 3 [33] Lewei Yao, Runhui Huang, Lu Hou, Guansong Lu, Minzhe Niu, Hang Xu, Xiaodan Liang, Zhenguo Li, Xin Jiang, and Chunjing Xu. Filip: Fine-grained interactive language-image pre-training, 2021. 1 [34] Lu Yuan, Dongdong Chen, Yi-Ling Chen, Noel Codella, Xiyang Dai, Jianfeng Gao, Houdong Hu, Xuedong Huang, Boxin Li, Chunyuan Li, Ce Liu, Mengchen Liu, Zicheng Liu, Yumao Lu, Yu Shi, Lijuan Wang, Jianfeng Wang, Bin Xiao, Zhen Xiao, Jianwei Yang, Michael Zeng, Luowei Zhou, and Pengchuan Zhang. Florence: A new foundation model for computer vision, 2021. [35] Xiaohua Zhai, Xiao Wang, Basil Mustafa, Andreas Steiner, Daniel Keysers, Alexander Kolesnikov, and Lucas Beyer. Lit: Zero-shot transfer with locked-image text tuning, 2022. 1[36] Xiaohua Zhai, Basil Mustafa, Alexander Kolesnikov, and Lucas Beyer. Sigmoid loss for language image pre-training, 2023. 1, 3 [37] Renrui Zhang, Rongyao Fang, Wei Zhang, Peng Gao, Kunchang Li, Jifeng Dai, Yu Qiao, and Hongsheng Li. Tip-adapter: Training-free clip-adapter for better vision-language modeling, 2021. 2, 3 [38] Kaiyang Zhou, Jingkang Yang, Chen Change Loy, and Ziwei Liu. Learning to prompt for vision-language models. In-ternational Journal of Computer Vision , 130(9):2337–2348, 2022. 1, 3, 5, 6 [39] Kaiyang Zhou, Jingkang Yang, Chen Change Loy, and Zi-wei Liu. Conditional prompt learning for vision-language models, 2022. 1, 3, 6 [40] Xingyi Zhou, Rohit Girdhar, Armand Joulin, Philipp Kr¨ ahenb¨ uhl, and Ishan Misra. Detecting twenty-thousand classes using image-level supervision, 2022. 1 
+
+10

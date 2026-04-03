@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.12369v1/fig-001.webp",
+      "caption": "Figure 1. SDG attempts for DR has traditionally failed to consistently outperform ERM primarily due to existing gap in causal factors among data sets. Knowledge from human experts in the field can fill the causal gap but are usually qualitative and ambiguous. This paper demonstrates GenEval that quantifies human expert knowledge, refines them, and integrates specialized foundational model such as MedGemma-4B through LoRA based fine tuning to bridge the causal gap between domains while removing ambiguity of knowledge.",
+      "page": 2,
+      "index": 1,
+      "width": 986,
+      "height": 446
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12369v1/fig-002.webp",
+      "caption": "Figure 4. MedGemma-4B LoRA fine-tuning overview.1",
+      "page": 14,
+      "index": 2,
+      "width": 829,
+      "height": 440
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12369v1/fig-003.webp",
+      "caption": "Figure 2. Contributions: a) Algorithms 1 and 2 to obtain domain conformal bounds and source domain conformance degree. Utilizing SDCD, ablation studies are performed to refine the knowledge set into an optimal set that maximizes SDCD. b) GenEval, a specialized foundational vision language model based method that integrates image and expert knowledge in textual form for a multi-modal prompt driven DR grading and SOZ detection schemes.",
+      "page": 5,
+      "index": 3,
+      "width": 926,
+      "height": 327
+    }
+  ]
+}

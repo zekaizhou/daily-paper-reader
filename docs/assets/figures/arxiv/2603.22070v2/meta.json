@@ -1,0 +1,78 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.22070v2/fig-001.webp",
+      "caption": "Figure 1. Comparison between cache-based adaptation and our distribution-based modeling. (a) Cache-based methods rely on discrete memory updates, storing a small number of recent samples in a fixed-size cache. (b) Our BayesMM models class-wise distributions across modalities rather than individual samples.",
+      "page": 1,
+      "index": 1,
+      "width": 487,
+      "height": 377
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22070v2/fig-002.webp",
+      "caption": "Table 3. Recognition accuracy comparison on Sim-to-Real. Two evaluation settings are considered: MN 11 → SONN 11 and SN 9 → SONN 9. The dataset on the left side of → stands for simulated data, while the dataset on the right side indicates real-world data. 11 classes are shared between MN 11 and SONN 11, while 9 classes are common between SN 9 and SONN 9. In the experiments, each point cloud is represented by 2,048 points. MN: ModelNet, SN: ShapeNet.",
+      "page": 6,
+      "index": 2,
+      "width": 960,
+      "height": 478
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22070v2/fig-003.webp",
+      "caption": "Figure 2. Comparison of distribution consistency across adaptation steps. The Kullback–Leibler (KL) divergence and Maximum Mean Discrepancy (MMD) are measured at different time steps during test-time adaptation.",
+      "page": 2,
+      "index": 3,
+      "width": 494,
+      "height": 246
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22070v2/fig-004.webp",
+      "caption": "Table I. Comparison of corruption generalization on S-PB T50-RS-C, the most challenging split of ScanObjectNN. Each clean point cloud is represented by 1024 points. SONN denotes ScanObjectNN.",
+      "page": 14,
+      "index": 4,
+      "width": 1006,
+      "height": 413
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22070v2/fig-005.webp",
+      "caption": "Table 6. Inference throughput (samples per second) on the ModelNet40. All experiments are conducted with a batch size of 1 on an RTX 3090 GPU. Point-Cache denotes the hierarchical variant.",
+      "page": 8,
+      "index": 5,
+      "width": 491,
+      "height": 348
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22070v2/fig-006.webp",
+      "caption": "Figure 6. t-SNE visualization of feature distributions derived from classifiers constructed under different strategies. t-SNE visualization of feature distributions obtained from classifiers built with different learning strategies.",
+      "page": 8,
+      "index": 6,
+      "width": 496,
+      "height": 250
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22070v2/fig-007.webp",
+      "caption": "Figure 3. Overview of the proposed BayesMM framework. A frozen point cloud encoder extracts geometric features from streaming inputs, and a frozen language model provides textual embeddings as semantic priors. Both modalities are represented by Gaussian distributions, where geometric ones are updated online with incoming samples. Bayesian weighting fuses the two modalities into a unified posterior for adaptive and training-free point cloud recognition.",
+      "page": 4,
+      "index": 7,
+      "width": 1027,
+      "height": 270
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22070v2/fig-008.webp",
+      "caption": "Table 1. Recognition accuracy comparison on ModelNet-C with 7 corruption types. Each clean point cloud contains 1024 points, and the corruption severity level is set to 2. The last column reports the average accuracy over all types. The best results are highlighted in bold, and the second best are underlined.",
+      "page": 5,
+      "index": 8,
+      "width": 1036,
+      "height": 477
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22070v2/fig-009.webp",
+      "caption": "Table 2. Recognition accuracy comparison on multiple benchmarks. S-PB RS T50 denotes the hardest split of ScanObjectNN. O-LVIS and Omni3D refer to Objaverse-LVIS and OmniObject3D, respectively. The number under each dataset indicates the number of points per object (pts). In Omni3D, each object may contain a variable number of points.",
+      "page": 5,
+      "index": 9,
+      "width": 964,
+      "height": 478
+    }
+  ]
+}

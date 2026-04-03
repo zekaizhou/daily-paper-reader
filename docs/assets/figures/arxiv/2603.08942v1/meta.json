@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.08942v1/fig-001.webp",
+      "caption": "Table 1. Main Results: 16-Shot Performance Comparison. We report Top-1 Accuracy (%) for Zero-Shot baselines and our proposed Bilinear adaptation (BiCLIP and BiSigLIP). ∆ represents the gain over the respective zero-shot baseline.",
+      "page": 7,
+      "index": 1,
+      "width": 690,
+      "height": 357
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08942v1/fig-002.webp",
+      "caption": "Figure 3. Few-shot performance comparison on various datasets. Our methods BiCLIP (black) and BiSigLIP (red) significantly outperform existing prompt tuning baselines across 1, 2, 4, 8, and 16 shots.",
+      "page": 7,
+      "index": 2,
+      "width": 1036,
+      "height": 527
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08942v1/fig-003.webp",
+      "caption": "Figure 2. The BiCLIP Adaptation Framework. Unlike standard CLIP which relies on a fixed dot product, BiCLIP introduces a trainable, structured transformation matrix W between the image and text modalities.",
+      "page": 5,
+      "index": 3,
+      "width": 462,
+      "height": 337
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08942v1/fig-004.webp",
+      "caption": "Table 2. Comparison of average angular distance between image and text embeddings for zero-shot CLIP and BiCLIP. Lower values indicate better separation.",
+      "page": 8,
+      "index": 4,
+      "width": 466,
+      "height": 360
+    }
+  ]
+}

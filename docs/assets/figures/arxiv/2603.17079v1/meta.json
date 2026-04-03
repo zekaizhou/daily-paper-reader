@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.17079v1/fig-001.webp",
+      "caption": "Table 2: Zero-shot classification performance on the CheXpert 5×200, RSNA, and SIIM datasets. Competing methods are categorized into specialist and generalist medical VLMs.",
+      "page": 11,
+      "index": 1,
+      "width": 666,
+      "height": 385
+    },
+    {
+      "url": "assets/figures/arxiv/2603.17079v1/fig-002.webp",
+      "caption": "Table A.1: Summary of dataset specifications and statistics. “Classes” and “Total Size” refer to the number of categories and total images, respectively.",
+      "page": 21,
+      "index": 2,
+      "width": 735,
+      "height": 392
+    },
+    {
+      "url": "assets/figures/arxiv/2603.17079v1/fig-003.webp",
+      "caption": "Table A.2: Class names for each dataset in zero-shot image classification.",
+      "page": 22,
+      "index": 3,
+      "width": 725,
+      "height": 431
+    },
+    {
+      "url": "assets/figures/arxiv/2603.17079v1/fig-004.webp",
+      "caption": "Table 1: Comparison of zero-shot classification performance across different fine-tuning methods. Full FT represents full fine-tuning, in which all parameters of the pre-trained model are updated. All methods are trained using Label-guided InfoNCE loss to ensure a fair comparison. The best results are highlighted in bold, and the second-best are underlined.",
+      "page": 10,
+      "index": 4,
+      "width": 679,
+      "height": 354
+    },
+    {
+      "url": "assets/figures/arxiv/2603.17079v1/fig-005.webp",
+      "caption": "Fig. 2: False negatives in contrastive learning. The CLIP loss treats all nonmatching pairs as negatives, which can falsely push apart semantically similar samples, whereas our formulation avoids separating pairs that share the same disease label.",
+      "page": 8,
+      "index": 5,
+      "width": 466,
+      "height": 288
+    },
+    {
+      "url": "assets/figures/arxiv/2603.17079v1/fig-006.webp",
+      "caption": "Fig. 1: Overview of ACE-LoRA. ACE-LoRA integrates low-rank adaptation modules into self-attention blocks of image and text encoders in a generalist medical VLM, and introduces ACE-HGNN, a hypergraph-based module that models high-order topological dependencies between local (e.g., image patches or report snippets) and global embeddings. For clarity, ACE-HGNN is described using image embeddings, though the same procedure is applied to text embeddings.",
+      "page": 5,
+      "index": 6,
+      "width": 721,
+      "height": 396
+    }
+  ]
+}

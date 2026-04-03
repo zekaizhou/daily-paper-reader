@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.09493v1/fig-001.webp",
+      "caption": "Table 2: Comparison of EvoPrompt with previous state-of-the-art methods on crossdataset evaluation across 10 datasets.",
+      "page": 11,
+      "index": 1,
+      "width": 712,
+      "height": 286
+    },
+    {
+      "url": "assets/figures/arxiv/2603.09493v1/fig-002.webp",
+      "caption": "Table 1: Comparison with state-of-the-art methods on base-to-novel generalization across 11 datasets. EvoPrompt demonstrates strong generalization results over existing methods. The best results are in bold and the second-best results are underlined.",
+      "page": 10,
+      "index": 2,
+      "width": 690,
+      "height": 807
+    },
+    {
+      "url": "assets/figures/arxiv/2603.09493v1/fig-003.webp",
+      "caption": "Table 4: (a) Ablation study on core components. (b) Sensitivity analysis of loss weights η for Lkcl and γ for Lfgr. (c) Comparison of training efficiency on ImageNet. Trainable parameter(M), training time (ms/image) and FPS (batch size=100) are reported.",
+      "page": 13,
+      "index": 3,
+      "width": 725,
+      "height": 191
+    },
+    {
+      "url": "assets/figures/arxiv/2603.09493v1/fig-004.webp",
+      "caption": "Fig. 3: EvoPrompt performance comparison in few-shot image recognition setting.",
+      "page": 13,
+      "index": 4,
+      "width": 725,
+      "height": 462
+    },
+    {
+      "url": "assets/figures/arxiv/2603.09493v1/fig-005.webp",
+      "caption": "Fig. 2: Overview of the proposed EvoPrompt framework. Left: Modality-shared projectors are used to inject prompts into dual encoders. Top-right: To enhance feature orthogonality, Lfgr transforms correlated representations into mutually independent vectors. Bottom-right: The low-rank adapter is decomposed into magnitude αi and direction components, with historical directions frozen to preserve early geometric alignments, while the magnitudes remain trainable for later adaptation.",
+      "page": 5,
+      "index": 5,
+      "width": 725,
+      "height": 394
+    }
+  ]
+}

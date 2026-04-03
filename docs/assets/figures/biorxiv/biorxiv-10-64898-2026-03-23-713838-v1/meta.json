@@ -1,0 +1,102 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-23-713838-v1/fig-001.webp",
+      "caption": "Table 3",
+      "page": 6,
+      "index": 1,
+      "width": 452,
+      "height": 531
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-23-713838-v1/fig-002.webp",
+      "caption": "Figure 8: Confusion matrices across all benchmark datasets, comparing zero-shot CLIP ViT-B/16 with HistoSB-Net.",
+      "page": 11,
+      "index": 2,
+      "width": 1029,
+      "height": 634
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-23-713838-v1/fig-003.webp",
+      "caption": "Table 6",
+      "page": 11,
+      "index": 3,
+      "width": 452,
+      "height": 279
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-23-713838-v1/fig-004.webp",
+      "caption": "Figure 1: Effect of prompt refinement on zero-shot classification in histopathology. (a) Under pronounced intra-class heterogeneity,",
+      "page": 2,
+      "index": 4,
+      "width": 918,
+      "height": 349
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-23-713838-v1/fig-005.webp",
+      "caption": "Table 4",
+      "page": 7,
+      "index": 5,
+      "width": 1029,
+      "height": 485
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-23-713838-v1/fig-006.webp",
+      "caption": "Figure 7: Class discriminability margin distributions across all benchmark datasets.",
+      "page": 10,
+      "index": 6,
+      "width": 1029,
+      "height": 502
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-23-713838-v1/fig-007.webp",
+      "caption": "Figure 2: Overview of HistoSB-Net. Given an image 𝑥𝑖 and a class prototype text 𝑡𝑐 = 𝜏(𝑐), the frozen CLIP ViT-B/16 vision and text backbones produce embeddings with CSB enabled on selected self-attention projections. CSB generates a projection residual",
+      "page": 3,
+      "index": 7,
+      "width": 921,
+      "height": 551
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-23-713838-v1/fig-008.webp",
+      "caption": "Figure 4: Performance scaling of HistoSB-Net with increasing",
+      "page": 8,
+      "index": 8,
+      "width": 471,
+      "height": 413
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-23-713838-v1/fig-009.webp",
+      "caption": "Table 5",
+      "page": 8,
+      "index": 9,
+      "width": 1064,
+      "height": 391
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-23-713838-v1/fig-010.webp",
+      "caption": "Figure 5: Effect of branch-specific CSB modulation on diagnos-",
+      "page": 9,
+      "index": 10,
+      "width": 471,
+      "height": 391
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-23-713838-v1/fig-011.webp",
+      "caption": "Figure 6: Relative Macro-F1 (%) change of CSB projection",
+      "page": 9,
+      "index": 11,
+      "width": 446,
+      "height": 331
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-23-713838-v1/fig-012.webp",
+      "caption": "Figure 3: Comparison of the original projection, LoRA weight",
+      "page": 5,
+      "index": 12,
+      "width": 464,
+      "height": 297
+    }
+  ]
+}

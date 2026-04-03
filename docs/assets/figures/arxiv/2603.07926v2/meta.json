@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.07926v2/fig-001.webp",
+      "caption": "Table 1: Test-time adaptation on ImageNet-C (50k). Accuracy(%)(↑) over 15 corruptions at severity level 5 using ViT-Base models with different pretraining strategies. Results with * are reproduced by us.",
+      "page": 6,
+      "index": 1,
+      "width": 824,
+      "height": 481
+    },
+    {
+      "url": "assets/figures/arxiv/2603.07926v2/fig-002.webp",
+      "caption": "Table 13: Ablation study on target modules. The best is bolded and the second best is underlined.",
+      "page": 15,
+      "index": 2,
+      "width": 700,
+      "height": 260
+    },
+    {
+      "url": "assets/figures/arxiv/2603.07926v2/fig-003.webp",
+      "caption": "Figure 2: (a) Comparison of top-R% vs. bottom-R% singular value selection. (b) Feature diversity across various training methods. (c) Adaptation performance across various training methods. (d) Impact of the threshold τ on domain shift detection and adaptation performance. CE and TTA losses denote Lce and Lentmin, respectively.",
+      "page": 8,
+      "index": 3,
+      "width": 826,
+      "height": 240
+    },
+    {
+      "url": "assets/figures/arxiv/2603.07926v2/fig-004.webp",
+      "caption": "Figure 4: (a) Diversity of alignment patterns in 3rd Transformer Block. (b) Diversity of alignment patterns in 6th Transformer Block. (c) Diversity of alignment patterns in 9th Transformer Block.",
+      "page": 16,
+      "index": 4,
+      "width": 807,
+      "height": 201
+    },
+    {
+      "url": "assets/figures/arxiv/2603.07926v2/fig-005.webp",
+      "caption": "Figure 5: Domain distance matrix. Pairwise distance matrix among 15 domain descriptors.",
+      "page": 16,
+      "index": 5,
+      "width": 585,
+      "height": 518
+    }
+  ]
+}

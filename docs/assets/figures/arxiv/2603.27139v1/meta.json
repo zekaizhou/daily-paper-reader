@@ -1,0 +1,118 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.27139v1/fig-001.webp",
+      "caption": "Figure 1. The VLM robustness three-way tradeoff. Existing robust fine-tuning strategies resolve at most two of {ID, OOD, adversarial} robustness simultaneously, leaving a gap in generalized robustness. GRACE is designed to close this gap.",
+      "page": 1,
+      "index": 1,
+      "width": 480,
+      "height": 260
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27139v1/fig-002.webp",
+      "caption": "Figure 5. Gram-volume feature alignment. For each input, GRACE compares clean, adversarial, and LAR-AWP-perturbed image embeddings via a small Gram matrix. The Gram-volume loss encourages these three vectors to remain close to each other (low volume) while preserving separation across different classes.",
+      "page": 6,
+      "index": 2,
+      "width": 476,
+      "height": 294
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27139v1/fig-003.webp",
+      "caption": "Figure 7. Layerwise curvature anisotropy in CLIP. Normalized Hutchinson curvature κℓ for each transformer block of CLIP ViT-B/32, ViT-B/16, and ViT-L/14. All models exhibit substantial variation in curvature across depth, indicating strong layerwise geometric heterogeneity.",
+      "page": 11,
+      "index": 3,
+      "width": 475,
+      "height": 806
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27139v1/fig-004.webp",
+      "caption": "Table 14. Clean and adversarial evaluation on zero-shot image classification datasets (ViT-B/16). Models are trained on ImageNet; all other datasets are zero-shot. ZS Avg is the mean across the 8 datasets.",
+      "page": 21,
+      "index": 4,
+      "width": 1026,
+      "height": 309
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27139v1/fig-005.webp",
+      "caption": "Table 4. OOD Results on ImageNet. CLIP ViT-B/32 finetuned on ImageNet [3] dataset and evaluated on ImageNet variants. The numbers are top-1 accuracy (%). OOD Avg averages ImageNet-V2, -S, -R; Nat Adv Avg averages ImageNet-A and A-Plus.",
+      "page": 7,
+      "index": 5,
+      "width": 820,
+      "height": 350
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27139v1/fig-006.webp",
+      "caption": "Table 5. Clean and adversarial evaluation on zero-shot image classification datasets (ViT-B/32). Models are trained on ImageNet; all other datasets are zero-shot. ZS Avg is the mean across the 8 datasets.",
+      "page": 7,
+      "index": 6,
+      "width": 1026,
+      "height": 315
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27139v1/fig-007.webp",
+      "caption": "Table 1. Decomposition of robust fine-tuning methods by optimization objectives. Methods addressing each term explicitly through their loss function or training procedure are marked (✓), those with implicit or partial coverage are marked (∼), and those without explicit optimization are marked (✗).",
+      "page": 3,
+      "index": 7,
+      "width": 487,
+      "height": 284
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27139v1/fig-008.webp",
+      "caption": "Figure 10. Samples from the ImageNet dataset",
+      "page": 18,
+      "index": 8,
+      "width": 496,
+      "height": 399
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27139v1/fig-009.webp",
+      "caption": "Figure 2. (a) Feature Distribution Analysis: 3D projection of image features for in-distribution (fID), OOD (fOOD), and PGD adversarial inputs (fAdv) of the same class. (b) Loss Landscape Analysis: 3D/2D loss slices around the converged solutions for each method, using shared perturbation directions.",
+      "page": 4,
+      "index": 9,
+      "width": 918,
+      "height": 316
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27139v1/fig-010.webp",
+      "caption": "Figure 9. 3D visualization of CLIP feature geometry under different shifts. Using normalized embeddings projected onto the unit sphere, we compare ID samples, natural adversarial (Nat Adv) variants, OOD samples, and features obtained under AWP perturbations. AWP produces feature displacements that closely follow the structure of real OOD and natural adversarial shifts, confirming that curvature-aligned weight perturbations serve as an effective proxy for robustness-critical distribution drift.",
+      "page": 17,
+      "index": 10,
+      "width": 496,
+      "height": 496
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27139v1/fig-011.webp",
+      "caption": "Figure 8. Schematic of LoRA weight updates. Weight updates are parameterized by low-rank matrices A and B of rank r, constraining deviations from the pre-trained weights to a lowdimensional subspace.",
+      "page": 12,
+      "index": 11,
+      "width": 352,
+      "height": 418
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27139v1/fig-012.webp",
+      "caption": "Table 11. Hyperparameter sensitivity results for GRACE (ViT-B/32). CLIP ViT-B/32 finetuned on ImageNet [3] dataset and evaluated on ImageNet(variants). The numbers represent top-1 accuracy.",
+      "page": 20,
+      "index": 12,
+      "width": 822,
+      "height": 373
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27139v1/fig-013.webp",
+      "caption": "Table 13. OOD Results on ImageNet (ViT-B/16). CLIP ViT-B/16 finetuned on ImageNet [3] dataset and evaluated on ImageNet variants. The numbers are top-1 accuracy (%). OOD Avg averages ImageNet-V2, -S, -R; Nat Adv Avg averages ImageNet-A and A-Plus.",
+      "page": 20,
+      "index": 13,
+      "width": 822,
+      "height": 339
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27139v1/fig-014.webp",
+      "caption": "Table 12. Unified summary across settings (ViT-B/16). ID uses ImageNet clean; Domain Shift (Same Classes) is OOD Avg over ImageNet-V2/S/R (clean); Zero Shot is ZS Avg (clean) across 8 datasets; Targeted Adversarial reports (ID/OOD/ZS) accuracies under AutoAttack (APGD-CE, ϵ=4/255); Natural Adversarial is the clean average over ImageNet-A/A-Plus.",
+      "page": 20,
+      "index": 14,
+      "width": 822,
+      "height": 341
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.21077v2/fig-001.webp",
+      "caption": "Table 1. Comparison of diverse VFT methods on 12 multimodal benchmarks under the unified LLaVA-1.5 [35] pre-training and",
+      "page": 6,
+      "index": 1,
+      "width": 1036,
+      "height": 440
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21077v2/fig-002.webp",
+      "caption": "Table 2. Ablation study of the contextual vector design in CVE and the routing strategy in CoMoE under LLaVA-1.5-7B.",
+      "page": 6,
+      "index": 2,
+      "width": 496,
+      "height": 310
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21077v2/fig-003.webp",
+      "caption": "Figure 1. (a) Performance comparison of distinct VFT methods on multimodal tasks, showing instability compared with Freeze baseline. (b) Illustration of the visual preference conflict phenomenon. Setup: we construct grounding and captioning tasks using identical images from the Visual Genome [30] dataset and train two independent MLLMs that differ only in their textual queries. (c) The L2 distance between the two vision encoders steadily increases during VFT, indicating growing divergence in learned, especially the deeper representations, which aligns with the classical finding that deeper layers tend to capture information with task-specific preferences [37, 54].",
+      "page": 2,
+      "index": 3,
+      "width": 1016,
+      "height": 227
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21077v2/fig-004.webp",
+      "caption": "Figure 3. (a) PCA [42] visualization of contextual vectors extracted from the CVE module. A subset of 5,000 instruction samples is clustered via k-means [2], showing clear semantic grouping aligned with distinct visual preference patterns. (b) Correlation between contextual similarity and inference similarity, computed as the cosine similarity of routing weights aggregated across CoMoE layers. The strong positive trend (r = 0.76) indicates that samples with similar contextual vectors yield similar expert activation patterns.",
+      "page": 7,
+      "index": 4,
+      "width": 1002,
+      "height": 291
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21077v2/fig-005.webp",
+      "caption": "Table 8. Comparison of computational overhead across different VFT strategies. Training time is reported in hours and minutes; inference time is averaged per sample.",
+      "page": 14,
+      "index": 5,
+      "width": 1018,
+      "height": 627
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21077v2/fig-006.webp",
+      "caption": "Figure 6. PCA [42] visualization of 5,000 contextual vectors extracted from the CVE module. Vectors are grouped using k-means [2], and for each cluster, four nearest samples to the cluster centroid are shown to illustrate representative task patterns.",
+      "page": 14,
+      "index": 6,
+      "width": 1020,
+      "height": 481
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21077v2/fig-007.webp",
+      "caption": "Figure 4. Analysis of data scalability. Following the two-stage LLaVA training pipeline, models are fine-tuned with varying proportions of the 665K multimodal instruction dataset during the second-stage instruction-tuning. We compare the performance of the baseline model with a frozen or full fine-tuned vision encoder and our CoVFT framework under different data scales.",
+      "page": 8,
+      "index": 7,
+      "width": 1014,
+      "height": 202
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21077v2/fig-008.webp",
+      "caption": "Table 3. Generalization evaluation of CoVFT across different MLLM architectures on 12 multimodal benchmarks.",
+      "page": 8,
+      "index": 8,
+      "width": 1032,
+      "height": 185
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21077v2/fig-009.webp",
+      "caption": "Figure 2. Illustration of the proposed context-aware visual fine-tuning (CoVFT) framework. Contextual vector extraction (CVE) generates a contextual vector c by aggregating multimodal cues through text-guided cross-attention. Contextual mixture-of-experts (CoMoE) injects c into the vision encoder via context-conditioned expert routing, enabling adaptive visual parameter updates.",
+      "page": 4,
+      "index": 9,
+      "width": 990,
+      "height": 358
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21077v2/fig-010.webp",
+      "caption": "Table 11. Per task results by various ablation settings in Table 4 of the supplementary material.",
+      "page": 16,
+      "index": 10,
+      "width": 1022,
+      "height": 204
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21077v2/fig-011.webp",
+      "caption": "Table 9. Per task results by various ablation settings in Table 2 of the main body.",
+      "page": 16,
+      "index": 11,
+      "width": 1002,
+      "height": 286
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21077v2/fig-012.webp",
+      "caption": "Table 10. Per task results by various ablation settings in Figure 4 of the main body.",
+      "page": 16,
+      "index": 12,
+      "width": 1022,
+      "height": 425
+    }
+  ]
+}

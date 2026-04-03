@@ -1,0 +1,746 @@
+Title: MERLIN: Building Low-SNR Robust Multimodal LLMs for Electromagnetic Signals
+
+URL Source: https://arxiv.org/pdf/2603.08174v1
+
+Published Time: Tue, 10 Mar 2026 02:03:02 GMT
+
+Number of Pages: 18
+
+Markdown Content:
+# MERLIN: Building Low-SNR Robust Multimodal LLMs for Electromagnetic Signals 
+
+## Junyu Shen 1∗, Zhendong She 3∗, Chenghanyu Zhang 2*, Yuchuang Sun 1, Luqing Luo 4,Dingwei Tan 5, Zonghao Guo 1, Bo Guo 1, Zehua Han 7, Wupeng Xie 9, Yaxin Mu 8,Peng Zhang 3, Peipei Li 2, Fengxiang Wang 6†, Yangang Sun 1†, Maosong Sun 1†
+
+1 Tsinghua University 2 Beijing University of Posts and Telecommunications 
+
+3 Tianjin University 4 Institute of Microelectronics of the Chinese Academy of Sciences 
+
+5 HKUST (Guangzhou) 6 National University of Defense Technology 
+
+7 Beihang University 8 Beijing Information Science and Technology University 
+
+9 Artificial Intelligence Institute of China Electronics Technology Group Corporation Existing Signal-Text Attempts 
+
+Radar WIFI UAV 
+
+AIS ADS-B Comm. 
+
+> Dual-input but non-generative; fusion is shallow and task-specific.
+
+Drawbacks    
+
+> lNo semantic alignment with language
+> lConfined within single-modality space
+> lPoor generalization across sources
+
+## EM-Bench 
+
+Open Ended Options 
+
+## EM-100K MERLIN Framework 
+
+Stage1: EM Pretrain 
+
+EM Data EM Foundation Model 
+
+> Prompt
+> LLM
+> Classifier
+> LLM
+> Response Text Concatenate
+> Fusion
+> Module
+
+Stage2: Low-SNR 
+
+Enhancement     
+
+> Low SNR Pairs
+> Signal Feature textualization without true multimodal fusion.
+> Signal
+> Encoder
+> Instruction
+> Projector
+> LLM
+> Tokenizer
+> Signal
+> [𝐀 𝐀 ,𝐀 𝐀 ,𝐀 𝐀 , …]
+> [𝐀 𝐀 ,𝐀 𝐀 ,𝐀 𝐀 ,…]
+> Classifier
+> Decoder
+> Embedding
+
+Encoder 
+
+l 2 Capabilities 
+
+l 4 Task Items 
+
+l 14 Subtasks 
+
+4.2k 
+
+pairs    
+
+> Simulation
+> data
+> Open Source
+> Dataset
+> Real-word
+> Collection
+> Totally 100K
+> Signal-Text pairs
+> l2 Signal Types
+> l14 Modulations
+> l8 Protocols
+
+Figure 1. Overview of our work. The top panel highlights the challenge of applying general MLLMs to the unique domain of EM signals. The bottom panel outlines our contributions to solve this: the EM-Bench benchmark and EM-100K dataset to address data scarcity, and the MERLIN framework, which employs multitask pre-training and low-SNR self-adaptation for robust performance. 
+
+## Abstract 
+
+The paradigm of Multimodal Large Language Models (MLLMs) offers a promising blueprint for advancing the electromagnetic (EM) domain. However, prevailing ap-proaches often deviate from the native MLLM paradigm, instead using task-specific or pipelined architectures that lead to fundamental limitations in model performance and generalization. Fully realizing the MLLM potential in EM 
+
+> *
+
+Contribute equally to this work. 
+
+> †
+
+Corresponding author. 
+
+domain requires overcoming three main challenges: (1) 
+
+Data. The scarcity of high-quality datasets with paired EM signals and descriptive text annotations used for MLLMs pre-training; (2) Benchmark. The absence of compre-hensive benchmarks to systematically evaluate and com-pare the performance of models on EM signal-to-text tasks; (3) Model. A critical fragility in low Signal-to-Noise Ra-tio (SNR) environments, where critical signal features can be obscured, leading to significant performance degrada-tion. To address these challenges, we introduce a tripar-tite contribution to establish a foundation for MLLMs in the EM domain. First, to overcome data scarcity, we con-
+
+> arXiv:2603.08174v1 [cs.CV] 9 Mar 2026
+
+struct and release EM-100k, a large-scale dataset com-prising over 100,000 EM signal-text pairs. Second, to en-able rigorous and standardized evaluation, we propose EM-Bench, the most comprehensive benchmark featuring di-verse downstream tasks spanning from perception to rea-soning. Finally, to tackle the core modeling challenge, we present MERLIN, a novel training framework designed not only to align low-level signal representations with high-level semantic text, but also to explicitly enhance model ro-bustness and performance in challenging low-SNR environ-ments. Comprehensive experiments validate our method, showing that MERLIN is state-of-the-art in the EM-Bench and exhibits remarkable robustness in low-SNR settings. 
+
+## 1. Introduction 
+
+The precise perception and reasoning of features within electromagnetic (EM) signals is crucial for critical domains such as radar, communications, and navigation [14, 21, 23, 39]. Although deep learning has shown success in basic EM perception tasks, most existing methods are designed for task-specific applications. They generally lack the abil-ity to generalize across a diverse range of perception and reasoning challenges, limiting their potential in real-world scenarios. Recent advancements in Multimodal Large Language Models (MLLMs) [1, 2, 6, 24, 31, 46, 57] offer a promis-ing path toward multi-task generalization in the EM do-main [9, 12]. By bridging raw signals with the versatile reasoning capabilities of LLMs, these models could un-lock unprecedented potential. Early efforts to achieve joint understanding of electromagnetic signals and natural lan-guage have laid important groundwork. However, these pi-oneering works often deviate from the standard, end-to-end paradigm that has proven successful for modern MLLMs in domains like vision. Many existing methods adopt a pipelined or task-specific architecture. Consequently, their generalize performance is often capped. Therefore, adapt-ing a native MLLM framework to the EM domain presents a promising and underexplored direction. However, a direct application of existing vision-language paradigms is im-peded by three fundamental challenges unique to the elec-tromagnetic domain: 
+
+Data Scarcity. The inherent confidentiality and com-plexity of EM signals have led to an extreme lack of high-quality, large-scale public datasets pairing signals with text. This data bottleneck fundamentally restricts the training and development of capable EM MLLMs. To address this bar-rier, we construct EM-100k, a large-scale dataset compris-ing over 100,000 signal-text pairs, integrating open-source signals, professional simulations, and real-world samples to provide a robust foundation for model pre-training. 
+
+The Absence of Standardized Benchmarks. Without a common ground for evaluation, it is impossible to fairly compare different model architectures and training strate-gies. To resolve this and enable measurable progress, we in-troduce EM-Bench, the first comprehensive benchmark de-signed to evaluate MLLMs in the EM domain. EM-Bench features a multi-tiered evaluation system covering tasks that span from fundamental perception to complex reasoning, offering over 4,200 high-quality question-answering pairs for a standardized and multi-dimensional assessment of model capabilities. 
+
+Model Performance Degradation in Low-SNR Envi-ronments. Enhancing robustness in noisy conditions re-mains a central challenge in the EM domain. We identify a critical fragility in the standard encoder-LLM architec-ture: its performance collapses dramatically in low Signal-to-Noise Ratio (SNR) environments. In this work, we define low-SNR as any signal with an SNR below 0 dB, a critical threshold where the noise power exceeds the signal power. This failure occurs because noise corrupts the low-level sig-nal features [10, 19, 35, 50], exacerbating the semantic gap between the signal and text modalities. Overcoming this fragility is not merely an incremental improvement, but a core challenge that must be solved to make EM MLLMs viable for practical application. Notably, our experiments demonstrate that the model tends to extract homogenized features, thereby losing the ability to discriminate the in-trinsic physical representation. We furthermore observe a key phenomenon: linearly interpolating from the feature of a noisy signal towards its clean version systematically improves model performance. These findings, combined with insights from advanced low-SNR handling techniques in fields such as image enhancement [34, 51, 55] and EEG signal representation learning [7, 7, 16, 48], inspired our conclusion: tackling noise directly at the feature level is an effective pathway. To this end, we propose MERLIN (Multi-modal Elec-tromagnetic Robust Learning), a two-stage training frame-work designed to build an EM MLLM robust to low-SNR conditions. Following an initial multi-task pre-training stage, MERLIN introduces a second stage based on knowl-edge distillation[29, 33, 38]. In this stage, the pre-trained model initializes a frozen teacher network and a trainable student network. The student is trained on low-SNR signals to align its latent representations with those of the teacher processing the corresponding high-SNR signals. This pro-cess compels the student to learn a noise-invariant represen-tation, significantly improving performance in noisy condi-tions while preserving its general multi-task capabilities. In summary, our core contributions are as follows: • We built EM-100k, a large-scale pre-training dataset for EM signals, and introduced EM-Bench, the field’s most comprehensive evaluation benchmark. These resources address the critical bottlenecks of data scarcity and the lack of standardized evaluation for multimodal EM mod-els, providing essential infrastructure for future research. • We propose MERLIN, a novel two-stage training frame-work designed to build EM MLLM robust to low-SNR conditions. By integrating an initial pre-training stage with a subsequent knowledge distillation stage for low-SNR robustness, MERLIN produces a model that excels in noisy environments while retaining its foundational multi-task abilities. This method effectively resolves the key challenge of low-SNR performance collapse. • We conduct extensive evaluations on our proposed EM-Bench. Our MERLIN-trained model demonstrates re-markable robustness in low-SNR settings and substan-tially outperforms baselines. This result validates the ef-ficacy of our end-to-end multimodal method. 
+
+## 2. Related Work 
+
+Multimodal Large Language Models. The powerful rea-soning of LLMs, exemplified by PaLM-2 [5], is now be-ing extended to perceive and understand non-textual infor-mation through MLLMs. This wave of innovation began in the visual domain, where a series of influential mod-els learned to align image features with language to enable complex visual dialogue [1, 11, 13, 24, 25, 31, 49]. This core idea was quickly adapted to interpret temporal dynam-ics in videos [4, 26, 28, 52, 54] and to process raw audio for end-to-end speech interaction [8, 40, 44, 53]. More re-cently, the electromagnetic domain has emerged as a new frontier for this multimodal approach. Pioneering works in this area aim to bridge low-level signal data with high-level semantic understanding. For instance, RadioLLM [9] lever-ages a Q-Former architecture, popularized by vision models like BLIP-2 [25], to map I/Q signal features into the LLM’s semantic space. Similarly, Spectrum-LLM [30] and Wire-lessLLM [41] are developing novel encoding strategies to translate time-series signals and network data into formats digestible by LLMs, paving the way for natural language-based wireless cognition. 
+
+Electromagnetic Datasets. The development of robust wireless perception models heavily relies on high-quality datasets. The RadioML series [36, 37] established a founda-tional benchmark for modulation classification under vary-ing SNR conditions. Subsequent datasets, including Hisar-Mod [47] and RadarCommDataset [17], expanded the scope by providing a greater diversity of modulation schemes, channel conditions, and signal protocols. More recently, the creation of large-scale corpora like EM[32], with its 800,000 raw I/Q samples, has provided the necessary in-frastructure for pre-training large, generalizable models for the wireless domain. 
+
+Low-SNR Robust Perception. The pervasive low signal-to-noise ratio (SNR) problem fundamentally con-strains the feasibility and performance ceilings of per-ception and reasoning tasks, making robustness enhance-ment a critical challenge across multiple domains. In the image domain, researchers have developed various noise-robust methodologies, including physics-guided en-hancement frameworks [42, 43, 45, 51], adaptive multi-scale attention mechanisms [3, 22, 34, 56], and contrastive learning-driven feature recovery techniques [18, 20, 27, 35, 55], significantly improving visual perception capabilities under low-light and high-noise conditions. 
+
+## 3. EM-100k & EM-Bench 
+
+3.1. Evaluation Dimensions 
+
+Performing an effective analysis of EM signals requires two fundamental abilities. The first is perception, the ability to understand the core characteristics of raw signal data. The second is reasoning, used to draw advanced conclusions and develop strategies. For MLLMs to perform well in complex EM scenarios, they must effectively combine robust percep-tion and reasoning. Therefore, we structure the EM-Bench evaluation around these two primary ( L-1 ) capabilities: Per-ception and Reasoning. These are further divided into 4 L-2 tasks and then refined into 14 fine-grained L-3 sub-tasks, shown in Figure 2. Perception covers 3 L-2 tasks and is mainly evaluated using single-choice questions. In contrast, reasoning covers 1 L-2 task and is assessed via open-ended question answering. The details of each L-2 task are pre-sented as follows: Duty Cycle Estimation 
+
+> Pulse Repetition Frequency Estimation
+> Radar Jamming Judgement
+> Jamming Segment Detection
+> Radar Jamming Strategy
+> Anti-Communication Jamming Strategy
+> Strategy Generation
+> Jamming Identification
+> Segment Detection
+> Signal Characterization
+> Modulation Classification
+> Communication Jamming Strategy
+> Anti-Radar Jamming Strategy
+> Communication Jamming Judgement
+> Protocol Identification
+> Pulse
+> Number Estimation
+> Pulse
+> Width Estimation
+> Bandwidth Estimation
+> Perception
+> Reasoning
+
+Figure 2. The hierarchical evaluation framework of EM-Bench, which systematically assesses the perception and reasoning capa-bilities of MLLMs on electromagnetic IQ signals across 3 levels and 14 sub-tasks. Table 1. Composition of the large-scale data corpus used for creating EM-100k and EM-Bench. This table details the 10 subsets, totaling over 35 million signal samples, that form our foundational data pool. 
+
+Subset Signal Type Mission Type Data Source Number of Samples MOD – 14 types of modulation Real-world 588,000 PE LFM/Barker/Frank/Stepped/Rectangular 6 types of parameters Simulation 7,310,600 PI BPSK/QPSK/16-QAM/64-QAM/256-QAM 8 types of protocols Simulation 911,895 SD – 9 types of Jamming Simulation 162,000 RJR LFM/Barker/Noise/Frank/Sin/Rectangular 12 types of Jamming Simulation 4,918,700 CJR BPSK/QPSK/16-QAM/64-QAM/GFSK 9 types of Jamming Simulation 4,984,875 RJS LFM/Barker/Frank/Stepped/Rectangular – Simulation 5,313,600 CJS – – Simulation 2,747,000 Anti-RJ LFM/Barker/Frank/Noise/Rectangular – Simulation 3,948,200 Anti-CJ BPSK/QPSK/16-QAM/64-QAM/GFSK – Simulation 4,984,875 TOTAL 35,869,745 
+
+• Signal Characterization. Electromagnetic IQ signals encode rich information, including modulation, protocol, and key parameter estimations. This task is therefore composed of 8 L-3 sub-tasks, each designed to evaluate the model’s ability to identify these distinct attributes. To meticulously assess the MLLM’s precision in parameter perception, we extract all 6 key parameters from the pa-rameter estimation tasks in EM-100k, formulating a ded-icated sub-task for each. • Jamming Identification. Signal jamming is a critical challenge in the EM domain, as strong interference can severely degrade signal quality. To evaluate an MLLM’s ability to perceive interference, we design 2 L-3 sub-tasks covering 12 typical jamming types in the radar domain and 9 in the communications domain. • Fragment Detection. Beyond identifying the type of jamming, an effective MLLM also needs the ability to localize the affected signal segments. This sub-task re-quires MLLMs to output the start and end points of the interfered IQ signal segment, thereby evaluating its fine-grained temporal perception capabilities. • Strategy Generation. In scenarios such as electronic countermeasures, MLLMs can serve as assistants in de-vising strategies to jam hostile signals or to counteract adversarial jamming. This L-2 task aims to evaluate the MLLM’s capacity for strategic planning. It comprises 4 L-3 sub-tasks, corresponding to the generation of jam-ming and anti-jamming strategies in both radar and com-munication contexts. 
+
+3.2. Data Collection and QA Pairs Construction 
+
+Data Sourcing. To construct a diverse and transferable multi-task dataset, we focus on maximizing the diversity of both the EM signals and their associated tasks. As il-lustrated in Figure 3 (Stage 1). We collect a diverse cor-pus of IQ data by synthetic generation and real-world col-lection. Furthermore, we integrate an existing open-source dataset [15] to ensure comprehension in the parameter es-timation task. As summarized in Table 1, our final dataset contains 35,869,745 IQ signals across 10 distinct sub-tasks, covering a wide range of signal types and parameters. All signals are standardized to a 20 MHz sampling rate, a uni-form SNR distribution from -20 to 20 dB, and a fixed length of 1024 samples. To ensure annotation quality, we retain the original labels for public datasets, while the corresponding labels for our synthetic data are generated programmatically during the simulation process. Finally, the entire dataset is validated by domain experts who confirmed the consistency between the IQ waveforms and their parameters to confirm the fidelity. 
+
+EM-100k & EM-Bench Construction. Our pipeline to create the benchmark and dataset begins with a uni-fied, LLM-driven generation process, as shown in Figure 3 (Stage 2). This core module takes the Curated IQ Sig-nals along with our QA Templates and Prompt Library as inputs to produce a large, shared pool of raw outputs. From this common origin, the data is channeled into two distinct pathways to forge the EM-Bench and EM-100K datasets, each with a tailored procedure reflecting its end purpose. To construct the EM-Bench benchmark, raw QA pairs from the generated pool are subjected to a Rigorous Expert Validation and Refinement process. This critical stage en-sures the highest quality, as domain experts meticulously re-view each question-answer pair for factual accuracy, clarity, and logical soundness. Any ambiguous or incorrect samples are either refined or discarded. For the EM-100K fine-tuning dataset, the process is optimized for scale. Raw instruction-response pairs are channeled through an automated Instruction Formatting pipeline. This step programmatically structures the data into a conversational format suitable for large-scale super-vised fine-tuning, efficiently converting the raw LLM out-Expert-led        
+
+> Curation &
+> Validation
+> üProtocol
+> üModulation
+> üBandwidth
+> üJamming Type
+> üSample Rate
+> üSNR
+> ü…
+> …
+> Raw Data Pool
+> （35.8M Signals ）
+> .h5
+> IQ data
+> Curated
+> IQ Signals
+> .h5
+> Prompt
+> Library
+> Q&A
+> Templates
+> …
+> Real World Signal
+> Stage 1: Foundational IQ Data Corpus Construction
+> Stage 2: Generation of EM-100K and EM-Bench
+> Simulation Signal
+> .h5
+> Curated IQ Signals
+> LLM-based
+> Generation
+> Rigorous Expert
+> Validation &
+> Refinement
+> Instruction
+> Formatting
+> EM-100K
+> （Pre-training Dataset ）
+> EM-Bench
+> （Benchmark in EM ）
+> "question_id": "...",
+> "iq_data": "[...]",
+> "question": "...",
+> "options": [ "A":"...", " B":"...", ... ],
+> "answer": "..."
+> "id": "...",
+> "iq_data": "[...]",
+> "conversations": [
+> {"from": "human", "value": "..."},
+> {"from": "gpt", "value": "..."}
+> ]
+> Raw
+> QA Pairs
+> Raw
+> Instruction
+> Respons e
+> Open-source dataset
+
+Figure 3. The two-stage construction pipeline for the EM-100K fine-tuning dataset and the EM-Bench evaluation benchmark. Stage 1 focuses on building a large-scale, expert-validated IQ data corpus. Stage 2 details the distinct generation processes: a di-rect, large-scale formatting for EM-100K, and a rigorously expert-validated pathway for the high-quality EM-Bench. 
+
+puts into a massive training resource. 
+
+3.3. Analysis 
+
+The dual-path construction pipeline yields two distinct re-sources, EM-Bench and EM-100K, whose properties and intended roles are analyzed below. EM-Bench is a high-quality benchmark designed for comprehensive evaluation, comprising 4,200 expert-validated QA pairs. It is structured to provide 300 pairs for each of the 14 L-3 sub-tasks defined in our evaluation framework. To thoroughly assess different model capabili-ties, the benchmark utilizes two distinct formats: • Perception Tasks use a single-choice format represented by the tuple Pi = ( Qi, C i, I i, A i), where Qi denotes the question, Ii denotes the IQ signal sequence, Ai denotes the ground-truth answer, and Ci denotes a set of five op-tions containing the correct answer, three distractors ran-domly sampled from the ground-truth answers of other QA pairs, and an option ”Unable to answer” for confi-dence assessment. • Reasoning Tasks follow a constrained open-ended for-mat Pi = ( Qi, I i, A i), which requires models to generate strategic responses directly without predefined options. EM-100K is a large-scale dataset created for supervised fine-tuning, consisting of 100,000 instruction-tuning sam-ples. Following a LLaVA-like architecture [31], each sam-ple is formatted as a single-turn dialogue (an instruction and a ground-truth response). This structure decouples the raw IQ data from the text while retaining embedded metadata such as sampling rate and SNR, making it ideal for training. In summary, EM-Bench provides a high-fidelity yard-stick for measuring model capabilities, while EM-100K of-fers the large-scale, specialized knowledge needed to en-hance them. Together, they form a comprehensive and syn-ergistic ecosystem for advancing Multimodal Large Lan-guage Models in the electromagnetic domain. 
+
+## 4. MERLIN Framework 
+
+We introduce MERLIN, a comprehensive framework for building robust and capable EM MLLMs. To address the performance degradation in low-SNR conditions, MERLIN adopts a carefully structured two-stage training paragdigm: (1) Foundational cross-modal pretraining to establish a ro-bust link between the two modalities, and (2) Low-SNR ro-bustness enhancement to specifically overcome the model’s fragility in noisy conditions. 
+
+4.1. Motivation. 
+
+While achieving robustness in low-SNR environments is a well-established challenge in the signal domain, how this problem manifests in large-scale MLLMs and how to best address it remains a question. Motivated by practices in the MLLM domain, a natural first attempt is to modify the com-position of training data. We first explored this direction by pre-training several models with varying ratios of low-to-high SNR data. As shown in Figure 5a, our experiments revealed a critical limitation of this data-centric approach. While increasing the volume of low-SNR training data pro-vides a marginal benefit, it fails to yield any substantial improvement in low-SNR performance. This finding mo-tivates our core thesis: the low-SNR problem in MLLMs must be addressed at the feature level, not merely at the data level. Furthermore, our analyzes demonstrate that the low-SNR degradation originates from feature collapse. Specif-ically, as visualized in Figure 5b, low-SNR signals pro-duce embeddings that are highly overlapped across classes, leading to semantic ambiguity and unstable multimodal alignment. Compellingly, directly manipulating these de-graded embeddings—by linearly interpolating a low-SNR signal embedding towards its corresponding high-SNR ver-sion—resulted in a dramatic recovery of the LLM’s genera-tive performance, as evidenced in Figure 5c. This evidence strongly motivates a solution that targets the signal feature space. These findings form the cornerstone of our proposed MERLIN framework, which is designed to explicitly ad-dress this feature-level fragility. 
+
+4.2. Model Architecture. 
+
+As illustrated in Figure 4, the architecture of our baseline model consists of three integral comoponents: Signal En-coder, Signal Projector and Large Language Model (LLM). To effectively obtain meaningful features from raw sig-nal data, we employ the pretrained EMind, which has Concatenate       
+
+> Signal Encoder Large Language Model
+> Signal Encoder Large Language Model
+> EM-QA
+> Tokenizer Adding
+> Noise
+> Question: Identify the modulation
+> method of the IQ signal below and
+> select correct answer from given options.
+> A. 64QAM B.128QAM
+> C. 8PSK D. OOK
+> E. Unable to Answer
+> Answer: C
+> Output
+> Output
+> Student Model
+> Teacher Model
+> .h5
+> .h5
+> Causal LM loss
+> Logits Loss
+> MLP Loss
+
+Distillation Framework 
+
+> DSM
+
+Model Architecture 
+
+> Signal Encoder
+> Large Language Model
+> Causal loss
+
+DSM   
+
+> Noisy  Signal Feature
+> Feature Space
+> Signal Feature Plane
+> Noisy Signal Feature
+> Basis
+> Projection
+> Denoised Feature
+> Noise
+> MLP
+> Denoised Feature
+> Answer Question
+> MLP
+> Signal Projector
+> MLP
+
+Figure 4. The architecture and training framework of MERLIN. (1) The baseline model architecture consists of a Signal Encoder, a Projector, and a LLM. (2) The knowledge distillation framework enhances low-SNR robustness by using a frozen high-SNR teacher model to guide a student model. (3) The Denoising Subspace Module (DSM) facilitates effective distillation by projecting noisy signal features into a clean, noise-invariant feature space. 
+
+(a) Comparison of training results for high and low SNR data in different mixed scenarios. 
+
+-20db to -10db 10db to 20db 
+
+(b) Embedding clustering of 2000 samples for the PI task under different SNR groups. 0.0 0.2 0.4 0.6 0.8 1.0 
+
+> Interpolation Rate
+> 45
+> 50
+> 55
+> 60
+> 65
+> Accuracy (%)
+
+(c) Training results after linearly interpolating high and low SNR data at different ratios. 
+
+Figure 5. Motivational analysis demonstrating that low-SNR degradation is a feature-collapse problem 
+
+demonstrated state-of-the-art performance in analogous electromagnetic tasks. The encoder maps the signal into high-dimensional latent representations. Then the encoded features are then projected into the embedding space of the language model through a lightweight projector, which con-sists of two MLP layers with GELU activation. After pro-jection, the signal embeddings are concatenated with the textual embeddings derived from the language tokenizer and jointly processed by a large language model (LLM) to generate language outpus. 
+
+4.3. Two-Stage Training paradigm 
+
+4.3.1 Stage1: Foundational Pretraining 
+
+To cultivate sophisticated reasoning abilities, we formulate the pretraining as a multi-task, instruction-following prob-lem. Instead of using simple (signal, description) pairs, the model is trained to auto-regressively generate the answer text A when presented with the signal S and the question or instruction Q.This instruction-tuning format trains the model to per-form a wide range of tasks within a unified generative framework. The training objective is to minimize the stan-dard next-token prediction loss: 
+
+Lpretrain (Θ) = −
+
+> M
+
+X
+
+> i=1
+
+log P (ai|a<i , Q, S ; Θ) 
+
+where A = {a1, a 2, ..., a M } is the ground-truth answer of length M , while P (ai|a<i , Q, S ; Θ) represents the distri-bution for the response token ai given the preceding to-kens a<i , Q and S. The entire set of model parameters, 
+
+Θ = {θenc , θ proj , θ llm }, is jointly optimized to minimize this objective. are the sets of trainable parameters for the Signal Encoder, the Projector, and the LLM, respectively. 4.3.2 Stage2: Low-SNR Robustness Enhancement 
+
+To systematically correct the degraded signal embed-dings, we introduce a comprehensive knowledge distilla-tion framework. This framework comprises two models, a T eacher and a Student , both initialized with the identi-cal weights of the baseline model described in Section 3.1. The T eacher , which operates as a static reference, remains frozen throughout this stage. The Student is the target of our optimization. Its parameters are fully trainable and are updated during this stage. Training is performed on a par-allel dataset of tuples (Ihigh , I low , Q, A ), where Ihigh and 
+
+Ilow respectively denote the high-SNR and low-SNR ver-sions of the same underlying signal. In each step, T eacher 
+
+receives (Ihigh , Q ) and Student receives (Ilow , Q ).
+
+Student is optimized using a composite objective that combines three distinct loss functions: the hard-label task loss Ltask , the feature-level distillation loss Lf eat , and the logit-level distillation loss Llogit . These terms guide 
+
+Student toward both discriminative and semantically sta-ble representations under noisy signal conditions. The final training objective combines the three components in a uni-fied formulation: 
+
+L = Ltask + λlogits Llogits + λf eat Lf eat 
+
+where λlogits and λf eat are scalar hyperparameters that bal-ance the contribution of each distillation term. 
+
+Task Loss. To ground Student in the primary task, we compute a standar cross-entropy loss between its predic-tions and A, conditioned on the low-SNR input: 
+
+Ltask = −
+
+> M
+
+X
+
+> i=1
+
+log PStudent (ai|a<i , Q, I low )
+
+Feature-level Distillation Loss. To address the degrada-tion of discriminative features under low-SNR conditions, we introduce a feature-level distillation mechanism that ex-plicitly transfers the high-SNR structural characteristics of 
+
+T eacher to the low-SNR Student . Given a pair of parallel signals, T eacher projector outputs a high-quality embed-ding fT eacher , while the student produces a noisy embed-ding fStudent . However, direct alignment between fT eacher 
+
+and fStudent is often unstable due to noise contamination in fStudent . To alleviate this issue, we employ a Denois-ing Subspace Module (DSM) that assumes the existence of an approximately orthogonal decomposition between signal and noise subspaces. The DSM learns a projection matrix 
+
+P = U U T spanning the signal subspace and projects the student embedding before computing the distillation loss: 
+
+Φ( fStudent ) = P f Student 
+
+Lf eat = ∥Φ( fStudent ) − fStudent ∥22
+
+This denoising projection effectively filters out noise-dominated components, stabilizing the optimization pro-cess and “softening” the distillation. Through this mech-anism, the student learns to reconstruct high-SNR-like fea-tures even from degraded inputs, which fundamentally im-proves feature discriminability in low-SNR regimes. 
+
+Logits-level Distillation Loss. To further ensure seman-tic consistency at the language modeling level, we apply a logit-level distillation loss that aligns the output distribu-tions of the teacher and student LLMs. Specifically, we minimize the KL divergence between their softened logits: 
+
+Llogit = T 2KL (Sof tmax ( zStudent 
+
+T ), Sof tmax ( zT eacher 
+
+T )) 
+
+where zStudent and zT eacher respectively denote T eacher 
+
+and Student logits from the LLM head, and T is the tem-perature coefficient. 
+
+## 5. Experiment 
+
+5.1. Experimental Setup 
+
+Implementation Details The architecture of our model consists of an EMind[32] signal encoder, a 2-layer MLP projector, and the Qwen3-4B-Instruct-2507 model as the LLM backbone. For both training stages, we use the AdamW optimizer and a cosine learning rate scheduler. Each stage is trained for a maximum of 8 epochs with a global batch size of 256 and an initial learning rate of 5e-5. The best checkpoint for each stage is selected via early stop-ping, based on the validation loss over a 10% held-out por-tion of the training data. All experiments were conducted on a single server equipped with 8 NVIDIA A100 (80GB) GPUs. 
+
+Dataset and Benchmark. We employ a two-stage train-ing process with final performance evaluated on the EM-Bench. The first pre-training stage utilizes the full EM-100k dataset. For the second stage, we construct a training set by generating low-SNR counterparts for high-SNR signals from EM-100k via Gaussian noise injection. This dataset of signal pairs is supplemented with a data replay mecha-nism from the original pre-training set to maintain general performance. 
+
+Baselines. Our primary baseline involves feeding tex-tualized signal data directly to a state-of-the-art LLM in a zero-shot setting. Raw IQ sequences are normalized and formatted into numerical strings embedded within task-specific prompts. This baseline is designed to quantify the signal processing capabilities inherent to the LLM itself, thereby isolating the performance gains provided by our multimodal architecture. 
+
+5.2. Main Results 
+
+To validate the efficacy of our proposed model, We evalu-ate MERLIN on EM-Bench against leading proprietary and Table 2. Main results on EM-Bench. We compare MERLIN with leading proprietary and open-source LLMs. All baseline LLMs process EM signals in a textualized format. The best results are highlighted in bold , and the second-best are underlined. ”PE” denotes Parameter Estimation tasks. Its sub-tasks denote BW : Bandwidth, DC : Duty Cycle, NP : Num. Pulses, PRF : Pulse Rep. Freq, PW : Pulse Width. MERLIN achieves state-of-the-art performance across both perception and reasoning tasks.                                                                                                                             
+
+> Model Perception Tasks Reasoning Tasks
+> MOD PE (Radar) PI CJR RJR SD Avg. Anti-CJ Anti-RJ CLS RJS BW DC NP PRF PW Rouge-L/BLEU Rouge/BLEU Rouge/BLEU Rouge/BLEU GPT-5 28.00 12.67 0.00 52.67 14.00 6.67 30.00 19.67 26.00 42.33 23.20 0.01 / 0.00 0.00 / 0.00 0.03 / 0.00 0.01 / 0.00 Claude-4-Sonnet 30.00 24.00 38.00 52.00 25.17 31.00 29.67 25.67 30.67 44.33 32.35 0.11 / 0.00 0.10 / 0.00 0.10 / 0.00 0.12 / 0.01 DeepSeek-v3.2-exp 18.00 9.33 9.67 19.67 13.67 17.00 8.33 5.67 11.00 18.33 13.07 0.05 / 0.00 0.06 / 0.00 0.09 / 0.00 0.09 / 0.00 Qwen3-Next-80b-A3B 17.00 7.33 14.67 29.33 15.33 16.33 10.00 9.33 13.67 24.00 15.70 0.01 / 0.00 0.01 / 0.00 0.03 / 0.00 0.01 / 0.00 Gemini-2.5-Pro 24.00 8.74 50.67 52.33 17.20 15.63 29.67 24.67 31.00 45.25 29.92 0.10 / 0.00 0.10 / 0.00 0.08 / 0.00 0.10 / 0.00 Qwen3-VL-4B-Instruct 45.93 84.33 55.03 86.83 74.47 56.10 89.00 76.17 81.52 79.97 72.94 0.43 / 0.14 0.31 / 0.09 0.31 / 0.06 0.28 / 0.10
+> MERLIN (Ours) 44.97 82.13 75.30 92.40 82.77 72.53 87.37 86.00 83.04 76.20 78.27 0.45 / 0.15 0.29 / 0.08 0.40 / 0.08 0.42 / 0.22
+
+Table 3. Ablation of MERLIN’s distillation components. We show the impact of incrementally adding each component on model performance, starting from the pre-trained baseline. 
+
+Method Components Perf. (%) 
+
+LM LP DSM LLogits Low-SNR Overall Stage-1 × × × 59.7 71.8 + Stage-2 × × × 62.9 77.6 + Feature KD ✓ × × 64.2 77.9 + DSM ✓ ✓ × 64.4 78.0 
+
+MERLIN ✓ ✓ ✓ 65.1 78.6 
+
+open-source LLMs. Baselines process EM signals only as text, without a dedicated signal encoder. Results are sum-marized in Table 2. In perception tasks, MERLIN exhibits a profound capability to accurately interpret raw signal char-acteristics. While baseline LLMs show some proficiency in simpler tasks, they falter on more nuanced parameter esti-mations. In contrast, MERLIN consistently delivers high accuracy, indicating its robust architecture is better suited for extracting detailed information from specialized elec-tromagnetic data. This performance gap is even more pro-nounced in the reasoning tasks. MERLIN demonstrates a strong ability to analyze complex scenarios, such as iden-tifying and responding to jamming signals. The baseline models, however, struggle to generate coherent or effec-tive strategies, as reflected by their near-zero scores. In conclusion, the comparative analysis validates that MER-LIN’s specialized design provides a substantial leap in per-formance for both foundational perception and high-level reasoning within the electromagnetic domain, setting a new state-of-the-art. 
+
+5.3. Ablation Study 
+
+We conduct a detailed ablation study on EM-Bench to vali-date the contribution of each component in our framework. To facilitate a clear and quantitative analysis, this section reports the accuracy on the multiple-choice tasks of EM-Bench, with the full results presented in Table 3. Our analysis begins with the model after its initial pre-training stage, which serves as our baseline (denoted as ”Stage-1”). As expected, the model struggles with the spe-cialized and noisy environment, establishing a clear need for further adaptation. A crucial finding is the effectiveness of a dedicated second training stage. Simply fine-tuning the pre-trained model on the target data results in a substantial leap in performance. This validates our two-stage approach, confirming that a specialized adaptation phase is essential for our model. Building upon this strong fine-tuning baseline, we then demonstrate the superiority of our knowledge distillation strategy. By augmenting the conventional supervised ob-jective with a MLP feature knowledge distillation loss, we observe a clear and consistent improvement. This result confirms our central hypothesis: for achieving noise robust-ness, it is effective to teach the model how to represent sig-nals. Finally, we show the value of our specific distillation enhancements. The integration of our DSM module pro-vides a further improvement. The final inclusion of the log-its loss completes the MERLIN framework and yields the highest performance, demonstrating the synergistic benefit of guiding the student model at both the feature and the out-put distribution levels. In conclusion, the ablation results systematically confirm that each component in our design is a deliberate choice, working in concert to produce the fi-nal model’s robustness. 
+
+## 6. Conclusion 
+
+In this work, we establish a comprehensive foundation for MLLMs in the EM domain by systematically addressing three critical challenges. We introduce two key resources, the large-scale EM-100k dataset and the comprehensive EM-Bench benchmark, to resolve the foundational issues of data scarcity and the lack of standardized evaluation. Building upon this infrastructure, we propose MERLIN, a novel training framework designed to overcome the core challenge of performance degradation in low-SNR environ-ments. Extensive experiments validate our integrated ap-proach, demonstrating that MERLIN achieves state-of-the-art performance on EM-Bench and, crucially, exhibits ex-ceptional robustness in noisy conditions where other meth-ods falter. Together, these contributions provide a robust and validated pathway for future research into powerful MLLMs for the EM domain. 
+
+## References 
+
+[1] Josh Achiam, Steven Adler, Sandhini Agarwal, Lama Ah-mad, Ilge Akkaya, Florencia Leoni Aleman, Diogo Almeida, Janko Altenschmidt, Sam Altman, Shyamal Anadkat, et al. Gpt-4 technical report. arXiv preprint arXiv:2303.08774 ,2023. 2, 3 [2] Imtiaz Ahmed, Sadman Islam, Partha Protim Datta, Imran Kabir, Naseef Ur Rahman Chowdhury, and Ahshanul Haque. Qwen 2.5: A comprehensive review of the leading resource-efficient llm with potentioal to surpass all competitors. Au-thorea Preprints , 2025. 2 [3] Kyusu Ahn, Jinpyo Kim, Chanwoo Park, JiSoo Kim, and Jaejin Lee. Integrating spatial and frequency information for under-display camera image restoration. Pattern Anal-ysis and Applications , 28(4):184, 2025. 3 [4] Jean-Baptiste Alayrac, Jeff Donahue, Pauline Luc, Antoine Miech, Iain Barr, Yana Hasson, Karel Lenc, Arthur Men-sch, Katherine Millican, Malcolm Reynolds, et al. Flamingo: a visual language model for few-shot learning. Advances in neural information processing systems , 35:23716–23736, 2022. 3 [5] Rohan Anil, Andrew M Dai, Orhan Firat, Melvin John-son, Dmitry Lepikhin, Alexandre Passos, Siamak Shakeri, Emanuel Taropa, Paige Bailey, Zhifeng Chen, et al. Palm 2 technical report. arXiv preprint arXiv:2305.10403 , 2023. 3 [6] Jinze Bai, Shuai Bai, Shusheng Yang, Shijie Wang, Sinan Tan, Peng Wang, Junyang Lin, Chang Zhou, and Jingren Zhou. Qwen-vl: A frontier large vision-language model with versatile abilities. arXiv preprint arXiv:2308.12966 , 1(2):3, 2023. 2 [7] Shakila Basheer, Ghadah Aldehim, Ala Saleh Alluhaidan, and Sapiah Sakri. Improving mental dysfunction detection from eeg signals: Self-contrastive learning and multitask learning with transformers. Alexandria Engineering Jour-nal , 106:52–59, 2024. 2 [8] Sanyuan Chen, Shujie Liu, Long Zhou, Yanqing Liu, Xu Tan, Jinyu Li, Sheng Zhao, Yao Qian, and Furu Wei. Vall-e 2: Neural codec language models are human par-ity zero-shot text to speech synthesizers. arXiv preprint arXiv:2406.05370 , 2024. 3 [9] Shuai Chen, Yong Zu, Zhixi Feng, Shuyuan Yang, and Mengchang Li. Radiollm: Introducing large language model into cognitive radio via hybrid prompt and token reprogram-mings. arXiv preprint arXiv:2501.17888 , 2025. 2, 3 [10] Yu-Wen Chen, Julia Hirschberg, and Yu Tsao. Noise robust speech emotion recognition with signal-to-noise ratio adapt-ing speech enhancement. arXiv preprint arXiv:2309.01164 ,2023. 2 [11] Zhe Chen, Jiannan Wu, Wenhai Wang, Weijie Su, Guo Chen, Sen Xing, Muyan Zhong, Qinglong Zhang, Xizhou Zhu, Lewei Lu, et al. Internvl: Scaling up vision foundation mod-els and aligning for generic visual-linguistic tasks. In Pro-ceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 24185–24198, 2024. 3 [12] Lu Cheng, Hongliang Zhang, Boya Di, Dusit Niyato, and Lingyang Song. Large language models empower multi-modal integrated sensing and communication. IEEE Com-munications Magazine , 2025. 2 [13] Gheorghe Comanici, Eric Bieber, Mike Schaekermann, Ice Pasupat, Noveen Sachdeva, Inderjit Dhillon, Marcel Blis-tein, Ori Ram, Dan Zhang, Evan Rosen, et al. Gemini 2.5: Pushing the frontier with advanced reasoning, multimodality, long context, and next generation agentic capabilities. arXiv preprint arXiv:2507.06261 , 2025. 3 [14] Kemal Davaslioglu, Serdar Boztas ¸, Mehmet Can Ertem, Yalin E Sagduyu, and Ender Ayanoglu. Self-supervised rf signal representation learning for nextg signal classification with deep learning. IEEE Wireless Communications Letters ,12(1):65–69, 2022. 2 [15] Zi Huang, Akila Pemasiri, Simon Denman, Clinton Fookes, and Terrence Martin. Multi-task learning for radar signal characterisation. In 2023 IEEE International Conference on Acoustics, Speech, and Signal Processing Workshops (ICAS-SPW) , pages 1–5. IEEE, 2023. 4 [16] Hyeon-Jin Im, Jiye Kim, and Sunyoung Kwon. Cocl: Eeg connectivity-guided contrastive learning for seizure detec-tion. ICT Express , 2025. 2 [17] Anu Jagannath and Jithin Jagannath. Dataset for modulation classification and signal type classification for multi-task and single task learning. Computer Networks , 199:108441, 2021. 3[18] Rusul Sabah Jebur, Mohd Hazli Bin Mohamed Zabil, Dalal Adulmohsin Hammood, and Lim Kok Cheng. A com-prehensive review of image denoising in deep learning. Mul-timedia Tools and Applications , 83(20):58181–58199, 2024. 3[19] Zhuoran Jiang, Siqi Wang, Yifei Xu, Leshan Sun, Gilberto Gonzalez, Yong Chen, Q Jackie Wu, Liangzhong Xiang, and Lei Ren. Radiation-induced acoustic signal denoising using a supervised deep learning framework for imaging and therapy monitoring. Physics in Medicine & Biology , 68(23):235010, 2023. 2 [20] Negar Jovhari, Amin Sedaghat, Reza Shah-Hosseini, Nazila Mohammadi, and Mahdi Hasanlou. Noise-robust multi-modal remote sensing image matching via geometric anal-ysis of embedded pre-trained manifolds. Neurocomputing ,638:130150, 2025. 3 [21] Seonghyeon Kang, Kawon Han, and Songcheol Hong. Sensing-aided distortion estimation for ofdm radar with non-linear transmitter. IEEE Transactions on Radar Systems ,2024. 2 [22] Nodirkhuja Khudjaev, Roman Tsoy, SM A Sharif, Azamat Myrzabekov, Seongwan Kim, and Jaeho Lee. Dformer: Learning efficient image restoration with perceptual guid-ance. In Proceedings of the IEEE/CVF Conference on Com-puter Vision and Pattern Recognition , pages 6363–6372, 2024. 3 [23] Gyu-Il Kim and Kyungyong Chung. Vit-based multi-scale classification using digital signal processing and image trans-formation. IEEE Access , 12:58625–58638, 2024. 2 [24] Feng Li, Renrui Zhang, Hao Zhang, Yuanhan Zhang, Bo Li, Wei Li, Zejun Ma, and Chunyuan Li. Llava-next-interleave: Tackling multi-image, video, and 3d in large multimodal models. arXiv preprint arXiv:2407.07895 , 2024. 2, 3 [25] Junnan Li, Dongxu Li, Silvio Savarese, and Steven Hoi. Blip-2: Bootstrapping language-image pre-training with frozen image encoders and large language models. In In-ternational conference on machine learning , pages 19730– 19742. PMLR, 2023. 3 [26] KunChang Li, Yinan He, Yi Wang, Yizhuo Li, Wenhai Wang, Ping Luo, Yali Wang, Limin Wang, and Yu Qiao. Videochat: Chat-centric video understanding. arXiv preprint arXiv:2305.06355 , 2023. 3 [27] Mengting Li and Chuang Zhu. Noisy label processing for classification: A survey. arXiv preprint arXiv:2404.04159 ,2024. 3 [28] Bin Lin, Yang Ye, Bin Zhu, Jiaxi Cui, Munan Ning, Peng Jin, and Li Yuan. Video-llava: Learning united visual repre-sentation by alignment before projection. In Proceedings of the 2024 Conference on Empirical Methods in Natural Lan-guage Processing , pages 5971–5984, 2024. 3 [29] Chengyuan Liu, Fubang Zhao, Kun Kuang, Yangyang Kang, Zhuoren Jiang, Changlong Sun, and Fei Wu. Evolving knowledge distillation with large language models and active learning. In Proceedings of the 2024 Joint International Con-ference on Computational Linguistics, Language Resources and Evaluation (LREC-COLING 2024) , pages 6717–6731, 2024. 2 [30] Chao Liu, Yu Wang, Shiwen Mao, Dusit Niyato, Xianbin Wang, and Guan Gui. Spectrumllm: Large language mod-els for next-generation spectrum prediction. IEEE Wireless Communications , 2025. 3 [31] Haotian Liu, Chunyuan Li, Qingyang Wu, and Yong Jae Lee. Visual instruction tuning. Advances in neural information processing systems , 36:34892–34916, 2023. 2, 3, 5 [32] Luqing Luo, Wenjin Gui, Yunfei Liu, Ziyue Zhang, Yunxi Zhang, Fengxiang Wang, Zonghao Guo, Zizhi Ma, Xinzhu Liu, Hanxiang He, et al. Emind: A foundation model for multi-task electromagnetic signals understanding. arXiv preprint arXiv:2508.18785 , 2025. 3, 7 [33] Yougang Lyu, Lingyong Yan, Shuaiqiang Wang, Haibo Shi, Dawei Yin, Pengjie Ren, Zhumin Chen, Maarten de Ri-jke, and Zhaochun Ren. Knowtuning: Knowledge-aware fine-tuning for large language models. arXiv preprint arXiv:2402.11176 , 2024. 2 [34] Dhruv Makwana, Gayatri Deshmukh, Onkar Susladkar, Sparsh Mittal, et al. Livenet: A novel network for real-world low-light image denoising and enhancement. In Proceed-ings of the IEEE/CVF Winter Conference on Applications of Computer Vision , pages 5856–5865, 2024. 2, 3 [35] YongKyung Oh and Alex Bui. Multi-view contrastive learn-ing for robust domain adaptation in medical time series anal-ysis. arXiv preprint arXiv:2506.22393 , 2025. 2, 3 [36] Timothy J O’shea and Nathan West. Radio machine learn-ing dataset generation with gnu radio. In Proceedings of the GNU radio conference , 2016. 3 [37] Timothy James O’Shea, Tamoghna Roy, and T Charles Clancy. Over-the-air deep learning based radio signal classi-fication. IEEE Journal of Selected Topics in Signal Process-ing , 12(1):168–179, 2018. 3 [38] Tianyu Peng and Jiajun Zhang. Enhancing knowledge dis-tillation of large language models through efficient multi-modal distribution alignment. In Proceedings of the 31st In-ternational Conference on Computational Linguistics , pages 2478–2496, 2025. 2 [39] Wei Quan, Wenjing Cheng, Yike Yang, Haiquan Zhao, Zhaoyu Chen, and Yunfan Luo. A signal fingerprint feature extraction method based on decomposition and fusion for radar emitter individual identification. Digital Signal Pro-cessing , page 105257, 2025. 2 [40] Paul K Rubenstein, Chulayuth Asawaroengchai, Duc Dung Nguyen, Ankur Bapna, Zal´ an Borsos, F´ elix de Chaumont Quitry, Peter Chen, Dalia El Badawy, Wei Han, Eugene Kharitonov, et al. Audiopalm: A large language model that can speak and listen. arXiv preprint arXiv:2306.12925 ,2023. 3 [41] Jiawei Shao, Jingwen Tong, Qiong Wu, Wei Guo, Zijian Li, Zehong Lin, and Jun Zhang. Wirelessllm: Empowering large language models towards wireless intelligence. arXiv preprint arXiv:2405.17053 , 2024. 3 [42] Jialin Shi, Kailai Zhang, Chenyi Guo, Youquan Yang, Yali Xu, and Ji Wu. A survey of label-noise deep learning for medical image analysis. Medical image analysis , 95:103166, 2024. 3 [43] Mehdi Taassori. Robustdeit: Noise-robust vision transform-ers for medical image classification. Image Analysis and Stereology , 44(2):111–129, 2025. 3 [44] Changli Tang, Wenyi Yu, Guangzhi Sun, Xianzhao Chen, Tian Tan, Wei Li, Lu Lu, Zejun Ma, and Chao Zhang. Salmonn: Towards generic hearing abilities for large lan-guage models. arXiv preprint arXiv:2310.13289 , 2023. 3 [45] Yiyi Tao, Zhuoyue Wang, Hang Zhang, Lun Wang, and Jianxin Gu. Nevlp: Noise-robust framework for efficient vision-language pre-training. In International Conference on Intelligent Computing , pages 74–85. Springer, 2025. 3 [46] Gemini Team, Rohan Anil, Sebastian Borgeaud, Jean-Baptiste Alayrac, Jiahui Yu, Radu Soricut, Johan Schalkwyk, Andrew M Dai, Anja Hauth, Katie Millican, et al. Gemini: a family of highly capable multimodal models. arXiv preprint arXiv:2312.11805 , 2023. 2 [47] K Tekbıyık, C Kec ¸eci, AR Ekti, A G¨ orc ¸in, and G Kurt. His-armod: A new challenging modulated signals dataset. IEEE Dataport , 2019. 3 [48] Guangyu Wang, Wenchao Liu, Yuhong He, Cong Xu, Lin Ma, and Haifeng Li. Eegpt: Pretrained transformer for uni-versal and reliable representation of eeg signals. Advances in Neural Information Processing Systems , 37:39249–39280, 2024. 2 [49] Peng Wang, Shuai Bai, Sinan Tan, Shijie Wang, Zhihao Fan, Jinze Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, et al. Qwen2-vl: Enhancing vision-language model’s perception of the world at any resolution. arXiv preprint arXiv:2409.12191 , 2024. 3 [50] Weining Weng, Yang Gu, Shuai Guo, Yuan Ma, Zhaohua Yang, Yuchen Liu, and Yiqiang Chen. Self-supervised learn-ing for electroencephalogram: A systematic survey. ACM Computing Surveys , 57(12):1–38, 2025. 2 [51] Xiaogang Xu, Ruixing Wang, Chi-Wing Fu, and Jiaya Jia. Snr-aware low-light image enhancement. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 17714–17724, 2022. 2, 3 [52] Wilson Yan, Yunzhi Zhang, Pieter Abbeel, and Aravind Srinivas. Videogpt: Video generation using vq-vae and trans-formers. arXiv preprint arXiv:2104.10157 , 2021. 3 [53] Dong Zhang, Shimin Li, Xin Zhang, Jun Zhan, Pengyu Wang, Yaqian Zhou, and Xipeng Qiu. Speechgpt: Empow-ering large language models with intrinsic cross-modal con-versational abilities. arXiv preprint arXiv:2305.11000 , 2023. 3[54] Hang Zhang, Xin Li, and Lidong Bing. Video-llama: An instruction-tuned audio-visual language model for video un-derstanding. arXiv preprint arXiv:2306.02858 , 2023. 3 [55] Jingming Zhang, Yaxi Yan, Shuaiqi Liu, Xingwei Chen, Alan Pak Tao Lau, Changyuan Yu, and Liyang Shao. Adap-tive block-matching and 3d denoising for ϕ-otdr under ultra-low snr conditions. Journal of Lightwave Technology , 42 (13):4698–4705, 2024. 2, 3 [56] Shihao Zhou, Duosheng Chen, Jinshan Pan, Jinglei Shi, and Jufeng Yang. Adapt or perish: Adaptive sparse transformer with attentive feature refinement for image restoration. In 
+
+Proceedings of the IEEE/CVF conference on computer vi-sion and pattern recognition , pages 2952–2963, 2024. 3 [57] Deyao Zhu, Jun Chen, Xiaoqian Shen, Xiang Li, and Mo-hamed Elhoseiny. Minigpt-4: Enhancing vision-language understanding with advanced large language models. arXiv preprint arXiv:2304.10592 , 2023. 2 A. Appendix 
+
+A.1. Overview of Appendix 
+
+This appendix provides supplementary details for our pre-trained baseline, dataset, and benchmark. Due to space constraints in the main paper, additional technical specifics can only be accommodated here. The organization is as follows: • Sec. A.2: More implent details of baseline model. • Sec. A.3: Datasheets for benchmark. • Sec. A.4: Visualizations of samples and challenging cases. • Sec. A.5: SNR Robustness: Pretrain Model vs. MERLIN. • Sec. A.6: Prompts on comparative Experiments Across Different General Models 
+
+A.2. Implementation Details of Baseline Model 
+
+We utilized EM-100K as the supervised fine-tuning (SFT) dataset. The pre-trained model is derived from Qwen3-8B, to which we first integrated a signal encoder (SIT) that embeds IQ signal data into feature vectors. These feature vectors serve as a second modality input alongside text into the LLM. During two-stage training, we perform full fine-tuning in the first stage to align signal and text semantics. In the second stage, we apply knowledge distillation fine-tuning to enhance the model’s robustness under low-SNR conditions, where the LLM parameters are frozen and only the signal encoder and projection layers are trained. 
+
+Table 4. Training configuration details for MERLIN framework. Hyperparameters used during the two-stage training. SIT = Signal Integration Transformer encoder. 
+
+Configuration Parameter Value 
+
+Dataset (Stage 1) EM-100K (100K instruction pairs) Dataset (Stage 2) Synthetic low-SNR variants (SNR = −20dB to 20dB) Batch Size 256 LR: Signal Encoder (SIT) 5.0 × 10 −5 (cosine decay) LR: Projector, LLM 5.0 × 10 −5
+
+Optimizer AdamW ( β1 = 0 .9, β 2 = 0 .999 , ϵ = 1 e-8)Training Epochs Stage 1: 8 epochs, Stage 2: 8 epochs Hardware 8 × NVIDIA A100 80GB 
+
+A.3. Datasheets for benchmark 
+
+Table 5. Overview of the EM-Bench evaluation framework. The benchmark features a three-level hierarchy spanning Perception and Reasoning, consisting of 14 distinct L3-Tasks. Each sub-task contains 300 samples, totaling 4,200 VQA pairs. The table lists the specific abbreviations, data quantities, and answer types (Single Choice vs. Open-ended Strategy) for each task.                                                                            
+
+> L1-Task L2-Task L3-Task Abbr. Annotation Format Number of Samples Answer Type
+> Perception Signal Characterization Modulation Classification MOD VQA 300 Single Choice(A/B/C/D/E) Duty Cycle Estimation PE.DC VQA 300 Single Choice(A/B/C/D/E) Pulse Repetition Frequency Estimation PE.PRF VQA 300 Single Choice(A/B/C/D/E) Bandwidth Estimation PE.BW VQA 300 Single Choice(A/B/C/D/E) Pulse Width Estimation PE.PW VQA 300 Single Choice(A/B/C/D/E) Pulse Number Estimation PE.NoP VQA 300 Single Choice(A/B/C/D/E) Protocol Identification PI VQA 300 Single Choice(A/B/C/D/E) Jamming Identification Radar Jamming Judgement RJR VQA 300 Single Choice(A/B/C/D/E) Communication Jamming Judgement CJR VQA 300 Single Choice(A/B/C/D/E) Segment Detection Jamming Segment Detection SD VQA 300 Single Choice(A/B/C/D/E) Reasoning Strategy Generation Anti-Communication Jamming Strategy Anti-CJ VQA 300 Open-end Strategy Anti-Radar Jamming Strategy Anti-RJ VQA 300 Open-end Strategy Communication Jamming Strategy CJS VQA 300 Open-end Strategy Radar Jamming Strategy RJS VQA 300 Open-end Strategy (a) Modulation (b) Bandwidth (c) Duty Cycle (d) Num. Pulses (e) PRF Est.
+> (f) Pulse Width (g) Protocol ID (h) Comm. Jamming (i) Radar Jamming (j) Segment Det.
+> Figure 6. Detailed performance comparison across 10 sub-tasks. The red line denotes MERLIN and the gray line denotes the Stage-1 baseline. MERLIN demonstrates significant improvements in complex parameter estimation tasks (e.g., Duty Cycle, Pulse Width) across all SNR levels, while maintaining robust performance in classification tasks.
+
+A.4. Detailed Performance Analysis across SNR Levels 
+
+Figure 6 provides a comprehensive breakdown of model performance across 10 sub-tasks under varying SNR conditions. The comparison between MERLIN and the Stage-1 baseline reveals distinct behavioral patterns: • Superiority in Fine-grained Perception: In complex parameter estimation tasks such as Duty Cycle , Pulse Width , and 
+
+PRF Estimation , MERLIN exhibits a consistent and significant performance lead (often > 10% ) across the entire SNR spectrum. This indicates that our feature-level distillation not only improves noise robustness but also enhances the model’s fundamental ability to extract subtle signal features that the baseline fails to capture even at high SNRs. • Robustness in Modulation and Detection: For Modulation Recognition (MOD) and Signal Detection (SD) , MERLIN demonstrates stronger resilience. While both models degrade as noise increases, MERLIN maintains a clearer operational margin in challenging low-SNR environments (e.g., −10 dB to 0 dB). • Performance on Saturated Tasks: For tasks like Protocol Identification (PI) and Jamming Recognition (RJR) , both mod-els achieve high accuracy rapidly. However, MERLIN remains competitive and consistently matches or slightly exceeds the baseline, ensuring no degradation in simpler tasks while significantly boosting performance in complex ones. A.5. Visualizations of samples and challenging cases Count the number of pulses in 
+
+the given IQ signal. 
+
+(A) 4
+
+(B) 3
+
+(C) 6
+
+(D) 5
+
+(E) Unable to Answer 
+
+Task: PE-Number-of-Pulses 
+
+claude-sonnet-4 ：（ C）
+
+deepseek-v3.2 ： （B）
+
+gemini-2.5-pro ： （C）
+
+gpt-5 ： （A）
+
+MERLIN ： （A) 
+
+Figure 7. Number-of-Pulses estimation details Calculate the pulse width of the 
+
+radar signal from the IQ data. 
+
+(A) 10\u00b5s 
+
+(B) 16\u00b5s 
+
+(C) 12\u00b5s 
+
+(D) 14\u00b5s 
+
+(E) Unable to Answer 
+
+Task: PE-Pulse-Width 
+
+claude-sonnet-4 ：（ C）
+
+deepseek-v3.2 ： （E）
+
+gemini-2.5-pro ： （E）
+
+gpt-5 ： （E）
+
+MERLIN ： （C) 
+
+Figure 8. Pulse-Width estimation classification Based on the IQ signal data 
+
+provided below, estimate the value of 
+
+its Pulse Repetition Frequency .
+
+(A) 200.0Hz 
+
+(B) 80.0Hz 
+
+(C) 100.0Hz 
+
+(D) 40.0Hz 
+
+(E) Unable to Answer 
+
+Task: PE-PRF 
+
+claude-sonnet-4 ：（ C）
+
+deepseek-v3.2 ： （C）
+
+gemini-2.5-pro ： （E）
+
+gpt-5 ： （B）
+
+MERLIN ： （D) Figure 9. PRF estimation details Please calculate the bandwidth 
+
+of the given IQ signal. 
+
+(A) 833.3Hz 
+
+(B) 160.0Hz 
+
+(C) 400.0Hz 
+
+(D) 666.7Hz 
+
+(E) Unable to Answer 
+
+Task: PE-Bandwidth 
+
+claude-sonnet-4 ：（ C）
+
+deepseek-v3.2 ： （C）
+
+gemini-2.5-pro ： （E）
+
+gpt-5 ： （E）
+
+MERLIN ： （B) 
+
+Figure 10. Bandwidth estimation details Based on the IQ signal data 
+
+provided below, estimate the value of 
+
+its Duty Cycle .
+
+(A) 0.600 
+
+(B) 0.700 
+
+(C) 0.250 
+
+(D) 0.200 
+
+(E) Unable to Answer 
+
+Task: PE-Duty-Cylce 
+
+claude-sonnet-4 ：（ C）
+
+deepseek-v3.2 ： （E）
+
+gemini-2.5-pro ： （E）
+
+gpt-5 ： （E）
+
+MERLIN ： （C) Figure 11. Duty-Cylce estimation details Based on the IQ signal data 
+
+presented below, please determine 
+
+which modulation scheme it uses and 
+
+select the corresponding correct 
+
+option. 
+
+(A) 2FSK 
+
+(B) 16QAM 
+
+(C) BPSK 
+
+(D) 4FSK 
+
+(E) Unable to Answer 
+
+Task: MOD 
+
+claude-sonnet-4 ：（ B）
+
+deepseek-v3.2 ： （B）
+
+gemini-2.5-pro ： （E）
+
+gpt-5 ： （A）
+
+MERLIN ： （A) 
+
+Figure 12. Modulation details Please analyze the IQ signal 
+
+below for interference . If present, 
+
+what is the type? If not, select the 
+
+corresponding option. 
+
+(A) Single-tone Jamming 
+
+(B) Broadband Jamming 
+
+(C) Multi-tone Jamming 
+
+(D) Barrage Jamming 
+
+(E) Unable to Answer 
+
+Task: CJR 
+
+claude-sonnet-4 ：（ B）
+
+deepseek-v3.2 ： （E）
+
+gemini-2.5-pro ： （B）
+
+gpt-5 ： （C）
+
+MERLIN ： （A) Figure 13. CJR details Please analyze the given IQ 
+
+signal and determine the 
+
+communication protocol or standard 
+
+it uses. 
+
+(A) Radar 
+
+(B) Background 
+
+(C) 5G NR 
+
+(D) LoRa 
+
+(E) Unable to Answer 
+
+Task: PI 
+
+claude-sonnet-4 ：（ C）
+
+deepseek-v3.2 ： （B）
+
+gemini-2.5-pro ： （C）
+
+gpt-5 ： （C）
+
+MERLIN ： （A) 
+
+Figure 14. PI details Analyze the IQ data below to 
+
+locate an embedded single-tone 
+
+jammer. Specify its temporal 
+
+boundaries by returning the start 
+
+and end sample indices. 
+
+(A) [359, 904] 
+
+(B) [1, 984] 
+
+(C) [412, 557] 
+
+(D) [0, 907] 
+
+(E) Unable to Answer 
+
+Task: SD 
+
+claude-sonnet-4 ：（ A）
+
+deepseek-v3.2 ： （C）
+
+gemini-2.5-pro ： （E）
+
+gpt-5 ： （A）
+
+MERLIN ： （B) Figure 15. SD details Analyze the provided IQ signal 
+
+and identify its primary type of 
+
+jamming , if any. 
+
+(A) Dense False Target Jamming 
+
+(B) Chaff Jamming 
+
+(C) Spot Jamming 
+
+(D) Swept-frequency Jamming 
+
+(E) Unable to Answer 
+
+Task: RJR 
+
+claude-sonnet-4 ：（ A）
+
+deepseek-v3.2 ： （E）
+
+gemini-2.5-pro ： （C）
+
+gpt-5 ： （E）
+
+MERLIN ： （A) 
+
+Figure 16. RJR details

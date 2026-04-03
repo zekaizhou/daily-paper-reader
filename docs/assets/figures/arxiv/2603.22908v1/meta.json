@@ -1,0 +1,86 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.22908v1/fig-001.webp",
+      "caption": "TABLE III: Results (%) on VisDA-17. “Source” denotes applying the pre-trained source model. “✓” indicates the use of a ViL model. “Avg.” is the average accuracy across tasks. Bold indicates the best results, underline denotes the second best.",
+      "page": 6,
+      "index": 1,
+      "width": 1052,
+      "height": 375
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22908v1/fig-002.webp",
+      "caption": "TABLE II: Results (%) on Office-Home. “Source” denotes applying the pre-trained source model. “✓” indicates the use of a ViL model. “Avg.” is the average accuracy across tasks. Bold indicates the best results, underline denotes the second best.",
+      "page": 6,
+      "index": 2,
+      "width": 1076,
+      "height": 337
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22908v1/fig-003.webp",
+      "caption": "Fig. 2: t-SNE visualizations of target features for D→A and W→A on Office-31. Each point represents a target sample in the feature space, with colors indicating different classes. The source model produces scattered distributions with substantial overlaps in (a) and (c), whereas our method generates well-separated clusters in (b) and (d), demonstrating its effectiveness in mitigating domain shift. (Best viewed in color and with magnification.)",
+      "page": 7,
+      "index": 3,
+      "width": 990,
+      "height": 255
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22908v1/fig-004.webp",
+      "caption": "Fig. 1: The overview of our proposed DDSR framework. The training process consists of two stages. In the first stage, DDSR adaptively integrates the complementary predictions from the black-box source model and CLIP to generate reliable pseudolabels for the target domain. A subnetwork-driven regularization strategy is introduced to alleviate overfitting caused by noisy supervision. The target predictions are further employed to iteratively update pseudo-labels through exponential moving average (EMA) and to refine the ViL prompts via the loss Lcm. In the second stage, the target model is further optimized through self-training based on class-wise prototypes, leading to more discriminative and semantically consistent feature representations.",
+      "page": 3,
+      "index": 4,
+      "width": 1072,
+      "height": 473
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22908v1/fig-005.webp",
+      "caption": "Fig. 4: Effect of the subnetwork ratio γ on the Ar→Rw task of Office-Home and the D→A task of Office-31. The accuracy reaches its peak when γ = 0.84, while remaining stable across different values, showing the robustness of the method.",
+      "page": 8,
+      "index": 5,
+      "width": 496,
+      "height": 273
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22908v1/fig-006.webp",
+      "caption": "Fig. 5: Sensitivity analysis of hyperparameters ϵ and ζ on the Ar→Cl task of Office-Home. Performance remains stable across a wide range of parameter settings, demonstrating low dependence on hyperparameter tuning.",
+      "page": 8,
+      "index": 6,
+      "width": 516,
+      "height": 408
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22908v1/fig-007.webp",
+      "caption": "Fig. 6: Ablation study of adaptive prediction fusion on Office31. Our full model outperforms the variant using fixed averaging by 1.5% on average, verifying the effectiveness of adaptively balancing the CLIP and source model predictions.",
+      "page": 8,
+      "index": 7,
+      "width": 516,
+      "height": 285
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22908v1/fig-008.webp",
+      "caption": "Fig. 7: Prediction entropy of CLIP vs. the source model on Office-31. CLIP consistently shows lower entropy, especially on large domains, keeping α < 0.5.",
+      "page": 8,
+      "index": 8,
+      "width": 516,
+      "height": 285
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22908v1/fig-009.webp",
+      "caption": "Fig. 8: Accuracy with different CLIP weights (0.2–0.8) on Office-31 and Office-Home tasks. Small domains favor smaller weights, while large domains benefit from larger ones, supporting Eq. (3).",
+      "page": 9,
+      "index": 9,
+      "width": 516,
+      "height": 285
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22908v1/fig-010.webp",
+      "caption": "TABLE I: Results (%) on Office-31. “Source” denotes applying the pre-trained source model. “✓” indicates the use of a ViL model. “Avg.” is the average accuracy across tasks. Bold indicates the best results, underline denotes the second best.",
+      "page": 5,
+      "index": 10,
+      "width": 529,
+      "height": 285
+    }
+  ]
+}

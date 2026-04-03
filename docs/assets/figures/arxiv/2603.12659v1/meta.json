@@ -1,0 +1,110 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.12659v1/fig-001.webp",
+      "caption": "Figure 1. The t-SNE visualization of visual embeddings from different datasets. The same class demonstrates large variations across datasets. However, only class names are provided in the datasets, which limits multimodal alignment.",
+      "page": 1,
+      "index": 1,
+      "width": 473,
+      "height": 404
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12659v1/fig-002.webp",
+      "caption": "Figure 5. t-SNE of base-to-novel visual and text embeddings on RESISC-45. (a) GeoRSCLIP [41] (b) AVION (ours) (c) APPLeNet [28] (d) MMRL [13]. Gray dots represent the visual embedding of base classes. Colored dots represent the visual embedding of novel classes with each color standing for a class. Colored crosses represent the text embedding of novel classes for their class names. A, B, C, and D are four classes.",
+      "page": 6,
+      "index": 2,
+      "width": 496,
+      "height": 497
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12659v1/fig-003.webp",
+      "caption": "Table 1. Few-shot classification against state-of-the-art methods. The table presents the average classification accuracy (%) over 6 datasets. The best-performing result for each K-shot setting is in bold, and the runner-up is underlined.",
+      "page": 6,
+      "index": 3,
+      "width": 491,
+      "height": 314
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12659v1/fig-004.webp",
+      "caption": "Table 10. Examples of LLM-generated candidate descriptions from our LLM-based domain prompting module, compared to standard simple templates. The generated candidates provide richer semantic and visual cues specific to remote sensing imagery.",
+      "page": 15,
+      "index": 4,
+      "width": 1036,
+      "height": 315
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12659v1/fig-005.webp",
+      "caption": "Table 3. Cross-modal retrieval (R@K, %) on RSITMD [37] and RSICD [26] (ViT-B/32 student; protocol details in Sec. 4.1). mR is the macro-average over {T → I, I → T} × {1, 5, 10}. ∆ is relative to GeoRSCLIP. Our method (AVION) is lightweight, updating only prompts/heads; see Appendix F for a full efficiency analysis.",
+      "page": 7,
+      "index": 5,
+      "width": 1031,
+      "height": 335
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12659v1/fig-006.webp",
+      "caption": "Table 8. Detailed base-to-novel results (%) on six remote sensing datasets (ViT-B/32 student). Baselines: GeoRSCLIP [41], CoOp [43], CoCoOp [42], MMRL [13], MaPLe [20], PromptKD [24], and APPLeNet [28]. We report Base, Novel, and HM; ∆ denotes the difference between Ours and the best-performing baseline for each metric.",
+      "page": 14,
+      "index": 6,
+      "width": 1036,
+      "height": 634
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12659v1/fig-007.webp",
+      "caption": "Table 9. Symbols and default/search ranges used in AVION. In all experiments we fix Kp=30, β=10, γ=2, ζs=3.0.",
+      "page": 14,
+      "index": 7,
+      "width": 998,
+      "height": 487
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12659v1/fig-008.webp",
+      "caption": "Figure 2. Overview of AVION. Upper-left (Training Student). Learnable prompt tokens are injected into the text and vision encoders. The student outputs embeddings: tSk (student text embedding for class k) and vS i (visual embedding for image i). Bottom-left (Offline Teacher). LLM-based Domain Prompting generates multiple class-aware descriptions, which are encoded into tTk,j . Selective Prototype Aggregation verifies these candidates using teacher visual embeddings vT i and aggregates them into an RS-aware text prototype tT∗ k . Right (Training Objectives). Tri-aspect alignment: (i) textual alignment Ltext maximizes the cosine similarity between tSk and tT∗ k ; (ii) visual alignment Limg aligns vS i with vT i ; (iii) similarity logit alignment Llogit matches teacher logits sTi,k = (vT i ) ⊤tT∗ k and student logits sSi,k = (vS i ) ⊤tSk via temperature-scaled KL. A standard task loss Ltask (cross-entropy) is applied on the student.",
+      "page": 3,
+      "index": 8,
+      "width": 892,
+      "height": 449
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12659v1/fig-009.webp",
+      "caption": "Table 7. Few-shot classification (top-1, %) on six remote sensing datasets. Winners are bold; runners-up are underlined.",
+      "page": 13,
+      "index": 9,
+      "width": 475,
+      "height": 1142
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12659v1/fig-010.webp",
+      "caption": "Figure 8. Base-to-novel generalization (HM, %) across six remote sensing datasets (ViT-B/32 student). The radar chart plots the harmonic mean between base and novel accuracies for AVION and competing baselines; a larger enclosed area indicates better overall base-to-novel performance.",
+      "page": 13,
+      "index": 10,
+      "width": 496,
+      "height": 569
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12659v1/fig-011.webp",
+      "caption": "Figure 6. Few-shot classification accuracy of AVION with different CLIP-based backbones in the few-shot setting.",
+      "page": 8,
+      "index": 11,
+      "width": 448,
+      "height": 274
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12659v1/fig-012.webp",
+      "caption": "Figure 3. LLM-based Domain Prompting. Given a class k, an RS-aware query asks the LLM to produce aerial-view descriptions. RS-Flag is used to examine whether the description contains RSrelated tokens.",
+      "page": 4,
+      "index": 12,
+      "width": 398,
+      "height": 304
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12659v1/fig-013.webp",
+      "caption": "Figure 7. Few-shot classification performance (top-1 accuracy, %) across six remote sensing datasets (AID [32], EuroSAT [14], RESISC45 [7], UCMerced [33], WHU-RS19 [31], and PatternNet [44]) for different numbers of shots K∈{1, 2, 4, 8, 16}.",
+      "page": 12,
+      "index": 13,
+      "width": 1036,
+      "height": 931
+    }
+  ]
+}

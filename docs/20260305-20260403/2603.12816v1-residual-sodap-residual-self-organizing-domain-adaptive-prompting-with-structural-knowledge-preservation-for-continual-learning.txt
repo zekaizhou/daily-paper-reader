@@ -1,0 +1,681 @@
+Title: Residual SODAP: Residual Self-Organizing Domain-Adaptive Prompting with Structural Knowledge Preservation for Continual Learning
+
+URL Source: https://arxiv.org/pdf/2603.12816v1
+
+Published Time: Mon, 16 Mar 2026 01:12:36 GMT
+
+Number of Pages: 29
+
+Markdown Content:
+# Residual SODAP: Residual Self-Organizing Domain-Adaptive Prompting with Structural Knowledge Preservation for Continual Learning 
+
+Gyutae Oh 1⋆, Jungwoo Bae 1, and Jitae Shin 1⋆⋆ 
+
+Department of Electrical and Computer Engineering, Sungkyunkwan University, Suwon 16419, Republic of Korea 
+
+alswo740012@g.skku.edu, baejungwoo@skku.edu, jtshin@skku.edu 
+
+Abstract. Continual learning (CL) suffers from catastrophic forget-ting, which is exacerbated in domain-incremental learning (DIL) where task identifiers are unavailable and storing past data is infeasible. While prompt-based CL (PCL) adapts representations with a frozen backbone, we observe that prompt-only improvements are often insufficient due to suboptimal prompt selection and classifier-level instability under domain shifts. We propose Residual SODAP, which jointly performs prompt-based representation adaptation and classifier-level knowledge preserva-tion. Our framework combines α-entmax sparse prompt selection with residual aggregation, data-free distillation with pseudo-feature replay, prompt-usage–based drift detection, and uncertainty-aware multi-loss balancing. Across three DIL benchmarks without task IDs or extra data storage, Residual SODAP achieves state-of-the-art AvgACC/AvgF of 0.850/0.047 (DR), 0.760/0.031 (Skin Cancer), and 0.995/0.003 (CORe50). 
+
+Keywords: Domain-Incremental Learning · Prompt-Based Continual Learning · Feature Representation Adaptation · Rehearsal-Free Learning 
+
+## 1 Introduction 
+
+Artificial intelligence has progressively evolved toward emulating the cognitive capabilities of living organisms [7, 46]. While biological systems flexibly accom-modate new information without compromising previously acquired knowledge, artificial neural networks frequently fail to do so [24, 26, 34]—a phenomenon known as catastrophic forgetting. In dynamic environments, the ability to con-tinuously assimilate new knowledge is therefore essential not only for biological agents but also for artificial intelligence systems [6,20,37]. In the visual domain, variations in acquisition conditions, devices, and environments give rise to hetero-geneous data distributions, causing models trained on one domain to suffer sharp performance degradation in another. Continual learning (CL) has been proposed  
+
+> ⋆
+
+First author:alswo740012@g.skku.edu  
+
+> ⋆⋆
+
+Corresponding author: jtshin@skku.edu  
+
+> arXiv:2603.12816v1 [cs.LG] 13 Mar 2026 2Gyutae Oh. et al.
+
+to address this challenge [2, 14, 30, 47]. Moreover, real-world deployments often impose strict constraints on data export and long-term storage due to privacy regulations [32], driving growing demand for CL methods that remain effective under such restrictions [45]. Against this backdrop, we address Domain Incre-mental Learning (DIL), where a model must incorporate new domain knowledge without retaining any previous data. Prompt-based continual learning (PCL) has recently emerged as a promising paradigm for this setting [14, 42, 43]; however, existing PCL methods exhibit two key limitations. 
+
+Limited prompt selection schemes. Hard selection (Top-k) methods [43] restrict the model to a fixed subset of prompts, limiting expressiveness and potentially causing training instability due to the non-differentiability of the selection process [31]. Soft selection (Softmax) methods [14] alleviate this issue by enabling gradient-based learning over all prompts; however, the weighted-sum nature of softmax allows even irrelevant prompts to exert influence, leading to noise accumulation [41]. 
+
+Neglect of the classifier structure. Existing PCL methods have predomi-nantly focused on prompt or prompt-pool design to improve CL performance and mitigate forgetting [14,42,43]. While this enables effective representation adapta-tion, [21] suggests that classifier design can be equally important. Through simple empirical observations, we show that jointly considering the classifier structure alongside prompt design is indeed necessary. We note that, although multi-head classifiers have been proposed to mitigate forgetting by maintaining separate heads per task [39], such methods generally assume task identity (Task-ID) at inference time. Since our DIL setting does not provide explicit Task-ID, our ap-proach differs from these existing multi-head methods in the applicable problem scope. Building on these observations, we propose Residual Self-Organizing Domain-Adaptive Prompting (Residual SODAP) , which jointly improves both the prompt pool and the classifier. Our contributions are fourfold :
+
+– α-Entmax-based Residual Prompt Selection. We enhance the input query with a memory bank and perform sparse prompt selection via α-entmax [27] combined with residual connections, structurally preserving prior knowledge through frozen prompts while adapting to new domains. 
+
+– Statistical Knowledge Preservation. Without accessing past data, we store class-wise feature distribution statistics and leverage them for feature distillation and pseudo feature replay during classifier training, thereby mit-igating catastrophic forgetting. 
+
+– Prompt Usage-based Drift Detection. We detect domain drift by jointly monitoring entropy changes in prompt selection patterns and structural shifts in selection behavior, enabling automatic prompt expansion and switch-ing. 
+
+– Uncertainty Weighting. By learning the uncertainty of each loss term, we enable stable joint optimization without manual weight tuning. Residual SODAP 3
+
+## 2 Related Work 
+
+Domain adaptation (DA) [40] and domain generalization (DG) [38] also address distribution shifts across domains [17, 33]. However, DA typically assumes prior or concurrent access to target-domain data, whereas DG is usually trained offline on multiple source domains without observing the target domain. As a result, these paradigms rely on different assumptions than our sequential setting where domains arrive over time. In contrast, this study focuses on a DIL setting where domains are presented sequentially, past data is inaccessible, and no Task-ID is provided [39]. Due to these fundamental differences in problem definition and evaluation protocols, we restrict our comparisons to continual learning baselines. 
+
+Continual Learning. Traditional CL methods can be broadly categorized into three groups [45]. First, Regularization-based CL (Reg-CL) mitigate catastrophic forgetting by constraining changes to parameters deemed important during train-ing. However, under complex distribution shifts or challenging settings, perfor-mance may degrade due to limited expressivity and adaptability [19, 30, 48]. Second, Rehearsal-based CL (Reh-CL) achieve strong performance by storing or replaying a subset of samples from previous tasks and training them jointly with current data, but their applicability is limited in practice due to constraints on data storage and reuse [2, 23, 46]. Third, Architectural-based CL (Arch-CL) alleviate forgetting by progressively expanding the model architecture, yet they often require a substantial number of additional parameters and increased com-putational cost [8, 29, 47]. 
+
+Prompt-based Continual Learning. Recently, PCL has attracted attention because it can achieve high performance by training only a small number of prompts or a prompt pool, without requiring past-data storage or additional Task-ID [25, 39]. Owing to these properties, a range of studies has explored PCL from both performance and efficiency perspectives. Nevertheless, existing methods often exhibit structural limitations in prompt selection. Hard selection (Top-k) methods [43] use only a subset of selected prompts, limiting expressive-ness, and may suffer from training instability because gradients are not directly propagated through the selection process [31]. In contrast, soft selection (Soft-max) methods [14] can utilize all prompts and learn them via gradients; however, due to the weighted-sum nature of softmax, even irrelevant prompts can exert influence, leading to accumulated noise [41]. 
+
+Distinctiveness and Proposed Approach. While our method also involves limited parameter expansion and prompt selection, it does not rely on naive ar-chitectural expansion. Instead, we focus on encouraging harmony between prior knowledge and new knowledge by leveraging memory-bank-based query enhance-ment and feature distribution statistics. This design is fundamentally different from existing Arch-CL methods in both design philosophy and objectives. More-over, to mitigate the noise issue inherent to softmax-based selection while still utilizing the full prompt pool, we introduce sparse prompt selection based on 
+
+α-entmax [27]. Furthermore, we propose a mechanism that dynamically reallo-cates prompts according to domain shifts by tracking changes in prompt selection patterns. 4 Gyutae Oh. et al.    
+
+> Fig. 1: PCL exhibits classifier-level forgetting. We apply the cross-composition (back-bone ×classifier) diagnostic of [21] to a [14]-based baseline under the skin-cancer DIL setting. Residual SODAP mitigates performance degradation caused by classifier in-stability and improves overall accuracy. The experimental setup and interpretation are provided in Sup. A–B.
+
+Classifier Instability under Domain Shifts. PCL has shown that prompt-structure design plays a critical role in mitigating catastrophic forgetting by enabling effective representation adaptation. However, inspired by the analysis of [21], we empirically observe that prompt-only improvements are not suffi-cient: while the backbone representation is well preserved through prompt-based adaptation, a clear degradation still emerges at the classifier level as domain-incremental training proceeds (Fig. 1). This indicates that forgetting in PCL is driven not only by representation drift but also by decision-boundary instabil-ity in the classifier. Motivated by this, we propose Residual SODAP, a frame-work that simultaneously achieves prompt-based representation adaptation and classifier-level knowledge preservation. As shown in Fig. 1, our method consis-tently improves the classifier-level behavior over the baseline and yields a more favorable accuracy–forgetting trade-off across domains, demonstrating stronger overall robustness under domain-incremental training. The detailed experimen-tal setup and full cross-composition analysis are provided in Sup. B.   
+
+> Fig. 2: Overview of Residual SODAP. Residual SODAP 5
+
+## 3 Proposed Method 
+
+This section presents the core components of Residual SODAP in four parts: (i) α-Entmax-based residual prompt selection, (ii) Statistical Knowledge Preser-vation via Statistics-based Pseudo Replay, (iii) prompt-usage-pattern-based drift detection (PUDD), (iv) Uncertainty Weighting. The overall architecture is illus-trated in Fig. 2. 
+
+3.1 α-Entmax-based residual prompt selection 3.1.1 Input and query enhancement At each Transformer layer l, we denote the token representations as Φ(l) ∈ RB×(1+ S)×D , and use the classification token (CLS) representation q(l) = Φ(l)[: ,0,:] ∈ RB×D as the query. Here, S is the number of patches (or input tokens), and index 0 denotes the CLS token. Since the CLS token contains an aggregated representation of the input, it is suitable as a query reflecting the semantic characteristics of each sample, and B denotes the batch size and D denotes the hidden dimension. We further define the initial CLS token right after embedding, g = Φ(0) [: ,0,:] ∈
+
+RB×D, as a global context shared across all layers. This enables deeper layers to still reference the original input characteristics and mitigates the locality issue that arises when relying only on the current layer CLS. The query enhancer integrates the current-layer query q(l), the global context g, and the retrieved signal r(l) from the memory bank. Memory retrieval is performed via Multi-Head Attention (MHA) [36] over a learnable memory bank, and the memory bank is shared across all layers, providing globally accumulated information throughout training as a global context across layers. The memory bank consists of learnable key–value pairs 
+
+(MK , MV ) ∈ RM ×D , where M is the number of memory size. The overall pro-cess is as follows: 
+
+r(l) = MHA  q(l), MK , MV
+
+ ∈ RB×D, (1) 
+
+c(l) = q(l); g; r(l) ∈ RB×3D, (2) 
+
+˜q(l) = q(l) + W2 GELU  LN( c(l)W1) ∈ RB×D, (3) where [ · ; · ; · ] denotes concatenation along the feature dimension, LN( ·) denotes LayerNorm, and W1 ∈ R3D×da and W2 ∈ Rda×D form a 2-layer adapter with bottleneck dimension da. The residual connection prevents loss of the original query information and helps stable optimization. The memory bank (MK , MV )
+
+performs the write operation using a gradient-free EMA [35] to accumulate new information gradually without abrupt changes while maintaining training sta-bility of the read path. 
+
+3.1.2 Bottleneck compression and sparse selection via α-Entmax To mitigate catastrophic forgetting while preserving useful prior prompts, we per-form input-conditioned prompt routing using the enhanced query from Sec. 3.1. 6 Gyutae Oh. et al. 
+
+Given the enhanced query ˜q(l) ∈ RB×D at Transformer layer l, we project it into the prompt bottleneck space as z(l) = ˜ q(l)Wdown ∈ RB×da with Wdown ∈
+
+RD×da , where da denotes the bottleneck dimension. The prompt pool is rep-resented as key–value pairs (PK , PV ) ∈ RN ×da , where N is the prompt-pool size. We compute prompt-selection logits by cosine similarity, ℓ(l) = ˆ z(l) ˆP⊤ 
+
+> K
+
+∈
+
+RB×N , where ˆ(·) denotes row-wise ℓ2 normalization. To suppress unnecessary prompt activations, we apply α-entmax [27] instead of softmax, which yields sparse normalized weights and can assign exact zeros to low-scoring prompts for 
+
+α > 1. For a logit vector ℓ ∈ RN (applied row-wise to ℓ(l)), the j-th component of α-entmax is defined as 
+
+α-entmax( ℓ) 
+
+> j
+
+=
+
+ α − 1
+
+α
+
+ ℓj − τ (ℓ) 1
+
+> α−1
+> +
+
+, (4) where j indexes the prompt dimension, [x]+ = max( x, 0) , and τ (ℓ) is chosen such that PNj=1 wj = 1 for w = α-entmax( ℓ). The final input-conditioned prompt representation is obtained as p(l) = α-entmax  ℓ(l)PV . In this work, we use 
+
+α = 1 .5, which provides a practical trade-off between softmax ( α → 1) and sparsemax ( α = 2 ) [27]. 
+
+3.1.3 Residual combination and output injection Residual SODAP mit-igates catastrophic forgetting by partitioning the prompt pool into a frozen set 
+
+F and an active set A, and expanding the pool when necessary. In Stage 1, all prompts are trainable; thus, we simply route over the full pool. From Stage 2 onward, we form F and A based on the prompt-pool state from the previ-ous stage and determine whether to expand the pool, as described in Sec. 3.3. In implementation, the prompt pool is maintained as full key–value tensors 
+
+(PK , PV ) ∈ RN ×da , while F and A are managed as index sets. During train-ing, gradients are blocked for the frozen prompts in F. From Stage 2 onward, we perform sparse routing independently on F and A. For G ∈ {F , A} , let 
+
+(PK, G , PV, G ) ∈ R|G|× da denote the corresponding key–value sub-tensors. We compute subset logits by cosine similarity, ℓ(l) 
+
+> G
+
+= ˆ z(l) ˆP⊤ 
+
+> K, G
+
+∈ RB×|G| , and obtain the corresponding prompt representation via α-entmax routing: 
+
+p(l) 
+
+> G
+
+= α-entmax  ℓ(l)
+
+> G
+
+PV, G , G ∈ {F , A} . (5) Here, α-entmax is applied row-wise over the subset prompt dimension. We then combine the frozen and active prompts in a residual form: 
+
+p(l)out = p(l) 
+
+> F
+
++ λr p(l) 
+
+> A
+
+, λr = 0 .1, (6) and inject the resulting prompt into the CLS token: 
+
+Φ(l)[: ,0,:] = q(l) + p(l)out Wup , Wup ∈ Rda×D . (7) This design treats the frozen prompts F as a stable base to preserve prior knowl-edge, while constraining the active prompts A to act as a residual for adaptation, enabling stable learning under sequential domain shifts. Residual SODAP 7
+
+3.1.4 Auxiliary Loss We propose two auxiliary losses to improve diversity and stability in prompt pool learning. In Stage 1, since all prompts are trainable, the losses are applied to the entire pool; from Stage 2 onward, they are applied only to the active set A to avoid interfering with the frozen set F. Accordingly, the application set is defined as S = {1, . . . , N } in Stage 1 and S = A from Stage 2 onward. 
+
+(i) Diversity loss. Let wb,i denote the prompt-routing weight assigned to prompt i for sample b (from α-entmax routing), and define the batch-averaged usage as ui = 1
+
+> B
+
+PBb=1 wb,i . We encourage diverse prompt values by penalizing similarity between frequently co-activated prompts. For the normalized prompt value ˆPV,i = PV,i /∥PV,i ∥2, we define 
+
+Ldiv =
+
+P 
+
+> i̸=j∈S
+
+ui uj ⟨ ˆPV,i , ˆPV,j ⟩
+
+P 
+
+> i̸=j∈S
+
+ui uj
+
+. (8) This reduces redundancy by discouraging high similarity among prompt values that are frequently selected together. 
+
+(ii) Norm regularization. From Stage 2 onward, we constrain the magnitude of active prompt values so that they operate only as residuals: 
+
+Lnorm = 1
+
+|A| 
+
+X
+
+> i∈A
+
+∥PV,i ∥2. (9) 
+
+3.2 Statistical Knowledge Preservation via Statistics-based Pseudo Replay 
+
+In DIL, the data domain shifts sequentially as stages progress, while the class space C remains fixed across all stages. Under a rehearsal-free setting, direct access to data from previous stages is unavailable, making it crucial to preserve prior knowledge using stored statistical information. Instead of replaying inputs directly, we introduce statistical knowledge preservation, maintains the previous decision boundaries via statistics-based pseudo replay at the feature level. 
+
+3.2.1 Saving Knowledge Assets at Stage Transitions After completing training at each stage, we store two knowledge assets to preserve prior knowl-edge in the next stage. First, we duplicate and freeze the current-stage classifier head ht and save it as a teacher head. Second, we collect class-wise feature statis-tics over the entire training data of the current stage. Here, the feature f ∈ RD
+
+is defined as the CLS token of the last Transformer layer, f = Φ(L)[: ,0,:] , and we es-timate the class mean μc ∈ RD and diagonal variance σ2 
+
+> c
+
+∈ RD using Welford’s online algorithm [44]. Specifically, whenever a new sample f belonging to class c
+
+is observed, we update the running statistics as: 
+
+nc ← nc + 1 , δ ← f − μc, (10) 
+
+μc ← μc + δ/n c, Qc ← Qc + δ ⊙ (f − μc). (11) 8 Gyutae Oh. et al. 
+
+where nc is the accumulated number of samples, Qc ∈ RD is the sum of squared deviations, and the final variance is computed using the unbiased estimator 
+
+σ2 
+
+> c
+
+= Qc/(nc − 1) . This approach enables single-pass estimation of statistics without storing the full dataset, providing strong memory efficiency and nu-merical stability. In multi-stage training, we maintain cumulative statistics by merging statistics from the previous and current stages using Welford’s formulas. 
+
+3.2.2 Knowledge Distillation During the Next Stage Training When training begins for the next stage, we load the saved classifier head ht and the class-wise feature statistics, freeze ht as a teacher head, and initialize a trainable student head hs by copying the teacher parameters. To preserve prior knowledge without accessing past data, we compute two distillation losses at each iteration, both formulated as KL divergence [10, 16] with the teacher distribution as the target. 
+
+(i) Real feature distillation. We pass the real features of the current batch, 
+
+freal ∈ RB×D, through the teacher and student heads to obtain zt = ht(freal ) ∈
+
+RB×C and zs = hs(freal ) ∈ RB×C , and align the two output distributions: 
+
+Lreal = KL 
+
+
+
+softmax( zt/T ) softmax( zs/T )
+
+
+
+· T 2. (12) Here, T is the distillation temperature (default: 2.0), and the T 2 factor rescales gradients for stable soft-label distillation [9]. 
+
+(ii) Pseudo feature replay. We replay prior knowledge at the feature level by sampling K pseudo features from the stored class-wise statistics (μc, σ2 
+
+> c
+
+). We ap-proximate the feature distribution of class c as a diagonal Gaussian N (μc, diag( σ2 
+
+> c
+
+)) 
+
+and sample class indices uniformly to mitigate under-representation of minority classes. Specifically, for ck ∼ Uniform {1, . . . , C } and ϵk ∼ N (0, ID ), we generate pseudo features via the reparameterization trick: 
+
+˜fk = μck + ϵk ⊙ σck , σck =
+
+q
+
+σ2 
+
+> ck
+
+. (13) Equivalently, ˜fk ∼ N (μck , diag( σ2 
+
+> ck
+
+)) . We treat ˜fk as a constant (stop-gradient) and pass it through the frozen teacher head and the trainable student head. Let 
+
+˜zt = ht(˜fk) ∈ RC and ˜zs = hs(˜fk) ∈ RC ; then the pseudo replay loss is defined as: 
+
+Lpseudo = 1
+
+K
+
+> K
+
+X
+
+> k=1
+
+KL 
+
+
+
+softmax  ˜zt/T  softmax  ˜zs/T 
+
+· T 2. (14) Since ht is frozen, Lpseudo backpropagates only through the student head hs.Here, K is the number of pseudo samples per batch (default: B), which enables preserving decision boundaries of previous classes without storing any past data. Finally, we combine the classification loss Lce with Lreal , Lpseudo , Ldiv , and 
+
+Lnorm . For clarity, we write the objective as a weighted sum, 
+
+Ltotal = λce Lce + λreal Lreal + λpseudo Lpseudo + λdiv Ldiv + λnorm Lnorm . (15) In our implementation, these weights are determined dynamically via the uncer-tainty weighting scheme in Sec. 3.4 (Eq. 21). Residual SODAP 9
+
+3.3 Prompt Usage-based Drift Detection (PUDD) 
+
+In prompt-based continual learning, it is important to promptly detect incoming data from a new domain and to automatically decide responses such as splitting and expanding the prompt pool based on the detection results. Accordingly, we propose PUDD, which detects domain shifts by monitoring changes in the usage patterns of prompt selection weights. The core assumption is that when the domain changes, the optimal prompt combination changes as well, leading to significant variations in the prompt selection distribution and the set of used prompts. In addition, since the usage set defined in PUDD may differ in purpose from the active set A during training, we denote it separately as St.
+
+3.3.1 Extracting prompt usage signals At each iteration t, given the prompt selection weights w(b) 
+
+> t
+
+∈ RN for samples b = 1 , . . . , B in the batch, we define the batch average as follows and extract two drift signals from it: 
+
+¯wt = 1
+
+B
+
+> B
+
+X
+
+> b=1
+
+w(b) 
+
+> t
+
+∈ RN . (16) 
+
+(i) Selection entropy. We measure the uncertainty of the selection distribution by the entropy Ht = − PNi=1 ¯wt,i log( ¯ wt,i + ϵ). Here, ϵ = 10 −10 is a numerical stabilization constant to handle cases where ¯wt,i = 0 can occur due to the spar-sity of α-entmax. When the domain changes, the fitness of the existing prompt combination decreases and the selection distribution is re-adjusted, which can manifest as increased short-term fluctuations of Ht.
+
+(ii) Usage set shift. We define the usage set as St = {i : ¯ wt,i > τ s}, where 
+
+τs is a threshold (default: 0.01 ) for prompts whose mass exceeds the threshold. Let the indices of the most recent W iterations form the sliding window Wt =
+
+{t − W + 1 , . . . , t − 1}, and define the union of past usage sets within the window as Sref  
+
+> t
+
+= S 
+
+> s∈W t
+
+Ss. We then compute 
+
+IoU t = |S t ∩ S ref  
+
+> t
+
+||S t ∪ S ref  
+
+> t
+
+| (17) to quantify changes in the usage set. A lower IoU t indicates that prompts differ-ent from those predominantly used recently are being selected, which we interpret as a signal of domain shift. 
+
+3.3.2 Computing and measuring the drift score We combine the two signals into a single drift score. Let the moving average and standard deviation of entropy within the sliding window Wt be ¯Ht = mean( {Hs}s∈W t ) and σH,t =std( {Hs}s∈W t ), respectively. The drift score is then defined as: 
+
+Dt = α · |Ht − ¯Ht|
+
+σH,t + ϵ + β ·
+
+ 1max(IoU t, η ) − 1
+
+
+
+(18) 10 Gyutae Oh. et al. 
+
+where α = 1 .0 and β = 0 .5 are the weights of the two signals, and η is a lower-bound clip for IoU (default: 0.1). At each iteration, we add {Ht, St} to the window Wt and update ¯Ht, σH,t , and Sref  
+
+> t
+
+, using the default window size 
+
+W = 100 . After completing training for Stage k, we pass the training data of the next domain Dk+1 through the frozen model in eval mode for one epoch, collecting Dt for each batch. As batches progress, observations from the new do-main accumulate in the sliding window and the reference statistics are gradually updated; thus, in early batches, abrupt changes in selection patterns appear as high Dt values and then gradually stabilize. We average the drift scores collected over L adapter layers and T batches as 
+
+¯D = 1
+
+LT 
+
+> L
+
+X
+
+> l=1
+> T
+
+X
+
+> t=1
+
+D(l) 
+
+> t
+
+(19) and use it as a single scalar representing the strength of the domain shift. 
+
+3.3.3 Drift-proportional pool expansion We determine the expansion scale of the prompt pool in proportion to the measured ¯D. Let the current number of active prompts be |A| and the expected maximum drift score be Dmax . The number of added prompts is computed as 
+
+E = clamp 
+
+ 
+
+|A| · ¯DDmax 
+
+
+
+, E min , E max 
+
+
+
+(20) with defaults Dmax = 5 .0, Emin = 10 , and Emax = 80 . Dmax is a normalization constant for the drift score and is set independently of the PUDD detection threshold θ. This allows adding only a minimal number of prompts under weak domain shifts ( ¯D ≪ Dmax ) to avoid excessive capacity waste, while allocating sufficient learning capacity under strong shifts ( ¯D → Dmax ) to ensure adaptabil-ity to the new domain. After expansion, the existing active prompts are moved to the frozen partition F, and the newly added prompts are assigned to the new active partition A.
+
+3.4 Uncertainty Weighting (UW) 
+
+Our training objective consists of multiple loss terms, including Lce , Lreal , Lpseudo ,
+
+Ldiv , and Lnorm . In this multi-objective setting, manually tuning fixed weights for each loss is not only inefficient, but it is also difficult to maintain an ap-propriate balance throughout training because the loss scales and their relative importance can change as training progresses. To address this, we adopt the ho-moscedastic uncertainty weighting of Kendall et al. [13] to automatically learn the relative weights among loss terms. For each loss Li, we introduce a learnable log-variance si = log σ2 
+
+> i
+
+and define the total loss as 
+
+Ltotal = X
+
+> i
+
+ e−si Li + si
+
+ (21) Residual SODAP 11 
+
+where losses with higher uncertainty (larger variance) are automatically assigned smaller weights wi = e−si , suppressing the influence of noisier signals, while losses with lower uncertainty receive larger weights, encouraging the model to focus on relatively more reliable signals. At the same time, the regularization term si prevents the trivial solution in which σi → ∞ and all losses are ig-nored. As a result, the balance among losses is dynamically adjusted throughout training without additional manual tuning. In implementation, we initialize all si as s(0)  
+
+> i
+
+= 0 (i.e., wi = e−si = 1 ), so that training starts from an equal baseline without prior knowledge. For numerical stability, we apply an asymmetric clamp to si within the range [−3, 6] . The upper bound ( si = 6 , wi ≈ 0.0025 ) allows a loss term to be effectively deactivated when necessary, while the lower bound ( si = −3, wi ≈ 20 ) is conservatively set to prevent training instability caused by excessive gradient amplification. The uncertainty parameters {si} are optimized jointly with the model parameters using the same optimizer. 
+
+## 4 Experiments 
+
+Experiment Setting. We aim to mitigate catastrophic forgetting in a DIL setting, where the input domain shifts sequentially over time. Following [39], we further assume a rehearsal-free constraint, i.e., the original data from past domains cannot be stored. To evaluate this setting, we preprocess a total of seven datasets and construct three experimental scenarios: (i) diabetic retinopathy (DR) [5, 11, 18], (ii) skin cancer [4, 12, 28], and (iii) CORe50 [22] as a general-domain benchmark to assess generalization beyond medical imaging. The dataset preprocessing pipeline, data usage protocol, and all training hyperparameters are detailed in Sup. A. For evaluation, we report AvgACC to measure how well the model maintains average performance throughout DIL training, and AvgF to quantify the extent of knowledge loss on previously seen domains. The definitions and interpretations of these metrics are provided in Sup. C. Unless otherwise stated, all numbers reported in tables are averaged over three independent runs. 
+
+Comparison with State-of-the-Art CL Methods. We compare Residual SODAP with representative methods from diverse continual learning families, including PCL, Reh-CL, Reg-CL, and Arch-CL, and summarize the results in Table 1. Across all benchmarks, our method achieves the strongest or most competitive accuracy, demonstrating robust retention under sequential domain shifts. In particular, on the DR scenario, Residual SODAP attains the best Av-gACC (0.850) and also the lowest AvgF (0.047) among all compared methods, indicating that it improves final performance while stabilizing knowledge preser-vation over time. On the Skin Cancer scenario, Residual SODAP again achieves the highest AvgACC (0.760). While Dual-Prompt yields the lowest forgetting (AvgF 0.012), it suffers from substantially lower AvgACC (0.637), revealing a clear accuracy–forgetting trade-off in this setting. By contrast, Residual SODAP provides a favorable operating point, delivering the top AvgACC while keep-ing forgetting comparatively low (AvgF 0.031). Finally, on the general continual 12 Gyutae Oh. et al. 
+
+Table 1: Performance comparison with continual learning baselines on two medical imaging benchmarks: DR (APTOS [11] → DDR [18] → DRD [5]) and Skin Cancer (ISIC [28] → HAM [4] → DERM7 [12]), and a general continual learning benchmark CORe50 [22]. Best results are in bold .                                                                 
+
+> CL-Type [Ref.] Method DR Skin Cancer CORe50
+> AvgACC ↑AvgF ↓AvgACC ↑AvgF ↓AvgACC ↑AvgF ↓
+> PCL [14] OS-Prompt 0.666 ±0.062 0.132 ±0.003 0.682 ±0.041 0.135 ±0.075 0.982 ±0.004 0.012 ±0.012 PCL [14] OS-Prompt++ 0.769 ±0.027 0.113 ±0.006 0.725 ±0.032 0.063 ±0.013 0.983 ±0.001 0.014 ±0.002 PCL [31] Coda-Prompt 0.688 ±0.079 0.140 ±0.044 0.713 ±0.040 0.041 ±0.013 0.974 ±0.041 0.056 ±0.011 PCL [42] Dual-prompt 0.467 ±0.159 0.291 ±0.065 0.637 ±0.065 0.012 ±0.039 0.975 ±0.002 0.036 ±0.001 Arch-CL [47] MoE-Adapters 0.716 ±0.141 0.080 ±0.092 0.597 ±0.165 0.040 ±0.016 0.949 ±0.041 0.043 ±0.023 Reh-CL [2] DER++ 0.607 ±0.121 0.288 ±0.160 0.722 ±0.057 0.099 ±0.023 0.994 ±0.004 0.061 ±0.009 Reg-CL [30] Online EWC 0.715 ±0.151 0.174 ±0.002 0.708 ±0.054 0.157 ±0.002 0.989 ±0.004 0.029 ±0.001
+> Ours Residual SODAP 0.850 ±0.001 0.047 ±0.003 0.760 ±0.004 0.031 ±0.009 0.995 ±0.001 0.003 ±0.001
+
+learning benchmark CORe50, our method achieves the best AvgACC (0.995) and the lowest AvgF (0.003), further supporting the generality of our design beyond medical datasets. Overall, these results show that Residual SODAP consistently improves the accuracy–forgetting balance across heterogeneous CL paradigms and offers a practical DIL solution for medical scenarios with evolving domains. 
+
+Fig. 3: Stage-wise prompt selection with PUDD-triggered pool expansion (60 →84 →94) and sparse α-entmax routing on the DR dataset. Corresponding results on the other datasets are provided in Sup. E. 
+
+Empirical Analysis of Residual SODAP. Figs. 3 and 4 present analyses verifying that Residual SODAP operates as intended. Fig. 3 illustrates how the per-input prompt selection pattern evolves as the stage progresses. We randomly sample three instances per class from each stage for analysis. As the learn-ing stream advances, PUDD detects distributional shifts and the prompt pool size expands incrementally from 60 →84 →94. The model fine-tunes the selected prompts according to each sample’s characteristics for inference, and continues to leverage both existing and newly acquired knowledge even after expansion. Notably, Entmax-based selection concentrates probability mass on a small sub-set of highly relevant prompts per input, effectively suppressing the unnecessary Residual SODAP 13 
+
+Fig. 4: Prompt usage and optimization dynamics on the DR dataset: (a) balanced se-lection, (b) no redundancy after expansion, (c–d) uncertainty-weighted loss rebalancing across stages. Corresponding results for the other datasets are provided in Sup. E. 
+
+Table 2: Sequential ablation on the DR continual learning benchmark (APTOS →
+
+DDR → DRD). We remove one component at a time from the full model. ∆ reports the absolute change from the full model in percentage points (pp): ∆AvgACC = 100 × (AvgACC − 0.850) and ∆AvgF = 100 × (AvgF − 0.047) (higher AvgACC and lower AvgF are better). ✓ indicates the component is enabled.                                                                                                                   
+
+> Components Metric vs. Full (pp) Method SODAP PUDD Distill Pseudo Ldiv Lnorm UW QE AvgACC ↑AvgF ↓∆AvgACC ↑∆AvgF ↓
+> Full Model ✓✓✓✓✓✓✓✓0.850 ±0.001 0.047 ±0.003 +0.0 +0.0
+> (1) Prompting / drift handling
+> w/o Query Enhancer (QE) ✓✓✓✓✓✓✓0.808 ±0.013 0.032 ±0.007 -4.2 -1.5 w/o PUDD ✓✓✓✓✓✓0.841 ±0.004 0.028 ±0.009 -0.9 -1.9 w/o Residual SODAP (SODAP) ✓✓✓✓✓✓✓0.831 ±0.004 0.027 ±0.003 -1.9 -2.0
+> (2) Classifier knowledge preservation
+> w/o Pseudo Replay ✓✓✓✓✓✓✓0.835 ±0.008 0.028 ±0.004 -1.5 -1.9 w/o Distillation ✓✓✓✓✓✓0.828 ±0.009 0.032 ±0.009 -2.2 -1.5
+> (3) Objective regularization / balancing
+> w/o Ldiv ✓✓✓✓✓✓✓0.818 ±0.011 0.072 ±0.001 -3.2 +2.5 w/o Lnorm ✓✓✓✓✓✓✓0.838 ±0.010 0.008 ±0.001 -1.2 -3.9 w/o Uncertainty Weighting (UW) ✓✓✓✓✓✓✓0.838 ±0.004 0.011 ±0.005 -1.2 -3.6
+
+prompt activation that can arise with softmax-based selection. Results for all layers are provided in Supp. D. Fig. 4 more directly examines the distributional properties of prompt selection and whether expansion introduces redundancy. Fig. 4(a) visualizes prompt selection frequencies, showing that the excessive re-liance on a few specific prompts commonly observed with conventional Top-k selection—is mitigated, yielding a more balanced distribution. Fig. 4(b) demon-strates that expanding the prompt pool does not produce functionally redundant prompts, suggesting that the model selectively acquires only the necessary infor-mation rather than duplicating existing representations. Figs. 4(c) and (d) show that the multiple loss terms introduced in Sec. 3.4 are dynamically adjusted as intended across stages. Stage 1 is excluded from this analysis, as uncertainty weighting is not applied at that stage. Fig. 4(c) presents the relative magnitudes of the learned loss terms at Stage 2, and Fig. 4(d) shows the corresponding results at Stage 3. Overall, the contribution of each loss term is automatically rebalanced according to the stage and data characteristics, maintaining a well-composed learning signal without manual tuning. 
+
+Ablation Study. Table 2 presents a sequential ablation on the DR domain-incremental benchmark (APTOS → DDR → DRD). We remove one component 14 Gyutae Oh. et al. 
+
+at a time from the full model and assess the accuracy–forgetting trade-off be-tween AvgACC and AvgF. Among the prompting/drift-handling modules, re-moving the QE causes the largest drop in AvgACC ( −4.2 pp), indicating that query refinement is critical for reliable prompt selection throughout the training stream. Routing-related ablations (w/o QE, w/o PUDD, and w/o SODAP) tend to reduce AvgF (i.e., mitigate forgetting), but this comes with non-trivial accu-racy loss, suggesting a shift toward a more conservative update regime and a less favorable overall trade-off. For classifier knowledge preservation, both pseudo replay and distillation are important. Removing pseudo replay decreases Av-gACC by 1.5 pp, and removing distillation results in a 2.2 pp drop, confirming that lightweight preservation mechanisms remain beneficial even under a frozen-backbone prompt-based setting. Finally, objective regularization and balancing terms strongly influence stability and performance. Dropping Ldiv degrades both dimensions, reducing AvgACC by 3.2 pp while increasing AvgF by 2.5 pp, which highlights the role of diversity regularization in preventing collapse and preserv-ing past knowledge. In contrast, removing Lnorm or UW leads to a modest drop in AvgACC ( −1.2 pp) while generally reducing AvgF, highlighting an inherent trade-off between maximizing accuracy and mitigating forgetting. In other words, some variants reduce forgetting at the expense of accuracy, corresponding to dif-ferent operating points on the trade-off curve, whereas our full model targets a balanced regime that maintains high accuracy without excessively worsening forgetting. Overall, the full model provides the most favorable trade-off among the tested variants (AvgACC 0.850 , AvgF 0.047 ). 
+
+## 5 Conclusion 
+
+This study proposes Residual SODAP , a rehearsal-free domain-incremental learning framework that simultaneously achieves representation adaptation and classifier-level knowledge preservation. By integrating α-entmax-based sparse prompt selection with residual fusion, Statistical Knowledge Preservation 
+
+via statistics-based pseudo-feature replay to alleviate classifier-level forgetting, 
+
+PUDD , and uncertainty weighting , the proposed method effectively miti-gates catastrophic forgetting without relying on task identity or access to past data. Extensive experiments on two medical imaging benchmarks and a general-domain dataset demonstrate consistent improvements over prior methods across different continual learning paradigms. Furthermore, ablation studies and qual-itative analyses validate the contribution of each component and confirm that the overall framework behaves in accordance with its design intent. As future work, we will extend Residual SODAP to class-incremental scenarios with evolv-ing label spaces and develop more principled drift-aware prompt management, including adaptive expansion schedules and capacity control under compute and memory constraints. We also plan to refine classifier-level preservation by design-ing class-conditional statistical pseudo replay and by improving the calibration of uncertainty weighting to better handle long-tailed, noisy medical labels and subtle domain shifts. Residual SODAP 15 
+
+## References 
+
+1. Boschini, M., Bonicelli, L., Buzzega, P., Porrello, A., Calderara, S.: Class-incremental continual learning into the extended der-verse. IEEE Transactions on Pattern Analysis and Machine Intelligence (2022) 2. Buzzega, P., Boschini, M., Porrello, A., Abati, D., Calderara, S.: Dark experience for general continual learning: a strong, simple baseline. In: Larochelle, H., Ran-zato, M., Hadsell, R., Balcan, M.F., Lin, H. (eds.) Advances in Neural Information Processing Systems. vol. 33, pp. 15920–15930. Curran Associates, Inc. (2020) 3. Cassidy, B., Kendrick, C., Brodzicki, A., Jaworek-Korjakowska, J., Yap, M.H.: Analysis of the isic image datasets: Usage, benchmarks and recommendations. Medical image analysis 75 , 102305 (2022) 4. Codella, N., Rotemberg, V., Tschandl, P., Celebi, M.E., Dusza, S., Gutman, D., Helba, B., Kalloo, A., Liopyris, K., Marchetti, M., et al.: Skin lesion analysis toward melanoma detection 2018: A challenge hosted by the international skin imaging collaboration (isic). arXiv preprint arXiv:1902.03368 (2019) 5. Dugas, E., Jared, Jorge, Cukierski, W.: Diabetic retinopathy detection. https: //kaggle.com/competitions/diabetic-retinopathy-detection (2015), kaggle 6. Hadsell, R., Rao, D., Rusu, A.A., Pascanu, R.: Embracing change: Continual learn-ing in deep neural networks. Trends in cognitive sciences 24 (12), 1028–1040 (2020) 7. Hassabis, D., Kumaran, D., Summerfield, C., Botvinick, M.: Neuroscience-inspired artificial intelligence. Neuron 95 (2), 245–258 (2017) 8. He, J., Duan, Z., Zhu, F.: Cl-lora: Continual low-rank adaptation for rehearsal-free class-incremental learning. In: Proceedings of the Computer Vision and Pattern Recognition Conference. pp. 30534–30544 (2025) 9. Hinton, G.: Distilling the knowledge in a neural network. In: Deep Learning and Representation Learning Workshop in Conjunction with NIPS (2014) 10. Hinton, G., Vinyals, O., Dean, J.: Distilling the knowledge in a neural network. stat 1050 , 9 (2015) 11. Karthik, Maggie, Dane, S.: Aptos 2019 blindness detection. https://kaggle.com/ competitions/aptos2019-blindness-detection (2019), kaggle 12. Kawahara, J., Daneshvar, S., Argenziano, G., Hamarneh, G.: Seven-point checklist and skin lesion classification using multitask multimodal neural nets. IEEE journal of biomedical and health informatics 23 (2), 538–546 (2018) 13. Kendall, A., Gal, Y., Cipolla, R.: Multi-task learning using uncertainty to weigh losses for scene geometry and semantics. In: Proceedings of the IEEE conference on computer vision and pattern recognition. pp. 7482–7491 (2018) 14. Kim, Y., Li, Y., Panda, P.: One-stage prompt-based continual learning. In: Euro-pean conference on computer vision. pp. 163–179. Springer (2024) 15. Kobat, S.G., Baygin, N., Yusufoglu, E., Baygin, M., Barua, P.D., Dogan, S., Yaman, O., Celiker, U., Yildirim, H., Tan, R.S., et al.: Automated diabetic retinopathy detection using horizontal and vertical patch division-based pre-trained densenet with digital fundus images. Diagnostics 12 (8), 1975 (2022) 16. Kullback, S., Leibler, R.A.: On information and sufficiency. The annals of mathe-matical statistics 22 (1), 79–86 (1951) 17. Li, J., Yu, Z., Du, Z., Zhu, L., Shen, H.T.: A comprehensive survey on source-free domain adaptation. IEEE Transactions on Pattern Analysis and Machine Intelli-gence 46 (8), 5743–5762 (2024) 18. Li, T., Gao, Y., Wang, K., Guo, S., Liu, H., Kang, H.: Diagnostic assessment of deep learning algorithms for diabetic retinopathy screening. Information Sci-ences 501 , 511 – 522 (2019). https://doi.org/https://doi.org/10.1016/ 16 Gyutae Oh. et al. 
+
+j.ins.2019.06.011 , http://www.sciencedirect.com/science/article/pii/ S0020025519305377 
+
+19. Li, Z., Hoiem, D.: Learning without forgetting. IEEE transactions on pattern anal-ysis and machine intelligence 40 (12), 2935–2947 (2017) 20. Liu, J., Xu, R., Yang, S., Zhang, R., Zhang, Q., Chen, Z., Guo, Y., Zhang, S.: Continual-mae: Adaptive distribution masked autoencoders for continual test-time adaptation. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. pp. 28653–28663 (2024) 21. Liu, Y., Parisot, S., Slabaugh, G., Jia, X., Leonardis, A., Tuytelaars, T.: More clas-sifiers, less forgetting: A generic multi-classifier paradigm for incremental learning. In: European Conference on Computer Vision. pp. 699–716. Springer (2020) 22. Lomonaco, V., Maltoni, D.: Core50: a new dataset and benchmark for continu-ous object recognition. In: Proceedings of the 1st Annual Conference on Robot Learning. vol. 78, pp. 17–26 (2017) 23. Lopez-Paz, D., Ranzato, M.: Gradient episodic memory for continual learning. Advances in neural information processing systems 30 (2017) 24. McCloskey, M., Cohen, N.J.: Catastrophic interference in connectionist networks: The sequential learning problem. In: Psychology of learning and motivation, vol. 24, pp. 109–165. Elsevier (1989) 25. Oh, G., Shin, J.: Multi-head cnn-attention prompt pools: Strengthening prompt combination and contextual insight for domain adaptation. In: 2025 Interna-tional Technical Conference on Circuits/Systems, Computers, and Communica-tions (ITC-CSCC). pp. 1–5. IEEE (2025) 26. Parisi, G.I., Kemker, R., Part, J.L., Kanan, C., Wermter, S.: Continual lifelong learning with neural networks: A review. Neural networks 113 , 54–71 (2019) 27. Peters, B., Niculae, V., Martins, A.F.: Sparse sequence-to-sequence models. arXiv preprint arXiv:1905.05702 (2019) 28. Rotemberg, V., Kurtansky, N., Betz-Stablein, B., Caffery, L., Chousakos, E., Codella, N., Combalia, M., Dusza, S., Guitera, P., Gutman, D., et al.: A patient-centric dataset of images and metadata for identifying melanomas using clinical context. Scientific data 8(1), 34 (2021) 29. Rusu, A.A., Rabinowitz, N.C., Desjardins, G., Soyer, H., Kirkpatrick, J., Kavukcuoglu, K., Pascanu, R., Hadsell, R.: Progressive neural networks. arXiv preprint arXiv:1606.04671 (2016) 30. Schwarz, J., Czarnecki, W., Luketina, J., Grabska-Barwinska, A., Teh, Y.W., Pas-canu, R., Hadsell, R.: Progress & compress: A scalable framework for continual learning. In: International conference on machine learning. pp. 4528–4537. PMLR (2018) 31. Smith, J.S., Karlinsky, L., Gutta, V., Cascante-Bonilla, P., Kim, D., Arbelle, A., Panda, R., Feris, R., Kira, Z.: Coda-prompt: Continual decomposed attention-based prompting for rehearsal-free continual learning. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. pp. 11909– 11919 (2023) 32. Smith, J.S., Tian, J., Halbe, S., Hsu, Y.C., Kira, Z.: A closer look at rehearsal-free continual learning. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. pp. 2410–2420 (2023) 33. Sun, Y., Wang, X., Liu, Z., Miller, J., Efros, A., Hardt, M.: Test-time training with self-supervision for generalization under distribution shifts. In: International conference on machine learning. pp. 9229–9248. PMLR (2020) Residual SODAP 17 34. Tadros, T., Krishnan, G.P., Ramyaa, R., Bazhenov, M.: Sleep-like unsupervised replay reduces catastrophic forgetting in artificial neural networks. Nature com-munications 13 (1), 7742 (2022) 35. Tarvainen, A., Valpola, H.: Mean teachers are better role models: Weight-averaged consistency targets improve semi-supervised deep learning results. Advances in neural information processing systems 30 (2017) 36. Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A.N., Kaiser, Ł., Polosukhin, I.: Attention is all you need. Advances in neural information pro-cessing systems 30 (2017) 37. Wang, B., Luo, X., Zhuang, X.: Toward universal medical image registration via sharpness-aware meta-continual learning. In: International Conference on Medi-cal Image Computing and Computer-Assisted Intervention. pp. 739–748. Springer (2024) 38. Wang, J., Lan, C., Liu, C., Ouyang, Y., Qin, T., Lu, W., Chen, Y., Zeng, W., Yu, P.S.: Generalizing to unseen domains: A survey on domain generalization. IEEE transactions on knowledge and data engineering 35 (8), 8052–8072 (2022) 39. Wang, L., Zhang, X., Su, H., Zhu, J.: A comprehensive survey of continual learn-ing: theory, method and application. IEEE Transactions on Pattern Analysis and Machine Intelligence (2024) 40. Wang, M., Deng, W.: Deep visual domain adaptation: A survey. Neurocomputing 
+
+312 , 135–153 (2018) 41. Wang, P., Wang, X., Wang, F., Lin, M., Chang, S., Li, H., Jin, R.: Kvt: k-nn attention for boosting vision transformers. In: European conference on computer vision. pp. 285–302. Springer (2022) 42. Wang, Z., Zhang, Z., Ebrahimi, S., Sun, R., Zhang, H., Lee, C.Y., Ren, X., Su, G., Perot, V., Dy, J., et al.: Dualprompt: Complementary prompting for rehearsal-free continual learning. In: European Conference on Computer Vision. pp. 631–648. Springer (2022) 43. Wang, Z., Zhang, Z., Lee, C.Y., Zhang, H., Sun, R., Ren, X., Su, G., Perot, V., Dy, J., Pfister, T.: Learning to prompt for continual learning. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. pp. 139–149 (2022) 44. Welford, B.P.: Note on a method for calculating corrected sums of squares and products. Technometrics 4(3), 419–420 (1962) 45. Wu, X., Xu, Z., Tong, R.K.y.: Continual learning in medical image analysis: A survey. Computers in Biology and Medicine 182 , 109206 (2024) 46. Yin, H., Molchanov, P., Alvarez, J.M., Li, Z., Mallya, A., Hoiem, D., Jha, N.K., Kautz, J.: Dreaming to distill: Data-free knowledge transfer via deepinversion. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recog-nition. pp. 8715–8724 (2020) 47. Yu, J., Zhuge, Y., Zhang, L., Hu, P., Wang, D., Lu, H., He, Y.: Boosting continual learning of vision-language models via mixture-of-experts adapters. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. pp. 23219–23230 (2024) 48. Zenke, F., Poole, B., Ganguli, S.: Continual learning through synaptic intelligence. In: International conference on machine learning. pp. 3987–3995. PMLR (2017) 18 Gyutae Oh. et al. 
+
+## Supplementary Material Supplementary Material Overview 
+
+This supplementary material is organized as follows. 
+
+– Sec. A Implementation and Reproducibility Details. We describe the rehearsal-free domain-incremental learning (DIL) setting, dataset con-struction and preprocessing for DR (APTOS →DDR →DRD), Skin Cancer (ISIC →HAM →DERM7), and CORe50 (11-stage stream), and report full training configurations and standardized baseline hyperparameters (Sup. Ta-bles 3–5, Tables 6–7). 
+
+– Sec. B Additional Analysis: Classifier Instability under Domain Shifts. We present a diagnostic cross-composition analysis (Backbone ×
+
+Classifier) following [21] under the Skin Cancer DIL protocol, and report full 3 × 3 cross-stage compositions for the baseline [14] (Sup. Fig. 5) and our method (Sup. Fig. 6). 
+
+– Sec. C Continual Learning Metrics. We provide formal definitions and interpretations of the evaluation metrics used throughout the paper, includ-ing AvgACC and AvgF. 
+
+– Sec. D Additional Analysis: Entmax Sparse Prompt Selection Across All Layers. We analyze α-entmax sparse prompt selection across stages and layers, including stage-wise expansion, selection frequency, and prompt sim-ilarity statistics (Sup. Fig. 7). 
+
+– Sec. E Additional Results on Other Datasets. We provide qualitative results on Skin Cancer and CORe50, including stage-wise expansion, bal-anced prompt usage, and uncertainty-weighted loss dynamics (Sup. Figs. 8– 10). 
+
+– Sec. F Use of AI Tools Disclosure. We disclose limited auxiliary use of AI tools for writing support (ChatGPT) and code maintenance (Cursor/Claude CLI); all scientific content and final decisions were made by the authors. 
+
+## A Implementation and Reproducibility Details 
+
+Domain Incremental Continual Learning Setting Following [39], we con-sider a rehearsal-free DIL setting where original data from past domains cannot be stored. Domains arrive sequentially at each stage t ∈ { 1, . . . , T }, and only the current dataset Dt = {(xi, y i)}nt 
+
+> i=1
+
+is accessible, where xi and yi denote the image and its label, respectively. Past data D<t is unavailable, and no domain-switch signal or task identity is provided at inference time. This setting realisti-cally reflects the domain shifts and domain uncertainty frequently encountered in practical deployment scenarios. The goal is to train a single model that ef-fectively adapts to sequentially arriving domains while minimizing performance degradation (forgetting) on previously seen domains. 
+
+Primary benchmark (Diabetic Retinopathy). Our main experiments use three publicly available diabetic retinopathy (DR) datasets: APTOS, DDR, and Residual SODAP 19            
+
+> Table 3: Dataset statistics for the DR benchmarks after remapping to three classes (Normal, NPDR, PDR).
+> Dataset Normal (0) NPDR (1) PDR (2)
+> APTOS [11] 1805 1562 295 DDR [18] 6266 5343 913 DRD [5] 5000 8608 708
+
+DRD. Since some benchmarks do not provide ground-truth labels for their official test sets, we follow the preprocessing protocol of [15] to construct consistent train/validation/test splits. Following the same study, we remap the original five-level DR grading (normal, mild, moderate, severe, proliferative) into three clinically meaningful classes (Normal, NPDR, PDR): mild, moderate, and severe are merged into NPDR, while normal and PDR are kept as-is. The resulting data distribution and dataset sources are summarized in Sup. Table 3. Under the domain-incremental continual learning setting, the training stream is denoted as: 
+
+D = {D1, D 2, . . . , D n}, Dn = {Xn,b , Y n,b },
+
+where n is the stage index, Xn,b and Yn,b are the input image and its label, respectively, and b is the sample index within a batch of size B.        
+
+> Table 4: Distribution of Skin Cancer datasets used for training
+> Dataset Benign Malignant
+> ISIC [28] 584 584 HAM [4] 1113 1113 DERM7 [12] 252 252
+
+Supplementary external benchmark (Skin Cancer). To evaluate gen-eralization beyond DR, we conduct an additional experiment under the same domain-incremental protocol using three skin cancer datasets in the order ISIC 
+
+→ HAM → DERM7, forming three sequential stages. Following [3] on clinically relevant lesion grouping in ISIC, we remap the original diagnostic categories into a binary setting: lesions requiring urgent clinical intervention are labeled as ma-lignant, and the rest as benign. Dataset statistics are provided in Sup. Table 4. All datasets are split into train/validation/test at an 8:1:1 ratio. All other set-tings, including the model, training schedule, hyperparameters, and evaluation metrics, remain identical to the DR experiments; only the datasets are changed. Due to the smaller dataset scale, the batch size is set to 16. 
+
+Supplementary external benchmark (CORe50). To demonstrate that the proposed method is not limited to medical data and generalizes to standard DIL settings, we additionally evaluate on the public CORe50 dataset, which is widely used for DIL performance assessment. CORe50 consists of 10 classes and includes a total of 11 domain shifts induced by variations in acquisition conditions such 20 Gyutae Oh. et al. 
+
+as background and illumination. Accordingly, we construct an 11-stage domain-incremental learning stream and measure performance as the stages progress. The dataset split is summarized in Table 5, where the data are partitioned into 70/15/15 for train/validation/test. These results demonstrate that our model is not restricted to the medical domain and remains robust even under a large number of domain shifts. 
+
+Table 5: Per-class training sample counts for each session in CORe50 [22]. Each ses-sion serves as one stage in our 11-stage domain-incremental continual learning setup (70/15/15 split).                                                                                                                                     
+
+> Class Category Stage 1 Stage 2 Stage 3 Stage 4 Stage 5 Stage 6 Stage 7 Stage 8 Stage 9 Stage 10 Stage 11
+> 0Plug adapters 1,064 1,066 1,066 1,064 1,066 1,064 1,066 1,064 1,066 1,066 1,066 1Mobile phones 1,048 1,052 1,052 1,052 1,052 1,051 1,049 1,050 1,052 1,052 1,047 2Scissors 1,070 1,067 1,067 1,069 1,064 1,070 1,070 1,066 1,067 1,067 1,070 3Light bulbs 1,041 1,042 1,040 1,039 1,033 1,039 1,039 1,040 1,043 1,041 1,041 4Cans 1,039 1,038 1,040 1,041 1,041 1,038 1,040 1,040 1,039 1,039 1,038 5Glasses 1,064 1,059 1,065 1,065 1,058 1,064 1,065 1,062 1,066 1,065 1,064 6Balls 1,047 1,046 1,045 1,045 1,049 1,048 1,045 1,047 1,046 1,044 1,048 7Markers 1,002 1,009 1,002 1,011 1,014 1,002 1,020 1,001 1,017 1,007 1,004 8Cups 1,060 1,057 1,060 1,062 1,052 1,059 1,054 1,060 1,053 1,057 1,072 9Remote controls 1,057 1,054 1,057 1,048 1,047 1,057 1,047 1,058 1,046 1,052 1,043
+> Total 10,492 10,490 10,494 10,496 10,476 10,492 10,495 10,488 10,495 10,490 10,493
+
+Training hyperparameters Setting. The experimental protocol follows the configurations summarized in Table 6 and Table 7. We adhere as closely as pos-sible to the base setup described in Table 6, while the detailed hyperparameters for the compared continual learning (CL) methods are standardized according to Table 7. The CL models used in our experiments are implemented based on well-established libraries [1,2]. When certain methods were not directly available or required adaptation to match our experimental setting, they were carefully re-implemented under the same evaluation protocol. 
+
+## B Additional Analysis: Classifier Instability under Domain Shifts 
+
+Motivation. Prompt-based continual learning (PCL) can effectively adapt rep-resentations under sequential domain shifts, but it remains unclear whether prompt improvements alone are sufficient to prevent forgetting throughout the entire learning process. Following the diagnostic perspective of [21], we disentan-gle the contributions of backbone representations and classifier decision bound-aries to forgetting in domain-incremental learning (DIL). 
+
+Experimental scenario. We construct a 3-stage DIL skin lesion diagnosis sce-nario where the class space is fixed and only the input domain changes sequen-tially: ISIC [28] → HAM [4] → DERM7 [12]. A recent PCL method [14] is trained under this protocol. Detailed dataset descriptions are provided in Sup. A. 
+
+Cross-composition protocol (Backbone × Classifier). We decompose the model trained at stage t ∈ { 1, 2, 3} into its backbone Bt and classifier head Ct.Residual SODAP 21                    
+
+> Table 6: Experimental Settings.
+> Category Setting Hardware
+> GPU 2×NVIDIA V100 RAM 256 GB
+> Optimization
+> Optimizer AdamW Learning rate 1e-3 Scheduler Cosine Batch size 64 Epochs 100 Early-stop patience 5
+> Model / Method
+> Prompt pool size ( N)60 Bottleneck dimension ( da)512 Memory slot size ( M)9Drift threshold ( θ)0.7 Feature dimension ( D)768
+> Input
+> Image size 224 ×224
+
+After training each stage, we store the corresponding (Bt, C t) pair and evaluate all cross-combinations {(Bi, C j )}3
+
+> i,j =1
+
+, yielding 3 × 3 composite models. This allows us to attribute performance degradation to (i) representation-level factors (varying Bi with fixed Cj ) or (ii) classifier-level factors (varying Cj with fixed 
+
+Bi). 
+
+Key observation. Prompt-based adaptation generally benefits backbone rep-resentations, tending to maintain or improve performance when paired with an appropriate classifier. However, as DIL progresses, degradation at the classifier level becomes increasingly pronounced. Specifically, the performance drop caused by swapping the classifier head is larger and more systematic than that caused by swapping the backbone, suggesting that decision-boundary instability in the classifier can be a dominant source of forgetting under domain shifts. This trend is consistent with the analysis of [21], which posits that decision-boundary col-lapse primarily occurs at the classifier level under sequential learning, leading to drops in both accuracy and F1-score. 
+
+Implication. These results indicate that improvements to prompt structures and pool designs are necessary but not sufficient. Robust continual learning un-der domain shifts requires explicitly addressing classifier-level knowledge preser-vation alongside prompt-based representation adaptation, which provides the 22 Gyutae Oh. et al. 
+
+Table 7: Key hyperparameters for continual learning baselines. 
+
+Method Hyperparameter Value 
+
+CODA-Prompt Pool size ( coda_pool_size ) 100 Prompt length ( coda_prompt_length ) 4Ortho. reg. ( coda_ortho_mu ) 0.1 DualPrompt Prompt length ( dual_prompt_length ) 4Pool size ( dual_pool_size ) 100 Top-k (dual_top_k ) 5G-prompt length ( dual_g_prompt_length ) 4G layers ( dual_g_prompt_layers ) [0, 1] E layers ( dual_e_prompt_layers ) [2, 3, 4] Head type ( dual_head_type ) token 
+
+DER++ 
+
+α (preserve past) 0.5 
+
+β (relearn past) 0.5 Buffer size 30 or 64 (CORe50) Online EWC Momentum ( optim_mom ) 0.9 Weight decay ( optim_wd ) 5e-4 MoE Adapters Prompt template a photo of {}. 
+
+CLIP backbone ViT-B/16 
+
+Virtual BS iters. ( virtual_bs_n ) 1OS (++) Prompt Prompt Dim 768 Pool size 150 
+
+core motivation for Residual SODAP that integrates preservation mechanisms at both levels. 
+
+Additional results. Fig. 1 provides a summary of this analysis, and Sup. Fig. 5 reports per-stage results and the full 3 × 3 cross-composition outcomes. More-over, Sup. Fig. 6 visualizes our method under the same cross-composition protocol as Sup. Fig. 5, where the classifier-induced degradation is noticeably mitigated, indicating improved stability of decision bound-aries over the domain-incremental stream. 
+
+## C Continual Learning Metrics 
+
+AvgACC = 1
+
+T
+
+> T
+
+X
+
+> i=1
+
+ 1
+
+i
+
+> i
+
+X
+
+> j=1
+
+Ri,j 
+
+ . (22) 
+
+Symbols. T denotes the total number of stages (or tasks), and Ri,j is the accuracy on task j measured right after training up to stage i.Residual SODAP 23    
+
+> Fig. 5: Results of cross-stage backbone–classifier compositions ( 3×3) under the skin-cancer DIL protocol. The baseline visualization follows the prompt-based continual learning method of [14].
+
+How it is computed. At each stage i, we first average the accuracies over all tasks observed so far (from 1 to i). We then average these stage-wise values over 
+
+i = 1 , . . . , T to obtain AvgACC .
+
+Interpretation. AvgACC summarizes the overall performance profile across the entire learning trajectory, rather than only the final outcome. It therefore reflects how consistently the model maintains performance as new stages arrive. 
+
+AvgF = 1
+
+T − 1 
+
+> T−1
+
+X
+
+> j=1
+
+
+
+max   
+
+> i∈{ j,...,T }
+
+Ri,j − RT,j 
+
+
+
+. (23) 
+
+Symbols. T is the total number of stages (or tasks), and Ri,j is the accuracy on task j after training up to stage i. RT,j denotes the final accuracy on task j after completing all T stages, while max i∈{ j,...,T } Ri,j is the best accuracy achieved on task j at any point during training. 
+
+How it is computed. For each earlier task j, we compute the drop from its peak performance during training to its final performance after stage T . AvgF 
+
+is the average of this drop over j = 1 , . . . , T − 1.24 Gyutae Oh. et al.      
+
+> Fig. 6: Results of cross-stage backbone–classifier compositions ( 3×3) under the skin-cancer DIL protocol. This figure visualizes our method using the same cross-composition protocol; the corresponding baseline visualization based on [14] is provided in Sup. Fig. 5.
+
+Interpretation. AvgF directly quantifies forgetting by comparing a task’s best historical performance with its end-of-training performance. Larger values indi-cate more severe forgetting, while values near zero imply strong retention. 
+
+## D Additional Analysis: Entmax Sparse Prompt Selection Across All Layers 
+
+As illustrated in Fig. 7, this experiment qualitatively analyzes how the proposed Residual SODAP selects prompts from the entire prompt pool via α-entmax as the pool expands, and how these selection patterns vary across stages and layers. For each stage, we load the corresponding trained weights and randomly sample three instances per class for analysis. The results show that, even after prompt pool expansion, previously learned prompts and newly introduced prompts are selected in a balanced manner, con-sistent with our design intention. In other words, while expanded prompts are utilized for adapting to new domains, prompts learned from earlier domains Residual SODAP 25 
+
+continue to be selected, indicating preservation of prior knowledge. We further observe that prompt selection behavior differs across layers. In early layers (0–2), prompt selection tends to be relatively balanced across multiple prompts. In in-termediate layers (3–9), a subset of key prompts receives higher probability mass and plays a more dominant role in shaping the representation. In later layers, a small number of prompts more strongly transform the feature representation, while the remaining prompts contribute residual refinements. These observations are consistent with the general characteristic that deeper layers progressively compress and abstract information. They suggest that the selection mechanism of Residual SODAP adaptively leverages prompts accord-ing to the representational role of each layer. Overall, α-entmax-based sparse selection suppresses unnecessary prompt activation while enabling both existing and newly expanded prompts to be jointly utilized, thereby supporting stable adaptation and knowledge preservation across stages.      
+
+> Fig. 7: Residual SODAP prompt pool analysis: (a) stage-wise prompt count ( 60 →
+> 84 →94 ), (b) prompt selection ratio on 100 random samples, and (c) prompt cosine similarity. 26 Gyutae Oh. et al.
+
+## E Additional Results on Other Datasets. 
+
+Skin cancer. As shown in Fig. 8, the prompt pool expansion behavior and the 
+
+α-entmax-based sparse selection patterns observed on the DR benchmark consis-tently appear on the skin-cancer benchmark as well. Moreover, the uncertainty-weighting scheme learns diverse loss weights in a stable manner, exhibiting not only monotonic increases but also meaningful decreases when appropriate. We further observe balanced prompt utilization across the pool, and the expanded prompts acquire new information without redundancy, indicating that the ad-ditional capacity captures novel domain-specific cues rather than duplicating existing knowledge. 
+
+CORe50. As shown in Figs. 9 and 10, the proposed prompt expansion and prompt learning behaviors, together with uncertainty-weighted optimization, op-erate as intended on the general-domain benchmark. Notably, these patterns re-main stable even with the larger number of stages in CORe50, indicating that the framework generalizes well to longer learning streams. Overall, these results provide evidence that our approach is not limited to medical imaging, but can also learn robustly on a general dataset, supporting the generalizability of the proposed components beyond the medical domain. 
+
+## F Use of AI Tools Disclosure. 
+
+We disclose that AI tools were used in a limited and auxiliary capacity during the preparation of this manuscript. All scientific content—including the research con-ception, experimental design, result interpretation, core claims, and final writing decisions—was produced by the authors. ChatGPT was used only for writing support, such as proofreading, typo/grammar correction, translation into English, and language polishing. Cursor and the Claude CLI were used only for code maintenance tasks, includ-ing refactoring and cleanup to improve readability (e.g., formatting, comment organization, and minor restructuring). These tools were not used to gener-ate new experimental results, data, numerical findings, or conclusions. All final manuscript text and code changes were reviewed and approved by the authors, who take full responsibility for the work. Residual SODAP 27 
+
+Fig. 8: Supplementary analysis on the skin-cancer benchmark. 28 Gyutae Oh. et al. 
+
+Fig. 9: Supplementary analysis on the CORe50 benchmark. Residual SODAP 29 
+
+Fig. 10: Supplementary analysis on the CORe50 benchmark.

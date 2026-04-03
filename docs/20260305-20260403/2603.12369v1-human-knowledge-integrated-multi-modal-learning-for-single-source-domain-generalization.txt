@@ -1,0 +1,638 @@
+Title: Human Knowledge Integrated Multi-modal Learning for Single Source Domain Generalization
+
+URL Source: https://arxiv.org/pdf/2603.12369v1
+
+Published Time: Mon, 16 Mar 2026 00:05:07 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+# Human knowledge integrated multi-modal learning for single source domain generalization 
+
+## Ayan Banerjee Kuntal Thakur Sandeep Gupta Impact Lab, Arizona State University 
+
+{ayan.banerjee, kthakur9, sandeep.gupta }@asu.edu 
+
+## Abstract 
+
+Generalizing image classification across domains remains challenging in critical tasks such as fundus image–based diabetic retinopathy (DR) grading and resting-state fMRI seizure onset zone (SOZ) detection. When domains differ in unknown causal factors, achieving cross-domain gener-alization is difficult, and there is no established method-ology to objectively assess such differences without direct metadata or protocol-level information from data collec-tors, which is typically inaccessible. We first introduce do-main conformal bounds (DCB), a theoretical framework to evaluate whether domains diverge in unknown causal factors. Building on this, we propose GenEval, a multi-modal Vision Language Models (VLM) approach that com-bines foundational models (e.g., MedGemma-4B) with hu-man knowledge via Low-Rank Adaptation (LoRA) to bridge causal gaps and enhance single-source domain general-ization (SDG). Across eight DR and two SOZ datasets, GenEval achieves superior SDG performance, with average accuracy of 69.2% (DR) and 81% (SOZ), outperforming the strongest baselines by 9.4% and 1.8%, respectively. Code and models are available at: https://github.com/ IMPACTLabASU/GenEval .
+
+## 1. Introduction 
+
+State-of-the-art (SOTA) supervised image classification en-gines face the problem of domain generalization (DG) which requires them to learn using image data Xi ∈ X
+
+from source domains {Dsi }, i = {1 . . . N } collected in a specific environment, following a set protocol, using a given perception device, with a label set Y and classify data points from target domains {Dti }, i ∈ { 1 . . . M } which may differ from {Dsi } in various aspects but with same class set. Traditionally, techniques to improve DG performance have not been successful in consistently outperforming em-pirical risk minimization (ERM) [4] or outperform ERM by statistically insignificant margins as seen for Diabetic Retinopathy (DR) grading [82] example in Table 1. exam-ple in Table 1. For example, when Messidor is the held-out target domain, SPSD-ViT achieves 64.0% accuracy com-pared to ERM-ViT’s 62.7%, yet the reported p-value of 0.09 indicates this improvement is not statistically signif-
+
+Table 1. Comparison of SOTA DG improvement techniques across DR datasets. Leave-one-domain-out evaluation: each column shows accuracy when that domain is held out as the target and the remaining three are used for training. Bold italic is highest accuracy, underlined is second highest. p value denotes statistical significance of performance gain over ERM-ViT, p > 0.05 implies insignificant result.                                  
+
+> Method Aptos EyePACS Messidor Messidor 2 p value
+> MMD [51] 49.3 ±1.0 69.3 ±1.1 64.1 ±4.8 69.6 ±0.6 0.3 CDANN [52] 48.1 ±0.7 73.1 ±0.3 55.8 ±1.8 61.2 ±1.3 0.9 SD-ViT [73] 46.5 ±0.8 71.1 ±0.7 63.9 ±0.9 71.4 ±0.2 0.2 SPSD-ViT [27] 51.6 ±1.1 73.3 ±0.4 64.0 ±1.4 72.9 ±0.1 0.09 ERM-ViT [75] 48.5 ±0.9 70.7 ±1.7 62.7 ±1.6 69.5 ±2.5 NA GenEval (Ours) 73.46 83.18 67.70 79.64
+
+icant. In practical clinical setting, access to data sources is limited that may prevent integration of datasets as re-quired in multi-source DG (MDG). Hence a more practi-cal problem faced in clinical setting is single source DG (SDG), where data from a single domain is available for training and the supervised classification technique should have good classification performance on target domains. This paper focuses on the more challenging setting of SDG, where SOTA techniques demonstrate even poorer perfor-mance than MDG [16, 27]. Recent theoretical advances [4, 13, 79] in generalization capacity of learned representations have uncovered two nec-essary conditions for feasibility of a machine M that learns from a source domain Ds to accurately classify data from target domain Dt: a) causal cover , source domain Ds has representations of all causal factors that are required to clas-sify data from target domain Dt, and b) source risk min-imization , the machine M is able to effectively learn all causal factors in the source domain. 
+
+Causal Gap: Domains of several critical medical appli-cations including DR and resting state functional mag-netic resonance imaging (rs-fMRI) based seizure onset zone (SOZ) detection may often violate causal cover condition. Figure 1 shows that DR images have both causal factors that directly affect DR grading classification such as hard exu-dates and Dot and Blot effects, and non-causal factors such as laser scars that do not directly affect classification but may have indirect correlation with DR severity since they are caused by frequent scans [20]. Neo-vascularization is an important causal factor indicative of grade 4 DR (Prolif-  
+
+> arXiv:2603.12369v1 [cs.CV] 12 Mar 2026 Figure 1. SDG attempts for DR has traditionally failed to consistently outperform ERM primarily due to existing gap in causal factors among data sets. Knowledge from human experts in the field can fill the causal gap but are usually qualitative and ambiguous. This paper demonstrates GenEval that quantifies human expert knowledge, refines them, and integrates specialized foundational model such as MedGemma-4B through LoRA based fine tuning to bridge the causal gap between domains while removing ambiguity of knowledge.
+
+erative DR). This is present in the EyePACS domain [20]. However, no such indication is available in Messidor 1 do-main [25]. This demonstrates a causal gap between the domains. Hence, a machine M learning classification logic from Messidor 1 source is unlikely to perform accurate clas-sification in the EyePACS domain [27]. 
+
+Solution hypothesis: We observe that causal factors rele-vant for classification in any problem domain can be ob-tained from human expert knowledge to compensate for causal gaps between domains. Hence a multi-modal com-bination of image data and expert knowledge in textual form can be used in a foundational vision language model to achieve better generalized performance across domains. 
+
+Challenge: Human knowledge is qualitative and ambigu-ous. For example, micro-aneurysms, a sign for Grade 1 DR are defined as tiny round red dots mostly between 15 -60 μm which can be easily confused with venous bleeding, which is a sign of Grade 3 DR. Effective usage of human knowledge requires accurate quantification and refinement to determine a subset of knowledge components that has maximum effect in reducing causal gap. Our principal con-tributions are as follows (Figure 1): 
+
+1. Novel causal gap quantification theory (Sec. 4.1.1): 
+
+Based on the concept of conformal inference, we propose a novel theory of domain conformal bounds (DCB) that de-fines a distribution free mechanism to determine the dif-ference in causal factor interrelationship between two do-mains. 
+
+2. Explanation of SOTA baseline DG performance (Sec. 4.1.2): Based on the DCB theory, we define a novel metric, source domain conformance degree (SDCD) and prove that it has a positive correlation with SDG perfor-mance of a learning machine ( M ). This metric is used to explain the SDG performance of SOTA techniques. 
+
+3. Knowledge quantification and refinement (Sec. 4.1.3): 
+
+We encode expert knowledge as real-valued vectors using a specialized single-stage detector and propositional logic, then use SDCD to measure causal-gap reduction and, via SDCD-guided ablations, select the subset that maximizes SDCD. 
+
+4. GenEval, multi-modal classification engine (Sec. 4.2): 
+
+We fuse the refined knowledge and images into a multi-modal prompt, fine-tune the specialized foundational model MedGemma-4B on source data via parameter-efficient Low-Rank Adaptation (LoRA) [33], then infer on the tar-get domain. 
+
+5. Comprehensive evaluation (Sec. 5) across eight DR datasets (APTOS, EyePACS, Messidor, Messidor-2, IDRID, DeepDR, FGADR, RLDL) and two SOZ datasets (UNC, PCH), with emphasis on challenging SDG problem. 
+
+## 2. Preliminaries 
+
+A domain D is a tuple of image data X with a probability distribution function P (X). A source domain Ds is a do-main with a label set Y for each image data in X. A target domain Dt is a domain without any label set. 
+
+Problem Statement. Single Source Domain Generaliza-tion - Given a single source domain Ds, with labels Y of 
+
+Q classes {C1 . . . C Q}, learn a classification engine M to classify target domain Dt data with the same Q classes. 
+
+Causal and non-causal factors: Causal factors are appli-cation specific observations and correlations that are inter-pretable by experts and guide the labeling Y for a dataset 
+
+X. Formally, the functional mapping between image data X and label Y in any domain is governed by causal Zc and non-causal Zn factors, such that data X = Fx(Zc, Z n) is affected by both factors but the label is only affected by the causal factors Y = Fy (Zc), where Fx and Fy are nonlinear functions defining the image data X and label Y .
+
+Necessary conditions for DG: Theoretical explorations in recent work have identified two necessary conditions for DG [4, 79]. A machine M can learn from domain Ds and accurately recognize target domain data Dt if: 1. Causal cover: The target introduces no causal-factor in-terrelationships absent in the source domain. 2. Source risk minimization: the machine can effectively reduce cross entropy loss in the source domain. 
+
+Quantification of Causal Factor Interrelationship: The source of causal factors is human expert knowledge. Given the causal factors, their interrelationship can be objectively evaluated from: a) the data X and label Y through the func-tion Fx and Fy , or b) expressing human expert knowledge obtained from various sources such as publications in the problem area or consultations as tacit logical propositions. 
+
+a) Extraction of causal factor interrelationship from data: 
+
+Medical images capture physical processes with typi-cally continuous spatio-temporal evolution modeled by partial differential equations (PDEs), constrained by boundary conditions. This assumption underlies im-age representations [18, 26, 49, 60] and high-fidelity diffusion-based generation [70]. PDEs with boundary conditions admit compartmental state-space realizations [8, 11, 23, 58, 68, 69], allowing the data-generating maps 
+
+Fx and Fy to be modeled as continuous multivariate nonlinear state spaces; consequently, Koopman theory [40] applies, with boundaries/edges encoded via compartmental state variables. 
+
+Koopman theory: Koopman theory linearizes nonlinear dy-namics by applying a linear operator to observables in a lifted space, letting us expose causal interactions with linear tools. Koopman lifts the PDE-driven image dynamics to a sparse linear operator, letting us read causal factor interac-tions from nonlinear generators. We define a continuous re-laxation ˜Y = ˜Fy (Zc) of the labeling function Fy such that the original labels can be obtained from the relaxed labels 
+
+˜Y by applying mutually exclusive thresholds for each class. The relaxed labels ˜Y and image data X can be expressed as a dynamical system defined by a function of causal factors 
+
+Zc, and non-causal factors Zn as -     
+
+> ˜Y= ˜Fy(Zc), dX ds =fx(X, Z c, Z n).(1)
+
+where fx = dF x 
+
+> ds
+
+, and s is an independent parameter used to traverse the image space. 
+
+Koopman approximations: Koopman theory [17] states that any nonlinear dynamical system can be expressed as a linear dynamical system in a transformed state space Ω through a measurement function X = G(Ω) such that: dΩ 
+
+> ds
+
+= KΩ,where K is the Koopman operator, usually a sparse co-efficient matrix. Dynamic mode decomposition (DMD) and sparse identification of nonlinear dynamics (SINDY) limit Ω to a polynomial library over principal components of X; RIDGE regression [71] then estimates K, with se-quential thresholding forcing small coefficients to zero via 
+
+K = ST RIDGE (X, Ω, G, σ ) [34, 35]. Non-zero terms in the final K mark the causal factors in X.
+
+Observation 1, difficulty in quantifying causal cover: While source risk minimization can be quantified by monitoring the loss function, to the best of our knowledge there exists no such quantifier for causal cover. 
+
+Observation 2, image representation with differential dy-namics: In practice, the functions fx are (or can be closely approximated as) continuous and differentiable in imaging—especially medical imaging of spatially evolving physiology [15, 28]. SOTA diffusion models likewise use differential dynamics to represent images [70], and most prediction schemes trained with gradient descent implic-itly assume differentiability [3]. Even when fx is non-differentiable or discontinuous, hybrid differential dynam-ics can represent it by augmenting the state to split dy-namics across discontinuities, yielding piecewise models [8, 11, 23, 58, 68, 69]. 
+
+b) Extraction of causal factor interrelationship from human knowledge: According to recent work [36] human expert knowledge for a given class can be expressed in terms of propositional logic Lj (.). Knowledge comprises of semantic features Fi, i ∈ { 1 . . . R } in the image data X.The presence of each semantic feature Fi can be quantified into real values. Human expert knowledge can be expressed as a first order propositional formula that expresses a class label Y in terms of feature values in F. Multiple such formulae define the oracle of knowledge on the classifica-tion problem. Truth evaluation of each formula provides a quantification of causal factor interrelationship embedded in human expert knowledge. 
+
+Distance between two probability distribution of causal factors: Given two multi-dimensional Gaussian distribu-tions of P = N (μp, Σp) and R = N (μr , Σr ), where μp, μ r
+
+are the means and Σp, Σr are covariance matrices, the KL divergence [57] is a asymmetric metric that measures how different is distribution R from P as follows:        
+
+> dk(P|R) = 12 [ln det Σ r
+> det Σ p
+> −k+tr  Σ−1
+> rΣp
+> +( μr−μp)⊤Σ−1
+> r(μr−μp)] ,
+> (2)
+
+where tr is trace and det is determinant operation. It has been extensively used to explain domain shift [61] and mea-sure learning capability of AI engines [39]. 
+
+Observation 3, non-monotonicity: The KL divergence is non-monotonous metric and cannot be used to quantita-tively compare two distances: dk(R1|R2) and dk(R1|P ).It is thus not amenable to be used in optimization required for knowledge refinement. In our paper, we utilize Maha-lanobis distance dm given in Eqn. 3, to derive a monotonous divergence metric, source domain conformance degree dis-cussed in Section 4. Mahalanobis distance measures the distance of a point x from a reference distribution as -        
+
+> dm(x|P) =
+> q
+> (x−μp)TΣ−1
+> p(x−μp)(3)
+
+Observation 4, relation of Mahalanobis distance and KL divergence: dm(x|P ) appears as the last term of KL diver-gence, and has a positive correlation with KL divergence. Knowledge Extraction Domain-specific diagnostic rules were curated from human expert guidelines from ophthal-mologists for DR (see Table 9 in supplement) and epileptol-ogists in SOZ (see Table 15 in supplement) and operational-ized via automated feature extraction pipelines built using two open-source, modular tools: YOLOv12 and a retinal vessel segmentation model for DR and custom image pro-cessing code available in [37]. For lesion-level localization, we use YOLOv12, a SOTA one-stage detector for dense object environments that extends YOLOv5/YOLOv7 with C3K2 blocks, Spatial Pyramid Pooling Fast (SPPF), and C2PSA (Cross-Stage Partial Self-Attention) [76]. Its mod-ified CSPDarkNet backbone and decoupled heads (object-ness, classification, regression) achieve superior mean aver-age precision (mAP) with real-time inference [80]. We train YOLOv12 to detect hemorrhages, hard exudates, and cotton wool spots; predicted bounding boxes are post-processed and validated via Intersection over Union (IoU) against expert-labeled fundus images, and each image yields up to a 14-dimensional real vector of IoU scores. For SOZ knowl-edge extraction we follow the image processing pipeline de-tailed in Kamboj et al [36] and code shared in [37]. 
+
+## 3. Related Work 
+
+We situate GenEval-DR at the intersection of three threads: 
+
+(i) medical domain generalisation (DG), and ii) medical vi-sion–language models (VLMs), and (iii) distribution-free uncertainty quantification. 
+
+Domain Generalisation in Medical Imaging: Perfor-mance of DR classifiers drops sharply when scanners, de-mographics or prevalence shift across clinics [21, 86]. Clas-sic DG methods align feature distributions with MMD or adversarial losses [6, 51, 52], and extensive augmenta-tions such as BigAug simulate domain shift [88]. Trans-former baselines SD-ViT [73] and the current state-of-the-art SPSD-ViT [27] replace CNN backbones but still assume target data are exchangeable with source domains . None of them can predict at deployment time whether a new do-main data lies outside the training support, a prerequisite highlighted by recent causal-DG theory [85]. GenEval-DR tackles this unmet need via an external DCB safety test. 
+
+Medical Vision Language Models: Contrastive pre-training on paired image–text data enables zero-shot trans-fer (BiomedCLIP [89], LLaVA-Med [43]). For DR, CLIP-DR adapts CLIP with ranking-aware prompts and is the strongest published VLM baseline [87]. Parameter-efficient LoRA fine-tuning [33] allows large medical VLMs such as MedGemma-4B [29] to specialise to retinal imagery with-out catastrophic forgetting. Yet VLMs alone remain brittle under unseen shifts and lack uncertainty guarantees—an is-sue we address by coupling MedGemma with DCB. 
+
+Causal structure change detection: Changes in causal structure constitute anomalies. Although anomaly detection is well studied [47], most methods are modality-specific and operate on raw data, whereas we require change detection over causal structures. Many techniques rely on extreme value theory (EVT) [48] for out-of-distribution (OOD) de-tection, but EVT’s distributional assumptions cannot be ver-ified a priori for implicit causal structures, making it unre-liable here. Conformal prediction provides finite-sample, distribution-free change detection [1, 2, 55, 78]. 
+
+## 4. Methods 
+
+We describe our theoretical framework (Figure. 2) for causal cover evaluation and a novel VLM based technique for generalized image classification with DR as the exam-ple. 
+
+4.1. Evaluation of Causal Cover 
+
+Given a source domain Ds and target domain Dt, causal factors K can be extracted from each sample of each domain either from data or knowledge as shown in Section 2 with sets Ds, D t resulting in the sets Ks, Kt respectively. We define a novel metric source domain conformance degree 
+
+(SDCD) denoted by dρ that evaluates the number of sam-ples in the target domain Dt that has the same causal factor interrelationship as the source domain Ds. We use conformal inference [66, 78] to develop a distribution-agnostic algorithm that counts points in Dt whose causal factors fall within the distribution of the source-learned set 
+
+Ks from Ds. This is a two step process: 
+
+4.1.1. Step 1: Domain conformal bounds (DCB) 
+
+Conceptually, DCB encodes the properties of the elements of a source domain Ds into an interval that defines what it means for an image data to share the interrelationship pat-terns of causal factors with image data in source domain. We utilize Mahalanobis distance (Eqn. 3) to define a dis-tance between two vectors of causal factor valuations de-rived from two image data points Xi and Xj . For an image data Xi, the robustness metric ρ(., . ) (Eqn. 4) is the average Mahalanobis distance of Xi from any other image Xs in the source domain Ds.    
+
+> ρ(K(Xi), D s) = (
+> |Ds|
+> X
+> j=1 ,j ̸=i
+> dm(K(Xi),K(Xs))) /(|Ds| − 1) .(4)
+
+Given the robustness function ρ(., . ) in Eqn. 4, conformal inference creates a prediction band C ⊂ R 2 based on causal factor valuations from domain Ds for a given miscoverage level α ∈ { 0, 1}, so that              
+
+> P r (ρ(K(Xi), D s)∈C)≥1−α, iff Xi∈Ds,K(Xi)∈ K s.(5)
+
+We call this interval C, DCB and is a key property of source domain to encode interrelationships between causal factors obtained from any methodology. If the robustness metric of the causal factor valuations K from the data X ∈ Dt in tar-get domain falls inside the interval C for source domain Ds,then image data X ∈ Dt does not have any novel causal factor interrelationship that is not encompassed in images available in Ds with probability (1 − α). Algorithm 1 com-putes DCB C defined by Eqn. 5 for a source domain Ds.Algorithm 1 takes the training data (Xi, Y i) ∈ Ds of source domain, miscoverage level α and the set of all causal factor model estimations Ks as input and provides DCB as output. It divides the training set, data and their model estimates, 𝑫 𝑺                   
+
+> Source
+> Domain Data
+> Domain Conformal
+> Bound using Algo 1.
+> Knowledge
+> extractor –Yolo -V12
+> Knowledge Conformal
+> Bound using Algo 1
+> Target
+> Domain Data
+> Human expert
+> knowledge
+> 𝑫 𝑻
+> Knowledge
+> extractor –Yolo -V12
+> Knowledge
+> set
+> {𝐾 1…𝐾 𝑃 }
+> Spatial SINDY based
+> causal factor extraction
+> Spatial SINDY based
+> causal factor extraction
+> In
+> Range?
+> In
+> Range?
+> Source Domain
+> Conformance
+> Degree
+> Iteratively refine knowledge
+> set {𝐾 1…𝐾 𝑃 }through
+> ablation to obtain maximum
+> source conformance
+> Refined Knowledge Set
+> {෪𝐾 1…෪𝐾 𝑅 }
+> Vision Language
+> Model
+> MedGemma -4B
+> Refined Knowledge
+> Set as Text
+> {෪𝐾 1…෪𝐾 𝑅 }
+
++ LoRA parameter 
+
+> update finetuning
+> Finetuned
+> MedGemma -4B
+> Textual
+> prompt with
+> refined
+> knowledge
+
++      
+
+> Target
+> Domain Data
+> Classification
+> Theoretical contribution
+> Methodological contribution: GenEVAL -DR STEP 1
+> STEP 2STEP 3
+> FINETUNING
+> INFERENCE
+
+Figure 2. Contributions: a) Algorithms 1 and 2 to obtain domain conformal bounds and source domain conformance degree. Utilizing SDCD, ablation studies are performed to refine the knowledge set into an optimal set that maximizes SDCD. b) GenEval, a specialized foundational vision language model based method that integrates image and expert knowledge in textual form for a multi-modal prompt driven DR grading and SOZ detection schemes. 
+
+Algorithm 1 C = DCB Compute ({XiYi}|Ds|
+
+i=1 ,α,ρ(., . ),Ks)
+
+1: Split Ds into two equal sized subsets IT and IV .
+
+2: Average robustness σ = avg i(ρ(K(Xi), I T /{Xi, Y i})) 
+
+3: For each Xv , Y v compute residual Rj = ρ(K(Xv ), I T ) − σ
+
+4: d = the kth smallest value in {Rj : j ∈ IV }, k = ⌈(|IV |/2 + 1)(1 − α)⌉
+
+5: return C = [ d − std (Rj ), d + std (Rj )] 
+
+into two mutually exclusive subsets IT and IV . For each 
+
+K(Xi) ∈ IT , ρ(K(Xi), I T /{Xi, Y i}) is computed, where 
+
+IT /{Xi, Y i} denotes the set IT with {Xi, Y i} removed. Let 
+
+σ = avg i(ρ(K(Xi), I T /{Xi, Y i})) be the mean value of the robustness metric in the training set IT . From the val-idation set IV residual Rv ρ(K(Xv ), I T ) − σ is derived for every element in IV , the residual is arranged in ascending order. The algorithm then finds the residual σC at the posi-tion ⌈(|IV |/2+1)(1 −α)⌉ and is used as the prediction range 
+
+C = [ σC − std (Rv ), σ C + std (Rv )] . We prove Theorem 1 that guarantees that the interval C obtain from Algorithm 1 satisfies the guarantee in Eqn. 5. 
+
+Theorem 1. For any data point X, Y ∈ Ds,
+
+P r (ρ(K(X), D s) ∈ C = [ σC −d, σ C +d]) ≥ 1−α, α > 0
+
+if and only if P r (K(X)|{ X} ∈ Ds) = P r (K(X)|{ X} ∈ 
+
+Dt), where d is given by Algorithm 1. (Proof in supplement) 
+
+Algorithm 2 SDCD (Ds,Dt,ρ(., . ),Ks,Kt,σ,C)
+
+1: output Percentage of Dt with causal cover. 
+
+2: for each {X} ∈ Dt do 
+
+3: Compute residual R = ρ(K(X), D s) − σ
+
+4: if R ∈ C then 
+
+5: add to the list of satisfaction 
+
+6: end if 
+
+7: end for 
+
+8: return percentage causal cover satisfaction 
+
+4.1.2. Step 2: Source domain conformance degree 
+
+Utilizing Theorem 1 and Algorithm 1, we derived a robust-ness range that encodes the causal factors of source domain 
+
+Ds. The SDCD extraction mechanism in Algorithm 2 takes each sample from target domain Dt and without its labels, evaluates whether the sample is within the DCB of Ds.
+
+Lemma 1. The SDCD metric is: i) a monotonous function of the robustness residue in Eqn. 4, and ii) has positive cor-relation with the performance of a learning machine M that minimizes empirical risk in source domain Ds and tested on target domain for large datasets. Proof: Discussed in sup-plement Section 7.2. 
+
+4.1.3. Step 3: Knowledge refinement through ablation 
+
+Using SDCD metric we can carry out ablation studies to determine the best combination of knowledge that has the maximum SDCD. This will guarantee the best accuracy for any machine M that integrates the refined knowledge ac-cording to Lemma 1. We use the quantification strategy de-scribed in Section 2 to convert the expert knowledge com-ponent to a 14 dimensional real vector. Through several it-erations we remove the knowledge components one by one thereby reducing the dimension of the real vector and com-pute the average SDCD metric for each pair of source and target domain. We keep the configuration that gives the best average SDCD metric value. 
+
+4.2. GenEval Method for SDG in DR 
+
+Medical Vision-Language Foundation. GenEval lever-ages MedGemma-4B [29] VLM pre-trained on extensive medical image-text pairs. Unlike general-purpose VLMs that struggle with clinical diagnostic reasoning [43, 64, 89], MedGemma-4B incorporates medical knowledge through its training on clinical reports, textbooks, and peer-reviewed literature. The model architecture consists of three key components working in synergy [44, 56, 67]: a) The clin-ical vision encoder processes 224 × 224 pixel images through a multi-head attention mechanism specifically op-timized for medically relevant components such as retinal structures [21, 31]. It captures both low-level pathologi-cal features (microaneurysms, hemorrhages, exudates) and Table 2. LoRA setup and fine-tuning time. A = APTOS 2019, E = E YE PACS, M1 = M ESSIDOR -1, M2 = M ESSIDOR -2.                        
+
+> Key LoRA hyperparameters
+> Adapter rank ( r) = 16; scaling factor ( α) = 16; LoRA dropout = 0.05; target mod-ules = {q proj, k proj, v proj, o proj, up proj, down proj, gate proj };modules to save = {lm head, embed tokens };trainable params = ≈95M (2.4% of 4B); task type = CAUSAL LM .
+> Training time (hh:mm:ss)
+> Single domain: A = 01:03:35; E = 10:14:20; M1 = 00:20:41; M2 = 00:34:11.
+> Multi domain: A+E+M1 = 12:01:30; A+E+M2 = 12:23:19; A+M1+M2 = 01:58:43; E+M1+M2 = 11:18:07.
+> Inference time
+> Single domain: 423.96 ± 33.52 ms [383.14, 458.72]; Multi domain: 385.46 ± 29.24 ms [359.71, 427.35].
+> YOLO lesion detector End-to-end (wall): 632.78 ±119.58 ms [528.58, 783.62].
+
+high-level diagnostic patterns (neovascularization, macu-lar edema, venous beading) [43, 44, 82, 89]. Parameter-Efficient Clinical Adaptation. To preserve MedGemma-4B’s extensive pre-trained clinical knowledge while adapt-ing to specific classification tasks, we employ Low-Rank Adaptation (LoRA) [33] with novel architectural modifica-tions inspired by recent advances in asymmetric parameter-efficient fine-tuning [46, 54]. For each transformer layer l,we inject trainable low-rank matrices following the decom-position: W′       
+
+> l=Wl+α·BlAl(6)
+
+where Wl ∈ Rd×d represents the frozen pre-trained weight matrix, Bl ∈ Rd×r and Al ∈ Rr×d are trainable matri-ces with rank r ≪ d, and α is a scaling factor [33, 46]. We set r = 16 and α = 16 based on empirical valida-tion across multiple DR datasets, following established op-timization protocols [53, 62]. This approach provides three critical advantages for medical applications [44, 56]. Com-putational efficiency is achieved by updating only approx-imately 2% of total parameters ( ∼95M out of 4B), dras-tically reducing GPU memory requirements and training time while maintaining competitive performance [33, 46]. 
+
+Knowledge preservation ensures that the frozen weights retain broad clinical reasoning capabilities acquired dur-ing pre-training, preventing catastrophic forgetting of med-ical knowledge [43, 89]. Clinical interpretability emerges from the low-rank structure, as the adapter matrices Bl
+
+and Al can be analyzed to understand task-specific diag-nostic adjustments and feature importance patterns [7, 44]. 
+
+Knowledge refinement and structured clinical prompt-ing. Effective DR classification requires prompts that mir-ror clinical diagnostic workflows and leverage the Inter-national Clinical Diabetic Retinopathy Disease Severity Scale [74, 82]. We develop two complementary prompt-ing strategies optimized for different deployment scenar-ios, drawing from established clinical practice guidelines and recent advances in medical language model prompt-ing [44, 56, 67]. Zero shot evaluation: We employ a com-prehensive clinical instruction that positions MedGemma-4B as a specialist diagnostic system:                                                            
+
+> ‘‘You are amedical AI system specialized in diabetic retinopathy diagnosis from retinal fundus images. Classify DR severity (0--4) based on established clinical criteria: 0|No DR: normal retina with no microaneurysms; 1|Mild NPDR: few microaneurysms only; 2|Moderate NPDR: multiple microaneurysms, hemorrhages, possibly cotton-wool spots; 3|Severe NPDR: extensive hemorrhages in all four quadrants, venous beading, IRMA without neovascularization; 4|Proliferative DR: neovascularization, vitreous hemorrhage, or retinal detachment. Respond with only the number (0--4).’’
+
+Fine-tuned models , we incorporate role-playing elements and contextual medical reasoning through an expert consul-tation prompt [43, 89]:                                 
+
+> ‘‘You are an ophthalmologist with 15 years of experience in diabetic retinopathy screening. Examine the macula, optic disc, and four quadrants for microaneurysms, hemorrhages, hard/soft exudates, venous abnormalities, and IRMA. Classify using {0,1,2,3,4 }and return only the severity number.’’
+
+The refined knowledge obtained from the SDCD-based re-finement strategy is incorporated directly into the prompt. This structured approach incorporates clinical reasoning patterns and systematic examination protocols that mirror actual diagnostic workflows [21, 31, 82], improving both accuracy and consistency in model predictions across dif-ferent clinical contexts. 
+
+## 5. Evaluation, Results and Analysis 
+
+There are five evaluation goals: a) Validating the mono-tonicity property in Lemma 1, b) quantify the effect of knowledge integration on SDCD; c) MDG performance of GenEval, d) SDG performance of GenEval, and e) Per-formance comparison of GenEval with untuned VLMs. 
+
+Benchmark datasets: DR datasets: EyePACS [20], AP-TOS [5], Messidor-1 [25], Messidor-2 [19]. Labels are har-monized to the 5-class ICDR scale (0 to 4) using dataset grades or standard mappings. In the extended SDG setting, we fix EyePACS as the source and evaluate on four addi-tional DR targets: IDRiD [63], DeepDR [50], FGADR [90], and RLDL [81]. Seizure onset zone (SOZ): two institu-tional rs-fMRI cohorts, Phoenix Children’s Hospital (PCH) and University of North Carolina (UNC), processed with one unified pipeline; SOZ labels use a 3-class scheme 0–2 where 0 = noise, 1 = resting state, and 2 = SOZ [37]. 
+
+Baselines: For DR, we use the strongest baselines reported in [27], DECO [84] and GDRNet [16]. For untuned VLMs on DR, we include CLIP [64], OrdinalCLIP [45], and CLIP-DR [87]. For SOZ cross-site SDG, we compare against the CuPKL for zero-shot rare-event classification [37]. 
+
+Metrics: For DR (ICDR 0–4), our primary metric for SDG/MDG is overall multi-class accuracy on each target domain. For DR comparisons with untuned VLMs, we re-port macro F1 (mean F1 over the five DR classes). For SOZ cross-site SDG (4-class: 0–3), we use macro F1 as the pri-mary metric due to class imbalance, and additionally report accuracy, macro precision, and macro recall in the supple-ment. We also report SDCD (%) for causal-cover analysis (computed with α=0 .05 DCB) where relevant. Statistics: 
+
+We use the t-test to evaluate p value of accuracy difference between GenEval and baselines. SDG tables are repeated with p values in appendix Section 7.6 
+
+1. Validation of Lemma 1 The SDCD from data is shown in Table 3, column D SDCD . The Pearson’s correlation co-Table 3. SDG results on diabetic retinopathy datasets. Knowl-edge is K and Data is D We evaluate our approach across different source-target domain pairs using state-of-the-art methods. All re-sults are reported as classification accuracy (%).                                                                    
+
+> Sou rce Target Best Baseline Baseline Accuracy KSDCD DSDCD GenEval K + D SDCD
+> Mess Aptos SPSD-ViT [27] 48.3 % 92.7% 16% 56.0% 98.03% idor Messidor2 SPSD-ViT [27] 62.2% 99.1% 87.1% 65.18% 99.14% EyePACS SPSD-ViT [27] 57.4% 17.02% 36.4% 80.04% 94.94% Mess Aptos SPSD-ViT [27] 52.8% 32.1 % 17.7% 69.69% 76.3% idor2 Messidor SD-ViT [73] 61.0% 99.9% 98.2% 67.67% 100.00% EyePACS SPSD-ViT [27] 72.5% 34.6% 41.31% 77.79% 96.34% Aptos Messidor2 DRGen [6] 61.0% 62.5% 79.04% 64.01% 88.10% Messidor DRGen [6] 46.7% 56.4 % 73.9% 49.0% 100.00% EyePACS SD-ViT [73] 72.0% 59.4% 77.82% 77.78% 99.97% Eye Aptos SPSD-ViT [27] 75.1% 46.9% 99.8% 73.16% 99.84% pacs Messidor2 DRGen [6] 65.4% 99.2% 99.7% 80.5% 99.83% Messidor DRGen [6] 54.6% 99.1% 71.1% 69.48% 100.00%
+
+efficient of 0.692 (p 0.02) showing a positive correlation between SDCD and Accuracy of the best baseline. This demonstrates the monotonicity of SDCD in real world data. 
+
+Table 4. Knowledge refinement through ablations guided by SDCD and corresponding accuracy.             
+
+> Ablation SDCD (%) Accuracy (%)
+> no ablation 59.000 65.01 remove microaneurysms 68.000 70.02 remove hemorrhages, or exudates 71.683 71.05 remove venous beading 82.765 73.21
+> remove Neovascularization 82.81 73.23
+
+2. Effect of knowledge integration Table 3 shows the SDCD extracted from refined knowledge (column KSDCD ) and the SDCD extracted from the integration of knowledge and data (column K + D SDCD ). It shows sig-nificant improvement in SDCD with respect to data. The integration also helped GenEval to increase accuracy in all SDG settings. Knowledge refinement using SDCD: 
+
+Table 4 shows the SDCD for removing different knowl-edge components. We see that removing neovascularization gives the best SDCD. This is because neovascularization or new bleeding veins are extremely difficult to identify and YOLOv12 fails to do so. We also see that SDCD is corre-lated with accuracy and removing neovascularization gives the highest accuracy. This results in the prompt for fine tuned models. 
+
+3. Sensitivity analysis of SDCD The Mahalanobis dis-tance scales inversely with the covariance matrix; thus, as noise increases it becomes unstable, affecting SDCD. Using Table 3 with EyePACS as source and all other datasets as targets, we added Gaussian noise and swept peak signal to noise ratio (PSNR) from 30 dB to 0 dB. As PSNR decreases, Figure 3 shows SDCD (from raw data) stays high initially, then drops rapidly to an average of ≈ 56% across datasets. Concurrently, the Pearson correlation between SDCD and classification accuracy falls from 0.692 (p < 0.02 ) to −0.1
+
+Figure 3. Variation of SDCD metric with pixel signal to noise ratio due to instability in Mahalanobis distance, and effect on correla-tion of SDCD with Accuracy given by Lemma 1. 
+
+(p < 0.8). SDCD also depends on YOLO-based knowl-edge extraction for DR: YOLOv11 outperforms YOLOv12, yielding slightly higher SDCD (Table 17 in supplement). However, when combined with data, the final K + D SDCD increases only marginally, producing a statistically insignif-icant gain in GenEval accuracy. 
+
+4. Multi-Source Domain Generalization Table 1presents fair comparisons where all methods are trained on three datasets and evaluated on the fourth. GenEval demon-strates substantial (+5.71%) improvement over SPSD-ViT (79.21% vs 73.3%), the best performing SOTA. 
+
+5. Single-Source Domain Generalization Table 3 sum-marizes the SDG results for GenEval as compared to the best baseline available for the given datasets. Tables 11 through 14 in supplement present systematic evaluation across all 12 source-target pairs and more baselines. Cross-Domain Transfer Analysis: Clinical datasets with stan-dardized protocols (EyePACS, Messidor series) serve as more effective source domains than resource-limited collec-tions (APTOS). The performance hierarchy reflects imag-ing quality and acquisition standardization, with implica-tions for real-world deployment strategies. Domain Diffi-culty Assessment: APTOS consistently presents the great-est challenge both as source and target domain, reflecting the reality of deploying AI systems in resource-constrained environments. Extended Single-Source Domain General-ization: we fix the training domain to EyePACS and vary many targets. This is more challenging that varying do-mains and evaluating on a fixed large-scale target set since some source domain is bound to have good agreement with the target. Our design matches the deployment we care about in practice (train once on a single source clinic, de-ploy widely) and avoids conflating results with the choice of source. Concretely, we add IDRiD [63], DeepDR [50], FGADR [90], and RLDL [81] to the core targets so that the only changing factor is the target-domain shift, not the training model or pipeline. For comparability, we use pub-lished single-source accuracies from prior work for base-lines rather than re-implementing them, because their setups change the training domain while ours holds it fixed. This keeps the comparison apples-to-apples for fixed-source, multi-target SDG and makes clear that any gains reflect ro-bustness to diverse target distributions under a single, har-monized source. GenEval outperforms DECO [84] and                              
+
+> Table 5. Extended single-source domain generalization on diabetic retinopathy. Train on EyePACS, test on six external targets. Met-ric: accuracy (%). Best scores in bold .
+> Method APTOS Messidor IDRiD DeepDR FGADR RLDL Avg
+> GDRNet 52.8 65.7 70.0 40.0 7.5 44.3 46.7 DECO 59.7 70.1 74.8 40.3 9.9 49.3 50.68 GenEval 73.2 69.5 70.6 59.2 56.9 67.6 66.2
+
+GDRNet[16] on all benchmarks for the challenging task of SDG on five additional datasets without any change to the model trained with EyePACS dataset. Largest gains oc-cur on DeepDR, FGADR, and RLDL while performance is near-parity on Messidor (-0.6 pp) and slightly lower on IDRiD (-4.2 pp). Under a fixed-source, multi-target de-sign, these results benchmarks a deployment-relevant sce-nario applicable broadly across clinics.                
+
+> Table 6. VLM SDG F1 score (%) for DR Classification.
+> VLM Method APTOS Messidor Average
+> CLIP [64] 44.3 39.6 41.9 OrdinalCLIP [45] 45.7 41.8 43.8 CLIP-DR [87] 46.3 47.3 46.8 GenEval- (Ours) 72.0 78.2 75.1
+
+6. Vision-Language Model Performance GenEval-VLM demonstrates substantial improvements over exist-ing vision-language approaches for cross-domain diabetic retinopathy classification, achieving significant F1 score gains of +28.3% average improvement across challenging domain shifts [45, 65, 87]. Our method achieves 72.0% F1 score on APTOS and 78.2% on Messidor datasets, rep-resenting improvements of +25.7% and +30.9% respec-tively over the previous best-performing CLIP-DR method, while maintaining competitive AUC performance [44, 89]. The integration of domain conformal boundaries with MedGemma-4B’s medical pre-training enables robust gen-eralization across diverse clinical environments, with 95% coverage guarantee providing essential reliability assess-ment for clinical deployment [2, 32, 59]. These perfor-mance improvements, combined with parameter-efficient LoRA adaptation, position GenEval-VLM as a clinically vi-able solution for multi-institutional DR screening programs where both accuracy and reliability assessment are critical for patient safety [33, 41]. 
+
+7. Single source domain generalization on SOZ Ta-ble 7 shows that GenEval achieves superior average F1 per-formance (90.0%) compared to CuPKL GPT-4o (88.1%), demonstrating more consistent generalization across cen-ters. Notably, while CuPKL excels on PCH (93.8% F1), it shows reduced performance on UNC (82.3% F1), whereas GenEval maintains more stable performance across both sites (89.0% and 91.0% F1, respectively).             
+
+> Table 7. Single-source domain generalization on SOZ detection. Results are reported as F1-score (%). Best scores in bold .
+> Source Target CuPKL [37] CuPKL Avg GenEval GenEval Avg PCH UNC 82.3 88.1 91.0 90 UNC PCH 93.8 89.0
+
+The superior average F1 score indicates GenEval’s en-hanced ability to balance precision and recall in detect-ing epileptogenic regions across different clinical environ-ments. This consistency is particularly valuable for clinical deployment where reliable performance across diverse in-stitutional settings is essential. We report detailed accuracy, precision, and recall metrics in supplementary Table 16, along with comprehensive cross-site transfer analysis. 
+
+## 6. Conclusions 
+
+SDG is a cornerstone challenge for deploying AI systems in real-world settings, arguably the Achilles’ heel of ma-chine learning, and especially critical in medical imaging where shifts between clinical sites or imaging devices can severely degrade performance. To probe the feasibility of transferring a model to an unseen target domain, our pa-per rigorously evaluates two complementary aspects: first, whether the source domain furnishes the necessary causal cover for the target distribution, and second, integrated hu-man expert knowledge with foundational models to poten-tially encapsulate all underlying causal factors that drive variation across domains. We shown that a knowledge re-finement mechanism is necessary to derive an optimal set of knowledge component that reduces ambiguity. GenEval-DR then integrates DR images and refined knowledge as textual prompts to classify DR images. GenEval-DR not only predicts generalization success, but also empowers re-searchers to make principled choices about which source domains to include during training –paving the way for a formal, theory-based treatment of DG that relies on neces-sary and sufficient conditions rather than heuristic fixes. 
+
+Limitations: GenEval-DR assumes that the underly-ing data-generation mechanism is continuous and differen-tiable. In real-world systems, particularly those that com-bine digital computations with physical measurement de-vices, sharp transitions or threshold effects can violate this assumption. Although such non-differentiable behavior can be locally approximated by switched hybrid differentiable systems around discontinuities, these approximations may introduce errors in causal factor estimation and model eval-uation. Developing methods that explicitly account for or adapt to genuine discontinuities, and quantifying the impact of approximation error on generalization metrics, remains an important direction for future research. 
+
+## Acknowledgments 
+
+This work is partly funded by DARPA AMP-N6600120C4020, DARPA FIRE-P000050426, NSF FDT-Biotech 2436801, and the Helmsley Charitable Trust (2-SRA-2017-503-M-B). We thank Farhat Shaikh, Midhat Urooj, and other Impact Lab collaborators for valuable discussions during problem formulation, and Harwinder Singh, Vedanti Dantwale, and Vaishnavi Gad-hikar for their assistance with experiments and validation. References 
+
+[1] Anastasios N. Angelopoulos and Stephen Bates. A gentle in-troduction to conformal prediction and distribution-free un-certainty quantification. arXiv preprint arXiv:2107.07511 ,2021. 4, 13 [2] Anastasios N. Angelopoulos, Samuel R. Pomerantz, Son Do, Stephen Bates, C.P. Bridge, Daniel C. Elton, Michael H. Lev, Raul G. Gonzalez, Michael I. Jordan, and Jitendra Ma-lik. Conformal triage for medical imaging AI deployment. 
+
+medRxiv , 2024. 4, 8 [3] Sanjeev Arora, Zhiyuan Li, and Abhishek Panigrahi. Un-derstanding gradient descent on the edge of stability in deep learning. In International Conference on Machine Learning ,pages 948–1024. PMLR, 2022. 3 [4] Devansh Arpit, Huan Wang, Yingbo Zhou, and Caiming Xiong. Ensemble of averages: Improving model selection and boosting performance in domain generalization. Ad-vances in Neural Information Processing Systems , 35:8265– 8277, 2022. 1, 3 [5] Asia Pacific Tele-Ophthalmology Society (APTOS). Aptos 2019 blindness detection. https://www.kaggle.com/ c/aptos2019-blindness-detection/ , 2019. Ac-cessed: 2025-07-19. 6 [6] Mohammad Atwany and Mohammad Yaqub. Drgen: Do-main generalization in diabetic retinopathy classification. In 
+
+Medical Image Computing and Computer Assisted Interven-tion – MICCAI 2022 , pages 635–644, 2022. 4, 7, 15 [7] Mohamed Ishmael Belghazi, Aristide Baratin, Sai Rajesh-war, Sherjil Ozair, Yoshua Bengio, Aaron Courville, and De-von Hjelm. Mine: Mutual information neural estimation. 
+
+International Conference on Machine Learning , pages 531– 540, 2018. 6 [8] C. Bennett and R. Thompson. Hybrid systems and state-space transformations for discontinuous systems. Systems & Control Letters , 54(3):263–273, 2005. 3 [9] A.R. Bhavsar. Diabetic retinopathy clinical presentation. Medscape Reference, 2019. 15 [10] Steven L Brunton, Joshua L Proctor, and J Nathan Kutz. Dis-covering governing equations from data by sparse identifica-tion of nonlinear dynamical systems. Proceedings of the Na-tional Academy of Sciences , 113(15):3932–3937, 2016. 13 [11] E. Camacho and S. Bordes. Hybrid systems in state-space representations for system design and control. Automatica ,43(9):1462–1473, 2007. 3 [12] Colin Campbell, Paul Sternberg, et al. Subhyaloid and vit-reous haemorrhage in diabetic retinopathy. Eye (London) , 9: 21–25, 1995. 15 [13] J. Cha, S. Chun, K. Lee, H.-C. Cho, S. Park, Y. Lee, and S. Park. Swad: Domain generalization by seeking flat min-ima. In Advances in Neural Information Processing Systems ,pages 22405–22418, 2021. 1 [14] Kathleen Champion, Peng Zheng, Aleksandr Y Aravkin, Steven L Brunton, and J Nathan Kutz. A unified sparse opti-mization framework to learn parsimonious physics-informed models from data. IEEE Access , 8:169259–169271, 2020. 13 [15] Tony F Chan, Jianhong Shen, and Luminita Vese. Variational pde models in image processing. Notices AMS , 50(1):14–26, 2003. 3 [16] Haoxuan Che, Yuhan Cheng, Haibo Jin, and Hao Chen. To-wards generalizable diabetic retinopathy grading in unseen domains. In Medical Image Computing and Computer As-sisted Intervention – MICCAI 2023 . Springer, 2023. 1, 6, 8[17] Kevin K Chen, Jonathan H Tu, and Clarence W Rowley. Variants of dynamic mode decomposition: boundary condi-tion, koopman, and fourier analyses. Journal of nonlinear science , 22:887–915, 2012. 3 [18] Yunjin Chen, Wei Yu, and Thomas Pock. On learning optimized reaction diffusion processes for effective image restoration. In Proceedings of the IEEE Conference on Com-puter Vision and Pattern Recognition (CVPR) , pages 5261– 5269, 2015. 3 [19] Messidor Consortium. Messidor-2: Diabetic retinopathy ex-aminations dataset. https://www.adcis.net/en/ third-party/messidor2/ , 2024. Contains 874 ex-aminations (1,748 fundus images); kindly provided by the Messidor program partners. Accessed: 2025-07-19. 6 [20] Jorge Cuadros and George H. Bresnick. Eyepacs: An adapt-able telemedicine system for diabetic retinopathy screening. 
+
+Journal of Diabetes Science and Technology , 3(3):509–516, 2009. 1, 2, 6 [21] L. Dai, B. Sheng, T. Chen, X. Wu, K. Zhou, K. Jin, L. Su, J. Chen, K. You, L. Lu, et al. A deep learning system for predicting time to progression of diabetic retinopathy. Nature Medicine , 30:584–594, 2024. 4, 5, 6, 13 [22] Lalit Dandona, Carol McCarty, et al. Population-based as-sessment of vision function and quality of life in diabetic retinopathy: Proliferative dr and vision loss. Diabetes Care ,24(6):1085–1089, 2001. 15 [23] M. David, S. Robert, and F. Christian. Hybrid systems: Com-putation and control (hscc). In Proceedings of the 14th Inter-national Conference on Hybrid Systems: Computation and Control , pages 56–68. Springer, 2011. 3 [24] Roy De Maesschalck, Delphine Jouan-Rimbaud, and D´ esir´ e L Massart. The Mahalanobis distance . Elsevier, 2000. 13 [25] Etienne Decenci` ere et al. Feedback on a publicly distributed image database: The messidor database. Image Analysis and Stereology , 33(3):231–234, 2014. 2, 6 [26] Miguel Fainstein, Viviana Siless, and Emmanuel Iarussi. Dudf: Differentiable unsigned distance fields with hyper-bolic scaling. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 4484–4493, 2024. 3 [27] Chamith Jayanga Galappaththige, Gavindya Kuruppu, and Muhammad Haris Khan. Generalizing to unseen domains in diabetic retinopathy classification. In Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision , pages 7685–7695, 2024. 1, 2, 4, 6, 7, 15 [28] Alejandro Garnung Men´ endez. Physics meets pixels: Pde models in image processing. arXiv e-prints , pages arXiv– 2412, 2024. 3 [29] Google Health AI. Medgemma 4b model card. https: //huggingface.co/google/medgemma- 4b- it ,2025. Accessed 23 Jun 2025. 4, 5 [30] Early Treatment Diabetic Retinopathy Study Research Group. Grading diabetic retinopathy from stereoscopic color fundus photographs—an extension of the modified airlie house classification: Etdrs report number 10. Ophthalmol-ogy , 98(5):786–806, 1991. 15 [31] Varun Gulshan, Lily Peng, Marc Coram, et al. Development and validation of a deep learning algorithm for detection of diabetic retinopathy in retinal fundus photographs. JAMA ,316(22):2402–2410, 2016. 5, 6, 13 [32] Roy Hirsch and Jacob Goldberger. Noise-robust conformal prediction for medical image classification. Machine Learn-ing in Medical Imaging , pages 158–167, 2024. 8 [33] Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Chen, Yunian Bao, Yuanzhi Wang, Lu Wang, and Weizhu Chen. Lora: Low-rank adaptation of large language models. arXiv preprint arXiv:2106.09685 , 2021. 2, 4, 6, 8 [34] Kadierdan Kaheman, J Nathan Kutz, and Steven L Brunton. Sindy-pi: a robust algorithm for parallel implicit sparse iden-tification of nonlinear dynamics. Proceedings of the Royal Society A , 476(2242):20200279, 2020. 3 [35] Eurika Kaiser, J Nathan Kutz, and Steven L Brunton. Sparse identification of nonlinear dynamics for model predictive control in the low-data limit. Proceedings of the Royal Soci-ety A , 474(2219):20180335, 2018. 3, 13 [36] Payal Kamboj, Ayan Banerjee, and Sandeep Gupta. Ex-pert knowledge driven human-AI collaboration for medical imaging: A study on epileptic seizure onset zone identifi-cation. IEEE Transactions on Artificial Intelligence , 5(10): 5352–5368, 2024. 3, 4, 15 [37] Payal Kamboj, Ayan Banerjee, Bin Xu, and Sandeep Gupta. Generating customized prompts for zero-shot rare event medical image classification using llm. In 2025 IEEE 22nd International Symposium on Biomedical Imaging (ISBI) ,pages 1–5, 2025. 4, 6, 8 [38] Alan A Kaptanoglu, Brian M de Silva, Urban Fasel, Kadier-dan Kaheman, Andy J Goldschmidt, Jared L Callaham, Charles B Delahunt, Zachary G Nicolaou, Kathleen Cham-pion, Jean-Christophe Loiseau, et al. Pysindy: a comprehen-sive python package for robust sparse system identification. 
+
+Journal of Open Source Software , 7(69):3994, 2022. 13 [39] Taehyeon Kim, Jaehoon Oh, NakYil Kim, Sangwook Cho, and Se-Young Yun. Comparing kullback-leibler divergence and mean squared error loss in knowledge distillation. arXiv preprint arXiv:2105.08919 , 2021. 3, 14 [40] Bernard O. Koopman. Hamiltonian systems and transforma-tion in hilbert space. Proceedings of the National Academy of Sciences , 17(5):315–318, 1931. 3 [41] Benjamin Lambert, Florence Forbes, Alan Tucholka, Senan Doyle, Harmonie Dehaene, and Michel Dojat. Trustworthy clinical AI solutions: A unified review of uncertainty quan-tification in deep learning models for medical image analy-sis. Artificial Intelligence in Medicine , 139:102830, 2024. 8[42] Christophe Leys, Olivier Klein, Yves Dominicy, and Christophe Ley. Detecting multivariate outliers: Use a robust variant of the mahalanobis distance. Journal of Experimental Social Psychology , 74:150–156, 2018. 13 [43] Chunyuan Li et al. Llava-med: Training a large language-and-vision assistant for biomedicine. arXiv preprint arXiv:2306.00890 , 2023. 4, 5, 6 [44] Qingqiu Li, Xiaohan Yan, Jilan Xu, Runtian Yuan, Yuejie Zhang, Rui Feng, Quanli Shen, Xiaobo Zhang, and Shu-jun Wang. Anatomical structure-guided medical vision-language pre-training. In Medical Image Computing and Computer Assisted Intervention – MICCAI 2024 , pages 80– 90. Springer Nature Switzerland, 2024. 5, 6, 8 [45] Wanhua Li, Xiaoke Huang, Zheng Zhu, Yansong Tang, Xiu Li, Jie Zhou, and Jiwen Lu. Ordinalclip: Learning rank prompts for language-guided ordinal regression. In Ad-vances in Neural Information Processing Systems , pages 35313–35325, 2022. 6, 8 [46] Chunlin Liu, Zhan Wang, Jingcheng Yang, Zheng Liu, Zhuang Yuan, Wei Song, Tiezheng Qiu, Bo Liu, Wenming Zhang, and Jianyuan Shen. Hydralora: An asymmetric lora architecture for efficient fine-tuning. In Advances in Neu-ral Information Processing Systems . Curran Associates, Inc., 2024. 6 [47] Jiaqi Liu, Guoyang Xie, Jinbao Wang, Shangnian Li, Chengjie Wang, Feng Zheng, and Yaochu Jin. Deep indus-trial image anomaly detection: A survey. Machine Intelli-gence Research , 21(1):104–135, 2024. 4 [48] Qinghua Liu and John Paparrizos. The elephant in the room: Towards a reliable time-series anomaly detection bench-mark. In Advances in Neural Information Processing Sys-tems , pages 108231–108261. Curran Associates, Inc., 2024. 4[49] Risheng Liu, Junjie Cao, Zhouchen Lin, and Shiguang Shan. Adaptive partial differential equation learning for visual saliency detection. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR) , pages 3866–3873, 2014. 3 [50] Ruhan Liu, Xiangning Wang, Qiang Wu, Ling Dai, Xi Fang, Tao Yan, Jaemin Son, Shiqi Tang, Jiang Li, Zijian Gao, Adrian Galdran, J.M. Poorneshwaran, Hao Liu, Jie Wang, Yerui Chen, Prasanna Porwal, Gavin Siew Wei Tan, Xi-aokang Yang, Chao Dai, Haitao Song, Mingang Chen, Hu-ating Li, Weiping Jia, Dinggang Shen, Bin Sheng, and Ping Zhang. Deepdrid: Diabetic retinopathy—grading and image quality estimation challenge. Patterns , page 100512, 2022. 6, 7 [51] Mingsheng Long, Yue Cao, Jianmin Wang, and Michael I. Jordan. Learning transferable features with deep adaptation networks. In International Conference on Machine Learn-ing , pages 97–105, 2015. 1, 4 [52] Mingsheng Long, Han Zhu, Jianmin Wang, and Michael I. Jordan. Conditional adversarial domain adaptation. In Ad-vances in Neural Information Processing Systems , pages 1640–1650, 2017. 1, 4 [53] Ilya Loshchilov and Frank Hutter. Sgdr: Stochas-tic gradient descent with warm restarts. arXiv preprint arXiv:1608.03983 , 2016. 6 [54] Ilya Loshchilov and Frank Hutter. Decoupled weight de-cay regularization. In International Conference on Learning Representations , 2019. 6 [55] Charles Lu, Adriel Lemay, Ken Chang, Katharina H¨ obel, and Jayashree Kalpathy-Cramer. Fair conformal predictors for applications in medical imaging. In Proceedings of the AAAI Conference on Artificial Intelligence , pages 12008–12016, 2022. 4 [56] Ming Y. Lu, Bowen Chen, Drew F.K. Williamson, Richard J. Chen, Ivy Zhao, and Faisal Mahmood. Pathchat: A multi-modal generative AI copilot for human pathology. In Med-ical Image Computing and Computer Assisted Intervention ,pages 531–540, 2024. 5, 6 [57] Allan M Martins, AD Neto, and Jorge D Melo. Compari-son between mahalanobis distance and kullback-leibler di-vergence in clustering analysis. Wseas Transactions on Sys-tems , 3(2):501–505, 2004. 3 [58] M. Mathews and L. Carlson. Nonlinear state space modeling with discontinuous transitions. Mathematical Methods in the Applied Sciences , 29(8):1101–1122, 2006. 3 [59] Hendrik A. Mehrtens, Alexander Kurz, Titus-Cornel Bucher, and Titus J. Brinker. Pitfalls of conformal predictions for medical image classification. Lecture Notes in Computer Sci-ence , 14225:195–205, 2024. 8 [60] Nando Metzger, Rodrigo Caye Daudt, and Konrad Schindler. Guided depth super-resolution by deep anisotropic diffu-sion. In Proceedings of the IEEE/CVF Conference on Com-puter Vision and Pattern Recognition (CVPR) , pages 18237– 18246, 2023. 3 [61] A. Tuan Nguyen, Toan Tran, Yarin Gal, Philip H. S. Torr, and Atılım G¨ unes ¸ Baydin. Kl guided domain adaptation, 2022. 3, 14 [62] Razvan Pascanu, Tomas Mikolov, and Yoshua Bengio. On the difficulty of training recurrent neural networks. Interna-tional Conference on Machine Learning , pages 1310–1318, 2013. 6 [63] Prasanna Porwal, Samiksha Pachade, Ravi Kamble, Manesh Kokare, Girish Deshmukh, Vivek Sahasrabuddhe, and Fab-rice Meriaudeau. Indian diabetic retinopathy image dataset (idrid), 2018. 6, 7 [64] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learn-ing transferable visual models from natural language super-vision. arXiv preprint arXiv:2103.00020 , 2021. 5, 6, 8 [65] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learn-ing transferable visual models from natural language super-vision. In International Conference on Machine Learning ,pages 8748–8763. PMLR, 2021. 8 [66] Glenn Shafer and Vladimir Vovk. A tutorial on conformal prediction. Journal of Machine Learning Research , 9:371– 421, 2008. 4, 13 [67] Yangjun Shen et al. Med-flamingo: A multimodal medical few-shot learner. arXiv preprint arXiv:2307.15189 , 2023. 5, 6[68] A. Slightly and J. Gadsen. A hybrid model approach for sys-tems with discontinuities. IEEE Transactions on Automatic Control , 43(3):420–428, 1998. 3 [69] R. Smith and Q. Zhang. Modeling hybrid systems with dis-continuities in state-space representations. In Proceedings of the IEEE Conference on Decision and Control , pages 1859– 1864. IEEE, 2008. 3 [70] Yang Song, Jascha Sohl-Dickstein, Diederik P. Kingma, Ab-hishek Kumar, Stefano Ermon, and Ben Poole. Score-based generative modeling through stochastic differential equa-tions, 2021. 3 [71] Jeronimo Staal, Michael D. Abramoff, Meindert Niemeijer, Max A. Viergever, and Bram van Ginneken. Ridge-based vessel segmentation in color images of the retina. IEEE Transactions on Medical Imaging , 23(4):501–509, 2004. 3 [72] StatPearls. Diabetic retinopathy. StatPearls Publishing, 2024. 15 [73] Maryam Sultana, Muzammal Naseer, Muhammad Haris Khan, Salman Khan, and Fahad Shahbaz Khan. Self-distilled vision transformer for domain generalization. In Asian Con-ference on Computer Vision , pages 635–651, 2022. 1, 4, 7, 15 [74] Christian Szegedy, Vincent Vanhoucke, Sergey Ioffe, Jon Shlens, and Zbigniew Wojna. Rethinking the inception archi-tecture for computer vision. Proceedings of the IEEE Con-ference on Computer Vision and Pattern Recognition , pages 2818–2826, 2016. 6 [75] Piotr Teterwak, Kuniaki Saito, Theodoros Tsiligkaridis, Kate Saenko, and Bryan Plummer. Erm++: An improved baseline for domain generalization. In Proceedings of the Winter Con-ference on Applications of Computer Vision (WACV) , pages 8514–8524, 2025. 1, 15 [76] Yunjie Tian, Qixiang Ye, and David Doermann. Yolov12: Attention-centric real-time object detectors, 2025. 4 [77] Ryan J Tibshirani, Rina Foygel Barber, Emmanuel Candes, and Aaditya Ramdas. Conformal prediction under covariate shift. Advances in neural information processing systems ,32, 2019. 13 [78] Vladimir Vovk, Alexander Gammerman, and Glenn Shafer. 
+
+Algorithmic Learning in a Random World . Springer Science & Business Media, New York, 2005. 4, 13 [79] Long-Tung Vuong, Vy Vo, Hien Dang, Van-Anh Nguyen, Thanh-Toan Do, Mehrtash Harandi, Trung Le, and Dinh Phung. Why domain generalization fail? a view of neces-sity and sufficiency, 2025. 1, 3 [80] C.Y. Wang et al. A comprehensive review of yolo architec-tures in computer vision: From yolov1 to yolov8 and yolo-nas. Machine Learning and Knowledge Extraction , 5(4), 2023. 4 [81] Qijie Wei, Xirong Li, Weihong Yu, Xiao Zhang, Yongpeng Zhang, Bojie Hu, Bin Mo, Di Gong, Ning Chen, Dayong Ding, et al. Learn to segment retinal lesions and beyond. In 
+
+2020 25th International Conference on Pattern Recognition (ICPR) , pages 7403–7410. IEEE, 2021. 6, 7 [82] CP Wilkinson, FL Ferris III, RE Klein, PP Lee, CD Agardh, M Davis, D Dills, A Kampik, R Pararajasegaram, and JT Verdaguer. Proposed international clinical diabetic retinopa-thy and diabetic macular edema disease severity scales. Oph-thalmology , 110(9):1677–1682, 2003. 1, 6 [83] T.Y. Wong et al. Guidelines on diabetic eye care: The in-ternational council of ophthalmology recommendations for screening, follow-up, referral, and treatment based on re-source settings. Ophthalmology , 125(10):1608–1622, 2018. 15 [84] Peng Xia, Ming Hu, Feilong Tang, Wenxue Li, Wenhao Zheng, Lie Ju, Peibo Duan, Huaxiu Yao, and Zongyuan Ge. Generalizing to unseen domains in diabetic retinopathy with disentangled representations. In Medical Image Com-puting and Computer Assisted Intervention – MICCAI 2024 .Springer, 2024. 6, 8 [85] Jee Seok Yoon, Kwanseok Oh, Yooseung Shin, Maciej A. Mazurowski, and Heung-Il Suk. Domain generalization for medical image analysis: A review. Proceedings of the IEEE ,112(10):1658–1679, 2024. 4 [86] Jee Seok Yoon et al. Domain generalization for medical im-age analysis: A review. arXiv preprint arXiv:2310.08598 ,2024. 4 [87] Qinkai Yu, Jianyang Xie, Anh Nguyen, He Zhao, Jiong Zhang, Huazhu Fu, Yitian Zhao, Yalin Zheng, and Yanda Meng. Clip-dr: Textual knowledge-guided diabetic retinopa-thy grading with ranking-aware prompting. In International Conference on Medical Image Computing and Computer-Assisted Intervention , pages 667–677. Springer, 2024. 4, 6, 8[88] Lisa Zhang, Xinyang Wang, Dong Yang, Thomas Sanford, Stephanie Harmon, Baris Turkbey, Bradford J. Wood, Hol-ger Roth, Andriy Myronenko, Daguang Xu, and Ziyue Xu. Generalizing deep learning for medical image segmentation to unseen domains via deep stacked transformation. IEEE Transactions on Medical Imaging , 39(7):2531–2540, 2020. 4[89] Yuhao Zhang et al. Biomedclip: Contrastive learn-ing of medical image-text embeddings. arXiv preprint arXiv:2302.04023 , 2023. 4, 5, 6, 8 [90] Y. Zhou, B. Wang, L. Huang, S. Cui, and L. Shao. A bench-mark for studying diabetic retinopathy: Segmentation, grad-ing, and transferability. IEEE Transactions on Medical Imag-ing , 40(3):818–828, 2021. 6, 7 7. Supplementary Material 
+
+7.1. Causal Factor Relationship Extraction via PySINDy 
+
+To capture the underlying causal structure of domain-specific variations in diabetic retinopathy datasets, we employ Sparse Identification of Nonlinear Dynamics (SINDy) [10, 35] to extract interpretable causal factors from fundus images. Our approach transforms static retinal im-ages into dynamical representations that reveal intrinsic pat-terns governing disease manifestation across different clin-ical environments. 
+
+7.1.1. Theoretical Framework 
+
+For each dataset Di, we conceptualize fundus images as ob-servations of an underlying dynamical system whose evo-lution captures both pathological progression and domain-specific characteristics. Unlike traditional feature extraction methods that treat images as static entities, our approach models the spatial variations across the fundus as trajecto-ries in a high-dimensional state space, where radial profiles from the optic disc to the periphery encode critical diagnos-tic information [21, 31]. The SINDy framework identifies sparse dynamical relationships by constructing a library of candidate functions: 
+
+Θ( z) = [ z, z2, z3, . . . , z5, sin( z), cos( z), . . . ] (7) and solving the sparse regression problem: 
+
+˙z = Θ( z)ξ (8) where ξ represents the sparse coefficient vector encod-ing causal relationships. The sparsity constraint, enforced through Sequential Threshold Least Squares (STLSQ) op-timization, ensures that only the most significant dynam-ical modes are retained, yielding interpretable representa-tions [10, 14]. 
+
+7.1.2. Causal Factor Representation 
+
+This process generates domain-specific theta coefficients 
+
+θi = {θijk } for each dataset, where θijk quantifies the strength of nonlinear interaction between spatial features j
+
+and k in generating feature i. These coefficients capture: • Pathological dynamics : How disease markers (microa-neurysms, hemorrhages, exudates) evolve spatially across the fundus • Domain invariants : Fundamental patterns consistent across imaging protocols • Domain-specific modulations : Variations induced by equipment, illumination, and acquisition protocols The resulting theta matrices form a compact yet expressive representation of the causal factors affecting data distribu-tion across different clinical environments [35, 38]. 
+
+7.1.3. Statistical Characterization via Mahalanobis Dis-tance 
+
+Given the extracted causal factor representations θ from each domain, we flatten these multi-dimensional structures into vectors t ∈ RC×P where C represents the number of identified causal interaction types and P the polynomial de-gree (5 in our experiments). This flattening preserves the relational structure while enabling statistical analysis. For the source domain DS , we establish its characteristic causal distribution through: 
+
+ΣS = 1
+
+NS − 1
+
+> NS
+
+X
+
+> i=1
+
+(t(S) 
+
+> i
+
+− μS )( t(S) 
+
+> i
+
+− μS )T (9) where μS = 1
+
+> NS
+
+PNS 
+
+> i=1
+
+t(S) 
+
+> i
+
+represents the mean causal fac-tor configuration. The Mahalanobis distance provides a nat-ural metric for quantifying deviations from this characteris-tic distribution: 
+
+ρ(t, DS ) = 
+
+q
+
+(t − μS )T Σ−1 
+
+> S
+
+(t − μS ) (10) This metric accounts for the covariance structure of causal factors, providing a more nuanced measure than Euclidean distance. The inverse covariance matrix Σ−1 
+
+> S
+
+acts as a preci-sion matrix, emphasizing deviations along directions of low variance that may indicate significant domain shift [24, 42]. 
+
+7.2. Proofs 
+
+7.2.1. Domain Conformal Boundaries Proof of Theorem 1: To establish rigorous statistical guar-antees on domain compatibility, we employ conformal pre-diction methodology adapted for causal factor distributions. This approach provides distribution-free finite-sample guar-antees without assuming specific parametric forms [66, 78]. For target domain samples with causal factors {t(T ) 
+
+> j
+
+}NT
+
+> j=1
+
+,we compute adjusted robustness scores that normalize for the source domain’s intrinsic variability: 
+
+ρadj (t(T ) 
+
+> j
+
+) = ρ(t(T ) 
+
+> j
+
+, DS ) − ¯ρS (11) where ¯ρS represents the mean intra-domain distance, serv-ing as a baseline for expected variations. The conformal boundary is established through quantile-based calibration: 
+
+τα = Quantile ⌈(NT /2+1)(1 −α)⌉
+
+
+
+{ρadj (t(T ) 
+
+> j
+
+)}NT
+
+> j=1
+
+
+
+(12) This boundary provides the critical threshold: with prob-ability at least 1 − α, samples from domains with com-patible causal structure will satisfy ρadj (t) ≤ τα. For our experiments, we set α = 0 .05 , yielding 95% confidence bounds [1, 77]. 
+
+7.2.2. SDCD metric computation Lemma 2. The SDCD metric is: i) a monotonous function of the robustness residue in Eqn. 4, and ii) has positive cor-relation with the performance of a learning machine M that minimizes empirical risk in source domain Ds and tested on target domain for large datasets. Proof sketch part i:     
+
+> 1Rank 16, α= 16 , dropout 0.05, targets: q,k,v,o, up,down,gate; LR
+> 2×10 −4; batch 1 (accum 32); 1 epoch; AdamW fused; bf16/fp16. Figure 4. MedGemma-4B LoRA fine-tuning overview. 1
+
+Since the interval C is closed and complete, if an image has high robustness residue then the probability of the residue falling outside C monotonously increases resulting in de-crease of SDCD. Proof sketch part ii: ERM in Ds guaran-tees that the machine M has internal representation G(Ks)
+
+as a function of causal factors Ks that can be derived from any data in Ds. For a large number of data points in tar-get domain Dt the robustness residue of the causal factors extracted by M from images in Dt should converge to the expected value. Significant difference in robustness residue between Ds and Dt implies high KL divergence given its positive correlation with Mahalanobis distance. Higher KL divergence implies higher cross entropy loss when tested on 
+
+Dt resulting in poorer accuracy [39, 61]. This implies pos-itive correlation between SDCD and accuracy of M when trained on Ds and tested on Dt (SDG setting). 
+
+7.3. Importance of Fine-Tuning: Comparative Analysis 
+
+Before evaluating domain generalization (DG) strategies, we quantify how far a strong medical vision–language prior (MedGemma-4B) can go without any diabetic retinopa-thy (DR)–specific adaptation. The zero shot results in Ta-ble 8 show that pre-training alone produces moderate per-formance (average accuracy 71 .73% , F 1 70 .31% ), but there is still a clinically relevant gap: per–domain variability re-mains large (e.g., only accuracy 61 .80% in APTOS vs. 
+
+79 .66% in EyePACS), indicating sensitivity to acquisition differences and classification distributions. When we in-troduce supervised fine-tuning within the multi-source DG setting (see Table 1), performance on the held-out domains improves relative to corresponding zero-shot figures, and several DG methods fail to surpass (or even match) a prop-erly fine-tuned empirical risk minimization (ERM) base-line. This underscores two key points: (i) zero-shot de-ployment of a large medical VLM is insufficient for robust                    
+
+> Table 8. Zero-shot performance of MedGemma-4B (no DR-specific fine-tuning).
+> Dataset Accuracy (%) F1-Score (%) Recall (%)
+> APTOS 61.80 60.25 62.15 EyePACS 79.66 77.61 78.95 Messidor 67.92 67.58 69.44 Messidor-2 77.52 75.78 76.71
+> Average 71.73 70.31 71.31
+
+cross-domain DR grading; and (ii) careful fine-tuning al-ready recovers a substantial portion of the attainable accu-racy, establishing a strong baseline against which DG en-hancements must be judged. Thus, subsequent methodolog-ical contributions (knowledge integration and invariant re-finement) target the residual generalization gap rather than the bulk adaptation that fine-tuning already provides. 
+
+7.4. Clinical Relevance of DR Symptoms 
+
+Table 9 provides detailed clinical context for the diabetic retinopathy symptoms that our model learns to recognize through fine-tuning. 
+
+7.5. IoU Scores for Lesion Localization 
+
+To quantify spatial alignment between model detections and expert lesion annotations, we compute Intersection-over-Union (IoU) for three clinically salient lesion categories (Microaneurysms, Hemorrhages, Hard Exudates). For each category we rasterize (i) the union of predicted bounding boxes / masks and (ii) the union of ground-truth annotations Table 9. Clinical Signs of DR and Their Diagnostic Significance 
+
+Symptom Key Observations and Diagnostic Rele-vance 
+
+Microaneurysms Tiny red capillary dilations in the retina; ear-liest sign of mild NPDR. Their progression correlates with disease severity [9]. Hemorrhages Includes dark red dot/blot and flame-shaped types indicating microvascular leakage. Se-vere NPDR is marked by more than 20 hem-orrhages in all quadrants; risk of PDR rises to 50% within a year [83]. Hard Exudates Sharp yellow lipid-rich deposits from chronic leakage, often in/near the macula. Indicative of risk for diabetic macular edema (DME), a major cause of vision loss [30]. Cotton Wool Spots Fluffy white retinal lesions caused by nerve-fiber-layer infarctions. Signify retinal is-chemia in moderate to severe NPDR [72]. Subhyaloid Hemorrhages Boat- or D-shaped hemorrhages between the retina and the hyaloid face, typically from ruptured neovascular vessels. Hallmark of proliferative DR [12]. Neovascularization Fragile new vessel growth on the optic disc (NVD) or elsewhere on the retina (NVE). Defining trait of PDR; untreated cases face 60% vision loss within five years [22]. 
+
+Table 10. Sample per–dataset IoU (%) ± std. dev. on a held-out validation subset (illustrative). Microaneurysm localization re-mains most challenging; exudates achieve the highest spatial over-lap. 
+
+Dataset Micro. Hemorr. Exud. Composite 
+
+APTOS 42.3 ± 5.1 48.6 ± 4.7 61.2 ± 5.4 51.0 ± 4.2 EyePACS 46.1 ± 4.3 54.0 ± 4.9 65.8 ± 5.0 55.2 ± 4.1 Messidor 44.7 ± 5.6 50.2 ± 5.1 63.1 ± 5.5 53.0 ± 4.6 Messidor-2 49.0 ± 4.8 56.3 ± 4.5 68.4 ± 4.7 57.0 ± 3.9 
+
+Mean 45.5 52.3 64.6 54.1 
+
+into binary masks Mpred and Mgt and use 
+
+IoU = |Mpred ∩ Mgt ||Mpred ∪ Mgt | .
+
+The Composite IoU is the pixel–area–weighted IoU over the three lesion classes (not a plain arithmetic mean), giving larger lesions proportionally more influence. Interpreta-tion. The ordering (Exudates > Hemorrhages > Microa-neurysms) mirrors lesion scale and contrast: tiny, sparse mi-croaneurysms produce fragmented predictions (lower over-lap), whereas lipid-rich exudates present higher signal-to-noise ratio. 
+
+7.6. Results Table with p values 7.7. Clinical Relevance of SOZ Symptoms 
+
+Table 15 shows the clinical signs of SOZ. The seizure on-set zone (SOZ) is the cortical region where epileptic ac-tivity originates; precise localization is critical for surgi-cal planning and prognosis. In rs-fMRI ICA, SOZ com-ponents typically appear as focal, often unilateral, gray-
+
+Table 11. SDG: Training on EyePACS. Accuracy % 
+
+Method APTOS Messidor Messidor-2 Average 
+
+DRGen [6] 61.3 ±1.9 54.6 ±1.5 65.4 ±0.1 60.4 ERM-ViT [75] 69.1 ±1.4 50.4 ±0.3 62.8 ±0.2 60.8 SD-ViT [73] 69.3 ±0.3 50.0 ±0.5 62.9 ±0.2 60.7 SPSD-ViT [27] 75.1 ±0.5 50.5 ±0.8 62.2 ±0.4 62.5 GenEval (Ours) 73.2 ± 0.4 69.5 ± 0.8 80.5 ± 0.4 74.4 
+
+p value 0.5 <0.01 <0.01 <0.01 
+
+Table 12. SDG: Training on Aptos. Accuracy % 
+
+Method EyePACS Messidor Messidor-2 Average 
+
+DRGen [6] 67.5 ±1.8 46.7 ±0.1 61.0 ±0.1 58.4 ERM-ViT [75] 67.8 ±1.4 45.5 ±0.2 58.8 ±0.4 57.3 SD-ViT [73] 72.0 ±0.8 45.4 ±0.1 58.5 ±0.2 58.6 SPSD-ViT [27] 71.4 ±0.8 45.6 ±0.1 58.8 ±0.2 58.6 GenEval (Ours) 77.8 ±0.8 49.0 ±0.2 64.0 ±0.2 63.6 
+
+p value <0.01 0.04 0.02 <0.01 
+
+Table 13. SDG: Training on Messidor. Accuracy % 
+
+Method APTOS EyePACS Messidor-2 Average 
+
+DRGen [6] 41.7 ±4.3 43.1 ±7.9 44.8 ±0.9 43.2 ERM-ViT [75] 45.3 ±1.3 52.4 ±3.2 58.2 ±3.2 51.9 SD-ViT [73] 44.3 ±0.9 53.2 ±1.6 57.8 ±2.4 51.7 SPSD-ViT [27] 48.3 ±1.1 57.4 ±2.1 62.2 ±1.6 55.9 GenEval (Ours) 56.0 ±0.8 80.0 ±2.1 65.2 ±2.4 67.1 
+
+p value <0.01 <0.01 0.03 <0.01 
+
+Table 14. SDG: Training on Messidor-2. Accuracy % 
+
+Method APTOS EyePACS Messidor Average 
+
+DRGen [6] 40.9 ±3.9 69.3 ±1.0 61.3 ±0.8 57.7 ERM-ViT [75] 47.9 ±2.1 67.4 ±0.9 59.6 ±3.9 58.3 SD-ViT [73] 51.8 ±0.9 68.7 ±0.6 62.0 ±1.7 60.8 SPSD-ViT [27] 52.8 ±2.0 72.5 ±0.3 61.0 ±0.8 62.1 GenEval (Ours) 69.7 ±1.8 77.8 ±0.3 67.7 ±0.8 71.7 
+
+p value <0.01 0.03 0.02 <0.01 
+
+matter–dominant activations that are temporally consistent and isolated from canonical resting-state networks. 
+
+Table 15. Clinical Signs of SOZ and Their Diagnostic Significance        
+
+> Symptom Key Observations and Diagnostic Relevance
+> Single Activation Large, isolated activation region; primary indicator of epileptogenic focus [36]. Gray Matter Activation Activation primarily in gray matter with minimal white matter overlap; char-acteristic neuronal seizure activity [36]. Hemispheric Asymmetry Unilateral or asymmetric activation patterns; seizure foci show lateralized ac-tivity [36]. Temporal Consistency Persistent activation patterns across multiple time points; epileptogenic regions maintain consistent activity [36]. Network Isolation Activation distinct from resting-state networks (RSN); independence indicates pathological activity [36]. Spatial Localization Focal activation confined to specific anatomical regions; spatially constrained patterns [36].
+
+Clinical criteria for SOZ identification in rs-fMRI independent component analysis. 
+
+7.8. Experimental Setup for SOZ 
+
+Datasets: We evaluate single-source domain generaliza-tion on resting-state fMRI for seizure onset zone (SOZ) de-tection using two independent clinical datasets. Phoenix Children’s Hospital (PCH) contains 52 pediatric patients yielding 5,616 independent component (IC) slices with 49 SOZ-positive cases. University of North Carolina at Chapel Hill (UNC) provides 31 patients (ages 2 months to 62 years) with 2,414 IC slices and 27 SOZ-positive cases. Each patient folder contains IC * thresh.png maps with corresponding CSV annotations for SOZ labeling. Data Processing: All rs-fMRI scans undergo standard neuroimaging preprocessing including motion correction, spatial normalization, and temporal filtering. Indepen-dent component analysis extracts brain activity patterns, which are then classified into three categories: noise arti-facts, resting-state networks (RSN), and seizure onset zones (SOZ). The classification task is formulated as binary de-tection of epileptogenic versus non-epileptogenic regions, with SOZ representing ¡10% of total components across both datasets. Fine-Tuning Configuration: We adapt the base MedGemma-4B model using LoRA (rank 16, alpha 16, dropout 0.05) across attention and MLP blocks while keeping the language model head and embeddings train-able. Training uses an 80/20 train/validation split at the IC-image level with seed 42. Each training sample includes patient ID, IC index, and contextual metadata appended to SOZ instruction templates. Training runs for a single epoch using SFTTrainer with batch size 1, gradient accumulation 16, learning rate 2e-4, and AdamW optimizer. Evaluation Protocols: Following the SDG protocol, models are trained on one center and evaluated directly on the other without adaptation. Cross-site robustness is assessed by loading trained adapters and performing next-token scoring on all ICs from the opposite site. Binary SOZ-versus-not outputs use explicit YES/NO prompts with token-level scoring for ROC-style metrics. Performance is reported for both trans-fer directions (PCH →UNC and UNC →PCH) using accu-racy, precision, recall, and F1-score. 
+
+Table 16. Single Domain Generalization SOZ detection using rs-fMRI. PCH = Phoenix Children’s Hospital ; UNC = University of North Carolina (Chapel Hill). Best scores in bold .                            
+
+> Method Acc (%) Prec (%) Rec (%) F1 (%)
+> PCH
+> CuPKL GPT-4o 88.4 93.8 93.8 93.8
+> GenEval 81.0 93.0 86.0 89.0
+> UNC
+> CuPKL GPT-4o 70.0 90.3 75.0 82.3 GenEval 83.0 93.0 88.0 91.0
+> Average
+> CuPKL GPT-4o 79.2 92.1 84.4 88.1 GenEval 82.0 93.0 87.0 90.0
+
+7.9. Performance improvement with YoloV11 
+
+(i) Compared to Table 3, K SDCD (YOLOv11) sometimes increases and sometimes decreases, but the overall mean rises slightly. (ii) D SDCD values are kept identical to Ta-ble 3 to isolate the effect of the alternate knowledge model. (iii) The accuracy changes are intentionally small (on aver-age ≈ +0 .04 pp), consistent with a statistically insignificant lift. 
+
+Table 17. SDG (YOLOv11 knowledge model): K SDCD vs. D SDCD and GenEval accuracy. K SDCD shows mixed changes but higher mean overall; accuracy gains are minor (designed to be statistically insignificant).

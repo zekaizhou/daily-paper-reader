@@ -1,0 +1,102 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.22017v1/fig-001.webp",
+      "caption": "Figure 7: The visual instruction tuned version of Gemma-3-12b-it exhibits the best performance in most image based tasks and closely follow the performance of the base model with only domain adaptation in text for remaining tasks.",
+      "page": 26,
+      "index": 1,
+      "width": 957,
+      "height": 490
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22017v1/fig-002.webp",
+      "caption": "Figure 11: Common n-grams ordered by frequency from each journal with common stop words and journal information filtered out.",
+      "page": 34,
+      "index": 2,
+      "width": 955,
+      "height": 697
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22017v1/fig-003.webp",
+      "caption": "Figure 10: Plot indicates vocabulary similarity between the various open-access articles categorized by their respective journal used in the dataset. Additive Manufacturing Letters exhibits the highest vocabulary similarity between all journals with the lowest vocabulary similarity seen between Rapid Prototyping Journal and Journal of Additive Manufacturing.",
+      "page": 33,
+      "index": 3,
+      "width": 937,
+      "height": 755
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22017v1/fig-004.webp",
+      "caption": "Figure 12: Plot of the top 10 keywords obtained from dataset articles omitting those where none are provided and ones where “Additive Manufacturing” is listed.",
+      "page": 35,
+      "index": 4,
+      "width": 904,
+      "height": 377
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22017v1/fig-005.webp",
+      "caption": "Figure 4: Content (text) and figures (images) are extracted from their .pdf formats from open-access articles from various additive manufacturing journals. This data is utilized for domain adaptive pretraining and the figure captions are processed into question answer conversations and detailed descriptions using GPT-OSS37 for visual instruction tuning. The various data configurations are uploaded and publicly accessible via HuggingFace.",
+      "page": 18,
+      "index": 5,
+      "width": 979,
+      "height": 496
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22017v1/fig-006.webp",
+      "caption": "Figure 6: Additive-Manufacturing-Benchmark is a set of multi-modal tasks compiled from various published resources38–40 used to evaluate AM comprehension. Language based tasks include answering general knowledge questions in (a) short answer or (b) multiple choice formats and (c) melt pool dimension prediction given process parameters. Image-based tasks including (d) FDM Defect identification, (e) AM machine identification, and (f) LPBF anomaly identification.",
+      "page": 23,
+      "index": 6,
+      "width": 786,
+      "height": 1133
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22017v1/fig-007.webp",
+      "caption": "Figure 2: Original figure by Hu et al.74 diagrams LoRA for a square pretrained weight matrix (d × d). Figure is adapted to showcase an example of a pretrained weight matrix with different input and output dimensions (d× k).",
+      "page": 13,
+      "index": 7,
+      "width": 590,
+      "height": 489
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22017v1/fig-008.webp",
+      "caption": "Figure 1: General training and evaluation process utilized in the development of AdditiveLLM2. (1) Domain adaptive pretraining (DAPT) is applied in both the text and vision modalities using the Gemma 3 model using a selection of open-access articles from the additive manufacturing domain.35 as its base. (2) Visual Instruction Tuning (VIT) utilizes the extracted captions from these articles and generates description and conversation prompts with the aid of GPT-OSS 120B.37 The domain adapted model is evaluated with tasks from the Additive-Manufacturing-Benchmark which are compiled from various published resources.38–40",
+      "page": 4,
+      "index": 8,
+      "width": 976,
+      "height": 979
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22017v1/fig-009.webp",
+      "caption": "Figure 3: Composition of each dataset configuration by journal for (left) text, (center) images, and (right) visual instruction tuning (VIT). The reduced Rapid Prototyping Journal slice in the VIT configuration (right) is due to the smaller number of figure and caption pairs found within that journal during the data extraction process.",
+      "page": 17,
+      "index": 9,
+      "width": 979,
+      "height": 375
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22017v1/fig-010.webp",
+      "caption": "Figure 9: Hypothetical comparison of outputs between standard prompting process to that of the chain-of-thought reasoning process.",
+      "page": 32,
+      "index": 10,
+      "width": 736,
+      "height": 456
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22017v1/fig-011.webp",
+      "caption": "Figure 8: All models adapted upon the Gemma-3-12b-pt (pretraining only) variant of the base model exhibit comparatively worse performance to their Gemma-3-12b-it variants. Models at the visual instruction tuned achieve the best performance and in some cases outperform their previous training stages by a significant factor.",
+      "page": 27,
+      "index": 11,
+      "width": 957,
+      "height": 511
+    },
+    {
+      "url": "assets/figures/arxiv/2603.22017v1/fig-012.webp",
+      "caption": "Figure 5: Gemma 3 12B variants (pretrained only or instruction tuned) are adapted to the domain of additive manufacturing using LoRA in a 3 step training process. (1) Extracted text from the open-access articles is used to train language model attention weights for next token prediction. (2) Extracted figures along with their respective captions are utilized to train the vision tower attention weights while keeping the language model weights frozen. (3) Visual instruction tuning post training on all attention weights is performed using questionanswer pairs along with detailed image descriptions.",
+      "page": 20,
+      "index": 12,
+      "width": 976,
+      "height": 912
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.26330v1/fig-001.webp",
+      "caption": "Table 4: Ablation on query design and modality conditioning. Group I compares fixed and adaptive queries under different conditioning strategies. Group II isolates modality-specific contributions. Input adaptivity provides the dominant gain, while modality-specific conditioning offers additional but smaller improvements. Full benchmark results are reported in Appendix.",
+      "page": 7,
+      "index": 1,
+      "width": 830,
+      "height": 237
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26330v1/fig-002.webp",
+      "caption": "Table 9: Complete benchmark results for all fully evaluated configurations on Qwen3-VL-2B. Scores are reported in percentage points; MME is normalized to the 0–100 range. Rows are sorted by overall average (All-Avg) in descending order. Best results in each column are shown in bold; ties are bolded.",
+      "page": 14,
+      "index": 2,
+      "width": 826,
+      "height": 254
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26330v1/fig-003.webp",
+      "caption": "Figure 1: Overview of IADA. Compared with LoRA fine-tuning in (a), IADA in (b) inserts an IADA block at block boundaries to enable explicit cross-depth routing. IADA generates modality-specific queries from the current hidden states, retrieves information from cached states at previous nd block boundaries, and injects the resulting aggregated residuals back through gated residual addition.",
+      "page": 3,
+      "index": 3,
+      "width": 826,
+      "height": 377
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26330v1/fig-004.webp",
+      "caption": "Table 8: Supplementary results for additional architectural variants discussed in Section 4.3.5. All configurations use LoRA rank 16 as the backbone unless otherwise noted. We report only variants with complete evaluation results.",
+      "page": 13,
+      "index": 4,
+      "width": 829,
+      "height": 347
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26330v1/fig-005.webp",
+      "caption": "Table 6: Extended design exploration beyond the default IADA configuration. Sequence-level routing, a linear bottleneck, and a globally learned gate remain preferable in our setting. Even under extreme compression (r = 4), IADA still improves over LoRA-only.",
+      "page": 8,
+      "index": 5,
+      "width": 718,
+      "height": 183
+    }
+  ]
+}

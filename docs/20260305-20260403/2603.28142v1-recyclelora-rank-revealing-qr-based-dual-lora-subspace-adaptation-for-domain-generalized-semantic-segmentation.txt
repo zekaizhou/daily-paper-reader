@@ -1,0 +1,379 @@
+Title: RecycleLoRA: Rank-Revealing QR-Based Dual-LoRA Subspace Adaptation for Domain Generalized Semantic Segmentation
+
+URL Source: https://arxiv.org/pdf/2603.28142v1
+
+Published Time: Tue, 31 Mar 2026 02:08:26 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+# RecycleLoRA: Rank-Revealing QR-Based Dual-LoRA Subspace Adaptation for Domain Generalized Semantic Segmentation 
+
+## Chanseul Cho Seokju Yun Jeaseong Jeon Seungjae Moon Youngmin Ro *
+
+## Machine Intelligence Laboratory, University of Seoul, Korea 
+
+{chanseul2001, wsz871, jasonjun1121, msj0243, youngmin.ro }@uos.ac.kr https://github.com/chanseul01/RecycleLoRA.git 
+
+## Abstract 
+
+Domain Generalized Semantic Segmentation (DGSS) aims to maintain robust performance across unseen target do-mains. Vision Foundation Models (VFMs) offer rich multi-domain knowledge that can enhance generalization. However, strategies for actively exploiting the rich sub-space structures within VFMs remain under-explored, with many existing methods focusing primarily on preserving pre-trained knowledge. Furthermore, their LoRA com-ponents often suffer from limited representational diver-sity and inefficient parameter utilization. We propose Re-cycleLoRA, which addresses both challenges by employ-ing Rank-Revealing QR Decomposition (RRQR) to system-atically exploit VFM’s subspace structures and enhance LoRA’s representational richness. Our main adapter lever-ages minor subspace directions identified by RRQR to learn diverse and independent features, achieving competitive performance even when used alone. We further introduce a sub adapter that carefully refines major directions with minimal adjustments, providing complementary improve-ments to the main adapter’s strong baseline performance. This design enables the dual adapters to learn distinct representations without requiring additional regularization losses. Our systematic exploitation of pre-trained subspace structures through RRQR-based initialization leads to su-perior domain generalization performance. RecycleLoRA achieves state-of-the-art performance on both synthetic-to-real generalization and real-to-real generalization tasks without complex architectures or additional inference la-tency. 
+
+## 1. Introduction 
+
+Semantic segmentation assigns semantic labels to every pixel in an image and plays a crucial role in autonomous driving, medical imaging, and robotics. However, domain shift, the phenomenon where models trained on one do-main experience performance degradation when applied to another, limits real-world deployment. To address this GT               
+
+> RecycleLoRA
+> (Ours)
+> RecycleLoRA
+> (Main adapter Only)
+> SoMA
+> 71.82
+> 72.92 73.01
+> 61.31 61.22
+> 61.77
+> 71.67 71.75
+> 72.07
+> 68.27
+> 68.63
+> 68.95
+> GTAV
+> àCityscapes GTAV
+> àBDD100K GTAV
+> àMapillary Average
+> SoMA (Previous SOTA) RecycleLoRA (Main adapter only) RecycleLoRA (Ours)
+
+Figure 1. Comparison of synthetic-to-real generalization perfor-mance (mIoU,%) between our proposed RecycleLoRA and the previous SOTA method, SoMA. 
+
+challenge, Domain Generalized Semantic Segmentation (DGSS) has been introduced, aiming to develop models that maintain robust performance across diverse domains with-out target domain data. This capability is particularly es-sential in safety-critical applications where models must re-liably handle varying conditions. Traditional DGSS approaches focused on data augmen-tation and domain-invariant feature learning but used back-bones trained on limited datasets [2, 8, 14, 58, 59, 69], whose knowledge was confined to specific domains and thus had limited generalization capability [16, 27, 64]. With the emergence of Vision Foundation Models (VFMs) such as DINOv2 [55] and CLIP [60]—trained on large-scale, diverse datasets that already capture rich and transferable knowledge across domains—the emphasis in DGSS is shift-1
+
+> arXiv:2603.28142v1 [cs.CV] 30 Mar 2026
+
+ing from diversifying inputs to preserving and efficiently adapting VFM’s world knowledge. To that end, recent stud-ies have explored Parameter-Efficient Fine-Tuning (PEFT) methods for adapting VFMs, achieving competitive perfor-mance with minimal computational overhead. In DGSS, Rein [71] introduced learnable tokens, while SoMA [76] leveraged Low-Rank Adaptation (LoRA) [29] to selectively adjust minor components through Singular Value Decom-position (SVD). Meanwhile, Tqdm [56] and MFuser [77] leveraged Vision-Language Models (VLMs) to enhance cross-domain generalization. However, existing methods face limitations in fully ex-ploiting the potential of VFMs. First, while SVD-based approaches such as SoMA [76] have shown promising re-sults by focusing on minor singular components for pre-serving pre-trained knowledge, it remains underexplored whether SVD is the most effective decomposition method for adapting Vision Foundation Models. In particular, SVD prioritizes variance preservation, which, while mathemat-ically optimal for data reconstruction, does not necessar-ily guarantee the most relevant directions for downstream adaptation [1, 41]. Moreover, SoMA adjusts only the mi-nor directions, leaving potentially useful major components untouched during adaptation. This restricted view may limit the model’s capacity to handle complex new tasks or fully exploit the rich representations in VFMs. Moreover, many LoRA-based methods suffer from limited represen-tational diversity due to learning redundant representations among their basis vectors, which leads to inefficient param-eter utilization(e.g., Tab. 2, Fig. 3) In domain generaliza-tion research, enhancing representational diversity has been shown to improve generalization performance by enabling models to capture a wider range of features [30, 52, 70, 73]. This issue of representational collapse or rank deficiency in LoRA has been noted and explored in several recent stud-ies [25, 31, 38, 40, 46]. To address these problems, we introduce an initializa-tion strategy based on Rank-Revealing QR Decomposition (RRQR). In contrast to SVD, which finds new orthogonal bases that preserve global variance, RRQR selects informa-tive columns directly from the original weight matrix us-ing greedy column pivoting [7]. At each step, it identifies the column with the largest orthogonal component relative to the previously selected subspace, thereby minimizing re-dundancy and preserving directional independence. Since this approach constructs the basis vectors based on columns selected directly from the original weight matrix, the unique structural information held by those columns is well reflected in the new basis. By selecting basis vectors from the actual columns of the weight matrix, RRQR re-tains localized structural information and preserves the cor-respondence between weight dimensions and learned rep-resentations. This leads to LoRA adapters that are both in-terpretable and diverse in representation. Importantly, our RRQR-based initialization helps mitigate the representa-tional redundancy often observed among LoRA’s basis vec-tors. RRQR’s greedy selection process promotes directional independence, naturally constructing a LoRA adapter with enhanced representational capacity. By recycling struc-turally informative directions, our method enhances both parameter efficiency and adaptation capacity while preserv-ing the core knowledge embedded in VFMs. Furthermore, while methods that focus only on minor directions are ef-fective for preserving the VFM’s pre-trained knowledge, they can struggle to adapt to new, complex tasks. Recent work such as PiSSA [51] has demonstrated that effective task adaptation can be achieved by tuning only the major directions of the pretrained weights. Motivated by this, we extend our design with a complementary sub-adapter that carefully refines major directions, further improving gener-alization performance. Building upon these insights, we propose RecycleLoRA ,a novel approach to utilizing pre-trained weights through RRQR decomposition. As demonstrated in Fig. 1, our main adapter, initialized with minor directions identified by RRQR, achieves state-of-the-art performance by learn-ing diverse and independent features. This demonstrates that strategically recycling these minor directions alone sur-passes existing methods. To further enhance performance, we introduce a sub adapter that carefully refines major di-rections with minimal adjustments, providing complemen-tary improvements. This strategic design enables the two adapters to naturally learn complementary features with-out additional regularization losses or complex training regimes. As shown in our analysis, the two adapters learn to operate in distinct subspaces and induce different types of modifications in the feature space. Experimental results demonstrate that RecycleLoRA achieves top performance in both synthetic-to-real and real-to-real generalization tasks without VLMs or complex ar-chitectures. This shows that superior performance in do-main generalization can be achieved by effectively exploit-ing pre-trained subspace structures. Our main contributions are as follows. • We propose a novel initialization strategy for LoRA based on Rank-Revealing QR Decomposition, which mitigates representational redundancy by selecting structurally di-verse directions from the original weight matrix. This im-proves both parameter utilization and task-specific adapt-ability in VFM fine-tuning. • We design a dual-adapter structure that combines a main adapter leveraging minor directions with a sub adapter re-fining major directions, enabling the model to naturally learn complementary feature representations without ex-plicit regularization. • Our method achieves state-of-the-art performance, with 268.95 mIoU in synthetic-to-real generalization and 72.10 mIoU in real-to-real generalization. 
+
+## 2. Related Work 
+
+2.1. Domain Generalized Semantic Segmentation 
+
+Domain Generalized Semantic Segmentation (DGSS) aims to train models that can generalize to unseen target do-mains without access to target domain data during train-ing. Early approaches primarily focused on alleviating do-main shift through data augmentation and adversarial train-ing techniques, but their performance was constrained by the limited representational power of the conventional back-bones they relied on, which were often trained on limited datasets [8, 20, 36, 37, 39, 43, 54, 57–59, 69, 72, 78]. The emergence of Vision Foundation Models (VFMs) has introduced new paradigms for DGSS. SoMA [76] in-troduces a method that leverages the subspace structure of pre-trained weights by selectively tuning minor singu-lar components through singular value decomposition, ef-fectively preserving the generalization capacity of VFMs while acquiring task-specific knowledge. Rein [71] pro-poses a parameter-efficient approach utilizing learnable tokens that refine feature maps layer-by-layer, enabling instance-level refinement within the backbone architecture. Meanwhile, methods such as MFuser [77] and tqdm [56] have improved generalization performance by leveraging the domain-invariant properties of text information based on VLMs. While recent VFM-based DGSS methods have primarily focused on preserving pre-trained knowledge, ap-proaches that systematically recycle and exploit their rich internal subspace structures remain underexplored. 
+
+2.2. Vision Foundation Models 
+
+Vision Foundation Models have emerged as powerful tools for various computer vision tasks, offering strong general-ization capabilities across diverse domains. Among promi-nent VFMs, DINOv2 [55] utilizes self-supervised learning techniques to learn robust visual representations from di-verse visual data, enabling broad applicability across var-ious downstream tasks. EVA02-CLIP [21] is a Vision-Language Model that provides robust, domain-invariant representations by aligning visual features with textual se-mantics. CLIP [60] has established itself as a foundational Vision-Language Model through joint training on image-text pairs, enabling zero-shot classification and cross-modal understanding. 
+
+2.3. Parameter-Efficient Fine-Tuning 
+
+Parameter-Efficient Fine-Tuning (PEFT) has become a stan-dard for adapting large models, as it enables fine-tuning with only a small fraction of the total parameters. Among these techniques, Low-Rank Adaptation (LoRA) [29] is a prominent method that freezes the original weights and in-jects trainable, low-rank matrices to model weight updates, achieving comparable performance to full fine-tuning with high parameter efficiency. Recent developments in PEFT have explored more so-phisticated initialization strategies that leverage subspace structures. SoMA [76] utilizes singular value decomposi-tion to identify and tune minor singular components, specif-ically targeting the less dominant singular values while pre-serving the major ones to maintain the pre-trained knowl-edge. This approach focuses on knowledge preservation by selectively modifying the subspace components that con-tribute less to the original representation, primarily concen-trating on the minor components. Methods like PiSSA [51] also use singular value decomposition for initialization to leverage the principal directions of weight matrices. These approaches have shown that consideration of the underlying structure in pre-trained weights can significantly impact the effectiveness of low-rank adaptation. Existing PEFT methods for domain generalization ex-hibit two main limitations. First, they tend to focus on pre-serving pre-trained knowledge rather than actively exploit-ing it. Second, many LoRA-based approaches suffer from inefficient parameter utilization and limited representational capacity, which leads to under-utilized subspace informa-tion and parameter redundancy [18, 48]. Our approach ad-dresses both of these challenges by systematically recycling subspace components to simultaneously improve LoRA’s parameter efficiency and representational capabilities. 
+
+## 3. Proposed Methods 
+
+In this section, we introduce our proposed method, Re-cycleLoRA. Section 3.1 provides the necessary technical background on Low-Rank Adaptation (LoRA) and Rank-Revealing QR Decomposition (RRQR), which are founda-tional to our method. Subsequently, in Section 3.2, we present the detailed design of RecycleLoRA, validating its effectiveness through an in-depth investigation. 
+
+3.1. Preliminaries 
+
+Low-Rank Adaptation (LoRA). LoRA is a parameter-efficient fine-tuning technique that models weight updates through trainable low-rank decomposition while freezing pre-trained weights W0 ∈ Rd×k. The weight update ∆W
+
+is represented as: 
+
+W = W0 + ∆ W = W0 + BA  (1) where B ∈ Rd×r , A ∈ Rr×k, and the rank r is much smaller than the original dimensions ( r ≪ min( d, k )), con-straining the adaptation to a low-dimensional subspace. The learned low-rank matrices can be merged into the original weights during inference, introducing no additional infer-ence latency. 3A (c)  
+
+> Main Adapter c
+
+(a) (b)  
+
+> Pretrained Weight
+> A
+
+(d)        
+
+> Sub Adapter
+> RRQR based
+> Subspace Selection
+> Frozen Parameter
+> Trainable with Standard LR
+> Trainable with Lower LR
+> Initialization with “minor” directions
+> Initialization with “major” directions
+> Dual -Adapter Residual Weight
+
+RecycleLoRA 
+
+> B
+> B
+
+Figure 2. RecycleLoRA Framework Overview. This figure illustrates the overall workflow of RecycleLoRA. (a) Rank-Revealing QR Decomposition (RRQR) is applied to the pre-trained weight matrix to identify subspace directions ranked by importance. (b) Among the recyclable subspaces selected through RRQR, the minor directions are assigned as initialization values for the main adapter, while the major directions are assigned to the sub adapter. (c) The main adapter’s B matrix is initialized with the minor directions, and its A matrix is sparsely initialized by mapping these directions to their corresponding column indices. (d) The sub adapter’s B matrix is initialized with the major directions, and its A matrix is sparsely initialized by mapping these directions to their corresponding column indices. 
+
+Rank-Revealing QR Decomposition (RRQR). The as-sessment of parameter importance has been a significant research topic across various areas of deep learning. Asubstantial body of work has established that weight mag-nitudes serve as effective indicators of parameter impor-tance. Classical pruning methods such as magnitude-based pruning demonstrate that parameters with larger magni-tudes typically contribute more significantly to model per-formance [19, 26, 42, 44]. This principle has been ex-tended to various contexts, including structured pruning, where entire channels or layers are ranked by their norm-based importance scores [28, 32, 45, 67]. Recent advances in parameter-efficient fine-tuning have similarly leveraged magnitude-based importance measures [12, 25, 48, 50]. These findings establish weight magnitude as an effective indicator of parameter importance, motivating our adoption of RRQR decomposition, which systematically ranks ma-trix columns by their norm-based importance. For a matrix 
+
+W ∈ Rm×n, the Rank-Revealing QR (RRQR) decomposi-tion is expressed as: 
+
+WP = QR  (2) where P ∈ Rn×n is a permutation matrix, Q ∈ Rm×n
+
+is an orthogonal matrix ( QT Q = I), and R ∈ Rn×n is an upper triangular matrix whose diagonal elements capture the magnitude of each column’s orthogonal component, and whose off-diagonal elements encode the dependencies be-tween columns. At each step k, the algorithm selects the next column from the set of remaining columns. The cho-sen column is the one that has the largest norm after being projected onto the orthogonal complement of the subspace spanned by the previously selected columns. Specifically, given the already selected columns W P 1, . . . , W P k−1, the algorithm chooses the next column W P k that maximizes: 
+
+WP k − proj span (WP 1,..., WP k−1)(WP k) 2
+
+(3) where proj span (·) denotes orthogonal projection onto the subspace spanned by the argument. This greedy selection process typically produces a strong tendency for the diago-nal elements of R to satisfy: 
+
+|r11 | ≥ | r22 | ≥ · · · ≥ | rnn | (4) indicating that most of the matrix energy is concentrated in the leading components. The permutation matrix P records this importance ordering, where P [i] indicates the original column index of the i-th most important direction. The orthogonal matrix Q provides the corresponding orthonor-mal basis, where each column qi represents the normalized direction of the orthogonal component of the P [i]-th col-umn. Thus, RRQR provides two key insights: the permuta-tion matrix P identifies the importance ordering of original columns, while the orthogonal matrix Q provides the cor-responding geometric directions. This structural characteri-zation enables effective LoRA initialization through sparse mapping of specific input dimensions, enhancing represen-tation diversity and parameter utilization. 
+
+3.2. RecycleLoRA 
+
+RecycleLoRA is a dual-adapter methodology that uses RRQR decomposition to separate pre-trained weights into minor and major directions, which initialize a main and sub adapter, respectively (Figure 2). To preserve the initial out-put of the pre-trained weights, we construct a residual ma-trix by subtracting the initial adapter values from the orig-inal weights before training. This matrix is then frozen, so that only the two adapters are trained. To demonstrate 4Table 1. Comparison of ℓ2-norm statistics between selected and non-selected columns in LoRA matrix A after training.                 
+
+> LoRA Column-wise Norm Statistics
+> Mean ℓ2norm Mean ℓ2norm Average Maximum (selected) (non-selected) ratio ratio All layers 0.138245 0.113566 1.22 ×1.63 ×
+
+Table 2. Effective rank and rank efficiency comparison. Rank efficiency is calculated as the ratio of effective rank to target rank, measuring parameter utilization. RecycleLoRA consistently achieves higher efficiency than SoMA across different rank set-tings.              
+
+> Effective Rank & Rank-Efficiency Statistics
+> Target rank RecycleLoRA (Ours) SoMA Effective rank Rank efficiency Effective rank Rank efficiency 16 13.60 0.850 9.78 0.611 32 24.65 0.770 20.80 0.650
+
+the effectiveness of our approach, we compare our method against SoMA [76], which is the previous state-of-the-art and a LoRA-based method. 
+
+Main Adapter. RecycleLoRA leverages RRQR decompo-sition to design a novel initialization strategy that systemat-ically recycles pre-trained knowledge from VFMs while si-multaneously enhancing LoRA’s representational efficiency for improved domain generalization. Specifically, we per-form RRQR decomposition on each linear layer’s weight matrix W0 ∈ Rd×k to obtain: 
+
+W0P = QR  (5) where Q ∈ Rd×k is an orthogonal matrix and R ∈ Rk×k
+
+is upper triangular. In practice, the permutation matrix P is returned as an index array P ∈ Nk, where P [i] indicates the original column index of the i-th most important direction. The main adapter is initialized as: 
+
+Bmain = Q[: , −rmain :]  (6) 
+
+Amain [i, j ] = 
+
+(
+
+1, if j = P [k − rmain + i]0, otherwise  (7) where i ∈ { 0, 1, ..., r main −1} and j ∈ { 0, 1, ..., k −1}. This sparse initialization is designed to focus initial changes on specific input dimensions identified by RRQR. To validate the effectiveness of this initialization strat-egy, we analyzed the evolution of LoRA parameters throughout training. Table 1 presents the column-wise norms of the A matrix after training, revealing that columns containing sparsely initialized positions with value 1 main-tain norms that are on average 1.22 × larger, and up to 
+
+1.63 × larger, than columns initialized entirely to 0. This 
+
+Figure 3. Cosine similarity heatmaps of LoRA components for (a) RecycleLoRA and (b) SoMA at different ranks (r=16, 32). Left: pairwise similarity among rows of A. Right: pairwise similarity among columns of B. Darker blue colors represent lower similar-ity. 
+
+suggests that parameter updates during training were rel-atively concentrated on the initially selected directions, demonstrating that our sparse initialization maintains struc-tural bias to some extent throughout the training process. Furthermore, we evaluated the diversity of learned rep-resentations and the efficiency of parameter utilization. Fig-ure 3 visualizes the cosine similarity between LoRA com-ponents for both SoMA and RecycleLoRA, showing that RecycleLoRA consistently exhibits lower similarity across various rank settings. Specifically, we focused our analy-sis on the dimensions that actually determine the rank in LoRA’s low-rank structure: the similarity between rows of A ∈ Rr×k and the similarity between columns of 
+
+B ∈ Rd×r . This is because in LoRA’s weight update 
+
+∆W = BA , the i-th row of A and the i-th column of 
+
+B together form a single low-rank component. Therefore, low similarity among rows of A and low similarity among columns of B indicate that each low-rank component cap-tures distinct, independent features. This reduced similarity encourages each low-rank component to learn more inde-pendent and distinctive features, thereby improving the uti-lization efficiency of limited parameters. This diverse representation learning directly translates to enhanced model expressiveness. As shown in Ta-ble 2, RecycleLoRA consistently achieves higher Effective Rank [63] compared to SoMA. The Effective Rank quanti-fies the dimensional richness of learned representations, and recent studies have shown that higher Effective Rank corre-lates with improved representational capacity and general-ization performance [22, 31, 38, 46]. The consistent im-provements observed across various settings demonstrate that our method utilizes LoRA’s limited parameters more efficiently to enhance representational capacity. 
+
+Sub Adapter. A key insight in the design of RecycleLoRA is that different subspace components within VFM weights can contribute complementarily to domain generalization performance. Building on this observation, we introduce 5Subspace Similarity      
+
+> Subspace Similarity between Main &Sub Adapters
+
+Figure 4. Block-wise subspace similarity ϕ between main and sub adapters measured using Grassmann Distance on the low-rank ma-trices. Lower values indicate more orthogonal subspaces. 
+
+a sub adapter that complements the main adapter. By investigating recent LoRA initialization strategies, we uncovered a critical yet underexplored relationship be-tween the choice of initialization subspace and the optimal learning rate. Specifically, we observed that methods that initialize LoRA with major directions, such as PiSSA [51], tend to adopt lower learning rates. We can infer that this is because major directions encode the Vision Foundation Model’s core, generalizable knowledge, making them sen-sitive to large updates that could risk catastrophic forget-ting. A lower learning rate thus enables a careful refine-ment of these critical components, preserving foundational knowledge while adapting to the new task. Conversely, we observed that approaches using minor directions, like SoMA [76], tend to employ relatively higher learning rates. Since these minor directions contribute less to the model’s pretrained capabilities, they can provide a safer subspace for learning new representations. A higher learning rate al-lows for more aggressive and efficient adaptation within this subspace without jeopardizing the model’s core representa-tions. This suggests an inherent relationship between the initialization strategy and the optimal learning rate, rooted in the trade-off between knowledge preservation and task adaptation. Motivated by this observation, we investigated the in-terplay between initialization methods and learning rates. Our experiments, detailed in Section 4.3 (Tab 6), sug-gest a tendency where the optimal learning rate is contin-gent upon the nature of the initialized directions. Specif-ically, the sub adapter, initialized with RRQR’s top direc-tions, tended to exhibit improved performance at a lower learning rate (5e-5), which implies that the major directions encoding the VFM’s core knowledge require more careful optimization. In contrast, both the main adapter initial-ized with minor directions and standard LoRA with Kaim-ing initialization achieved peak performance at the standard learning rate (1e-4), with their performance declining when the learning rate was reduced. Notably, this performance drop was more pronounced for the main adapter than for (a)  (b)  (c) 
+
+Figure 5. Visualization of adapter-induced feature modifications via PCA projection. (a) Input. (b) main adapter PCA Visualiza-tion. (c) sub adapter PCA Visualization. The divergent activation patterns reveal complementary feature learning between the dual adapters. 
+
+the Kaiming-initialized LoRA. This result suggests that the minor directions provide a safer subspace for learning new, task-specific features, thereby benefiting from more aggres-sive updates. These contrasting findings validate our design choice of employing a differentiated learning rate scheme in our dual-adapter architecture, where each adapter is opti-mized according to the sensitivity of its assigned subspace. Based on these findings, we incorporate a sub adapter that leverages the top directions from RRQR. While our main adapter alone already surpasses existing state-of-the-art methods (as will be demonstrated in Table 5, Section 4.3), the sub adapter provides complementary performance improvements. The sub adapter is initialized as: 
+
+Bsub = Q[: , : rsub ] (8) 
+
+Asub [i, j ] = 
+
+(
+
+1, if j = P [i]0, otherwise  (9) The sub adapter is trained with a much smaller rank (32 →4) and lower learning rate (1e-4 →5e-5) than the main adapter, allowing careful adjustment of the major directions in the pre-trained weights. To verify that the two adapters learn distinct representa-tions, we conducted several analyses. Figure 4 presents the subspace similarity measured using Grassmann Distance. Specifically, we compute the similarity between the sub-spaces spanned by the left singular vectors ( Umain , Usub )6from the SVD of each adapter’s matrix A:
+
+ϕ = ∥UT
+
+> main
+
+Usub ∥2
+
+> F
+
+min( rmain , r sub ) ∈ [0 , 1]  (10) This metric, introduced in the LoRA paper [29], ranges from 0 to 1, where 1 indicates identical subspaces and 0 signifies complete orthogonality. As shown in Figure 4, our RecycleLoRA framework yields a consistently low simi-larity between the main and sub adapters. As a baseline, we trained a dual-adapter model that, while initialized with the standard Kaiming method, otherwise shared the iden-tical configuration of RecycleLoRA, including the differ-entiated rank and learning rate settings for the main and sub adapters. This baseline exhibited significantly higher subspace similarity than RecycleLoRA. This comparative analysis demonstrates that our RRQR-based initialization is instrumental in guiding the adapters to operate in distinct, nearly orthogonal subspaces. Furthermore, Figure 5 presents PCA projections of the feature differences produced by the main and sub adapters in the final block of DINOv2. The main adapter induces localized, salient modifications around foreground objects, whereas the sub adapter yields broader shifts that spread across the background. These complementary patterns sup-port the claim that the RRQR-based initialization and the differentiated rank and learning-rate design steer the two adapters toward learning complementary representations. This integration of RRQR-based initialization, differen-tiated rank allocation, and carefully tuned learning rates en-ables RecycleLoRA to systematically exploit VFM’s multi-domain knowledge, achieving superior domain generaliza-tion performance without additional regularization. 
+
+## 4. Experiments 
+
+4.1. Experimental Settings 
+
+Datasets. We evaluate the effectiveness of RecycleLoRA using widely adopted benchmark datasets for Domain Gen-eralized Semantic Segmentation. For synthetic data, we use GTAV [61], which consists of 12,403 training images, 6,382 validation images, and 6,181 test images. For real-world data, we employ Cityscapes [15] with 2,975 training images and 500 validation images, Berkeley Deep Driv-ing dataset [75] with 1,000 validation images, and Mapil-lary [53] with 2,000 validation images. 
+
+Implementation Details. We use DINOv2-Large as the backbone and Mask2Former as the segmentation head. Re-cycleLoRA is applied to all linear layers within the self-attention modules and MLP layers of the transformer. The main adapter uses a rank of 32, while the sub adapter’s rank is set to 4 for the synthetic-to-real setting and 2 for the real-to-real setting. The learning rate multipliers for the main and sub adapters are 1.0 and 0.5, respectively. All experi-ments use 512×512 cropped images for training. 
+
+Table 3. Domain generalization results (mIoU %) under the synthetic-to-real setting. Our method is highlighted in gray . 
+
+Bold and underlined indicate best and second-best results.                                                                                                                                                               
+
+> Synthetic-to-Real Generalization
+> Method Venue Backbone Trained on GTAV
+> →Citys. →BDD →Map. Avg. CLOUDS [4] CVPR2024 CLIP-CN-L 60.20 57.40 67.00 61.50 VLTSeg [33] ACCV2024 EVA02-L 65.30 58.30 66.00 63.20 DoRA [49] ICML2024 DINOv2-L 66.12 59.31 67.07 64.17 VPT [35] ECCV2022 DINOv2-L 68.75 58.64 68.32 65.24 SET [74] TIP2021 DINOv2-L 68.06 61.64 67.68 65.79 tqdm [56] ECCV2024 EVA02-L 68.88 59.18 70.10 66.05 Rein †[71] CVPR2024 DINOv2-L 69.19 60.01 69.06 66.09 FADA [5] NeurIPS2024 DINOv2-L 68.23 61.94 68.09 66.09 AdaptFormer [10] NeurIPS2022 DINOv2-L 70.10 59.81 68.77 66.23 PEGO [30] ECCV2024 DINOv2-L 68.86 61.44 68.61 66.30 SSF [47] NeurIPS2022 DINOv2-L 68.97 61.30 68.77 66.35 LoRA [29] ICLR2022 DINOv2-L 70.13 60.13 70.42 66.89 DepthForge [11] ICCV2025 DINOv2-L 69.04 62.82 69.22 67.03 DPMFormer [34] ICCV2025 EVA02-L 70.08 60.48 70.66 67.07 Mfuser [77] CVPR2025 EVA02-L 70.19 63.13 71.28 68.20 SoMA [76] CVPR2025 DINOv2-L 71.82 61.31 71.67 68.27 RecycleLoRA -DINOv2-L 73.01 61.77 72.07 68.95
+> Method Venue Backbone Trained on GTAV + Synthia
+> →Citys. →BDD →Map. Avg. Rein †[71] CVPR2024 DINOv2-L 72.17 61.53 70.69 68.13 SoMA [76] CVPR2025 DINOv2-L 73.16 61.90 72.73 69.26 RecycleLoRA -DINOv2-L 73.71 61.87 72.68 69.42
+> Method Venue Backbone Trained on GTAV + Synthia + UrbanSyn
+> →Citys. →BDD →Map. Avg. Full Fine-Tuning -DINOv2-L 75.90 60.93 72.80 69.88 SoMA [76] CVPR2025 DINOv2-L 77.33 62.78 74.93 71.68 RecycleLoRA -DINOv2-L 78.66 63.46 74.83 72.32
+
+4.2. Comparison with State-of-the-Art Methods 
+
+To demonstrate the effectiveness of our method, we com-pare RecycleLoRA against existing state-of-the-art DGSS methods. For a fair comparison, some methods are reim-plemented using publicly available official checkpoints, and these reimplemented results are denoted with †.
+
+Synthetic-to-Real Generalization. We compare Recy-cleLoRA against a wide range of recent state-of-the-art methods. As shown in Table 3, in the setting where models are trained on synthetic GTAV data and evalu-ated on real-world Cityscapes, BDD, and Mapillary data, RecycleLoRA achieves state-of-the-art performance, out-performing all existing methods. Notably, our method achieves 73.01 mIoU on GTAV →Cityscapes, representing a substantial improvement of 1.19 mIoU over the previ-ous best-performing method. It also achieves a 0.4 mIoU improvement on GTAV →Mapillary, establishing state-of-the-art performance with an average improvement of 0.68 mIoU. To further assess the robustness and scalability of our method, we also evaluate RecycleLoRA in a multi-source generalization setting where the model is trained on combined synthetic datasets. As detailed in Table 3, when trained on GTAV and Synthia, RecycleLoRA achieves an average mIoU of 69.42, surpassing the previous state-of-the-art method, SoMA [76]. We further extend the exper-iment by adding UrbanSyn to the training sources. In this three-source setting, RecycleLoRA again demonstrates su-perior performance, achieving an average mIoU of 72.32 7Table 4. Domain generalization results (mIoU %) under the real-to-real setting. Our method is highlighted in gray . Bold and underlined indicate best and second-best results.                                                                        
+
+> Real-to-Real Generalization
+> Method Venue Backbone Trained on Cityscapes
+> →BDD →Map. Avg. HGFormer [17] CVPR2023 Swin-L 61.50 72.10 66.80 CMFormer [6] AAAI2024 Swin-L 62.60 73.60 68.10 PDAF [9] ICCV2025 Swin-L 63.00 74.10 68.55 SET [74] TIP2021 DINOv2-L 65.07 75.67 70.37 VLTSeg [33] ACCV2024 EVA02-L 64.40 76.40 70.40 tqdm [56] ECCV2024 EVA02-L 64.72 76.15 70.44 DPMFormer [34] ICCV2025 EVA02-L 64.20 76.67 70.44 FADA [5] NeurIPS2024 DINOv2-L 65.12 75.86 70.49 Rein †[71] CVPR2024 DINOv2-L 66.53 75.18 70.86 DepthForge [11] ICCV2025 DINOv2-L 66.19 75.93 71.06 SoMA [76] CVPR2025 DINOv2-L 67.02 76.45 71.74 MFuser [77] CVPR2025 EVA02-L 65.81 77.93 71.87 RecycleLoRA -DINOv2-L 66.65 77.54 72.10
+
+Table 5. Ablation study on the Main and Sub Adapter components of RecycleLoRA. Best results in bold .                              
+
+> Main Sub Params. →Citys. →BDD →Map. Avg.
+> "1.6M 70.64 60.56 71.11 67.44
+> "12.6M 72.92 61.22 71.75 68.63
+> ""14.2M 73.01 (↑0.09) 61.77 (↑0.55) 72.07 (↑0.32) 68.95 (↑0.32)
+
+and widening its performance gap over SoMA. These re-sults confirm that RecycleLoRA effectively leverages mul-tiple source domains and maintains its strong generalization capabilities as the diversity of training data increases. 
+
+Real-to-Real Generalization. In this setting, our method is compared with various competitive approaches. Table 4 shows that in the real-to-real scenario, where models are trained on Cityscapes and evaluated on BDD and Mapil-lary, RecycleLoRA consistently demonstrates superior per-formance, achieving state-of-the-art performance with an average improvement of 0.23 mIoU. These results confirm that our method effectively handles not only synthetic-to-real domain gaps but also variations between different real-world domains. 
+
+4.3. Ablation Studies 
+
+To validate our design choices, we conduct a series of abla-tion studies in the synthetic-to-real generalization setting. 
+
+Components Analysis. Table 5 presents an analysis of each component’s contribution. Remarkably, using only the main adapter achieves an average mIoU of 68.63, which already surpasses all previous state-of-the-art methods, in-cluding SoMA. This result highlights that our RRQR-based initialization strategy for the main adapter is highly effec-tive on its own. The addition of the sub adapter further boosts performance across all target domains, reaching an average of 68.95 mIoU. This confirms that the two adapters work in a complementary manner to maximize domain gen-eralization performance. 
+
+Learning Rate Analysis. To further investigate our hy-pothesis on the relationship between the initialization strat-
+
+Table 6. Comparative analysis of learning rate sensitivity across initialization strategies. Standard LoRA employs Kaiming ini-tialization while RecycleLoRA’s Sub Adapter utilizes RRQR top-ranked directions. The best result for each method is shown in 
+
+bold .                                                           
+
+> Method lr. →Citys. →BDD →Map. Avg. Main Adapter 1e-4 72.92 61.22 71.75 68.63
+> Main Adapter 5e-5 69.46 (↓3.46) 62.22 (↑1.00) 68.23 (↓3.52) 66.64 (↓1.99)
+> LoRA 1e-4 70.36 60.21 69.95 66.84
+> LoRA 5e-5 69.40 (↓0.96) 59.62 (↓0.59) 69.20 (↓0.75) 66.07 (↓0.77)
+> Sub Adapter 1e-4 68.60 60.74 67.54 65.63 Sub Adapter 5e-5 70.64 (↑2.04) 60.56 (↓0.18) 71.11 (↑3.57) 67.44 (↑1.81)
+
+Table 7. Domain generalization performance (mIoU, %) on the EVA02-L backbone under the synthetic-to-real setting. Bold and underlined indicate the best and second-best results, respectively.                                     
+
+> Synthetic-to-Real Generalization
+> Method Venue Backbone Trained on GTAV
+> →Citys. →BDD →Map. Avg. Rein [71] CVPR2024 EVA02-L 65.30 60.50 64.90 63.60 FADA [5] NeurIPS2024 EVA02-L 66.70 61.90 66.10 64.90 DepthForge [11] ICCV2025 EVA02-L 68.00 61.70 67.50 65.73 SoMA [76] CVPR2025 EVA02-L 68.05 60.81 68.33 65.73 RecycleLoRA -EVA02-L 68.95 61.37 68.73 66.35
+
+egy and learning rates, we present the analysis in Table 6. The results indicate that both the main adapter, initialized with RRQR’s minor directions, and the standard LoRA with Kaiming initialization tend to show performance degrada-tion as the learning rate is reduced, with this trend being more pronounced for the main adapter. Interestingly, the sub adapter, which is initialized with RRQR’s top direc-tions, exhibits a contrasting and notable pattern of improved performance at a lower learning rate. These observations suggest a potential link between the directions used for ini-tialization and the optimal learning rate, a finding that sup-ports the rationale for applying different learning rates to our main and sub adapters. 
+
+Performance on Different VFM backbones. To demon-strate its generality, we also evaluated RecycleLoRA on the EVA02-L backbone. As shown in Table 7, Recy-cleLoRA achieves state-of-the-art performance against pure Vision Foundation Model adaptation methods, with VLM-based approaches that leverage textual information being excluded from the comparison [34, 56, 77]. This result con-firms that our RRQR-based strategy is robust and effective across different VFM architectures. 
+
+## 5. Conclusion 
+
+In this paper, we introduce RecycleLoRA, an approach de-signed to actively recycle the internal subspace structures of Vision Foundation Models through Rank-Revealing QR decomposition. This strategy enables complementary fea-ture learning by leveraging both minor and major directions, achieving state-of-the-art performance on both synthetic-to-real and real-to-real generalization tasks. 86. Acknowledgments 
+
+This work was supported by the National Research Founda-tion (NRF) grant funded by the Korea government (MSIT) [RS-2025-00562400] and [RS-2022-NR068754]. 
+
+## References 
+
+[1] Mohamed Abdelnaby and Marmar R Moussa. A benchmark-ing study of random projections and principal components for dimensionality reduction strategies in single cell analy-sis. bioRxiv , 2025. 2 [2] Woo-Jin Ahn, Geun-Yeong Yang, Hyun-Duck Choi, and Myo-Taeg Lim. Style blind domain generalized semantic segmentation via covariance alignment and semantic consis-tence contrastive learning. In Proceedings of the ieee/cvf conference on computer vision and pattern recognition ,pages 3616–3626, 2024. 1 [3] Muhammad Awais, Muzammal Naseer, Salman Khan, Rao Muhammad Anwer, Hisham Cholakkal, Mubarak Shah, Ming-Hsuan Yang, and Fahad Shahbaz Khan. Foundation models defining a new era in vision: a survey and outlook. 
+
+IEEE Transactions on Pattern Analysis and Machine Intelli-gence , 2025. [4] Yasser Benigmim, Subhankar Roy, Slim Essid, Vicky Kalo-geiton, and St´ ephane Lathuili` ere. Collaborating foundation models for domain generalized semantic segmentation. In 
+
+Proceedings of the IEEE/CVF Conference on Computer Vi-sion and Pattern Recognition , pages 3108–3119, 2024. 7 [5] Qi Bi, Jingjun Yi, Hao Zheng, Haolan Zhan, Yawen Huang, Wei Ji, Yuexiang Li, and Yefeng Zheng. Learning frequency-adapted vision foundation model for domain generalized se-mantic segmentation. Advances in Neural Information Pro-cessing Systems , 37:94047–94072, 2024. 7, 8 [6] Qi Bi, Shaodi You, and Theo Gevers. Learning content-enhanced mask transformer for domain generalized urban-scene segmentation. In Proceedings of the AAAI Conference on Artificial Intelligence , pages 819–827, 2024. 8 [7] Tony F Chan. Rank revealing qr factorizations. Linear alge-bra and its applications , 88:67–82, 1987. 2 [8] Prithvijit Chattopadhyay, Kartik Sarangmath, Vivek Vi-jaykumar, and Judy Hoffman. Pasta: Proportional amplitude spectrum training augmentation for syn-to-real domain gen-eralization. In Proceedings of the IEEE/CVF international conference on computer vision , pages 19288–19300, 2023. 1, 3 [9] I Chen, Hua-En Chang, Wei-Ting Chen, Jenq-Neng Hwang, Sy-Yen Kuo, et al. Exploring probabilistic modeling be-yond domain generalization for semantic segmentation. In 
+
+Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 21755–21765, 2025. 8 [10] Shoufa Chen, Chongjian Ge, Zhan Tong, Jiangliu Wang, Yibing Song, Jue Wang, and Ping Luo. Adaptformer: Adapting vision transformers for scalable visual recogni-tion. Advances in Neural Information Processing Systems ,35:16664–16678, 2022. 7 [11] Siyu Chen, Ting Han, Changshe Zhang, Xin Luo, Meiliu Wu, Guorong Cai, and Jinhe Su. Stronger, steadier & superior: Geometric consistency in depth vfm forges do-main generalized semantic segmentation. arXiv preprint arXiv:2504.12753 , 2025. 7, 8 [12] Tianyi Chen, Tianyu Ding, Badal Yadav, Ilya Zharkov, and Luming Liang. Lorashear: Efficient large language model structured pruning and knowledge recovery. arXiv preprint arXiv:2310.18356 , 2023. 4 [13] Bowen Cheng, Ishan Misra, Alexander G Schwing, Alexan-der Kirillov, and Rohit Girdhar. Masked-attention mask transformer for universal image segmentation. In Proceed-ings of the IEEE/CVF conference on computer vision and pattern recognition , pages 1290–1299, 2022. 13 [14] Sungha Choi, Sanghun Jung, Huiwon Yun, Joanne T Kim, Seungryong Kim, and Jaegul Choo. Robustnet: Improving domain generalization in urban-scene segmentation via in-stance selective whitening. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,pages 11580–11590, 2021. 1 [15] Marius Cordts, Mohamed Omran, Sebastian Ramos, Timo Rehfeld, Markus Enzweiler, Rodrigo Benenson, Uwe Franke, Stefan Roth, and Bernt Schiele. The cityscapes dataset for semantic urban scene understanding. In Proceed-ings of the IEEE conference on computer vision and pattern recognition , pages 3213–3223, 2016. 7 [16] Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li, and Li Fei-Fei. Imagenet: A large-scale hierarchical image database. In 2009 IEEE conference on computer vision and pattern recognition , pages 248–255. Ieee, 2009. 1 [17] Jian Ding, Nan Xue, Gui-Song Xia, Bernt Schiele, and Dengxin Dai. Hgformer: Hierarchical grouping transformer for domain generalized semantic segmentation. In Proceed-ings of the IEEE/CVF conference on computer vision and pattern recognition , pages 15413–15423, 2023. 8 [18] Ning Ding, Xingtai Lv, Qiaosen Wang, Yulin Chen, Bowen Zhou, Zhiyuan Liu, and Maosong Sun. Sparse low-rank adaptation of pre-trained language models. arXiv preprint arXiv:2311.11696 , 2023. 3 [19] Bryn Elesedy, Varun Kanade, and Yee Whye Teh. Lottery tickets in linear models: An analysis of iterative magnitude pruning. arXiv preprint arXiv:2007.08243 , 2020. 4 [20] Mohammad Fahes, Tuan-Hung Vu, Andrei Bursuc, Patrick P´ erez, and Raoul De Charette. A simple recipe for language-guided domain generalized segmentation. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 23428–23437, 2024. 3 [21] Yuxin Fang, Quan Sun, Xinggang Wang, Tiejun Huang, Xin-long Wang, and Yue Cao. Eva-02: A visual representation for neon genesis. Image and Vision Computing , 149:105171, 2024. 3 [22] Ruili Feng, Kecheng Zheng, Yukun Huang, Deli Zhao, Michael Jordan, and Zheng-Jun Zha. Rank diminishing in deep neural networks. Advances in Neural Information Pro-cessing Systems , 35:33054–33065, 2022. 5 [23] Jonathan Frankle and Michael Carbin. The lottery ticket hy-pothesis: Finding sparse, trainable neural networks. arXiv preprint arXiv:1803.03635 , 2018. 
+
+9[24] Jose L G´ omez, Manuel Silva, Antonio Seoane, Agn` es Borr´ as, Mario Noriega, Germ´ an Ros, Jose A Iglesias-Guitian, and Antonio M L´ opez. All for one, and one for all: Urbansyn dataset, the third musketeer of synthetic driv-ing scenes. Neurocomputing , 637:130038, 2025. [25] Naibin Gu, Peng Fu, Xiyu Liu, Bowen Shen, Zheng Lin, and Weiping Wang. Light-peft: Lightening parameter-efficient fine-tuning via early pruning. arXiv preprint arXiv:2406.03792 , 2024. 2, 4 [26] Song Han, Jeff Pool, John Tran, and William Dally. Learn-ing both weights and connections for efficient neural net-work. Advances in neural information processing systems ,28, 2015. 4 [27] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual learning for image recognition. In Proceed-ings of the IEEE conference on computer vision and pattern recognition , pages 770–778, 2016. 1 [28] Yang He, Yuhang Ding, Ping Liu, Linchao Zhu, Hanwang Zhang, and Yi Yang. Learning filter pruning criteria for deep convolutional neural networks acceleration. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 2009–2018, 2020. 4 [29] Edward J Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang, Weizhu Chen, et al. Lora: Low-rank adaptation of large language models. ICLR ,1(2):3, 2022. 2, 3, 7, 14 [30] Jiajun Hu, Jian Zhang, Lei Qi, Yinghuan Shi, and Yang Gao. Learn to preserve and diversify: Parameter-efficient group with orthogonal regularization for domain generalization. In 
+
+European Conference on Computer Vision , pages 198–216. Springer, 2024. 2, 7 [31] Qiushi Huang, Tom Ko, Zhan Zhuang, Lilian Tang, and Yu Zhang. Hira: Parameter-efficient hadamard high-rank adap-tation for large language models. In The Thirteenth Inter-national Conference on Learning Representations , 2025. 2, 5[32] Zhongzhan Huang, Wenqi Shao, Xinjiang Wang, Liang Lin, and Ping Luo. Rethinking the pruning criteria for convolu-tional neural network. Advances in Neural Information Pro-cessing Systems , 34:16305–16318, 2021. 4 [33] Christoph H¨ ummer, Manuel Schwonberg, Liangwei Zhou, Hu Cao, Alois Knoll, and Hanno Gottschalk. Strong but simple: A baseline for domain generalized dense perception by clip-based transfer learning. In Proceedings of the Asian Conference on Computer Vision , pages 4223–4244, 2024. 7, 8[34] Seogkyu Jeon, Kibeom Hong, and Hyeran Byun. Exploiting domain properties in language-driven domain generalization for semantic segmentation. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 20791– 20801, 2025. 7, 8 [35] Menglin Jia, Luming Tang, Bor-Chun Chen, Claire Cardie, Serge Belongie, Bharath Hariharan, and Ser-Nam Lim. Vi-sual prompt tuning. In European conference on computer vision , pages 709–727. Springer, 2022. 7 [36] Yuru Jia, Lukas Hoyer, Shengyu Huang, Tianfu Wang, Luc Van Gool, Konrad Schindler, and Anton Obukhov. Dgin-style: Domain-generalizable semantic segmentation with image diffusion models and stylized semantic control. In 
+
+European Conference on Computer Vision , pages 91–109. Springer, 2024. 3 [37] Christoph Kamann and Carsten Rother. Increasing the ro-bustness of semantic segmentation models with painting-by-numbers. In European Conference on Computer Vision ,pages 369–387. Springer, 2020. 3 [38] Jaeill Kim, Wonseok Lee, Moonjung Eo, and Wonjong Rhee. Improving forward compatibility in class incremental learn-ing by increasing representation rank and feature richness. 
+
+Neural Networks , 183:106969, 2025. 2, 5 [39] Sunghwan Kim, Dae-hwan Kim, and Hoseong Kim. Texture learning domain randomization for domain generalized seg-mentation. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 677–687, 2023. 3 [40] Yoav Kurtz, Noga Bar, and Raja Giryes. Group orthogonal-ization regularization for vision models adaptation and ro-bustness. arXiv preprint arXiv:2306.10001 , 2023. 2 [41] Daniel Lee and H Sebastian Seung. Algorithms for non-negative matrix factorization. Advances in neural informa-tion processing systems , 13, 2000. 2 [42] Jaeho Lee, Sejun Park, Sangwoo Mo, Sungsoo Ahn, and Jin-woo Shin. Layer-adaptive sparsity for the magnitude-based pruning. arXiv preprint arXiv:2010.07611 , 2020. 4 [43] Suhyeon Lee, Hongje Seong, Seongwon Lee, and Euntai Kim. Wildnet: Learning domain generalized semantic seg-mentation from the wild. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,pages 9936–9946, 2022. 3 [44] Guiying Li, Chao Qian, Chunhui Jiang, Xiaofen Lu, and Ke Tang. Optimization based layer-wise magnitude-based prun-ing for dnn compression. In IJCAI , pages 2383–2389, 2018. 4[45] Hao Li, Asim Kadav, Igor Durdanovic, Hanan Samet, and Hans Peter Graf. Pruning filters for efficient convnets. arXiv preprint arXiv:1608.08710 , 2016. 4 [46] Vladislav Lialin, Sherin Muckatira, Namrata Shivagunde, and Anna Rumshisky. ReloRA: High-rank training through low-rank updates. In The Twelfth International Conference on Learning Representations , 2024. 2, 5 [47] Dongze Lian, Daquan Zhou, Jiashi Feng, and Xinchao Wang. Scaling & shifting your features: A new baseline for efficient model tuning. Advances in Neural Information Processing Systems , 35:109–123, 2022. 7 [48] Jian Liang, Wenke Huang, Guancheng Wan, Qu Yang, and Mang Ye. Lorasculpt: Sculpting lora for harmonizing gen-eral and specialized knowledge in multimodal large language models. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 26170–26180, 2025. 3, 4 [49] Shih-Yang Liu, Chien-Yi Wang, Hongxu Yin, Pavlo Molchanov, Yu-Chiang Frank Wang, Kwang-Ting Cheng, and Min-Hung Chen. Dora: Weight-decomposed low-rank adaptation. In Forty-first International Conference on Ma-chine Learning , 2024. 7 [50] Zihang Liu, Tianyu Pang, Oleg Balabanov, Chaoqun Yang, Tianjin Huang, Lu Yin, Yaoqing Yang, and Shiwei Liu. Lift 
+
+10 the veil for the truth: Principal weights emerge after rank re-duction for reasoning-focused supervised fine-tuning. arXiv preprint arXiv:2506.00772 , 2025. 4 [51] Fanxu Meng, Zhaohui Wang, and Muhan Zhang. Pissa: Prin-cipal singular values and singular vectors adaptation of large language models. Advances in Neural Information Process-ing Systems , 37:121038–121072, 2024. 2, 3, 6, 14 [52] Rang Meng, Xianfeng Li, Weijie Chen, Shicai Yang, Jie Song, Xinchao Wang, Lei Zhang, Mingli Song, Di Xie, and Shiliang Pu. Attention diversification for domain general-ization. In European conference on computer vision , pages 322–340. Springer, 2022. 2 [53] Gerhard Neuhold, Tobias Ollmann, Samuel Rota Bulo, and Peter Kontschieder. The mapillary vistas dataset for semantic understanding of street scenes. In Proceedings of the IEEE international conference on computer vision , pages 4990– 4999, 2017. 7 [54] Joshua Niemeijer, Manuel Schwonberg, Jan-Aike Term¨ ohlen, Nico M Schmidt, and Tim Fingscheidt. Generalization by adaptation: Diffusion-based domain extension for domain-generalized semantic segmentation. In Proceedings of the IEEE/CVF winter conference on applications of computer vision , pages 2830–2840, 2024. 3 [55] Maxime Oquab, Timoth´ ee Darcet, Th´ eo Moutakanni, Huy Vo, Marc Szafraniec, Vasil Khalidov, Pierre Fernandez, Daniel Haziza, Francisco Massa, Alaaeldin El-Nouby, et al. Dinov2: Learning robust visual features without supervision. 
+
+arXiv preprint arXiv:2304.07193 , 2023. 1, 3 [56] Byeonghyun Pak, Byeongju Woo, Sunghwan Kim, Dae-hwan Kim, and Hoseong Kim. Textual query-driven mask transformer for domain generalized segmentation. In 
+
+European Conference on Computer Vision , pages 37–54. Springer, 2024. 2, 3, 7, 8 [57] Xingang Pan, Ping Luo, Jianping Shi, and Xiaoou Tang. Two at once: Enhancing learning and generalization capacities via ibn-net. In Proceedings of the european conference on computer vision (ECCV) , pages 464–479, 2018. 3 [58] Duo Peng, Yinjie Lei, Lingqiao Liu, Pingping Zhang, and Jun Liu. Global and local texture randomization for synthetic-to-real semantic segmentation. IEEE Transactions on Image Processing , 30:6594–6608, 2021. 1 [59] Duo Peng, Yinjie Lei, Munawar Hayat, Yulan Guo, and Wen Li. Semantic-aware domain generalized segmentation. In 
+
+Proceedings of the IEEE/CVF conference on computer vi-sion and pattern recognition , pages 2594–2605, 2022. 1, 3 [60] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learning transferable visual models from natural language supervi-sion. In International conference on machine learning , pages 8748–8763. PmLR, 2021. 1, 3 [61] Stephan R Richter, Vibhav Vineet, Stefan Roth, and Vladlen Koltun. Playing for data: Ground truth from computer games. In European conference on computer vision , pages 102–118. Springer, 2016. 7 [62] German Ros, Laura Sellart, Joanna Materzynska, David Vazquez, and Antonio M Lopez. The synthia dataset: A large collection of synthetic images for semantic segmentation of urban scenes. In Proceedings of the IEEE conference on computer vision and pattern recognition , pages 3234–3243, 2016. [63] Olivier Roy and Martin Vetterli. The effective rank: A mea-sure of effective dimensionality. In 2007 15th European sig-nal processing conference , pages 606–610. IEEE, 2007. 5 [64] Mark Sandler, Andrew Howard, Menglong Zhu, Andrey Zh-moginov, and Liang-Chieh Chen. Mobilenetv2: Inverted residuals and linear bottlenecks. In Proceedings of the IEEE conference on computer vision and pattern recogni-tion , pages 4510–4520, 2018. 1 [65] Namrata Shivagunde, Mayank Kulkarni, Giannis Kara-manolakis, Jack G. M. FitzGerald, Yannick Versley, Saleh Soltan, Volkan Cevher, Jianhua Lu, and Anna Rumshisky. Approximations may be all you need: Towards pre-training llms with low-rank decomposition and optimizers. 2024. [66] Mingjie Sun, Zhuang Liu, Anna Bair, and J Zico Kolter. A simple and effective pruning approach for large language models. arXiv preprint arXiv:2306.11695 , 2023. [67] Xinglong Sun and Humphrey Shi. Towards better structured pruning saliency by reorganizing convolution. In Proceed-ings of the IEEE/CVF Winter Conference on Applications of Computer Vision , pages 2204–2214, 2024. 4 [68] PeiYuan Tang, Xiaodong Zhang, Chunze Yang, Haoran Yuan, Jun Sun, Danfeng Shan, and Zijiang James Yang. Un-leashing the power of visual foundation models for general-izable semantic segmentation. In Proceedings of the AAAI Conference on Artificial Intelligence , pages 20823–20831, 2025. [69] Sumanth Udupa, Prajwal Gurunath, Aniruddh Sikdar, and Suresh Sundaram. Mrfp: Learning generalizable semantic segmentation from sim-2-real with multi-resolution feature perturbation. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 5904– 5914, 2024. 1, 3 [70] Zijian Wang, Yadan Luo, Ruihong Qiu, Zi Huang, and Mahsa Baktashmotlagh. Learning to diversify for single do-main generalization. In Proceedings of the IEEE/CVF in-ternational conference on computer vision , pages 834–843, 2021. 2 [71] Zhixiang Wei, Lin Chen, Yi Jin, Xiaoxiao Ma, Tianle Liu, Pengyang Ling, Ben Wang, Huaian Chen, and Jinjin Zheng. Stronger fewer & superior: Harnessing vision foundation models for domain generalized semantic segmentation. In 
+
+Proceedings of the IEEE/CVF conference on computer vi-sion and pattern recognition , pages 28619–28630, 2024. 2, 3, 7, 8, 13 [72] Zhenyao Wu, Xinyi Wu, Xiaoping Zhang, Lili Ju, and Song Wang. Siamdoge: Domain generalizable semantic segmen-tation using siamese network. In European Conference on Computer Vision , pages 603–620. Springer, 2022. 3 [73] Seunghan Yang, Seokeon Choi, Hyunsin Park, Sungha Choi, Simyung Chang, and Sungrack Yun. Feature diversifica-tion and adaptation for federated domain generalization. In 
+
+European Conference on Computer Vision , pages 52–70. Springer, 2024. 2 
+
+11 [74] Jingjun Yi, Qi Bi, Hao Zheng, Haolan Zhan, Wei Ji, Yawen Huang, Yuexiang Li, and Yefeng Zheng. Learning spectral-decomposited tokens for domain generalized semantic seg-mentation. In Proceedings of the 32nd ACM International Conference on Multimedia , pages 8159–8168, 2024. 7, 8 [75] Fisher Yu, Haofeng Chen, Xin Wang, Wenqi Xian, Yingying Chen, Fangchen Liu, Vashisht Madhavan, and Trevor Dar-rell. Bdd100k: A diverse driving dataset for heterogeneous multitask learning. In Proceedings of the IEEE/CVF con-ference on computer vision and pattern recognition , pages 2636–2645, 2020. 7 [76] Seokju Yun, Seunghye Chae, Dongheon Lee, and Youngmin Ro. Soma: Singular value decomposed minor components adaptation for domain generalizable representation learning. In Proceedings of the Computer Vision and Pattern Recogni-tion Conference , pages 25602–25612, 2025. 2, 3, 5, 6, 7, 8, 13, 14 [77] Xin Zhang and Robby T Tan. Mamba as a bridge: Where vision foundation models meet vision language models for domain-generalized semantic segmentation. In Proceedings of the Computer Vision and Pattern Recognition Conference ,pages 14527–14537, 2025. 2, 3, 7, 8 [78] Zhun Zhong, Yuyang Zhao, Gim Hee Lee, and Nicu Sebe. Adversarial style augmentation for domain general-ized urban-scene segmentation. Advances in neural infor-mation processing systems , 35:338–350, 2022. 3 
+
+12 RecycleLoRA: Rank-Revealing QR-Based Dual-LoRA Subspace Adaptation for Domain Generalized Semantic Segmentation 
+
+# Supplementary Material 
+
+This supplement provides additional materials omitted from the main text to facilitate a deeper understanding of our pro-posed RecycleLoRA. 
+
+## Contents 
+
+A. Implementation Details 13 B . Additional Experiments and Analysis 13 
+
+B.1. Hyperparameter Analysis . . . . . . . . . . . 13 B.2. Ablation on Dual-Adapter Initialization . . . 14 
+
+C. Limitations and Future Works 14 D. Qualitative Results 14 
+
+## A. Implementation Details 
+
+Our method is implemented based on the MMSegmen-tation codebase. We use DINOv2-Large as the back-bone and Mask2Former as the decode head. Following the experimental setups of Rein [71] and SoMA [76], we only utilize the default data augmentation provided in Mask2Former [13] to ensure a fair comparison. All mod-els are trained on NVIDIA A6000 GPUs. Further details on hyperparameters are provided in Table 8. Unless stated oth-erwise, all experiments in the main paper were conducted using these settings.                             
+
+> Hyperparameter Synthetic-to-Real Real-to-Real
+> backbone DINOv2-L DINOv2-L main rank 32 32 sub rank 42main lr mult. 1.0 1.0 sub lr mult. 0.5 0.5 learning rate 1e-4 1e-4 backbone lr mult. 0.5 0.5 lr scheduler PolyLR PolyLR AWD scheduler Cosine Cosine weight decay 0.05 0.05 optimizer AdamW AdamW batch size 44iterations 40,000 40,000
+
+Table 8. Hyperparameter settings for experiments. 
+
+## B. Additional Experiments and Analysis 
+
+B.1. Hyperparameter Analysis 
+
+Rank Analysis. To determine the optimal configuration for our dual-adapter structure, we conducted an analysis to in-vestigate the impact of the rank settings for both the Main and Sub Adapters on domain generalization performance. First, for the synthetic-to-real scenario (Table 9), we found that a Main Adapter rank of 32 consistently outper-formed a rank of 16. With the Main Adapter’s rank fixed at 32, we observed that performance peaked at an aver-age mIoU of 68.95 when the Sub Adapter’s rank was 4. However, increasing the rank further to 8 or higher led to a noticeable degradation in performance. This finding is consistent with our hypothesis that the Sub Adapter, which modifies the VFM’s major directions, requires minimal and careful adjustments. Therefore, we adopted the (32, 4) rank configuration for the synthetic-to-real experiments (e.g., Ta-ble 3, 12). We extended this analysis to the real-to-real generaliza-tion scenario (Table 10) as well. In this setting, the best per-formance (72.10 mIoU) was achieved with a Main Adapter rank of 32 and a Sub Adapter rank of 2. This result suggests that for the real-to-real setting, which has a smaller domain gap, an even more conservative adjustment of the VFM’s major directions is beneficial. Consequently, we used the (32, 2) rank configuration for all real-to-real experiments (e.g., Table 4).                                                                                   
+
+> Synthetic-to-Real Generalization
+> rank lr Params. Trained on GTAV
+> main sub main sub →Citys. →BDD →Map. Avg. 32 21e-4 5e-5 13.4M 72.03 60.75 72.06 68.28 32 41e-4 5e-5 14.2M 73.01 61.77 72.07 68.95
+> 32 81e-4 5e-5 15.7M 72.83 61.13 70.81 68.26 32 16 1e-4 5e-5 18.9M 71.20 61.16 70.87 67.74 32 32 1e-4 5e-5 25.2M 72.13 60.83 69.87 67.61 16 21e-4 5e-5 7.1M 71.67 61.27 70.84 67.93 16 41e-4 5e-5 7.9M 71.74 61.54 71.25 68.18 16 81e-4 5e-5 9.4M 71.40 60.56 70.41 67.46 16 16 1e-4 5e-5 12.6M 71.51 60.48 70.37 67.45
+
+Table 9. Domain generalization results (mIoU %) for Recy-cleLoRA with varying rank configurations for its Main and Sub Adapters, under the synthetic-to-real setting (G →{ C, B, M }). 
+
+Bold and underlined indicate best and second-best results.                        
+
+> Real-to-Real Generalization
+> rank lr Params. Trained on Cityscapes
+> main sub main sub →BDD →Map. Avg. 32 21e-4 5e-5 13.4M 66.65 78.14 72.10
+> 32 41e-4 5e-5 14.2M 66.76 76.64 71.70
+
+Table 10. Domain generalization results (mIoU %) for Recy-cleLoRA with varying rank configurations for its Main and Sub Adapters, under the real-to-real setting (C →{ B, M }). Bold and underlined indicate best and second-best results. 
+
+13 Learning rate Analysis. We conduct an analysis to deter-mine the optimal learning rate for the Sub Adapter and vali-date our design choice of using a different learning rate from the Main Adapter. As shown in Table 11, we fixed the Main Adapter’s learning rate to 1e-4 and varied the Sub Adapter’s learning rate. The results demonstrate that the best perfor-mance is achieved when the Sub Adapter’s learning rate is set to 5e-5, half that of the Main Adapter, achieving an av-erage mIoU of 68.95. Setting the learning rate for the Sub Adapter to be either the same as the Main Adapter (1e-4) or excessively low (1e-5) resulted in a performance drop. This empirical evidence supports our strategy of applying a carefully tuned, lower learning rate to the Sub Adapter. This differentiation is crucial for enabling the complemen-tary learning process between the two adapters, validating our overall design.                                   
+
+> Synthetic-to-Real Generalization
+> rank lr Params. Trained on GTAV
+> main sub main sub →Citys. →BDD →Map. Avg. 32 41e-4 1e-4 14.2M 72.23 60.50 70.60 67.78 32 41e-4 5e-5 14.2M 73.01 61.77 72.07 68.95
+> 32 41e-4 1e-5 14.2M 72.55 61.10 70.55 68.07
+
+Table 11. Domain generalization results (mIoU %) for Recy-cleLoRA with varying learning rate configurations for its Main and Sub Adapters, under the synthetic-to-real setting (G →{ C, B, M}). Bold and underlined indicate best and second-best results. 
+
+B.2. Ablation on Dual-Adapter Initialization 
+
+To assess the impact of the initialization strategy on our dual-adapter framework, we conducted an ablation study comparing our RRQR-based approach with other represen-tative initialization methods. We compare against Kaim-ing uniform initialization, a standard method that does not leverage the pre-trained weight structure, and SVD-based initialization, which utilizes subspace decomposition as seen in prior work such as SoMA [76] or PiSSA [51]. Interestingly, as presented in Table 12, the other initial-ization methods did not synergize with the dual-adapter structure and instead exhibited performance degradation. Specifically, the dual-adapter with Kaiming initialization scored 66.31 mIoU, which is lower than the 66.89 mIoU of standard LoRA [29] (single adapter) presented in Ta-ble 3. Similarly, the SVD-based initialization achieved only 67.23 mIoU, underperforming SoMA (single adapter), which scored 68.27 mIoU as shown in Table 3. In con-trast, our proposed RRQR-based initialization achieves an average mIoU of 68.95, significantly outperforming both al-ternatives. These results underscore the importance of the initialization method and suggest that our proposed RRQR-based strategy is a more effective choice for the proposed dual-adapter structure.                     
+
+> Synthetic-to-Real Generalization
+> Initialization Backbone Trained on GTAV
+> →Citys. →BDD →Map. Avg. Kaiming unif. DINOv2-L 68.96 60.57 69.41 66.31 SVD DINOv2-L 70.40 60.35 70.93 67.23 RRQR DINOv2-L 73.01 61.77 72.07 68.95
+
+Table 12. Domain generalization results (mIoU %) for the dual-adapter framework with different initialization strategies, under the synthetic-to-real setting (G →{C, B, M }). Bold and underlined indicate best and second-best results. 
+
+## C. Limitations and Future Works 
+
+While RecycleLoRA demonstrates robust state-of-the-art performance, we identify several avenues for future re-search that could further advance its capabilities and address its current limitations. Further optimization of RecycleLoRA could be achieved by developing systematic methods for tuning hyperparam-eters, such as the ranks and learning rates of the dual adapters. The current configuration was determined empir-ically, and creating automated search strategies would en-hance the practicality and replicability of our approach. The scope of our work, currently focused on Domain Generalized Semantic Segmentation, could also be broad-ened. The core principle of recycling pre-trained knowl-edge through subspace analysis is likely applicable to other downstream tasks that require efficient foundation model fine-tuning, such as object detection, video analysis, and medical image segmentation. Investigating the effective-ness of our approach in these diverse contexts presents a logical direction for future work. Another promising research direction involves revisiting our methodology’s binary partitioning of the VFM’s sub-space into “major” and “minor” directions, which currently omits the intermediate directions. This simplification is based on the hypothesis that the most and least dominant directions are most critical for balancing knowledge preser-vation and new feature acquisition. However, the potential contribution of these intermediate directions remains unex-plored. Future research could investigate a more nuanced allocation of the entire subspace spectrum, perhaps through a third adapter or a soft-weighting scheme that utilizes all ranked directions, which may unlock further performance gains. 
+
+## D. Qualitative Results 
+
+Figures 6 and 7 present qualitative comparisons against other state-of-the-art methods. These visualizations high-light that RecycleLoRA generates more accurate and de-tailed segmentation maps, which are more closely aligned with the ground truth. 14 Input MFuser SoMA RecycleLoRA GT                   
+
+> road sidew. build. wall fence pole light sign veget. terrain
+> sky person rider car truck bus train motor. bicycle n/a.
+
+Figure 6. Qualitative comparison of semantic segmentation on the Cityscapes. All models were trained on the GTAV. Input MFuser SoMA RecycleLoRA GT                   
+
+> road sidew. build. wall fence pole light sign veget. terrain
+> sky person rider car truck bus train motor. bicycle n/a.
+
+Figure 7. Qualitative comparison of semantic segmentation on the Mapillary. All models were trained on the GTAV. 
+
+15

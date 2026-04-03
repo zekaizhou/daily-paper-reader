@@ -1,0 +1,468 @@
+Title: Tell2Adapt: A Unified Framework for Source Free Unsupervised Domain Adaptation via Vision Foundation Model
+
+URL Source: https://arxiv.org/pdf/2603.05012v1
+
+Published Time: Fri, 06 Mar 2026 01:55:17 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+## Tell2Adapt: A Unified Framework for Source Free Unsupervised Domain Adaptation via Vision Foundation Model 
+
+Yulong Shi 1 Shijie Li 1 Ziyi Li 1 Lin Qi 1,2,3*†
+
+> 1
+
+College of Medicine and Biological Information Engineering, Northeastern University 
+
+> 2
+
+Engineering Research Center of Medical Imaging and Intelligent Analysis, Ministry of Education 
+
+> 3
+
+Key Laboratory of Medical Image Computing, Ministry of Education, Northeastern University 
+
+Abstract 
+
+Source Free Unsupervised Domain Adaptation (SFUDA) is critical for deploying deep learning models across di-verse clinical settings. However, existing methods are typ-ically designed for low-gap, specific domain shifts and cannot generalize into a unified, multi-modalities, and multi-target framework, which presents a major barrier to real-world application. To overcome this issue, we in-troduce Tell2Adapt, a novel SFUDA framework that har-nesses the vast, generalizable knowledge of the Vision Foun-dation Model (VFM). Our approach ensures high-fidelity VFM prompts through Context-Aware Prompts Regulariza-tion (CAPR), which robustly translates varied text prompts into canonical instructions. This enables the generation of high-quality pseudo-labels for efficiently adapting the lightweight student model to target domain. To guaran-tee clinical reliability, the framework incorporates Visual Plausibility Refinement (VPR), which leverages the VFM’s anatomical knowledge to re-ground the adapted model’s predictions in target image’s low-level visual features, ef-fectively removing noise and false positives. We conduct one of the most extensive SFUDA evaluations to date, val-idating our framework across 10 domain adaptation direc-tions and 22 anatomical targets, including brain, cardiac, polyp, and abdominal targets. Our results demonstrate that Tell2Adapt consistently outperforms existing approaches, achieving SOTA for a unified SFUDA framework in medi-cal image segmentation. Code are avaliable at Github. 
+
+1. Introduction 
+
+Deep learning has demonstrated remarkable success in nat-ural image analysis tasks, yet translating this success to 
+
+> *Corresponding author (qilin@bmie.neu.edu.cn).
+> †This work was supported by the Key Research and Development Pro-gram of Liaoning Province (2024JH2/102500076) and Fundamental Re-search Funds for the Central Universities (N25BJD013).
+
+Figure 1. Distribution shift across imaging modalities in BraTS. Kolmogorov-Smirnov statistics quantify the divergence between intensity distributions of the four different imaging modalities. 
+
+medical image analysis remains uniquely challenging. Un-like natural images, medical images present distinct charac-teristics, like low spatial resolution, complex tissue back-grounds, and modality-specific artifacts. These intrinsic properties exacerbate the vulnerability of deep learning models to domain shift caused by different scanning de-vices or imaging modalities [7]. As illustrated in Fig. 1, the BraTS 2024 (BraTS) dataset shows substantial distribu-tion shifts across different imaging modalities, which often lead to severe performance degradation and pose major bar-riers to clinical deployment. To overcome these challenges, unsupervised domain adaptation has been developed, but it typically requires concurrent access to source data, which is often infeasible in clinical practice due to patient privacy regulations and data confidentiality agreements [20]. This has given rise to a more practical and challeng-ing paradigm: source free unsupervised domain adapta-tion, where domain adaptation to an unseen target domain is achieved without any access to the source data [18, 22]. The source free and unsupervised settings are particularly appealing in clinical scenarios, in which data privacy is  
+
+> arXiv:2603.05012v1 [cs.CV] 5 Mar 2026 Figure 2. Generalization performance of Tell2Adapt across di-verse adaptation tasks. The outermost ring displays the adaptation direction, the middle ring shows Dice score (DICE), while the in-nermost ring represents the Average Surface Distance (ASD).
+
+paramount. Despite significant progress, current SFUDA methods suffer from a critical limitation: most existing works focus on low-gap adaptation and specific anatomical targets [32] [23] [25]. These specialized methods lack the flexibility and scalability to function as a unified solution for the wide variety of modalities and anatomical targets encountered in clinical practice. Consequently, a unified SFUDA framework remains a significant challenge. Recently, the advent of VFMs has marked a paradigm shift in Medical image analysis. General VFMs like DINO [4], CLIP [17], and SAM [12], and medical VFMs like MedSAM [16], MedSAM-3D[19], VividMed [15], BiomedParse [30], and BiomedCLIP [28] have demon-strated strong generalization capabilities and performance. For SFUDA, these models as an ideal, untapped external knowledge source to generate supervisory signals for the target domain. Guided by spatial or text prompts, VFM of-fers a transformative paradigm that bypasses the reliance on source data and establishes a foundation for a uni-fied SFUDA framework across multi-modalities and multi-target medical image segmentation. In this work, we propose Tell2Adapt, a unified SFUDA framework that achieves generalizable domain adaptation across an unprecedented range of modalities and targets, as illustrated in Fig. 2. Specifically, we first introduce Context-Aware Prompts Regularization that employs a Large Lan-guage Model (LLM) to interpret and standardize arbitrary user text prompts into a canonical instruction set, ensuring reliable guidance for VFM to generate high-quality pseudo-labels for the unlabeled target domain. Subsequently, this knowledge is efficiently distilled into the lightweight source model. This knowledge transfer not only imbues the source model with rich, domain-specific information but also com-presses the VFM’s generalist knowledge into a compact, specialist model. Finally, we incorporate Visual Plausi-bility Refinement that verifies the adapted model’s predic-tion against the original target image. This step filters out anatomically implausible regions by ensuring their low-level visual features are consistent with the general anatom-ical properties expected for that category, effectively re-grounding the prediction in the target image. Our main con-tributions are threefold: 1. We propose Tell2Adapt, a unified SFUDA framework for medical image segmentation that harnesses multi-modalities knowledge from VFM. The framework’s ef-fectiveness as a unified solution is demonstrated through the most extensive and challenging SFUDA evaluations to date, achieving SOTA across 10 domain adaptation di-rections and 22 distinct anatomical targets, diverse from abdominal, cardiac, polyp, and brain targets. 2. We introduce Context-Aware Prompts Regularization, which parses the internal context of varied inputs and transforms them into a canonical, structured format. By resolving ambiguity and enriching the prompts with es-sential contextual information, this module provides the VFM with standardized and reliable guidance. 3. We propose Visual Plausibility Refinement, which sig-nificantly enhances the anatomical plausibility and relia-bility of the predictions. Leveraging the VFM’s anatom-ical knowledge to re-ground the adapted model’s predic-tions in the target image’s low-level features, VPR effec-tively removes noise and false positives in predictions. 
+
+2. Related Works 
+
+2.1. Source Free Unsupervised Domain Adaptation 
+
+SFUDA aims to adapt a model pre-trained on a source domain to an unseen target domain without accessing the source data, which is critically important due to growing concerns over data privacy and the computational burden of storing and reusing large source datasets. Mainstream SFUDA primarily falls into three categories: data synthe-sis, knowledge distillation, and self-training methods. Data synthesis methods typically generate source-like data that helps bridge the domain shifts [25]. Knowledge distil-lation methods employ a teacher-student strategy to im-prove pseudo-label quality and enhance training stability [5]. Self-training methods generate pseudo-labels on the target domain for prototype alignment and encourage adap-tation by contrast learning [24] or denoising [31]. Despite their progress, a fundamental limitation plagues the vast majority of existing methods: they are typically designed for low-gap and specific target adaptation. There is cur-rently no unified SFUDA framework capable of handling a wide array of diverse, multi-target, and huge-gap domain adaptation with a single, consistent methodology. 
+
+2.2. Vision Foundation Models in Medical Scenario 
+
+The advent of VFMs has recently catalyzed a paradigm shift in medical image analysis. These emerging models can be broadly categorized by their prompting mechanism: spatial-prompted and text-prompted. The spatial-prompted mod-els include general-purpose VFMs like SAM, DINO, and their medically-adapted derivatives (MedSAM, MedSAM-3D), which are fine-tuned on large medical datasets. While powerful, these models are unsuitable for SFUDA due to the reliance on high-quality spatial prompts. In the source-free setting, spatial prompts are generated from the source model’s predictions, which are often unreliable under se-vere domain shift. Using these noisy predictions as prompts triggers an error propagation process, causing the VFM to produce highly inaccurate pseudo-labels. Recognizing this limitation, text-prompted VFMs have been developed, often from the ground up on specialized medical data, integrating language as a more powerful and flexible prompting modality. VividMed and BiomedParse fall into this category, with BiomedParse representing the SOTA in this direction by enabling segmentation, detection, and recognition guided purely by text prompts. This ability to interpret high-level semantic instructions without requir-ing precise spatial prompts makes it an ideal source of ex-ternal knowledge, breaking the cycle of error accumulation and perfectly suiting the challenges of SFUDA. 
+
+2.3. Synergizing VFM with SFUDA 
+
+The rich and generalizable knowledge encapsulated within VFM presents a transformative opportunity for SFUDA. The core idea is using VFM to provide high-quality super-vision for the unseen target domain, thereby bypassing the limitations of traditional SFUDA methods that rely solely on the unreliable pseudo-labels of the source model. Re-cent pioneering works have begun to explore this direc-tion. For example, some studies have utilized MedSAM to generate pseudo-labels [14] [26] [27] or to guide the train-ing process [8] for domain adaptation. These initial efforts have validated the potential of the combination of VFM and SFUDA. However, these works rely on the source model’s low-quality predictions as spatial prompts, which creates a potential failure cascade due to a large domain shift. 
+
+3. Methods 
+
+Our proposed unified SFUDA framework, Tell2Adapt, is designed to distill the generalizable knowledge of a VFM into the lightweight source model, making it practical for          
+
+> Table 1. Comparison of prompts before and after regularization
+> Original Prompts Regularized Prompts
+> Liverr [SEP] Spleen CT [SEP] Abdomen duodenum Liver in abdomen CT [SEP] Spleen in abdomen CT [SEP] Duodenum in abdomen CT Right ventricle [SEP] Myocardium MRI [SEP] Left ventricle Right ventricle in cardiac MRI [SEP] Myocardium in cardiac MRI [SEP] Left ventricle in car-diac MRI
+
+clinical deployment. At its core, the framework leverages BiomedParse, guided by canonical text prompts regularized by CAPR to generate high-quality pseudo-labels for the tar-get domain. This rich supervisory signal then drives the adaptation of the source model through a knowledge dis-tillation paradigm. Finally, during inference, we introduce VPR to refine the final predictions from the adapted model, ensuring anatomical plausibility. Formally, we define the source domain as DS = {xsi , y si }Ns 
+
+> i=1
+
+and the unlabeled tar-get domain as DT = {xtj }Nt
+
+> j=1
+
+. In SFUDA settings, only the model Ms pre-trained on DS and the target images DT are available during the adaptation process. 
+
+3.1. Context-Aware Prompts Regularization 
+
+Our framework employs a VFM guided by text prompts to generate pseudo-labels for the target domain, while its per-formance remains highly sensitive to the syntactic and se-mantic structure of the prompts. In real-world clinical ap-plications, prompts can be noisy, ambiguous. Furthermore, a single query often contains multiple, semantically-related targets, which provides rich but unstructured intra-prompt context. This variability can introduce semantic drift in the VFM’s text encoder, leading to inconsistent embeddings and erroneous pseudo-labels. To address this critical chal-lenge, we introduce CAPR, which acts as a semantic nor-malizer to canonicalize the prompts. Unlike simple prompt cleaning, CAPR performs a holistic analysis of the entire string. We leverage the powerful in-context reasoning and instruction following capabilities of LLM. The LLM performs global context inference by follow-ing a meta-prompt that instructs it to collectively analyze all input prompts and identify a shared, high-level context, such as the imaging modality and anatomical region. Sec-ond, using this inferred global context, the LLM conducts contextual enrichment and canonicalization for each sub-prompt. It corrects typographical errors, resolves ambi-guities, and enriches the sub-prompt with the shared con-text. As shown in Tab. 1, each sub-prompt is then refor-matted into a predefined, descriptive, and consistent struc-ture, which we define as the canonical format: [Target] in [Anatomical Site] [Modality]. The structured strings re-turned by the LLM are then parsed to serve as clean, canon-Figure 3. Overview of Tell2Adapt, a unified SFUDA framework. The workflow decouples pseudo-label generation from the source model by leveraging VFM guided by text prompts. We introduce CAPR to standardize these prompts, enabling the VFM to generate high-fidelity pseudo-labels. This knowledge is then distilled into the lightweight source model via self-training and refined using VPR. 
+
+ical prompts for the VFM’s text encoder. 
+
+3.2. VFM-Guided Knowledge Distillation 
+
+With the canonical instructions from CAPR, Tell2Adapt leverages BiomedParse as an external knowledge source to generate supervisory signals for the unlabeled target domain 
+
+DT . This process is followed by a knowledge distillation paradigm that distills this knowledge into the lightweight and deployable source model. The initial step is to generate high-quality pseudo-labels for the target images. BiomedParse comprises a text en-coder, an image encoder, a mask decoder, and an object classifier, all jointly trained to understand visual-semantic relationships. For each target image xt ∈ DT , the regular-ized text prompt is converted into text embeddings by the text encoder, while the target image is transformed into rich spatial feature embeddings by the image encoder. The mask decoder then performs a grounding operation, using the text embeddings to query the image embeddings and attend to the relevant anatomical regions. This yields segmentations that serve as pseudo-label ˆyt for the image xt.After generating the pseudo-label set {ˆytj }Nt
+
+> j=1
+
+, we ad-dress the critical challenge of low-level domain shift. As visualized in Fig. 1, variations in intensity distributions are a primary barrier to adaptation. To mitigate this and create more robust training signals, we apply standard histogram equalization (HE) to target images xtj . This step normal-izes global image contrast by redistributing pixel intensities based on their cumulative distribution function, compelling the model to focus on learning invariant anatomical features rather than superficial domain-specific statistics. The knowledge distillation then proceeds by training the source model on the enhanced target images and their cor-responding pseudo-labels, forming the training set: 
+
+Dadapt T = {(HE (xtj ), ˆytj )}Nt 
+
+> j=1
+
+(1) The model is optimized by minimizing a combination of Dice and Cross-Entropy losses. This procedure effec-tively distills generalized knowledge from BiomedParse into an efficient student model, adapting it to the target do-main. The final result is a lightweight, high-performance model that can be deployed clinically without requiring the resource-intensive VFM at inference. Specifically, while di-rect inference on the BiomedParse requires 371.8M param-eters and a peak VRAM of 26.1 GB on abdominal datasets, our adapted model achieves robust performance using only 31.1M parameters and 4.8 GB of peak VRAM. This mas-sive reduction in computational overhead significantly low-ers the hardware barrier for real-world clinical deployment. 3.3. Visual Plausibility Refinement 
+
+While the adapted model provides efficient segmentation, its predictions Pinitial may occasionally contain anatom-ically implausible regions and misidentifications due to residual domain shift. To enhance the robustness and clin-ical reliability of final predictions, we introduce a refine-ment that leverages a rich knowledge of statistical priors pre-computed from BiomedParse. This process begins by identifying the target’s general anatomical category C using BiomedParse’s inherent ob-ject classifier. We then leverage the anatomical priors pro-vided by BiomedParse, which contain pre-computed Beta distributions describing the visual properties of each object category. For any given category C, we retrieve a set of four Beta distributions, denoted as PC .
+
+PC = ( αk, β k)4 
+
+> k=1
+
+(2) Each parameter pair models the distribution of a specific vi-sual attribute of the target object: (α1, β 1) represents the distribution of the average object pixel probability, while 
+
+(α2, β 2), (α3, β 3), and (α4, β 4) collectively model the dis-tributions of the average intensity values in the R, G, and B channels, respectively. For grayscale images, the single channel is duplicated to match the 3-channel format. The refinement process utilizes these statistical priors to validate and correct the initial predictions Pinitial . Let the initial prediction be a set of N disconnected components 
+
+Pinitial = {p1, p 2, . . . , p N }. For each component pi, we compute its corresponding set of four features {fi,k }4
+
+> k=1
+
+.We then calculate an anatomical plausibility score, S(pi),which measures how well each component’s features align with the retrieved prior distributions by modeling their joint probability density using Beta distributions: 
+
+S(pi) = 
+
+> 4
+
+Y
+
+> k=1
+
+f αk −1 
+
+> i,k
+
+(1 − fi,k )βk −1
+
+B( αk, β k) (3) where B( αk, β k) is the Beta function. This score, S(pi),will be high if the component pi has a pixel probability and color profile that are statistically typical for the target cate-gory C, and low otherwise. Finally, the refined prediction, 
+
+Pf inal , is generated by retaining only those components whose plausibility score exceeds a predefined threshold τ :
+
+Pf inal = [
+
+> i|S(pi)>=τ
+
+pi (4) The threshold τ is defined as two standard deviations σS
+
+below the mean score μS of all N components ( τ = μS −
+
+2σS ). This procedure effectively removes noise and false positive regions that are inconsistent with the anatomical knowledge, yielding a more reliable segmentation. 
+
+4. Experiments and Results 
+
+We conduct extensive experiments across 10 domain adap-tation directions and 22 anatomical targets, covering ab-dominal, brain, polyp, and cardiac targets, to comprehen-sively assess the performance of Tell2Adapt. 
+
+4.1. Dataset and Implementation Details 
+
+We validate our method on AMOS [11], BraTS [6], CA-MUS [13], ACDC [2], Kvasir [10], and CVCDB [1] datasets. AMOS consists of 500 CT and 100 MRI scans collected from a multi-center, multi-vendor, multi-modality, multi-phase, and multi-disease cohort, with voxel-level an-notations for 15 abdominal organs. BraTS provides 2200 3D MRI scans across four modalities: T1n, T1c, T2w, and T2f, which include segmentation targets for four subre-gions: enhancing tissue (ET), tumor core (TC), surrounding non-enhancing FLAIR hyperintensity (SNFH), and resec-tion cavity (RC). CAMUS provides 2D apical four-chamber and two-chamber view sequences acquired from 500 pa-tients, with pixel-level annotations for the left ventricle (LV), myocardium (MYO), and left atrium. ACDC con-tains 150 MRI scans categorized into five subgroups, which include slices covering the LV, MYO, and right ventricle from base to apex. Kvasir is a widely used benchmark dataset consisting of 1,000 endoscopic images with pixel-wise annotated polyp segmentation. CVCDB comprises 612 frames extracted from multiple colonoscopy video se-quences with corresponding masks delineating the polyp re-gions. Notably, in US →MR and MR →US, we restrict our evaluation to LV and MYO from ACDC and CAMUS to maintain consistency in the targets. We evaluate Tell2Adapt on 10 domain adaptation di-rections: T1n →T2w, T2w →T1n, T1c →T2f and T2f →T1c for brain targets on BraTS, MR →CT and CT →MR for abdominal targets on AMOS, Kvasir →CVCDB and CVCDB →Kvasir for polyp on CVCDB and Kvasir, and US →MR and MR →US for cardiac targets on ACDC and CAMUS. The dataset is randomly slice-wise divided into training and testing sets in an 8:2 ratio, and the performance is quantitatively evaluated using DICE and ASD. All experiments were implemented using PyTorch and conducted on two NVIDIA RTX 4090 GPUs. For the source model, we used the nnUNet framework[9], which employs a ResNet-based U-Net architecture, trained for 500 epochs. For all the comparison methods, we follow the official implementation and hyperparameters provided in their original paper. In CAPR, we employ Qwen3-VL-8B-Instruct [29], using a unified meta-prompt that remains identical across all adaptation directions, as detailed in the Appendix. For VPR, the anatomical priors are sourced from the official HuggingFace repository of BiomedParse and are also included in the supplementary materials, where we ad-ditionally provide all implementation details and the com-Figure 4. Qualitative results of Tell2Adapt demonstrate its strong generalization capability across diverse and challenging SFUDA di-rections. The figure presents segmentation outputs from Tell2Adapt adapted to various target domains. Specifically, the first and second rows show MR-CT adaptation for abdominal targets in AMOS, while the third row illustrates extreme-gap adaptation in cardiac targets (MR-US), single target adaptation in polyp (Kvasir-CVCDB), and multi-sequence adaptation in brain targets (T1n-T2w and T1c-T2f). Table 2. DICE (%, mean ± std) of segmentation results on abdominal targets. ASD for all anatomical targets is provided in Appendix.                                                                                                                                                                           
+
+> MR →CT Methods VFM Spleen R. K L. K Gallb Esoph Liver Stom Aortic V-Cava Pancr R. Adre L. Adre Duod Bladder Pros/Uter mDICE
+> Baseline ×65.1 ±30.4 71.2 ±26.9 63.2 ±29.6 27.2 ±27.7 42.2 ±22.1 82.2 ±9.9 46.9 ±28.6 72.0 ±20.3 61.7 ±23.7 55.7 ±23.3 39.7 ±22.8 44.7 ±24.2 38.5 ±22.4 0.0 ±0.0 0.0 ±0.0 47.4 ±24.7 Supervised ×97.2 ±1.7 96.4 ±1.7 94.7 ±11.7 86.0 ±13.6 84.1 ±10.0 97.6 ±1.0 93.1 ±5.1 95.3 ±2.8 90.2 ±5.7 83.7 ±12.9 77.8 ±11.0 78.9 ±11.7 81.6 ±10.9 83.3 ±19.3 85.5 ±7.0 88.4 ±7.5 UPL [21] ×23.9 ±2.0 7.7 ±0.2 30.2 ±26.9 0.0 ±0.0 12.5 ±12.7 23.6 ±30.9 10.7 ±12.2 9.3 ±10.0 0.7 ±1.4 8.6 ±8.3 0.0 ±0.0 0.0 ±0.0 2.0 ±7.2 0.0 ±0.0 0.0 ±0.0 8.6 ±9.4 ProtoContra [24] ×5.6 ±6.3 11.9 ±2.3 7.3 ±2.6 4.3 ±3.1 37.5 ±24.1 40.1 ±24.8 25.1 ±21.3 38.6 ±27.8 29.2 ±18.9 39.1 ±20.1 0.0 ±0.0 0.0 ±0.0 17.6 ±16.2 0.0 ±0.0 0.0 ±0.0 17.1 ±15.9 IAPC [3] ×8.7 ±4.5 4.5 ±2.3 1.9 ±1.4 1.3 ±1.5 4.5 ±11.3 15.2 ±2.1 14.3 ±5.6 9.7 ±5.0 4.6 ±1.1 2.0 ±0.6 0.0 ±0.0 0.0 ±0.0 2.2 ±7.4 19.8 ±16.8 7.2 ±6.8 6.4 ±6.1 DFG [8] ✓0.7 ±0.6 28.7 ±17.4 4.1 ±7.2 0.0 ±0.0 35.1 ±16.3 35.0 ±19.2 16.6 ±16.1 13.0 ±16.1 22.0 ±23.3 29.7 ±18.4 0.0 ±0.0 0.0 ±0.0 21.2 ±12.7 0.0 ±0.0 0.0 ±0.0 13.7 ±13.8 IPLC [26] ✓0.0 ±0.0 0.0 ±0.0 0.0 ±0.0 0.0 ±0.0 0.0 ±0.0 65.4 ±11.3 10.5 ±7.1 6.6 ±8.3 4.1 ±2.7 3.8 ±3.7 0.0 ±0.0 0.0 ±0.0 0.0 ±0.0 0.0 ±0.0 0.0 ±0.0 6.0 ±16.7 SRPL [14] ✓0.0 ±0.0 0.0 ±0.0 0.0 ±0.0 0.0 ±0.0 41.0 ±25.3 47.6 ±29.1 42.2 ±26.0 66.0 ±28.9 26.2 ±30.2 46.6 ±23.3 0.0 ±0.0 0.0 ±0.0 29.4 ±17.9 0.0 ±0.0 0.0 ±0.0 19.9 ±22.9 Ours ✓97.1 ±1.6 96.3 ±2.9 96.2 ±4.6 85.2 ±16.4 84.0 ±8.6 96.9 ±2.6 91.9 ±7.5 94.9 ±2.2 90.5 ±5.5 84.7 ±10.5 77.4 ±8.1 77.3 ±10.3 79.7 ±14.2 85.8 ±16.4 84.6 ±9.2 88.2 ±7.1
+
+CT →MR Methods VFM Spleen R. K L. K Gallb Esoph Liver Stom Aortic V-Cava Pancr R. Adre L. Adre Duod mDICE 
+
+Baseline × 58.6 ±47.0 86.6 ±9.2 89.6 ±0.7 53.1 ±28.8 58.9 ±34.2 73.4 ±33.0 60.0 ±19.5 61.4 ±29.8 64.0 ±25.1 65.0 ±19.2 56.5 ±3.3 64.7 ±10.2 44.3 ±25.0 64.3 ±12.5 Supervised × 97.6 ±1.5 97.1 ±0.8 97.1 ±0.5 88.1 ±10.0 73.7 ±15.0 98.0 ±1.2 90.4 ±3.3 92.9 ±5.2 91.7 ±2.5 86.4 ±3.9 67.7 ±9.9 71.0 ±11.2 69.1 ±8.7 86.2 ±10.1 UPL [21] × 1.7 ±5.3 0.8 ±1.4 2.3 ±0.9 0.0 ±0.0 0.0 ±0.0 12.9 ±12.5 1.0 ±1.1 38.4 ±19.9 0.0 ±0.0 12.9 ±13.5 0.0 ±0.0 0.0 ±0.0 0.0 ±0.0 5.4 ±10.0 ProtoContra [24] × 17.8 ±16.1 4.9 ±4.9 16.1 ±17.8 0.0 ±0.0 47.7 ±28.0 11.7 ±14.4 18.7 ±14.4 6.0 ±11.8 38.2 ±24.2 30.5 ±16.8 27.3 ±22.7 0.0 ±0.0 0.0 ±0.0 16.8 ±14.5 IAPC [3] × 21.9 ±3.3 8.9 ±3.8 19.4 ±6.5 0.0 ±0.0 16.1 ±6.9 13.6 ±23.0 33.8 ±3.7 7.8 ±1.5 2.6 ±8.7 0.6 ±1.0 0.0 ±0.0 0.0 ±0.0 0.0 ±0.0 9.6 ±9.9 DFG [8] ✓ 14.0 ±12.9 10.2 ±2.7 11.4 ±14.7 0.0 ±0.0 36.9 ±22.5 45.0 ±26.9 5.9 ±10.4 65.3 ±23.3 23.1 ±17.7 27.3 ±22.5 0.0 ±0.0 0.0 ±0.0 0.0 ±0.0 18.4 ±19.7 IPLC [26] ✓ 0.0 ±0.0 0.0 ±0.0 0.0 ±0.0 0.0 ±0.0 2.2 ±1.3 59.6 ±13.0 5.0 ±2.8 10.6 ±5.8 4.6 ±2.9 8.4 ±6.5 0.0 ±0.0 0.0 ±0.0 17.6 ±2.0 7.1 ±15.8 SRPL [14] ✓ 0.0 ±0.0 0.0 ±0.0 69.8 ±24.6 0.0 ±0.0 0.0 ±0.0 38.6 ±23.9 31.1 ±26.4 54.0 ±28.9 0.0 ±0.0 42.1 ±26.2 0.0 ±0.0 0.0 ±0.0 19.7 ±17.2 19.6 ±24.8 Ours ✓ 94.8 ±3.8 94.4 ±0.8 95.2 ±0.8 73.3 ±7.4 71.6 ±8.9 96.8 ±0.4 88.9 ±7.2 91.5 ±2.7 85.7 ±4.3 85.9 ±5.7 61.5 ±3.0 61.0 ±14.8 68.9 ±6.3 82.3 ±12.9 
+
+Note : A DICE of 0.0 indicates a complete prediction failure for the corresponding targets. 
+
+plete code of Tell2Adapt to ensure reproducibility. 
+
+4.2. Comparison with SOTA Methods 
+
+To further assess the effectiveness of our framework, we compare Tell2Adapt with six SOTA SFUDA meth-ods, covering both general-purpose approaches (IAPC) and medical-purpose approaches (UPL, ProtoContra, IPLC, SRPL, and DFG). Notably, our evaluation aligns with the emerging paradigm of VFM-guided SFUDA, where DFG and IPLC utilize MedSAM, while SRPL is built upon SAM. The remaining methods represent traditional SFUDA that do not utilize VFM. In our experiments, Baseline denotes the source model directly tested on the target domain with-out adaptation, while Supervised refers to training and test-ing on the target domain with full supervision. 
+
+Results on Abdominal Targets As detailed in Table 2, Tell2Adapt demonstrates exceptional performance in ab-dominal targets. In MR →CT, our method achieves a mean DICE of 88.2%. Remarkably, this result is not only a sub-stantial improvement over Baseline but is also on par with the Supervised (88.4%), indicating a high-performing adap-tation without any target labels. The framework’s robustness is further confirmed in CT →MR. Here, Tell2Adapt attains a highly competitive mean DICE of 82.3%, once again closely approaching the Supervised upper bound of 86.2%. This consistent, high-level performance across both demanding adaptation on a complex multi-organ benchmark validates the powerful generalization capability of Tell2Adapt, effectively bridg-ing the domain shift between MR and CT. 
+
+Results on Brain Targets Table 3 presents the com-prehensive performance of Tell2Adapt on BraTS, evaluated Table 3. DICE and ASD of segmentation results on brain targets. 
+
+Methods VFM T1n →T2w T2w →T1n DICE (%, mean ± std) ASD (mm, mean ± std) DICE (%, mean ± std) ASD (mm, mean ± std) TC SNFH ET RC TC SNFH ET RC TC SNFH ET RC TC SNFH ET RC 
+
+Baseline × 19.7 ±29.1 7.5 ±7.4 4.7 ±5.6 30.0 ±24.9 40.6 ±17.8 21.2 ±8.6 40.2 ±18.8 58.9 ±25.7 4.6 ±4.8 13.9 ±10.5 3.2 ±4.9 25.9 ±38.1 48.4 ±22.9 19.4 ±7.6 38.1 ±15.9 57.1 ±20.6 Supervised × 61.9 ±20.8 84.3 ±7.3 68.0 ±14.8 86.6 ±10.9 2.9 ±5.1 1.3 ±0.5 1.8 ±1.9 1.0 ±3.0 62.8 ±20.7 83.6 ±6.7 71.6 ±14.9 83.9 ±14.3 2.3 ±2.5 1.4 ±0.6 1.8 ±2.4 1.2 ±2.9 UPL[21] × 47.2 ±23.4 36.9 ±22.5 61.7 ±48.6 46.7 ±23.5 33.6 ±22.8 33.5 ±20.8 6.8 ±6.1 29.5 ±23.1 46.5 ±34.1 10.7 ±12.1 60.3 ±48.9 38.7 ±24.6 16.5 ±12.8 56.9 ±22.1 23.2 ±14.3 22.9 ±17.0 
+
+ProtoContra[24] × 0.7 ±2.3 4.9 ±12.3 6.1 ±1.9 15.9 ±17.8 19.7 ±14.3 52.2 ±16.4 30.6 ±5.6 35.0 ±16.8 0.7 ±1.6 11.6 ±15.1 0.4 ±3.6 0.7 ±0.6 55.8 ±17.5 61.4 ±22.7 36.2 ±21.7 52.7 ±31.6 IAPC[3] × 0.4 ±2.3 7.2 ±10.3 2.6 ±7.5 2.6 ±8.2 75.7 ±42.8 72.2 ±50.4 71.6 ±48.3 68.7 ±44.3 0.7 ±3.4 7.1 ±11.1 2.2 ±6.8 3.5 ±10.3 71.9 ±35.7 74.3 ±52.9 66.7 ±40.8 60.5 ±35.2 DFG[8] ✓ 1.3 ±1.9 3.6 ±8.2 5.1 ±3.8 1.6 ±7.7 50.7 ±29.6 67.3 ±20.5 60.7 ±23.5 53.2 ±21.1 0.8 ±0.6 7.6 ±14.3 4.2 ±2.3 1.6 ±1.2 53.9 ±22.8 63.2 ±23.3 59.4 ±28.2 65.7 ±22.7 IPLC[26] ✓ 17.8 ±3.6 20.5 ±5.2 29.3 ±11.2 52.8 ±9.1 27.0 ±14.8 48.1 ±36.3 38.1 ±16.4 53.0 ±19.8 25.7 ±16.8 30.0 ±12.3 39.7 ±32.9 16.2 ±17.4 47.2 ±46.1 36.7 ±23.2 36.3 ±17.6 45.4 ±17.7 SRPL[14] ✓ 0.0 ±0.0 13.3 ±13.3 10.7 ±12.2 3.3 ±3.3 63.2 ±33.2 35.2 ±24.1 73.3 ±34.5 55.4 ±22.1 8.4 ±13.5 9.2 ±7.7 9.9 ±10.7 2.5 ±2.3 70.8 ±30.0 25.9 ±9.8 50.7 ±24.4 51.3 ±13.8 
+
+Ours ✓ 41.6 ±21.0 79.9 ±10.1 45.4 ±25.4 79.5 ±18.3 5.9 ±9.6 1.7 ±1.2 4.5 ±5.2 2.1 ±5.0 41.7 ±26.7 78.2 ±11.5 51.5 ±23.2 77.3 ±21.9 5.2 ±6.8 1.7 ±1.0 4.0 ±4.8 2.2 ±4.6 Methods VFM T1c →T2f T2f →T1c DICE (%, mean ± std) ASD (mm, mean ± std) DICE (%, mean ± std) ASD (mm, mean ± std) TC SNFH ET RC TC SNFH ET RC TC SNFH ET RC TC SNFH ET RC 
+
+Baseline × 4.8 ±5.7 1.3 ±1.4 14.2 ±15.1 49.3 ±33.5 39.9 ±30.7 22.7 ±7.9 33.8 ±19.2 26.3 ±26.9 18.8 ±19.9 2.1 ±3.6 42.7 ±25.7 54.0 ±33.1 10.8 ±13.9 23.8 ±18.4 6.4 ±7.7 11.6 ±19.6 Supervised × 63.1 ±20.2 90.3 ±5.6 66.6 ±15.2 83.7 ±11.4 2.5 ±2.5 0.97 ±0.4 2.2 ±2.7 1.0 ±0.7 82.4 ±15.3 83.6 ±6.9 84.8 ±12.5 85.3 ±14.1 1.4 ±5.0 1.4 ±0.5 0.8 ±0.9 1.0 ±1.5 UPL[21] × 25.0 ±22.0 46.6 ±19.4 22.6 ±16.3 55.9 ±30.2 32.9 ±22.5 26.1 ±23.8 36.9 ±24.0 29.7 ±26.6 43.4 ±27.1 15.6 ±15.6 44.6 ±26.1 53.7 ±29.1 28.6 ±25.5 46.2 ±22.2 27.6 ±23.9 29.7 ±26.8 
+
+ProtoContra[24] × 0.1 ±1.3 58.4 ±27.5 12.1 ±5.6 14.4 ±25.5 51.5 ±27.6 18.0 ±19.8 38.0 ±21.4 25.8 ±20.5 2.6 ±9.8 15.5 ±17.9 11.6 ±21.1 13.0 ±26.0 53.1 ±24.4 50.0 ±24.8 47.8 ±25.4 34.1 ±27.4 IAPC[3] × 1.0 ±4.6 6.9 ±10.5 2.3 ±7.5 29.4 ±9.2 69.1 ±35.7 68.8 ±48.2 59.7 ±35.4 62.1 ±37.6 13.2 ±5.0 6.7 ±11.1 4.2 ±8.9 3.8 ±10.0 65.6 ±32.6 77.5 ±58.3 64.9 ±43.3 80.6 ±60.1 DFG[8] ✓ 0.2 ±3.2 9.2 ±12.5 6.6 ±3.1 4.3 ±12.9 65.0 ±20.2 49.1 ±22.0 58.6 ±24.5 50.7 ±27.1 1.3 ±1.8 3.6 ±8.2 5.1 ±3.1 1.6 ±7.7 50.7 ±29.6 67.3 ±20.5 60.7 ±23.5 53.2 ±21.0 IPLC[26] ✓ 17.6 ±8.3 42.8 ±15.6 39.9 ±6.1 28.7 ±13.2 55.1 ±33.4 48.2 ±42.9 34.6 ±33.9 27.2 ±16.1 29.6 ±24.4 39.9 ±18.1 13.7 ±7.4 44.8 ±18.6 43.9 ±28.1 19.2 ±8.4 59.4 ±47.0 33.0 ±19.9 SRPL[14] ✓ 15.9 ±18.2 3.8 ±4.1 23.3 ±18.6 5.5 ±8.2 40.2 ±35.1 30.6 ±12.5 34.5 ±30.9 30.2 ±24.3 24.1 ±20.7 7.4 ±7.0 22.3 ±20.2 6.5 ±8.0 36.4 ±46.0 27.7 ±12.3 45.0 ±37.5 39.0 ±21.5 
+
+Ours ✓ 42.2 ±26.1 86.0 ±10.1 44.6 ±24.5 77.1 ±19.7 7.4 ±9.0 1.2 ±0.6 4.5 ±4.7 1.9 ±3.0 72.8 ±23.7 78.6 ±10.4 78.3 ±19.8 78.2 ±20.1 2.5 ±3.4 1.7 ±0.7 1.2 ±1.5 1.8 ±3.4 
+
+across four domain adaptation directions. In T1n →T2w, our method achieves a leading DICE of 41.6% on TC, 79.9% on SNFH, 45.4% on ET, and 79.5% on RC. This rep-resents a significant improvement over Baseline. The strong performance, particularly on SNFH and RC, highlights our method’s ability to handle large structural targets robustly. This strong performance is maintained in T2w →T1n, where Tell2Adapt again shows a strong overall profile with DICE of 78.2% on SNFH, 51.5% on ET, and 77.3% on RC. While UPL achieves a high DICE on TC and ET, our method pro-vides a more balanced performance across DICE and ASD. The advantage of our framework is even more pro-nounced in the post-contrast adaptation. In T1c →T2f, Tell2Adapt achieves a DICE of 86.0% and an ASD of 1.2 mm on SNFH, surpassing all competing methods by a substantial margin. Similarly, in T2f →T1c, our method demonstrates remarkable consistency with high DICE across all subregions: 72.8% on TC, 78.6% on SNFH, 78.3% on ET, and 78.2% on RC. Critically, these gains in overlap are complemented by superior boundary precision, as our method also achieves the lowest ASD on all targets in these adaptation directions. 
+
+Results on Cardiac Targets We also evaluate Tell2Adapt on the extremely challenging cross-modality cardiac adaptation: MR →US and US →MR. These tasks represent a profound domain shift due to the fundamentally different imaging physics of MR and US. As shown in Table 4, the severe domain gap causes the Baseline to fail, resulting in near-zero DICE and exceedingly large ASD. Existing SFUDA methods also fail to bridge this gap, producing almost meaningless segmentation. In contrast, Tell2Adapt exhibits strong robustness. For MR →US, our framework achieves DICE of 94.6% on LV and 88.5% on MYO, closely approaching Supervised. This demonstrates that incorporating VFM knowledge can effectively mitigate extreme domain shifts. Similar trends are observed in US →MR, where Tell2Adapt again attains near Supervised 
+
+Table 4. DICE and ASD of segmentation results on cardiac targets.                                                                                                           
+
+> Methods VFM MR →US US →MR DICE (%, mean ±std) ASD (mm, mean ±std) DICE (%, mean ±std) ASD (mm, mean ±std) LV MYO LV MYO LV MYO LV MYO
+> Baseline ×1.7 ±0.7 3.1 ±0.3 56.2 ±37.2 66.9 ±42.3 3.2 ±0.6 1.8 ±0.3 60.5 ±34.9 56.8 ±27.5 Supervised ×94.4 ±2.7 88.1 ±4.6 3.2 ±1.6 4.1 ±1.3 95.8 ±3.8 91.2 ±2.1 0.3 ±0.1 0.3 ±0.1 UPL [21] ×2.8 ±0.1 0.0 ±0.0 90.5 ±3.2 0.0 ±0.0 0.5 ±0.4 2.9 ±2.1 88.9 ±9.6 85.6 ±11.6 ProtoContra [24] ×1.2 ±1.2 17.0 ±7.2 54.9 ±14.2 56.4 ±13.9 5.2 ±5.8 4.9 ±3.2 72.9 ±12.4 74.8 ±10.5 IAPC [3] ×18.4 ±14.5 3.1 ±7.5 51.3 ±29.6 97.9 ±45.3 25.8 ±15.2 5.6 ±0.8 34.1 ±13.9 42.6 ±12.7 DFG [8] ✓4.6 ±4.1 4.5 ±3.7 51.6 ±12.9 63.1 ±14.3 2.3 ±1.7 6.9 ±4.4 69.3 ±16.7 66.5 ±18.3 IPLC [26] ✓1.7 ±2.0 5.8 ±2.5 50.5 ±18.1 48.3 ±18.9 2.9 ±3.6 11.5 ±8.9 48.4 ±11.2 26.1 ±10.5
+> SRPL [14] ✓0.7 ±1.1 0.9 ±1.2 83.1 ±31.0 79.8 ±19.2 8.5 ±9.3 9.1 ±9.3 30.1 ±15.3 45.9 ±22.0
+> Ours ✓94.6 ±2.6 88.5 ±4.5 3.2 ±1.5 4.1 ±1.6 95.5 ±3.7 89.2 ±3.9 3.1 ±0.2 4.1 ±0.4
+
+Table 5. DICE and ASD of segmentation results on polyp.                                                                
+
+> Methods VFM Kvasir →CVCDB CVCDB →Kvasir DICE (%, mean ±std) ASD (mm, mean ±std) DICE (%, mean ±std) ASD (mm, mean ±std)
+> Baseline ×65.1 ±21.5 5.8 ±11.1 60.2 ±27.0 23.7 ±20.4 Supervised ×99.8 ±0.1 0.36 ±0.1 97.4 ±1.3 0.9 ±1.1 UPL [21] ×67.1 ±14.6 2.2 ±0.9 60.2 ±31.3 11.4 ±17.2 ProtoContra [24] ×78.0 ±12.1 0.9 ±0.6 68.9 ±26.4 9.5 ±15.0
+> IAPC [3] ×73.3 ±29.6 4.4 ±7.9 61.2 ±26.3 13.7 ±13.2 DFG [8] ✓19.1 ±14.7 97.5 ±17.6 26.8 ±18.1 87.5 ±19.5 IPLC [26] ✓34.8 ±11.7 34.7 ±22.9 45.3 ±21.2 19.2 ±8.4 SRPL [14] ✓33.0 ±22.7 31.4 ±19.6 44.9 ±26.0 18.9 ±16.9
+> Ours ✓89.1 ±16.0 4.7 ±6.6 88.3 ±14.7 6.2 ±3.2
+
+performance with DICE of 95.5% on LV and 89.2% on MYO. The consistently lowest ASD further confirms the high accuracy and anatomical precision of the predicted segmentation boundaries. 
+
+Results on Polyp Target We further validate Tell2Adapt on polyp segmentation, which requires adaptation between endoscopic datasets with significant variations in lighting, camera, and polyp appearance. In Table 5, our framework demonstrates clear advantages in this challenging scenario. In Kvasir →CVCDB, our method achieves a robust DICE of 89.1%. This represents a substantial margin of +11.1% over the second-best method, ProtoContra (78.0%). The performance improvement is even more pronounced in CVCDB →Kvasir, where Tell2Adapt attains a DICE of 88.3%, surpassing ProtoContra by an impressive +19.4%. Notably, in CVCDB →Kvasir, this gain in overlap accuracy is complemented by a superior boundary delineation, as in-dicated by a better ASD of 6.2 mm compared to 9.5 mm from the second-best method. These consistent and large performance gains across both adaptation underscore our framework’s ability to distill robust, generalizable knowl-edge from BiomedParse, effectively overcoming domain-specific variations where other SOTA methods falter. 
+
+Ablation Study We conduct a comprehensive ablation Table 6. DICE (%, mean ± std) of segmentation results in the ablation study on abdominal targets. The corresponding ASD results for all anatomical targets are provided in the Appendix, along with detailed descriptions of the chaotic prompts and normal prompts.                                                                                                                                                                                                                   
+
+> MR →CT Methods Spleen R. K L. K Gallb Esoph Liver Stom Aortic V-Cava Pancr R. Adre L. Adre Duod Bladder Pros/Uter mDICE
+> Baseline 65.1 ±30.4 71.2 ±26.9 63.2 ±29.6 27.2 ±27.7 42.2 ±22.1 82.2 ±9.9 46.9 ±28.6 72.0 ±20.3 61.7 ±23.7 55.7 ±23.3 39.7 ±22.8 44.7 ±24.2 38.5 ±22.4 0.0 ±0.0 0.0 ±0.0 47.4 ±24.7 Ours w/o CAPR (Chaotic Prompts) 85.2 ±1.5 0.0 ±0.0 88.3 ±2.5 84.4 ±10.0 84.7 ±9.4 0.0 ±0.0 0.0 ±0.0 85.4 ±2.1 69.7 ±13.7 0.0 ±0.0 70.5 ±7.6 0.0 ±0.0 81.7 ±6.1 0.0 ±0.0 83.7 ±8.2 48.9 ±37.1 Ours w/o CAPR (Normal Prompts) 91.1 ±2.2 92.0 ±4.7 89.9 ±3.3 84.6 ±7.2 87.5 ±2.1 92.4 ±3.5 85.8 ±4.9 88.4 ±5.2 90.2 ±5.7 81.1 ±6.8 75.4 ±9.8 73.9 ±3.7 78.2 ±5.4 83.4 ±6.0 88.3 ±7.2 85.5 ±6.7 Ours w/o VPR (Normal Prompts) 90.1 ±2.3 91.8 ±3.7 92.5 ±4.4 80.2 ±12.1 83.2 ±6.1 94.9 ±3.3 90.0 ±7.6 91.8 ±4.1 90.1 ±5.8 80.6 ±11.6 72.7 ±8.0 74.6 ±9.7 75.4 ±16.8 82.3 ±14.4 84.9 ±7.0 85.0 ±7.4 Ours (Chaotic Prompts) 96.9 ±1.4 96.0 ±1.3 95.7 ±1.5 85.4 ±10.2 85.2 ±6.6 96.8 ±7.8 90.5 ±10.8 93.3 ±2.1 91.5 ±4.0 85.6 ±5.6 77.3 ±9.9 78.4 ±11.3 80.8 ±6.1 83.1 ±11.0 49.2 ±7.6 85.7 ±12.6
+> Ours (Normal Prompts) 97.1 ±1.6 96.3 ±2.9 96.2 ±4.6 85.2 ±16.4 84.0 ±8.6 96.9 ±2.6 91.9 ±7.5 94.9 ±2.2 90.5 ±5.5 84.7 ±10.5 77.4 ±8.1 77.3 ±10.3 79.7 ±14.2 85.8 ±16.4 84.6 ±9.2 88.2 ±7.1
+> CT →MR Methods Spleen R. K L. K Gallb Esoph Liver Stom Aortic V-Cava Pancr R. Adre L. Adre Duod mDICE
+> Baseline 58.6 ±47.0 86.6 ±9.2 89.6 ±0.7 53.1 ±28.8 58.9 ±34.2 73.4 ±33.0 60.0 ±19.5 61.4 ±29.8 64.0 ±25.1 65.0 ±19.2 56.5 ±3.3 64.7 ±10.2 44.3 ±25.0 64.3 ±12.5 Ours w/o CAPR (Chaotic Prompts) 85.7 ±1.4 0.0 ±0.0 90.6 ±2.6 69.5 ±5.7 70.6 ±7.7 0.0 ±0.0 0.0 ±0.0 90.9 ±1.8 42.0 ±18.9 0.0 ±0.0 54.3 ±9.4 0.0 ±0.0 70.7 ±5.1 44.2 ±36.9 Ours w/o CAPR (Normal Prompts) 92.5 ±4.4 91.8 ±7.8 90.4 ±2.9 72.6 ±8.5 74.4 ±7.1 89.1 ±4.6 86.2 ±9.7 91.4 ±2.2 80.5 ±5.9 77.4 ±8.1 61.3 ±4.9 60.2 ±9.8 70.1 ±1.2 79.8 ±11.6 Ours w/o VPR (Normal Prompts) 90.1 ±4.1 92.2 ±2.7 91.2 ±3.8 70.3 ±9.5 66.8 ±9.8 93.5 ±3.6 85.3 ±10.2 87.5 ±2.3 83.9 ±6.2 80.4 ±5.5 62.5 ±5.8 55.0 ±17.3 63.7 ±6.5 78.6 ±13.7 Ours (Chaotic Prompts) 94.3 ±1.4 94.6 ±1.3 94.1 ±2.6 76.1 ±7.1 70.3 ±7.4 97.0 ±0.7 87.9 ±3.2 91.9 ±1.8 87.8 ±3.3 79.0 ±3.5 60.8 ±9.2 63.8 ±15.7 70.0 ±4.9 82.1 ±12.4
+> Ours (Normal Prompts) 94.8 ±3.8 94.4 ±0.8 95.2 ±0.8 73.3 ±7.4 71.6 ±8.9 96.8 ±0.4 88.9 ±7.2 91.5 ±2.7 85.7 ±4.3 85.9 ±5.7 65.5 ±3.0 61.0 ±14.8 68.9 ±6.3 82.3 ±12.9
+
+Note : A DICE of 0.0 indicates a complete prediction failure for the corresponding targets. 
+
+study to evaluate the individual contributions of CAPR and VPR. In Table 6, the importance of VPR is evident when comparing Ours (Normal Prompts) with Ours w/o VPR (Normal Prompts). Removing VPR results in a mean DICE decrease of 3.2% (from 88.2% to 85.0%) in MR →CT and 3.7% (from 82.3% to 78.6%) in CT →MR, highlighting its effectiveness in enforcing anatomical plausibility. CAPR proves to be the most essential component, serv-ing as both a corrective and an optimizing mechanism in the adaptation process. When the framework receives Chaotic Prompts without CAPR, performance drops drastically to 48.9% and 44.2% mean DICE in MR →CT and CT →MR, respectively, with critical organs such as the liver, stomach, and pancreas completely failing. Enabling CAPR restores the system to 85.7% mean DICE in MR →CT (+36.8%) and 82.1% in CT →MR (+37.9%), as demonstrated by the comparison between Ours w/o CAPR (Chaotic Prompts) and Ours (Chaotic Prompts). Beyond correction, the im-provement from Ours w/o CAPR (Normal Prompts) to Ours (Normal Prompts) confirms that CAPR not only mitigates prompt noise but also refines semantic alignment, leading to further optimization. This dual effect, offering robustness through correction and optimization, together with VPR’s refinement, underscores the generality of Tell2Adapt. 
+
+5. Discussion 
+
+Our extensive experiments demonstrate that Tell2Adapt successfully establishes a unified and highly effective SFUDA framework, a significant step forward from prior specialized methods. This success stems from its ability to generate high-fidelity supervisory signals, overcoming the limitations of traditional SFUDA methods, which rely solely on self-training or entropy minimization from the source model, often resulting in unreliable supervision that limits their generalization and fails in high-gap scenarios. Our approach leverages the vast knowledge of a VFM and decouples the VFM’s prompt quality from the pseudo-labels of the source model. This stands in sharp contrast to other VFM-guided SFUDA methods (IPLC, DFG, and SRPL) that remain critically coupled to the source model. These methods use the source model’s pseudo-labels to gen-erate spatial prompts for VFM. This dependency creates a severe error accumulation cascade, where an inaccurate pseudo-label from the source model generates an erroneous prompt, which subsequently misguides the VFM. As a re-sult, the predictions may degrade severely, sometimes even worse than traditional SFUDA. Our framework leverages text prompts rather than spatial prompts. This strategy, powered by CAPR, provides a sta-ble, semantically rich, and high-quality supervisory signal independent of the source model. It breaks the failure cas-cade, enabling robust adaptation even in extreme-gap sce-narios. Furthermore, VPR enhances anatomical plausibil-ity, serving as a crucial clinical reliability check. By fil-tering out predictions that are statistically inconsistent with general anatomical properties, it refines segmentation and reduces false positives, which are often overlooked in tradi-tional SFUDA but are vital for real-world deployment. 
+
+Limitations: Despite its strong performance, Tell2Adapt has limitations. Although the adapted model is lightweight, the pseudo-label generation stage remains computationally demanding. On average, it requires 3.47 s per abdominal volume, 1.74 s per brain volume, 1.93 s per cardiac volume, and 0.26 s per polyp image. 
+
+6. Conclusion 
+
+In this work, we tackled the fundamental challenge of gen-eralization in SFUDA for medical image segmentation. We introduced Tell2Adapt, a unified framework that leverages the rich knowledge of VFM. By incorporating CAPR to ensure reliable VFM prompt and VPR to enforce anatomi-cal plausibility, Tell2Adapt achieves SOTA across 10 adap-tation directions and 22 anatomical targets. Beyond of-fering an effective solution, Tell2Adapt establishes a new paradigm for SFUDA. References 
+
+[1] Jorge Bernal, F Javier S´ anchez, Gloria Fern´ andez-Esparrach, Debora Gil, Cristina Rodr´ ıguez, and Fernando Vilari˜ no. Wm-dova maps for accurate polyp highlighting in colonoscopy: Validation vs. saliency maps from physi-cians. Computerized medical imaging and graphics , 43:99– 111, 2015. 5 [2] Olivier Bernard, Alain Lalande, Cl´ ement Zotti, Fr´ ed´ eric Cer-venansky, Xin Yang, Pheng-Ann Heng, Irem Cetin, Karim Lekadir, Oscar Camara, Miguel A. Gonz´ alez Ballester, Ger-ard Sanrom´ a, Sandy Napel, Steffen Erhard Petersen, Geor-gios Tziritas, Elias Grinias, Mahendra Khened, Vargh-ese Alex Kollerathu, Ganapathy Krishnamurthi, Marc-Michel Roh´ e, Xavier Pennec, Maxime Sermesant, Fabian Isensee, Paul F. J¨ ager, Klaus Hermann Maier-Hein, Peter M. Full, Ivo Wolf, Sandy Engelhardt, Christian F. Baumgartner, Lisa M. Koch, Jelmer M. Wolterink, Ivana I vs .gum, Yeong-gul Jang, Yoonmi Hong, Jay Patravali, Shubham Jain, Olivier Humbert, and Pierre-Marc Jodoin. Deep learning techniques for automatic mri cardiac multi-structures segmentation and diagnosis: Is the problem solved? IEEE Transactions on Medical Imaging , 37:2514–2525, 2018. 5 [3] Yihong Cao, Hui Zhang, Xiao Lu, Zheng Xiao, Kailun Yang, and Yaonan Wang. Towards source-free domain adaptive semantic segmentation via importance-aware and prototype-contrast learning. IEEE Transactions on Intelligent Vehicles ,2024. 6, 7, 1 [4] Mathilde Caron, Hugo Touvron, Ishan Misra, Herv´ e Jegou, Julien Mairal, Piotr Bojanowski, and Armand Joulin. Emerg-ing properties in self-supervised vision transformers. In 
+
+2021 IEEE/CVF International Conference on Computer Vi-sion (ICCV) , pages 9630–9640, 2021. 2 [5] Yijia Chen, Jiapeng Li, Haoze Yu, Lin Qi, and Yongchun Li. Source-free unsupervised domain adaptation fundus image segmentation via entropy optimization and anatom-ical priors. Procedia Computer Science , 250:182–187, 2024. Proceedings of the 2024 International Conference on Biomimetic Intelligence and Robotics. 2 [6] Maria Correia de Verdier, Rachit Saluja, Louis Gagnon, Do-minic LaBella, Ujjwall Baid, Nourel Hoda Tahon, Martha Foltyn-Dumitru, Jikai Zhang, and Maram Alafif. The 2024 brain tumor segmentation (brats) challenge: Glioma segmen-tation on post-treatment mri, 2024. 5 [7] Yuqi Fang, Pew-Thian Yap, Weili Lin, Hongtu Zhu, and Mingxia Liu. Source-free unsupervised domain adaptation: A survey. Neural Networks , 174:106230, 2024. 1 [8] Zheang Huai, Hui Tang, Yi Li, Zhuangzhuang Chen, and Xiaomeng Li. Leveraging segment anything model for source-free domain adaptation via dual feature guided auto-prompting. IEEE Transactions on Medical Imaging , pages 1–1, 2025. 3, 6, 7, 1 [9] Fabian Isensee, Paul F. Jaeger, Simon A. A. Kohl, Jens Pe-tersen, and Klaus Hermann Maier-Hein. nnu-net: a self-configuring method for deep learning-based biomedical im-age segmentation. Nature Methods , 18:203 – 211, 2020. 5 [10] Debesh Jha, Pia H Smedsrud, Michael A Riegler, P˚ al Halvorsen, Thomas de Lange, Dag Johansen, and H˚ avard D Johansen. Kvasir-seg: A segmented polyp dataset. In Inter-national Conference on Multimedia Modeling , pages 451– 462. Springer, 2020. 5 [11] Yuanfeng Ji, Haotian Bai, Chongjian Ge, Jie Yang, Ye Zhu, Ruimao Zhang, Zhen Li, Lingyan Zhanng, Wanling Ma, Xi-ang Wan, et al. Amos: A large-scale abdominal multi-organ benchmark for versatile medical image segmentation. Ad-vances in neural information processing systems , 35:36722– 36732, 2022. 5 [12] Alexander Kirillov, Eric Mintun, Nikhila Ravi, Hanzi Mao, Chloe Rolland, Laura Gustafson, Tete Xiao, Spencer White-head, Alexander C. Berg, Wan-Yen Lo, Piotr Doll´ ar, and Ross Girshick. Segment anything, 2023. 2 [13] Sarah Leclerc, Erik Smistad, Joao Pedrosa, Andreas Ostvik, Frederic Cervenansky, Florian Espinosa, Torvald Espeland, Erik Andreas Rye Berg, Pierre-Marc Jodoin, Thomas Gre-nier, Carole Lartizien, Jan Dhooge, Lasse Lovstakken, and Olivier Bernard. Deep learning for segmentation using an open large-scale dataset in 2d echocardiography. IEEE Transactions on Medical Imaging , 38(9):2198–2210, 2019. 5[14] Xinya Liu, Jianghao Wu, Tao Lu, Shaoting Zhang, and Guo-tai Wang. Srpl-sfda: Sam-guided reliable pseudo-labels for source-free domain adaptation in medical image segmenta-tion. Neurocomputing , 649:130749, 2025. 3, 6, 7, 1 [15] Lingxiao Luo, Bingda Tang, Xuanzhong Chen, Rong Han, and Ting Chen. VividMed: Vision language model with versatile visual grounding for medicine. In Proceedings of the 2025 Conference of the Nations of the Americas Chap-ter of the Association for Computational Linguistics: Hu-man Language Technologies (Volume 1: Long Papers) , pages 1800–1821, Albuquerque, New Mexico, 2025. Association for Computational Linguistics. 2 [16] Jun Ma, Yuting He, Feifei Li, Lin Han, Chenyu You, and Bo Wang. Segment anything in medical images. Nature Communications , 15:654, 2024. 2 [17] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen Krueger, and Ilya Sutskever. Learning transferable visual models from natural language supervision, 2021. 2 [18] Yulong Shi, Jiapeng Li, and Lin Qi. Heal: Learning-free source free unsupervised domain adaptation for cross-modality medical image segmentation, 2025. 1 [19] Haoyu Wang, Sizheng Guo, Jin Ye, Zhongying Deng, Jun-long Cheng, Tianbin Li, Jianpin Chen, Yanzhou Su, Ziyan Huang, Yiqing Shen, Bin Fu, Shaoting Zhang, Junjun He, and Yu Qiao. Sam-med3d: Towards general-purpose seg-mentation models for volumetric medical images, 2024. 2 [20] Yan Wang, Jian Cheng, Yixin Chen, Shuai Shao, Lanyun Zhu, Zhenzhou Wu, Tao Liu, and Haogang Zhu. Fvp: Fourier visual prompting for source-free unsupervised do-main adaptation of medical image segmentation. IEEE trans-actions on medical imaging , PP, 2023. 1 [21] Jianghao Wu, Guotai Wang, Ran Gu, Tao Lu, Yinan Chen, Wentao Zhu, Tom Vercauteren, S´ ebastien Ourselin, and Shaoting Zhang. Upl-sfda: Uncertainty-aware pseudo la-bel guided source-free domain adaptation for medical image segmentation. IEEE transactions on medical imaging , 42 (12):3932–3943, 2023. 6, 7, 1 [22] Chen Yang, Xiaoqing Guo, Zhen Chen, and Yixuan Yuan. Source free domain adaptation for medical image segmenta-tion with fourier style mining. Medical Image Analysis , 79: 102457, 2022. 1 [23] Yuwei Yin, Zhixian Tang, Zheng Huang, Mingxuan Wang, and Huachun Weng. Source free domain adaptation for kid-ney and tumor image segmentation with wavelet style min-ing. Scientific Reports , 14, 2024. 2 [24] Qinji Yu, Nan Xi, Junsong Yuan, Ziyu Zhou, Kang Dang, and Xiaowei Ding. Source-free domain adaptation for medical image segmentation via prototype-anchored feature alignment and contrastive learning. In International Confer-ence on Medical Image Computing and Computer-Assisted Intervention , pages 3–12. Springer, 2023. 2, 6, 7, 1 [25] Hongye Zeng, Ke Zou, Zhihao Chen, Ru Zheng, and Huazhu Fu. Reliable source approximation: Source-free unsuper-vised domain adaptation for vestibular schwannoma mri seg-mentation. In International Conference on Medical Image Computing and Computer-Assisted Intervention , 2024. 2 [26] Guoning Zhang, Xiaoran Qi, Bo Yan, and Guotai Wang. Iplc: iterative pseudo label correction guided by sam for source-free domain adaptation in medical image segmentation. In 
+
+International Conference on Medical Image Computing and Computer-Assisted Intervention , pages 351–360. Springer, 2024. 3, 6, 7, 1 [27] Guoning Zhang, Xiaoran Qi, Jianghao Wu, Bo Yan, and Guotai Wang. Iplc+: Sam-guided iterative pseudo label cor-rection for source-free domain adaptation in medical image segmentation. IEEE Journal of Biomedical and Health In-formatics , pages 1–12, 2025. 3 [28] Sheng Zhang, Yanbo Xu, Naoto Usuyama, Hanwen Xu, Jaspreet Bagga, Robert Tinn, Sam Preston, Rajesh Rao, Mu Wei, Naveen Valluri, Cliff Wong, Andrea Tupini, Yu Wang, Matt Mazzola, Swadheen Shukla, Lars Liden, Jianfeng Gao, Angela Crabtree, Brian Piening, Carlo Bifulco, Matthew P. Lungren, Tristan Naumann, Sheng Wang, and Hoifung Poon. Biomedclip: a multimodal biomedical foundation model pre-trained from fifteen million scientific image-text pairs, 2025. 2[29] Yanzhao Zhang, Mingxin Li, Dingkun Long, Xin Zhang, Huan Lin, Baosong Yang, Pengjun Xie, An Yang, Dayiheng Liu, Junyang Lin, Fei Huang, and Jingren Zhou. Qwen3 em-bedding: Advancing text embedding and reranking through foundation models, 2025. 5 [30] Theodore Zhao, Yu Gu, Jianwei Yang, Naoto Usuyama, Ho Hin Lee, Sid Kiblawi, Tristan Naumann, Jianfeng Gao, Angela Crabtree, Jacob Abel, et al. A foundation model for joint segmentation, detection and recognition of biomedical objects across nine modalities. Nature methods , 22(1):166– 176, 2025. 2 [31] Jie Zhou, Yulong Shi, Lin Qi, Xue Jiang, Shouliang Qi, and Wei Qian. A 3 -dualud: Source-free unsupervised do-main adaptation via anatomical anchor alignment and dual-path uncertainty denoising for cross-modality medical im-age segmentation. Computer Methods and Programs in Biomedicine , 271:109017, 2025. 2 [32] Wei Zhou, Jianhang Ji, Wei Cui, and Yugen Yi. Pseudo-label clustering-driven dual-level contrast learning based source-free domain adaptation for fundus image segmentation. In 
+
+Pattern Recognition and Computer Vision , pages 492–503, Singapore, 2024. Springer Nature Singapore. 2 Tell2Adapt: A Unified Framework for Source Free Unsupervised Domain Adaptation via Vision Foundation Model 
+
+## Appendix 
+
+This appendix complements the main paper by providing extended quantitative evaluations and detailed implementation specifications to ensure full reproducibility. While the main paper focuses primarily on DICE-based comparisons in ab-dominal targets, this appendix further reports ASD and elaborates on the prompt regularization mechanism that supports the Tell2Adapt framework. The appendix is organized as follows: • Extended Quantitative Evaluation (Section A): We present the complete ASD for all abdominal organs in both the MR →CT and CT →MR directions, together with ASD from the ablation study. These results reinforce the effectiveness of Tell2Adapt in achieving accurate and anatomically consistent segmentations. • Details in Ablation Study for CAPR (Section B): We describe the procedure for constructing chaos prompts used in the ablation study and provide the full list of chaos prompts. This section details how perturbations are introduced to assess the robustness of CAPR. • Reproducibility Details (Section C): To enable exact replication, we include the meta-prompt used in CAPR for LLM and the complete set of input prompts for all anatomical targets. 
+
+A. Extended ASD Evaluation on Abdominal Targets 
+
+To complement DICE reported in the main paper, this section provides a comprehensive analysis of ASD performance for all abdominal targets. We report full ASD for both MR →CT and CT →MR directions, following the same evaluation protocol used in the main paper. These results offer a finer-grained assessment of boundary accuracy, which is particularly important for small and geometrically complex organs where DICE alone may not fully capture segmentation quality. In addition to the adaptation results, we also include ASD from the ablation study to further elucidate the contribution of CAPR and VPR. Together, these quantitative evaluations provide a comprehensive assessment of Tell2Adapt’s effectiveness in achieving anatomically precise segmentations under severe cross-modality domain shifts. 
+
+A.1. Adaptation Results in ASD for Abdominal Targets 
+
+Due to space limitations, Table 2 in the main paper reports only DICE for abdominal segmentation. For completeness, we provide the corresponding ASD in Table 7. All ASD are computed over the same test subjects used in the main paper, following identical evaluation protocols and spacing normalization. As shown in Table 7, Tell2Adapt achieves consistently strong boundary accuracy across all abdominal organs. In MR →CT, our framework attains a mean ASD of 1.5 mm, representing a substantial reduction compared to Baseline and nearly matching Supervised of 1.4 mm. This strong performance is further reflected in the per-organ results, where struc-
+
+Table 7. ASD (mm, mean ± std) of segmentation results on abdominal targets.                                                                                                                                                                           
+
+> MR →CT Methods VFM Spleen R. K L. K Gallb Esoph Liver Stom Aortic V-Cava Pancr R. Adre L. Adre Duod Bladder Pros/Uter mASD
+> Baseline ×17.5 ±19.2 17.2 ±18.5 15.5 ±17.8 23.1 ±30.7 7.8 ±9.6 11.4 ±7.2 15.3 ±14.6 8.9 ±9.9 6.9 ±11.2 9.1 ±10.7 4.7 ±3.4 4.8 ±4.2 10.3 ±9.7 N/A N/A 13.0 ±4.8 Supervised ×1.1 ±0.3 1.1 ±0.8 1.2 ±1.4 1.2 ±2.4 0.8 ±0.7 2.3 ±0.5 1.9 ±1.6 1.1 ±1.3 1.0 ±0.4 1.4 ±1.0 0.7 ±0.7 0.7 ±0.7 1.6 ±1.1 1.9 ±1.9 2.7 ±7.7 1.4 ±0.6 UPL [21] ×79.0 ±19.9 87.2 ±15.2 72.4 ±17.6 N/A 14.8 ±17.6 37.0 ±20.6 31.6 ±21.5 23.7 ±12.8 50.2 ±15.4 29.3 ±16.7 N/A N/A 54.4 ±23.4 N/A N/A 48.0 ±23.6 ProtoContra [24] ×99.5 ±25.5 72.6 ±16.3 67.9 ±18.4 94.1 ±27.6 34.4 ±26.9 75.6 ±30.4 59.4 ±19.0 24.8 ±16.3 37.1 ±15.1 30.8 ±15.1 N/A N/A 45.8 ±18.7 N/A N/A 58.4 ±24.6 IAPC [3] ×92.3 ±80.2 65.2 ±19.9 69.8 ±21.2 82.0 ±37.9 25.8 ±14.7 54.4 ±31.0 77.6 ±47.8 29.9 ±20.0 27.7 ±15.5 54.2 ±32.7 N/A N/A 45.3 ±25.0 31.1 ±18.2 31.2 ±19.7 54.9 ±22.2 DFG [8] ✓98.5 ±21.0 77.0 ±21.1 72.5 ±9.4 N/A 10.7 ±8.6 67.3 ±24.5 54.0 ±16.6 20.5 ±6.3 30.5 ±7.9 30.5 ±15.5 N/A N/A 34.4 ±13.9 N/A N/A 49.6 ±27.1 IPLC [26] ✓N/A N/A N/A N/A N/A 12.6 ±4.4 40.9 ±13.5 50.9 ±16.3 52.8 ±11.3 39.6 ±11.3 N/A N/A N/A N/A N/A 39.4 ±14.4 SRPL [14] ✓N/A N/A N/A N/A 2.0 ±3.1 31.2 ±30.0 15.3 ±18.2 5.6 ±7.4 20.5 ±7.8 10.1 ±11.4 N/A N/A 29.1 ±24.8 N/A N/A 16.3 ±10.4 Ours ✓1.1 ±0.5 1.5 ±4.1 1.2 ±1.3 2.3 ±6.5 1.0 ±1.1 2.8 ±1.4 2.0 ±1.2 1.0 ±0.7 1.0 ±0.4 1.3 ±1.0 0.6 ±0.3 0.7 ±0.7 2.1 ±3.6 1.8 ±2.6 1.4 ±1.2 1.5 ±0.6
+
+CT →MR Methods VFM Spleen R. K L. K Gallb Esoph Liver Stom Aortic V-Cava Pancr R. Adre L. Adre Duod mASD 
+
+Baseline × 22.0 ±28.4 10.5 ±15.4 6.1 ±7.0 5.3 ±6.1 15.3 ±20.0 9.4 ±12.2 8.7 ±7.4 16.2 ±15.8 12.6 ±19.2 9.0 ±8.6 1.5 ±0.3 2.8 ±2.4 15.8 ±13.8 10.4 ±5.6 Supervised × 1.0 ±0.1 1.3 ±1.4 0.9 ±0.4 1.3 ±1.3 1.9 ±1.6 2.2 ±0.9 1.8 ±0.8 1.3 ±1.1 0.9 ±0.4 1.5 ±0.5 1.1 ±0.6 1.4 ±1.0 3.1 ±1.7 1.5 ±0.6 UPL [21] × 89.5 ±14.6 71.9 ±18.7 62.9 ±25.4 N/A N/A 53.4 ±20.8 61.1 ±25.5 14.3 ±19.7 N/A 33.3 ±24.8 N/A N/A N/A 55.2 ±23.0 ProtoContra [24] × 74.3 ±21.1 89.8 ±19.4 82.4 ±16.7 N/A 59.0 ±41.6 95.5 ±33.9 81.6 ±22.1 63.4 ±23.7 50.1 ±23.9 48.5 ±25.9 56.8 ±19.5 N/A N/A 70.1 ±16.0 IAPC [3] × 71.5 ±48.1 82.4 ±47.6 85.0 ±65.0 N/A 30.5 ±16.9 62.7 ±49.4 96.1 ±56.4 35.1 ±32.3 31.8 ±20.4 74.8 ±39.1 N/A N/A N/A 63.3 ±23.5 DFG [8] ✓ 99.9 ±27.0 83.8 ±3.3 80.9 ±17.0 N/A 18.0 ±17.3 76.1 ±35.8 85.4 ±22.6 24.4 ±29.5 57.2 ±23.1 47.5 ±22.4 N/A N/A N/A 63.7 ±27.0 IPLC [26] ✓ N/A N/A N/A N/A 65.6 ±14.5 14.3 ±5.5 31.9 ±12.0 42.8 ±11.1 47.0 ±7.4 25.7 ±5.5 N/A N/A 41.4 ±6.3 38.4 ±15.2 SRPL [14] ✓ N/A N/A 4.4 ±13.3 N/A N/A 16.9 ±22.7 8.1 ±9.3 5.3 ±12.0 N/A 10.5 ±11.5 N/A N/A 10.5 ±11.2 9.3 ±4.1 Ours ✓ 1.3 ±1.1 0.9 ±0.4 0.9 ±0.3 5.0 ±10.1 1.3 ±1.0 1.9 ±0.7 1.5 ±1.4 1.0 ±0.7 1.1 ±0.5 1.2 ±0.6 1.1 ±0.6 1.3 ±0.6 2.3 ±1.1 1.6 ±1.1 
+
+Note : An ASD of N/A indicates a complete prediction failure for the corresponding targets. turally diverse organs such as spleen (1.1 mm), esophagus (1.0 mm), and pancreas (1.3 mm) exhibit highly accurate boundary localization. The robustness of Tell2Adapt is further demonstrated in CT →MR. Here, Tell2Adapt achieves a mean ASD of 1.6 mm, again closely aligned with Supervised of 1.5 mm. Notably, challenging small and elongated structures, including the right adrenal gland (1.1 mm) and aorta (1.0 mm) are segmented with high boundary precision. Overall, the ASD results reinforce the findings derived from DICE. Tell2Adapt not only delivers accurate region-level segmentation but also preserves detailed boundary structure across all abdominal targets. This consistent performance across both MR →CT and CT →MR, on one of the most complex multi-organ abdominal benchmarks, highlights the strong gener-alization capability of Tell2Adapt and its effectiveness in overcoming severe domain shifts. 
+
+A.2. Ablation Results in ASD for Abdominal Targets 
+
+As stated in Section 4.2, we provide the corresponding ASD for our full ablation study on the abdominal targets. This complements DICE results presented in Table 6, and the results detailed in Table 8 mirror and reinforce the trends observed for DICE. Consistent with the DICE findings, CAPR emerges as the most influential method in improving boundary accuracy. With-out CAPR, chaos prompts lead to a marked deterioration in boundary accuracy, with mean ASD increasing from 1.8 mm to 2.8 mm in MR →CT and from 1.9 mm to 3.5 mm in CT →MR. As illustrated by the comparison between Ours w/o CAPR (Chaotic Prompts) and Ours (Chaotic Prompts), several organs exhibit substantially larger surface distances, indicating pro-nounced boundary misalignment. This demonstrates CAPR’s ability to stabilize VFM guidance by reconstructing coherent and semantically aligned prompts, even when the original prompts are noisy and ambiguous. Beyond its corrective role, CAPR also provides measurable optimization benefits. When comparing Ours (Normal Prompts) to Ours w/o CAPR (Normal Prompts), the mean ASD decreases notably from 2.4 mm to 1.5 mm in MR →CT and from 2.8 mm to 1.6 mm in CT →MR, demonstrating that CAPR improves boundary precision even when the initial prompts are already well-formed. This further confirms that CAPR not only rescues performance under chaos prompts but also improves semantic grounding under normal conditions. VPR provides an additional refinement by removing anatom-ically implausible components that can yield high ASD even when DICE appears reasonable. The increase in ASD from 1.5 mm to 2.8 mm in MR →CT and from 1.6 mm to 3.2 mm in CT →MR, when comparing Ours w/o VPR (Normal Prompts) to Ours (Normal Prompts) underscores the importance of incorporating anatomical priors. By eliminating false positives and enforcing shape plausibility, VPR enhances the boundary accuracy of Tell2Adapt. Overall, the ASD ablation results validate the complementary effects of CAPR and VPR. CAPR provides robustness against prompt variability and enhances semantic alignment, while VPR enforces anatomical plausibility and boundary cor-rectness. Their combined impact explains the substantial ASD reductions achieved by Tell2Adapt across both MR →CT and CT →MR, paralleling the improvements previously observed in DICE. 
+
+Table 8. ASD (mm, mean ± std) of segmentation results in the ablation study on abdominal targets.                                                                                                                                                                                                                   
+
+> MR →CT Methods Spleen R. K L. K Gallb Esoph Liver Stom Aortic V-Cava Pancr R. Adre L. Adre Duod Bladder Pros/Uter mASD
+> Baseline 17.5 ±19.2 17.2 ±18.5 15.5 ±17.8 23.1 ±30.7 7.8 ±9.6 11.4 ±7.2 15.3 ±14.6 8.9 ±9.9 6.9 ±11.2 9.1 ±10.7 N/A N/A 10.3 ±9.7 N/A N/A 13.0 ±4.8 Ours w/o CAPR (Chaotic Prompts) 1.7 ±1.1 N/A 2.5 ±0.5 2.6 ±1.4 2.6 ±0.8 N/A N/A 2.4 ±0.7 5.4 ±9.3 N/A 1.7 ±0.4 N/A 3.9 ±2.4 N/A 2.6 ±2.5 2.8 ±1.1 Ours w/o CAPR (Normal Prompts) 1.5 ±0.9 2.2 ±0.4 2.1 ±1.5 2.6 ±0.8 1.7 ±0.9 3.3 ±1.5 2.7 ±0.4 2.0 ±1.9 4.7 ±2.6 1.9 ±1.1 1.5 ±0.4 2.1 ±1.4 2.2 ±1.9 2.9 ±1.1 2.4 ±0.7 2.4 ±8Ours w/o VPR (Normal Prompts) 2.1 ±1.5 2.4 ±1.3 2.4 ±2.1 2.9 ±1.8 2.5 ±0.7 3.5 ±3.0 3.7 ±2.9 2.2 ±1.7 5.3 ±4.8 2.6 ±1.8 1.5 ±1.2 2.4 ±0.9 3.1 ±1.7 3.4 ±2.7 2.6 ±3.3 2.8 ±0.9 Ours (Chaotic Prompts) 1.2 ±0.4 2.3 ±0.1 1.3 ±0.4 2.8 ±2.4 1.5 ±0.5 2.3 ±0.2 2.1 ±5.5 1.4 ±0.9 1.5 ±0.2 0.9 ±0.4 0.9 ±4.2 1.0 ±4.4 3.8 ±0.9 1.7 ±2.0 1.8 ±1.5 1.8 ±0.8
+> Ours (Normal Prompts) 1.1 ±0.5 1.5 ±4.1 1.2 ±1.3 2.3 ±6.5 1.0 ±1.1 2.8 ±1.4 2.0 ±1.2 1.0 ±0.7 1.0 ±0.4 1.3 ±1.0 0.6 ±0.3 0.7 ±0.7 2.1 ±3.6 1.8 ±2.6 1.4 ±1.2 1.5 ±0.6
+> CT →MR Methods Spleen R. K L. K Gallb Esoph Liver Stom Aortic V-Cava Pancr R. Adre L. Adre Duod mASD
+> Baseline 22.0 ±28.4 10.5 ±15.4 6.1 ±7.0 5.3 ±6.1 15.3 ±20.0 9.4 ±12.2 8.7 ±7.4 16.2 ±15.8 12.6 ±19.2 9.0 ±8.6 1.5 ±0.3 2.8 ±2.4 15.8 ±13.8 10.4 ±5.6 Ours w/o CAPR (Chaotic Prompts) 2.7 ±1.1 N/A 2.5 ±1.3 5.6 ±0.7 2.7 ±0.3 N/A N/A 2.4 ±0.7 5.4 ±9.3 N/A 2.7 ±0.9 N/A 3.8 ±1.4 3.5 ±1.2 Ours w/o CAPR (Normal Prompts) 1.9 ±0.8 2.0 ±1.6 1.7 ±1.4 5.3 ±3.1 2.2 ±1.4 2.5 ±0.4 2.7 ±2.1 2.0 ±1.8 4.7 ±3.5 3.1 ±2.4 2.5 ±1.4 2.4 ±1.1 2.9 ±1.5 2.8 ±1.0 Ours w/o VPR (Normal Prompts) 2.4 ±0.7 2.5 ±1.9 2.2 ±2.1 5.3 ±4.4 2.6 ±1.2 3.1 ±2.7 2.9 ±1.4 2.3 ±2.1 5.3 ±4.1 3.7 ±2.8 2.9 ±1.4 2.8 ±0.5 3.4 ±2.9 3.2 ±1.0 Ours (Chaotic Prompts) 1.4 ±0.2 1.5 ±0.1 0.9 ±0.4 4.6 ±1.8 2.7 ±0.1 1.0 ±0.0 1.7 ±0.4 1.4 ±0.5 1.5 ±0.8 1.6 ±0.4 1.7 ±0.4 1.2 ±2.3 3.8 ±1.4 1.9 ±1.1
+> Ours (Normal Prompts) 1.3 ±1.1 0.9 ±0.4 0.9 ±0.3 5.0 ±10.1 1.3 ±1.0 1.9 ±0.7 1.5 ±1.4 1.0 ±0.7 1.1 ±0.5 1.2 ±0.6 1.1 ±0.6 1.3 ±0.6 2.3 ±1.1 1.6 ±1.1
+
+Note : An ASD of N/A indicates a complete prediction failure for the corresponding targets. 
+
+B. Details on Chaos Prompt in Ablation Study for CAPR 
+
+To strictly evaluate the robustness of CAPR against noisy real-world prompts, we introduced a systematic chaos prompt generation method. Unlike standard prompts, these prompts are intentionally corrupted with varying degrees of typographical errors and syntactic scrambling to simulate user input instability. This section details the mathematical formulation of these perturbations and provides the exact set of chaos prompts used in our ablation study to ensure the reproducibility of our robustness benchmarks. 
+
+B.1. Chaos Prompts Generation Methodology 
+
+To systematically evaluate the robustness of our method against noisy and corrupted text prompts, we introduce a controlled method for perturbing text prompts. This method generates prompt variations with a quantifiable chaos score to simulate real-world scenarios where prompts may contain typos, grammatical errors, or incomplete information. We inject noise through three primary categories of perturbations, with error rates dynamically scaled proportional to the target chaos level: • Typographical Errors: These simulate common spelling mistakes via character-level operations, including substitution (replacing a character with a random letter), transposition (swapping adjacent characters), and insertion (adding a random character), governed by the rate rspell .• Syntactic Disruption: We employ word order shuffling, where the positions of words within a prompt are randomly swapped to disrupt the grammatical structure, governed by the rate rshuffle .• Information Loss: We explicitly introduce character deletion, where characters are randomly removed from the text to simulate incomplete input, governed by the rate rremove .We quantify the chaos level using the normalized Levenshtein distance between the original and perturbed prompts: 
+
+S(Ppert ) = min 
+
+
+
+100 , L(Porig , P pert )max( |Porig |, |Ppert |) × 100 
+
+
+
+(5) where L(·, ·) denotes the Levenshtein distance, S(Ppert ) denotes the chaos score, Porig and Ppert represent the original and perturbed prompts respectively, and | · | denotes the string length. The chaos score ranges from 0 (identical to original) to 100 (maximum perturbation). For each target chaos level τ ∈ { 5, 15 , 30 , 50 , 75 }, we employ an iterative optimization strategy. For each level, we generate 50 candidate versions and select the one whose actual chaos score is closest to the target: 
+
+P ∗ 
+
+> τ
+
+= arg min  
+
+> P∈C τ
+
+|S(Ppert ) − τ | (6) where Cτ is the set of candidate prompts generated for the target level τ , and S(Ppert ) computes the chaos score of prompt 
+
+P . The perturbation rates for each operation are dynamically adjusted based on the target chaos level: 
+
+rspell = 0 .5 × τ
+
+100 (7) 
+
+rshuffle = 0 .7 × τ
+
+100 (8) 
+
+rremove = 0 .2 × τ
+
+100  (9) This method allows us to systematically evaluate model performance degradation across different levels of prompt corruption, ranging from minor typos (Chaos 5-15) to severely corrupted prompts (Chaos 50-75). For the ablation study presented in the main paper, we set the target chaos level to τ = 75 across all generated prompts, and the source code to generate chaos prompts is provided in the supplementary materials. The specific chaos prompts used in our experiments are explicitly listed in Table 9. 
+
+B.2. Chaos Prompt in Ablation Study 
+
+In this section, we provide a comprehensive list of perturbed text prompts used in the ablation study for CAPR. These chaos prompts were constructed to introduce a diverse range of textual noise to validate the necessity of CAPR. By documenting the exact strings in Table 9, researchers can replicate the specific noise conditions under which Tell2Adapt was evaluated. The table lists the chaos prompts used in both the MR →CT and CT →MR directions for all abdominal targets. 
+
+C. Meta-Prompt in CAPR and Full Prompts for All Targets 
+
+The Tell2Adapt’s performance is guided by the quality of the prompts provided to the VFM. To ensure full transparency and allow for exact replication of our results, this section provides the meta-prompt in CAPR and the complete list of input prompts used for all anatomical targets evaluated in Section 4. The prompts are organized by targets and domain adaptations in Table 10, Table 11, and Table 12. Table 9. Chaos prompt for ablation study in Tell2Adapt. 
+
+Target Chaos Prompt in MR →CT Chaos Prompt in CT →MR 
+
+Spleen abdominal in CT Spleen. pSleen MR in abdomianl. Right Kidney Right idney in abdominal CT. MR kidey in Right abdominal. Left Kidney Left abdominl kdne in CT. Lewt kdiney in abdominl MR. Gallbladder Gallbladedr in abdominal CT. Gallbladder in abdomital MR. Esophagus in CT abdominal Esophagus. abdominal in MR Esophagus. Liver Liiver in abdominal CT. abdminal in MR Liver. Stomach abdominal in CT Stomach. in MR xbdominal Stomach. Aorta in CT abdominal Aorta. MR in Aorta abdominal. Vena-Cava cava in abdominal CT Vedna. Vena cav in abdominal MR. Pancreas Pancreas CT. in bdominal. Pancroeas in abdominal MR. Right Adrenal gland glayd in adrenal Right abrdominal CT. MR in Right adrenal abdomiial glandp. Left Adrenal gland Left abdoimnal gland in adrenal CT. abominal MR gland in adrenal Left. Duodenum in bdominal Duodeunm CT. Duodenum in abdominal MR. Bladder dabdominal Bladdre in CT. N/A Prostate/uterus in Prostate/uterus CT abdominal. N/A 
+
+C.1. CAPR Meta-Prompt 
+
+As detailed in Section 3.1 of the main paper, CAPR employs Qwen3-VL-8B-Instruct to normalize and canonicalize varied text prompts. The following listing provides the complete, unified meta-prompt given to the LLM. This single meta-prompt was used across all adaptation directions to parse, correct, and contextually enrich all prompts into the canonical format: [Target] in [Anatomical Site] [Modality].  
+
+> 1
+
+You are a meticulous assistant specializing in refining and standardizing biomedical image analysis prompts. Your user is preparing a list of text prompts for the BiomedParse vision foundation model, which requires precise, context-aware inputs.  
+
+> 23
+
+Your task is to correct, refine, and normalize a list of "dirty" prompts I will provide.  
+
+> 45
+
+Core Requirements  
+
+> 6
+
+You must address two types of issues:  
+
+> 78
+
+1. Linguistic Error Correction: You must find and fix all errors in each individual prompt, including but not limited to the following:  
+
+> 9
+
+- Spelling Mistakes  
+
+> 10
+
+- Letter Transposition  
+
+> 11
+
+- Missing Words/Characters  
+
+> 12
+
+- Repeated Words  
+
+> 13 14
+
+2. Contextual Standardization: The BiomedParse model performs best when prompts are standardized. You must normalize every prompt to follow this strict format:  
+
+> 15 16
+
+[Target] in [Anatomical Site] [Modality]  
+
+> 17 18
+
+To do this, you must first infer the global context (the default Modality and Site) from the entire list of prompts.  
+
+> 19 20
+
+Step-by-Step Process  
+
+> 21
+
+Before providing the final answer, you must perform the following internal reasoning steps:  
+
+> 22 23
+
+Step 1: Analyze Global Context  
+
+> 24
+
+Read the complete list of prompts I provide. Infer the most likely Modality and Anatomical Site that applies to the entire batch.  
+
+> 25 26
+
+Step 2: State Your Context  
+
+> 27
+
+I have analyzed the list. The inferred global context is:  
+
+> 28
+
+Modality = [Your Inferred Modality]  
+
+> 29
+
+Site = [Your Inferred Site]  
+
+> 30 31
+
+Step 3: Iterate and Refine  
+
+> 32
+
+Go through each prompt from the original list one by one.  
+
+> 33 34
+
+- Analyze: The original prompt is: [original_prompt]  
+
+> 35
+
+- Correct: The linguistic correction is: [corrected_prompt]  
+
+> 36
+
+- Standardize: The prompt is missing context. Applying the global context, the final standardized prompt is: [standardized_prompt]  
+
+> 37
+
+(if the corrected prompt is liver and context is Abdomen CT, the final prompt is liver in abdomen CT) 38 - Exception: If a prompt already specifies its own context, like: tumor in brain MRI, respect that context and only correct its linguistic errors.                                                                          
+
+> 39 40 Final Output Format
+> 41 Your final response to me MUST ONLY contain the list of fully corrected and standardized prompts.
+> 42 43 - Do NOT include your internal Step-by-Step Thinking Process in the final output.
+> 44 - Separate each standardized prompt with [SEP].
+> 45 46 Example Output:
+> 47 liver in abdomen CT[SEP]right kidney in abdomen CT[SEP]pancreas in abdomen CT[SEP]tumor in brain MRI
+> 48 49 Task Starts Now
+> 50 Here is the list of prompts for you to correct and normalize. Note the subprompt is also separated by [SEP]"""
+
+C.2. Target-Specific Input Prompts 
+
+To facilitate full reproducibility of our extensive evaluations in Section 4, we provide the exact prompts used for each anatom-ical target. These prompts were fed into Tell2Adapt to generate the quantitative and qualitative results presented in the main paper. The prompts are organized by target in Table 10, Table 11, and Table 12. 
+
+Table 10. Prompts for abdominal targets in Tell2Adapt. 
+
+Target Prompt in MR →CT Prompt in CT →MR 
+
+Spleen Spleen in abdominal CT. Spleen in abdominal MR. Right Kidney Right kidney in abdominal CT. Right kidney in abdominal MR. Left Kidney Left kidney in abdominal CT. Left kidney in abdominal MR. Gallbladder Gallbladder in abdominal CT. Gallbladder in abdominal MR. Esophagus Esophagus in abdominal CT. Esophagus in abdominal MR. Liver Liver in abdominal CT. Liver in abdominal MR. Stomach Stomach in abdominal CT. Stomach in abdominal MR. Aorta Aorta in abdominal CT. Aorta in abdominal MR. Vena-Cava Vena-cava in abdominal CT. Vena-cava in abdominal MR. Pancreas Pancreas in abdominal CT. Pancreas in abdominal MR. Right Adrenal gland Right adrenal gland in abdominal CT. Right adrenal gland in abdominal MR. Left Adrenal gland Left adrenal gland in abdominal CT. Left adrenal gland in abdominal MR. Duodenum Duodenum in abdominal CT. Duodenum in abdominal MR. Bladder Bladder in abdominal CT. N/A Prostate/uterus Prostate/uterus in abdominal CT. N/A 
+
+Table 11. Prompts for brain targets in Tell2Adapt. 
+
+Target Prompt in T1n →T2w Prompt in T2w →T1n Prompt in T1c →T2f Prompt in T2f →T1c 
+
+TC Non-enhancing tumor core in head T2 weighted MR. Non-enhancing tumor core in head MR naive T1. Non-enhancing tumor core in head MR T2 FLAIR. Non-enhancing tumor core in head post-contrast T1 MR. SNFH Surrounding non-enhancing FLAIR hyperintensity in head T2 weighted MR Surrounding non-enhancing FLAIR hyperintensity in head MR naive T1. Surrounding non-enhancing FLAIR hyperintensity in head MR T2 FLAIR. Surrounding non-enhancing FLAIR hyperintensity in head post-contrast T1 MR. ET Enhancing tissue in head T2 weighted MR. Enhancing tissue in head MR naive T1. Enhancing tissue in head MR T2 FLAIR. Enhancing tissue in head post-contrast T1 MR. RC Resection cavity in head T2 weighted MR. Resection cavity in head MR naive T1. Resection cavity in head MR T2 FLAIR. Resection cavity in head post-contrast T1 MR. Table 12. Prompts for cardiac targets and polyp in Tell2Adapt. 
+
+Target Prompt in MR →US Prompt in US →MR 
+
+Left Ventricle Left ventricle in heart ultrasound. Left ventricle in cardiac MRI. Myocardium Myocardium in heart ultrasound. Myocardium in cardiac MRI. 
+
+Target Prompt in Kvasir →CVCDB Prompt in CVCDB →Kvasir 
+
+Polyp Polyp in colon endoscopes. Polyp in colon endoscopes.

@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.28142v1/fig-001.webp",
+      "caption": "Figure 1. Comparison of synthetic-to-real generalization performance (mIoU,%) between our proposed RecycleLoRA and the previous SOTA method, SoMA.",
+      "page": 1,
+      "index": 1,
+      "width": 487,
+      "height": 483
+    },
+    {
+      "url": "assets/figures/arxiv/2603.28142v1/fig-002.webp",
+      "caption": "Figure 5. Visualization of adapter-induced feature modifications via PCA projection. (a) Input. (b) main adapter PCA Visualization. (c) sub adapter PCA Visualization. The divergent activation patterns reveal complementary feature learning between the dual adapters.",
+      "page": 6,
+      "index": 2,
+      "width": 410,
+      "height": 436
+    },
+    {
+      "url": "assets/figures/arxiv/2603.28142v1/fig-003.webp",
+      "caption": "Figure 6. Qualitative comparison of semantic segmentation on the Cityscapes. All models were trained on the GTAV.",
+      "page": 15,
+      "index": 3,
+      "width": 1034,
+      "height": 615
+    },
+    {
+      "url": "assets/figures/arxiv/2603.28142v1/fig-004.webp",
+      "caption": "Figure 7. Qualitative comparison of semantic segmentation on the Mapillary. All models were trained on the GTAV.",
+      "page": 15,
+      "index": 4,
+      "width": 1024,
+      "height": 542
+    },
+    {
+      "url": "assets/figures/arxiv/2603.28142v1/fig-005.webp",
+      "caption": "Table 4. Domain generalization results (mIoU %) under the real-",
+      "page": 8,
+      "index": 5,
+      "width": 496,
+      "height": 350
+    },
+    {
+      "url": "assets/figures/arxiv/2603.28142v1/fig-006.webp",
+      "caption": "Figure 2. RecycleLoRA Framework Overview. This figure illustrates the overall workflow of RecycleLoRA. (a) Rank-Revealing QR Decomposition (RRQR) is applied to the pre-trained weight matrix to identify subspace directions ranked by importance. (b) Among the recyclable subspaces selected through RRQR, the minor directions are assigned as initialization values for the main adapter, while the major directions are assigned to the sub adapter. (c) The main adapter’s B matrix is initialized with the minor directions, and its A matrix is sparsely initialized by mapping these directions to their corresponding column indices. (d) The sub adapter’s B matrix is initialized with the major directions, and its A matrix is sparsely initialized by mapping these directions to their corresponding column indices.",
+      "page": 4,
+      "index": 6,
+      "width": 1009,
+      "height": 282
+    },
+    {
+      "url": "assets/figures/arxiv/2603.28142v1/fig-007.webp",
+      "caption": "Figure 3. Cosine similarity heatmaps of LoRA components for (a) RecycleLoRA and (b) SoMA at different ranks (r=16, 32). Left: pairwise similarity among rows of A. Right: pairwise similarity among columns of B. Darker blue colors represent lower similarity.",
+      "page": 5,
+      "index": 7,
+      "width": 494,
+      "height": 263
+    }
+  ]
+}

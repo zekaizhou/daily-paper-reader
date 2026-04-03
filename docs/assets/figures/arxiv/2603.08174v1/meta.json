@@ -1,0 +1,158 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-001.webp",
+      "caption": "Figure 4. The architecture and training framework of MERLIN. (1) The baseline model architecture consists of a Signal Encoder, a Projector, and a LLM. (2) The knowledge distillation framework enhances low-SNR robustness by using a frozen high-SNR teacher model to guide a student model. (3) The Denoising Subspace Module (DSM) facilitates effective distillation by projecting noisy signal features into a clean, noise-invariant feature space.",
+      "page": 6,
+      "index": 1,
+      "width": 1036,
+      "height": 458
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-002.webp",
+      "caption": "Figure 5. Motivational analysis demonstrating that low-SNR degradation is a feature-collapse problem",
+      "page": 6,
+      "index": 2,
+      "width": 1035,
+      "height": 248
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-003.webp",
+      "caption": "Figure 9. PRF estimation details",
+      "page": 15,
+      "index": 3,
+      "width": 537,
+      "height": 479
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-004.webp",
+      "caption": "Figure 10. Bandwidth estimation details",
+      "page": 15,
+      "index": 4,
+      "width": 531,
+      "height": 477
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-005.webp",
+      "caption": "Figure 8. Pulse-Width estimation classification",
+      "page": 14,
+      "index": 5,
+      "width": 502,
+      "height": 479
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-006.webp",
+      "caption": "Figure 7. Number-of-Pulses estimation details",
+      "page": 14,
+      "index": 6,
+      "width": 523,
+      "height": 477
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-007.webp",
+      "caption": "Figure 2. The hierarchical evaluation framework of EM-Bench, which systematically assesses the perception and reasoning capabilities of MLLMs on electromagnetic IQ signals across 3 levels and 14 sub-tasks.",
+      "page": 3,
+      "index": 7,
+      "width": 496,
+      "height": 498
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-008.webp",
+      "caption": "Figure 15. SD details",
+      "page": 18,
+      "index": 8,
+      "width": 539,
+      "height": 477
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-009.webp",
+      "caption": "Figure 16. RJR details",
+      "page": 18,
+      "index": 9,
+      "width": 510,
+      "height": 477
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-010.webp",
+      "caption": "Figure 6. Detailed performance comparison across 10 sub-tasks. The red line denotes MERLIN and the gray line denotes the Stage-1 baseline. MERLIN demonstrates significant improvements in complex parameter estimation tasks (e.g., Duty Cycle, Pulse Width) across all SNR levels, while maintaining robust performance in classification tasks.",
+      "page": 13,
+      "index": 10,
+      "width": 1032,
+      "height": 318
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-011.webp",
+      "caption": "Table 2. Main results on EM-Bench. We compare MERLIN with leading proprietary and open-source LLMs. All baseline LLMs process EM signals in a textualized format. The best results are highlighted in bold, and the second-best are underlined. ”PE” denotes Parameter Estimation tasks. Its sub-tasks denote BW: Bandwidth, DC: Duty Cycle, NP: Num. Pulses, PRF: Pulse Rep. Freq, PW: Pulse Width. MERLIN achieves state-of-the-art performance across both perception and reasoning tasks.",
+      "page": 8,
+      "index": 11,
+      "width": 1026,
+      "height": 204
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-012.webp",
+      "caption": "Table 1. Composition of the large-scale data corpus used for creating EM-100k and EM-Bench. This table details the 10 subsets, totaling over 35 million signal samples, that form our foundational data pool.",
+      "page": 4,
+      "index": 12,
+      "width": 1024,
+      "height": 336
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-013.webp",
+      "caption": "Figure 14. PI details",
+      "page": 17,
+      "index": 13,
+      "width": 521,
+      "height": 477
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-014.webp",
+      "caption": "Figure 13. CJR details",
+      "page": 17,
+      "index": 14,
+      "width": 515,
+      "height": 477
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-015.webp",
+      "caption": "Table 4. Training configuration details for MERLIN framework. Hyperparameters used during the two-stage training. SIT = Signal Integration Transformer encoder.",
+      "page": 12,
+      "index": 15,
+      "width": 714,
+      "height": 249
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-016.webp",
+      "caption": "Table 5. Overview of the EM-Bench evaluation framework. The benchmark features a three-level hierarchy spanning Perception and Reasoning, consisting of 14 distinct L3-Tasks. Each sub-task contains 300 samples, totaling 4,200 VQA pairs. The table lists the specific abbreviations, data quantities, and answer types (Single Choice vs. Open-ended Strategy) for each task.",
+      "page": 12,
+      "index": 16,
+      "width": 1026,
+      "height": 345
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-017.webp",
+      "caption": "Figure 3. The two-stage construction pipeline for the EM-100K fine-tuning dataset and the EM-Bench evaluation benchmark. Stage 1 focuses on building a large-scale, expert-validated IQ data corpus. Stage 2 details the distinct generation processes: a direct, large-scale formatting for EM-100K, and a rigorously expertvalidated pathway for the high-quality EM-Bench.",
+      "page": 5,
+      "index": 17,
+      "width": 496,
+      "height": 368
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-018.webp",
+      "caption": "Figure 12. Modulation details",
+      "page": 16,
+      "index": 18,
+      "width": 523,
+      "height": 477
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08174v1/fig-019.webp",
+      "caption": "Figure 11. Duty-Cylce estimation details",
+      "page": 16,
+      "index": 19,
+      "width": 496,
+      "height": 477
+    }
+  ]
+}

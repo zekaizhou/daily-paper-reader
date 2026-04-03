@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.08347v1/fig-001.webp",
+      "caption": "Table 3: ImageNet Accuracy and OOD Detection Performance.",
+      "page": 6,
+      "index": 1,
+      "width": 507,
+      "height": 454
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08347v1/fig-002.webp",
+      "caption": "Table 2: Ablation study on local branch design (16-shot).",
+      "page": 6,
+      "index": 2,
+      "width": 527,
+      "height": 359
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08347v1/fig-003.webp",
+      "caption": "Table 4: Detailed Few-Shot Performance (%) across all datasets.",
+      "page": 7,
+      "index": 3,
+      "width": 527,
+      "height": 683
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08347v1/fig-004.webp",
+      "caption": "Figure 2: Learned Local Prompt Specialization. Patch–prompt similarity maps for two example classes. For each individual prompt, the top-3 patches are shown. The \"combined prompts\" column shows similarity between the mean of the local prompts and patch features, computed over top-10 patches. Optimal Transport constraint promotes prompt specialization on distinct visual regions, while their mean representation covers the most salient parts of the object.",
+      "page": 7,
+      "index": 4,
+      "width": 979,
+      "height": 521
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08347v1/fig-005.webp",
+      "caption": "Figure 1: Overview of the SOT-GLP framework. The image encoder uses two parallel streams: a standard CLIP pathway (Q-K attention) for global features and a V-V attention pathway for local patch features. Global prompts generate class-agnostic text embeddings matched to the global [CLS] token, while class-specific local prompts align to Top-K selected patches via Optimal Transport. Both branches contribute to the final classification logits.",
+      "page": 3,
+      "index": 5,
+      "width": 1087,
+      "height": 303
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08347v1/fig-006.webp",
+      "caption": "Figure 3: Left: Avg. FPR95 vs. ImageNet accuracy. Right: Avg. AUC vs. ImageNet accuracy. Our method (blue star) is in the high-accuracy / low-FPR95 corner (75.5, 28.1), achieving very similar FPR95 and AUC to GalLoP but at higher ImageNet accuracy, while the variant without local projection (orange star) further lowers FPR95 to 23.8 and increases AUC score to 94.2 with only a small drop in accuracy. No local projection variant shows state of art OOD performance compared to the other prompt-learning baselines, with FPR95 gains ranging from ↓ 4.9 (vs. LoCoOp–GL, 28.7 → 23.8) to ↓ 3.5 (vs. Gallop, 27.3 → 23.8), and AUC gains of ↑ 0.7 (vs. LoCoOp (GL-MCM), 93.5→ 94.2) up to ↑ 1.0 (vs. Gallop, 93.2→ 94.2).",
+      "page": 8,
+      "index": 6,
+      "width": 731,
+      "height": 468
+    },
+    {
+      "url": "assets/figures/arxiv/2603.08347v1/fig-007.webp",
+      "caption": "Table 1: Few-shot classification accuracy (%) on 11 benchmarks with 16 shots per class using CLIP ViT-B/16.",
+      "page": 5,
+      "index": 7,
+      "width": 527,
+      "height": 471
+    }
+  ]
+}
