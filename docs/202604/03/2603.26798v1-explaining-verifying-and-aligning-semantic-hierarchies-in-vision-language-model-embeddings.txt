@@ -1,0 +1,1372 @@
+Title: Explaining, Verifying, and Aligning Semantic Hierarchies in Vision-Language Model Embeddings
+
+URL Source: https://arxiv.org/pdf/2603.26798v1
+
+Published Time: Tue, 31 Mar 2026 00:08:34 GMT
+
+Number of Pages: 27
+
+Markdown Content:
+# Explaining, Verifying, and Aligning Semantic Hierarchies in Vision-Language Model Embeddings 
+
+Gesina Schwalbe 1 , Mert Keser 2,3 , Moritz Bayerkuhnlein 1 , Edgar Heinert 4 , Annika M ¨ utze 4,Marvin Keller 1 , Sparsh Tiwari 1 , Georgii Mikriukov 5 , Diedrich Wolter 1 , Jae Hee Lee 6 , Matthias Rottmann 41University of L¨ ubeck, Germany 
+
+> 2
+
+Technical University of Munich, Germany 
+
+> 3
+
+AUMOVIO SE, Germany 
+
+> 4
+
+Osnabr¨ uck University, Germany 
+
+> 5
+
+Leibniz Institute for Agricultural Engineering and Bioeconomy, Germany 
+
+> 6
+
+University of Hamburg, Germany 
+
+{fist.last }@uni-luebeck.de, mert.keser@aumovio.com, 
+
+{edgar.heinert,annika.muetze,matthias.rottmann }@uni-osnabrueck.de, marvin.keller@student.uni-luebeck.de, gmikriukov@atb-potsdam.de, jae.hee.lee@uni-hamburg.de 
+
+Abstract 
+
+Vision-language model (VLM) encoders such as CLIP enable strong retrieval and zero-shot classi-fication in a shared image–text embedding space, yet the semantic organization of this space is rarely inspected. We present a post-hoc framework to ex-plain , verify , and align the semantic hierarchies in-duced by a VLM over a given set of child classes. First, we extract a binary hierarchy by agglomera-tive clustering of class centroids and name internal nodes by dictionary-based matching to a concept bank. Second, we quantify plausibility by comparing the extracted tree against human ontologies using efficient tree- and edge-level consistency measures, and we evaluate utility via explainable hierarchical tree-traversal inference with uncertainty-aware early stopping (UAES). Third, we propose an ontology-guided post-hoc alignment method that learns a lightweight embedding-space transformation, using UMAP to generate target neighborhoods from a de-sired hierarchy. Across 13 pretrained VLMs and 4 image datasets, our method finds systematic modal-ity differences: image encoders are more discrimi-native, while text encoders induce hierarchies that better match human taxonomies. Overall, the results reveal a persistent trade-off between zero-shot accu-racy and ontological plausibility and suggest practi-cal routes to improve semantic alignment in shared embedding spaces. 
+
+1 Introduction 
+
+Contrastive vision-language models (VLMs) such as CLIP [Radford et al. , 2021] demonstrate remarkable capabilities in learning joint representations of images and text [Barraco et al. ,2022]. These representations are adopted in various applica-a photo of a 
+
+> car animal cat dog
+
+## car animal cat dog is a… is a…  
+
+> …………
+> car animal cat dog felis
+
+extracted ontology given ontology hierarchical clusters in DNN latent space 
+
+> concept bank
+> “animal”
+
+# …
+
+# { }
+
+> text  encoder image  encoder
+
+# “car” “dog” “cat” 13452
+
+Figure 1: Our post-hoc framework to explain (embed 1 given con-cepts, cluster 2 and name found parents 3 ), verify 4 , and align 5
+
+the semantic hierarchy induced by a VLM in its embedding space. 
+
+tions, including image retrieval [Baldrati et al. , 2022], caption-ing [Barraco et al. , 2022], and zero-shot classification [Radford 
+
+et al. , 2021]. However, their evaluation is still dominated by task-level performance metrics such as classification accuracy that provide little insight into how concepts are internally or-ganized and related. In particular, understanding the semantic hierarchies of these representations has not been thoroughly explored [Lee et al. , 2025]. Semantic hierarchies capture how concepts relate via com-monalities and differences, and are central to human catego-rization and symbolic knowledge representation via ontolo-gies [Confalonieri and Guizzardi, 2025; Guarino, 1998]. Ex-tracting the hierarchy induced by a VLM is crucial for explain-ability [Bhalla et al. , 2024; Alper, 2025; Lee et al. , 2025; Wan 
+
+et al. , 2020]. It further enables identifying unintuitive or biased 
+
+> arXiv:2603.26798v1 [cs.LG] 26 Mar 2026
+
+groupings (e.g., grouping man and woman primarily via hair 
+
+rather than under person ) and aligning learned similarities with human knowledge [Ribeiro and Leite, 2021; Confalonieri and Guizzardi, 2025]. Lastly, hierarchies provide an inductive bias for more robust and informative classification [Bertinetto 
+
+et al. , 2020; Dhall et al. , 2020; Ge et al. , 2023], such as ex-plainable hierarchical tree traversal [Wan et al. , 2020]. Meanwhile, key desiderata formulated for VLM embedding spaces are text-to-image alignment, and that classes can be 
+
+discriminated via zero-shot classification. We complement this by two new desiderata: Text and image encoders should also align in their induced hierarchies; and they should be plausible ,i.e., the hierarchy should match human taxonomies. Note that plausibility and discriminability may diverge, since embedding similarities may accurately discriminate class members, but still violate human expectations. Into that direction, prior work has explored the interpretabil-ity of VLM embeddings [Bhalla et al. , 2024] ( Which concepts are encoded? ) and found and reinforced pre-defined seman-tic hierarchies in them [Alper, 2025] ( Is a given hierarchy encoded? ). However, there is a lack of systematic methods to answer the following questions for a trained VLM encoder, along which we organize our pipeline (cf. Figure 1): Q1: Can we explain which semantic hierarchy is induced by an encoder for a given set of leaf classes? How faithful and reliable are local explanations via explainable hierarchical inference? (Secs. 4.1, 4.2 and 5.2) Q2: Can we verify the plausibility of induced hierarchies relative to reference ontologies? How do they vary across modalities, models, and hierarchy depths? (Secs. 4.3 and 5.3) Q3: Can we post-hoc align an induced hierarchy to a target similarity structure without sacrificing zero-shot accuracy? (Secs. 4.4 and 5.4) 
+
+Contributions. We demonstrate the utility of semantic hier-archy extraction: 
+
+▶ We propose a post-hoc pipeline to explain, verify, and align semantic hierarchies in VLM embedding spaces. We ex-tract a hierarchy via hierarchical clustering of leaf classes and dictionary-based parent naming, verify it with effi-cient ontology-based comparison metrics, and align it using UMAP-guided target neighborhoods and a lightweight em-bedding transformation. 
+
+▶ We empirically study 13 pretrained VLMs across 4 datasets and multiple common-sense ontologies, enabling systematic comparison of encoder semantics. 
+
+▶ We find a consistent modality gap: image encoders yield higher zero-shot accuracy, while text encoders induce more plausible hierarchies; and enriching hierarchical inference with UAES improves semantic correctness, bridging the explainability-faithfulness tradeoff. 
+
+2 Related Work 
+
+Explaining Learned Concepts. The field of concept-based XAI (c-XAI) has evolved around the goal to associate vectors in the latent representations with semantic concepts [Lee et al. , 2025]. Such associations have found manifold applica-tions in the inspection of a DNN’s learned ontology, such as: which concepts from a given ontology are learned? [Ribeiro and Leite, 2021], how similar are pairs of concepts? [Fong and Vedaldi, 2018; Schwalbe, 2021], and how are concepts from different layers or models correlated? [Kim et al. , 2018; Mikriukov et al. , 2023]. Notably, we here build upon the ap-proach by [Yuksekgonul et al. , 2022] to name parent embed-dings. They utilize the text-to-image alignment in VLMs to match vectors to closest text embeddings from a dictionary. To go from concepts to hierarchical concept relations, [Wan 
+
+et al. , 2020] employed hierarchical clustering on latent rep-resentations, but unlike our approach restricted to the last layer of a classifier. And despite rising interest in verifica-tion and steering of DNNs against ontologies [Ribeiro and Leite, 2021; Ponomarev and Agafonov, 2022; Badreddine et al. , 2022; Alper, 2025], it remains largely unexplored how to post-hoc explain and control the learned semantic similarity structure within DNN embedding spaces [Confalonieri and Guizzardi, 2025]. 
+
+Understanding VLM Embedding Spaces. The CLIP-based learning scheme [Radford et al. , 2021; Jia et al. , 2021] of concurrent VLMs have been shown to emerge deep concept understanding [Bhalla et al. , 2024; Zhao et al. , 2025], and even class hierarchies [Alper, 2025; Ge et al. , 2023]—though existing hierarchy extraction techniques rely on costly parent supervision and don’t align with ontology concept dictionaries. Moreover, previous findings that integrating hierarchy infor-mation into the inference process makes classification more explainable [Wan et al. , 2020] and reliable [Bertinetto et al. ,2020; Dhall et al. , 2020], were shown to transfer to VLMs [Novack et al. , 2023]. We therefore adapt the hierarchy tree traversal approach from [Wan et al. , 2020] for VLM classifi-cation, newly adding early stopping. Despite these impressive properties, the modality alignment in CLIP embedding spaces remains suboptimal, mapping text and image to distinct latent regions [Liang et al. , 2022; Eslami and de Melo, 2024], and requiring prompt finetuning to boost zero-shot performance [Radford et al. , 2021; Ma et al. , 2025; Ge et al. , 2023]. Other than prior studies, we here for the first time investigate the text-to-image alignment with respect to the primarily learned semantic hierarchies of the encoders. 
+
+Ontologies and Ontology Matching. An ontology reflects a perspective on a domain [Guarino, 1998], formalized as con-cepts, relations, and assumptions thereon [Guarino, 1998]. By now a variety of both specialized and general domain ontolo-gies are available [Confalonieri and Guizzardi, 2025; Mascardi 
+
+et al. , 2007]. The latter include closed-source ones [Lenat, 1989; Forbus and Hinrich, 2017], large-scale but less princi-pled ones like ConceptNet [Speer et al. , 2017] or DBPedia [Lehmann et al. , 2015]. We here use the well-established, large, general domain ontologies SUMO [Niles and Pease, 2001], OpenCyc [Matuszek et al. , 2006], and Yago [Mahdisoltani 
+
+et al. , 2015] as reference for human knowledge on plausible hierarchies. Ontology matching techniques aim to compare or integrate divergent ontologies [Otero-Cerdeira et al. , 2015]. A common distance measure for graphs is edit distance , which transforms one instance into another via minimal edit opera-rootsiglip: image            
+
+> fleet
+> starboard
+> airplane ship
+> vehicular
+> car truck
+> warm-blooded
+> horse doglike
+> dog-sized
+> cat dog
+> croaky
+> frog avifaunal
+> bird deer
+> rootsiglip: text and image
+> animal
+> avifaunal
+> bird frog
+> canine
+> domestic cat
+> cat dog
+> equine
+> deer horse
+> vehicular
+> motor vehicle
+> car truck
+> boat
+> airplane ship
+
+(a) Comparison of two extracted hierarchies over the CIFAR-10 leaves (shown in blue) from SigLIP [Zhai 
+
+et al. , 2023], using image-only leaf embeddings (left) versus combined text&image leaf embeddings (right). coach vehicle horse animal 
+
+> zero-shot tree traversal
+> car truck
+
+(b) Illustration of tree-traversal vs. zero-shot inference in embedding space of the text & image tree. Figure 2: Running toy example on CIFAR-10 [Alex, 2009] leaf classes. 
+
+tions [Zhang and Shasha, 1989; Akutsu, 2010]. For our special case of semantic hierarchy trees, tree edit distance measures can be applied [Zhang et al. , 1992]. Aside from this global comparison, we here also aggregate local edge-wise scores based on matching lowest common ancestors (LCAs) [Bender 
+
+et al. , 2005]. However, existing works have not yet used ontol-ogy matching techniques to assess DNN-learned ontologies. 
+
+3 Background 
+
+The goal of our approach is to discover a learned semantic hierarchy, constituted of latent embeddings of parent concepts. In the following we formalize semantic hierarchies, and re-cap the classical techniques for concept discovery as well as underlying key assumptions for hierarchy extraction. 
+
+3.1 Ontologies 
+
+A semantic hierarchy is a slice of a broader ontology. 
+
+Definition 1 (Ontology) . An ontology O is a description of a domain by a set of class membership functions (the concepts ), instance relations , and a logic theory of assumptions thereon. [Guarino, 1998]. 
+
+Semantic similarity is an example for relations between instances. This paper only considers taxonomic is-a assump-tions on concepts (hypernymy/subclass relations [Fellbaum, 2010]) for verification and alignment. We denote these as 
+
+IsParentOf (P, C) := ( ∀v : C(v) ⇒ P(v)) ), meaning that in-stances of C are also instances of P (e.g., cat ⇒ animal ). A semantic hierarchy is a tree formed by such relations; our goal is to extract such a hierarchy from a VLM’s embedding space. 
+
+3.2 Assumed Properties of VLM Latent Spaces 
+
+We rely on a few high-level assumptions that are standard in concept-based interpretability [Lee et al. , 2025] and zero-shot evaluation. First, we simplify the representation of a visual concept from its cluster of concept instance embeddings to a point in embedding space. 
+
+Assumption 1 (Concept Embeddability) . A human-interpretable visual concept C can be represented by a point 
+
+e(C), its concept embedding , in the VLM embedding space [Kim et al. , 2018; Fong and Vedaldi, 2018]. 
+
+Second, cosine similarity between concept embeddings is a reasonable proxy for semantic relatedness, which is our key to find parent embeddings. This also is the same assumption used by zero-shot classification where we assign x to the closest concept embedding under cosine distance d(u, v ) := 1 − u·vT 
+
+> ∥u∥·∥ v∥
+
+in embedding space. 
+
+Assumption 2 (Embedding Interpolatability) . A concept 
+
+C is more similar to C′ than to C′′ iff d(e(C), e (C′)) ≤
+
+d(e(C), e (C′′ )) [Fong and Vedaldi, 2018; Ghorbani et al. , 2019; Posada-Moreno et al. , 2024]. 
+
+Subsequently, parent concepts can be approximated by ag-gregating their children (e.g., by averaging [Mikriukov et al. ,2025; Wan et al. , 2020]), which motivates our use of agglom-erative clustering. 
+
+4 Methodology 
+
+This section introduces our pipeline to explain the seman-tic hierarchy induced by a VLM as binary tree of concepts (Sec. 4.1) and via enhanced explainable hierarchical classifica-tion (Sec. 4.2), which allows to verify the VLM plausibility against references (Sec. 4.3), and semantically align its em-bedding space to a target similarity structure (Sec. 4.4). 
+
+Example 1. To make the pipeline concrete, we use the CIFAR-10 leaf classes (airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck) as a running example throughout the paper. Figure 2a shows two hierarchies extracted for the same ten leaves from SigLIP, and foreshadows the modality-dependent differences we quantify later (Sec. 5.3). 
+
+Experimental Setup and Notation. We assume a trained VLM encoder F and a dataset of leaf classes (e.g., CIFAR-10 [Alex, 2009]) with train/test splits. Leaf concepts can be rep-resented via images, text descriptions (e.g., LLM-generated prompts [Ma et al. , 2025]), or both. We further assume a con-cept bank C of candidate parent concepts, also with text de-scriptions, that map to a given reference ontology O. For C
+
+we here consider the large-scale lexical database WordNet [Fellbaum, 2010], which conveniently maps to many general domain ontologies like SUMO [Niles and Pease, 2001]. 
+
+4.1 Hierarchy Extraction 
+
+We aim to extract a labeled binary tree T that summarizes in a human-inspectable manner how the encoder groups the given leaf classes in embedding space. Leaves correspond to the leaf dataset classes; each internal node represents an ex-tracted parent concept from the concept bank together with an embedding. Edges represent predicted IsParentOf relations (cf. Figure 2a). Example 2 (Parent Relations) . In Figure 2a, image-only leaf embeddings group bird and deer under avifaunal as cap-tured by the extracted binary tree structure. 
+
+Approach. We build T in three steps. First, we compute a centroid embedding e(C) for each leaf class C from embed-dings of train samples for C (image, text, or both). Second, we run agglomerative hierarchical clustering [Ward Jr., 1963] on the leaf centroids using cosine similarity and average link-age; each merge creates a parent node whose embedding is the normalized mean of its children’s embeddings. Third, we name internal nodes by matching each parent embedding p to the closest concept-bank embedding e(˜ P), using a one-to-one matching (linear sum assignment [Crouse, 2016]) to optimally avoid duplicate names. 
+
+Rationale. Intuitively, each concept C is defined by the set of samples x to which C applies. Via F this translates to a cluster of embeddings F (x); for leaf concepts we approximate this cluster using the embeddings of their training samples. By def-inition, a parent concept P should cover the cluster of each of its children concepts C: If for all x holds C(x) = ⇒ P(x), then 
+
+{x | C(x)} ⊂ { x | P(x)}. This motivates iteratively merging the most similar clusters, as achieved by the agglomerative hier-archical clustering. Choosing cosine similarity reflects the ob-jective used in CLIP training, differing from Euclidean-linkage choices in prior work on clustering concept embeddings in neural network latent spaces [Wan et al. , 2020; Mikriukov et al. , 2025]. Intuitively, a good parent embedding for a parent cluster should minimize the distances to all of its children equally; for cosine distance on normalized vectors, the mean of children centroids fulfills this, which we assume to be the children’s concept embeddings (Ass. 2): 
+
+e(P) ≈ mean   
+
+> Ci∈Children (P)
+
+e(Ci) (1) 
+
+4.2 Explainable and Faithful Tree-Traversal Inference with UAES 
+
+Standard zero-shot classification of a sample x directly picks the leaf class with the most similar embedding to F (x). Wan 
+
+et al. [2020] instead suggest to use a hierarchy tree of em-beddings for inference via tree-traversal : One hierarchically traverses the tree from root to leaf, at each node picking the child with closest embedding to F (x). This results in a more explainable classification, since the full path of specialization is available (instead of just cat , “ animal → mammal → cat ”). Interestingly, predictions don’t necessarily coincide with zero-shot classification: if a leaf lies at the boundary of its superclass 
+
+P, the centroid of a sibling P′ may be closer to F (x), so traver-sal proceeds into the subtree of P′ (cf. Figure 2b). From a semantic perspective this can be desirable: assuming interpo-latability, a parent covers the area between its children, thereby preserving abstraction for underrepresented superclasses. 
+
+Example 3. As illustrated in Figure 2b, in a hierarchy of many animal and few vehicle subclasses, tree-traversal can still correctly consider coach a vehicle instead of an outlier animal ( horse ). 
+
+Nevertheless, a deep traversal into less matching subclasses should be avoided. Conveniently, the calculated similarities at each node may serve as a certainty score that traversal down that node is reasonable. We suggest to stop early at a parent node if none of its children would be sufficiently certain, returning the more reliable parent as prediction instead of a wild guess of a leaf class. 
+
+Example 4 (UAES) . In Figure 2b, vehicle should be returned when traversal is uncertain between subclasses 
+
+motor vehicle and boat-like ). Early stopping enables more reliable classification both of unknown classes ( coach )as well as known but erroneously classified ones. 
+
+We estimate the cut-off threshold for a node at the pth quan-tile (here: 0.01 ) of similarities observed in the training set. The ideal stopping point is the first node where a “wrong turn” would be taken—the lowest common ancestor (LCA) of the ground truth and the leaf node predicted by vanilla tree-traversal. The average walking distance of a prediction to that LCA gives an intuitive measure how much reliability early stopping recovers, here abbreviated as last correct node distance. 
+
+Measuring Hierarchy Faithfulness. While vanilla tree-traversal could theoretically surpass zero-shot performance, this is not achieved even on simpler embedding spaces [Wan et al. , 2020]. Reasons can be: unfavorable multi-modal, scattered or overlapping concept representations in embedding space violating our assumptions [Mikriukov et al. , 2025], or unequal covariances ( ≈ widths) of sibling class clusters as in unbal-anced trees. Hence, we interpret the ratio tree inference accuracy zero-shot accuracy as a proxy measure how faithful the hierarchy captures the inter-nal similarity structure. To capture how deeply rooted category confusions are, we suggest soft tree inference accuracy (the average fraction of the correct root-to-leaf path taken during traversal). 
+
+4.3 Verifying Plausibility of Induced Hierarchies 
+
+Since internal nodes are named and the structure is a tree, extracted hierarchies support both qualitative inspection and quantitative comparison to a reference hierarchy. We assume a target hierarchy T ′ represented as a directed acyclic graph, to-gether with a mapping M from concept-bank entries to nodes in T ′. The target T ′ can be a taxonomic subset of a human-defined ontology O or the hierarchy of a different encoder. We introduce two ontology-based verification metrics: (i) the distance to the closest valid tree extracted from the ontology (global fit), and (ii) a hierarchical consistency score Sonto that checks parent-child edges for matching ontology paths (local fit). Let dT be the integer walking distance between nodes in the underlying undirected graph of T .
+
+Globally Verifying against the Closest Valid Trees. We consider a hierarchy plausible with respect to O, if it is a slice thereof. To quantify how far an extracted hierarchy T is from being plausible, we search for the best matching T ′ ⊂ O .
+
+Definition 2. Let dtree be a tree comparison metric [Akutsu, 2010], like Tree Edit Distance [Zhang and Shasha, 1989] or Tree Alignment [Jiang et al. , 1995]. The closest valid tree to 
+
+T (without renamings) with respect to ontology O and dtree is the subtree 
+
+Tvalid = arg min T ′⊂O dtree (T, T ′) s.t. T ′ is a tree (2) Tvalid can serve as a minimal target to optimize for plausibility, and dtree (T, T valid ) as global (yet, costly to obtain) plausibility measure. 
+
+Hierarchical Consistency Score. This metric efficiently locally verifies that parent-child edges in the T respect the hy-pernymy constraints of the reference ontology O. We ground each parent node u to a representative ontology concept 
+
+ρ(u) = LCA O ({M (l) | l ∈ leaves (u)}) . (3) For each edge u → v, let δ(ρ(u), ρ (v)) be the shortest directed path length in O. We define Sedge (u → v) = 0 if no path exists, else Sedge (u → v) = min(1 , (γ · δ(ρ(u), ρ (v))) −1).The factor γ = 0 .5 is adapted from path-length normalization principles [Leacock, 1998] and allows to tolerate common one-level skips. We then aggregate over edges E in T to obtain 
+
+Hierarchical Consistency 
+
+Sonto (T ) = 1
+
+|E| 
+
+X
+
+> (u→v)∈E
+
+Sedge (u → v). (4) 
+
+Example 5 (Local Hierarchical Consistency) . In Figure 2a, the edge animal → canine only skips mammal and receives high Sedge = 1 , while Sedge (canine → equine ) = 0 .
+
+4.4 Aligning Induced to Target Hierarchies 
+
+The last part of our pipeline aims to post-hoc align the ob-served similarity structure T of the VLM encoder to a target tree T ′, like the closest valid tree or a different encoder’s se-mantics. We here suggest an efficient post-hoc, model-agnostic approach that only learns a transformation for the embedding space which minimally affects zero-shot performance (i.e., the original similarity structure). Ingredients are the tree structure and leaf labels of T ′, and a training and test split of the leaf concept dataset. Then, a transformation is obtained in two steps: (1) Determine suitable target latent points to which the instances should be mapped, in order to fulfill the target similarity structure. (2) Train a transformation of the embedding space, here a 2-layer DNN, on the pairs of original and targeted instance embeddings. This modularization allows to use efficient manifold learning techniques like UMAP [McInnes et al. , 2020] in the first step. UMAP finds embeddings of a set of original points in a target space, such that the embeddings match targeted pairwise point distances. This is typically used to map points into a lower -dimensional space, whilst targeting the pairwise distances from the original space to preserve neighborhoods. We instead map points into the same space, and want to change neighborhoods to match those of T ′. Hence, we initialize the mapping with the identity, and sum pairwise distances between points x,
+
+x′ of concepts C, C’ that ( α) anchor to the original cosine geometry, ( β) encourage samples from classes that are close in 
+
+T ′ to become closer and vice versa, and ( γ) regularize against collapsing class representations: 
+
+demb (x, x ′) = αorig · d(F (x), F (x′)) + 1 
+
+> Z
+
+βonto · dT ′ (C, C′) − γmidp · d(e(C), e (C′)) (5) for cosine distance d, the undirected tree walk-ing distance dT ′ in T ′, the normalization constant 
+
+Z := max dT ′ / max C1,C 2 d(e(C1), e (C2)) , and scalar parameters αorig , βonto and γmidp . It is a combination of the 
+
+original distance , the length of the shortest path between their classes in T ′, and the distance of the class representations 
+
+w.r.t. the original hierarchy T . During training, the second term is normalized by the maximum path distance and maximum class embedding distance in the dataset. 
+
+5 Experiments 
+
+We conduct an empirical study to investigate faithfulness and utility of the extracted hierarchies for tree traversal (Sec. 5.2); compare plausibility of hierarchies across modalities and mod-els (Sec. 5.3), and to measure how easily embedding spaces can be post-hoc aligned to target hierarchies (Sec. 5.4). 
+
+The supplementary provides further details on the setup, ablation study, tables with numerical results of all plots, hy-pothesis tests (p-values are < 10 −5 if not reported). 
+
+5.1 Experimental Settings 
+
+A hyperparameter study selected WordNet-based over Llama3-based or combined descriptions for generating concept bank embeddings as optimal (see supplementary). WordNet is used for the general, WordNet+Llama3 for the specialized CUB dataset. The following settings apply to the total of 156 exper-iments. 
+
+Models. We consider in total 13 pre-trained foundational VLMs from 4 families [Miller et al. , 2024]: CLIP (C) with 9 different backbones [Radford et al. , 2021], ALIGN [Jia et al. , 2021], FLAVA [Singh et al. , 2022], and SigLIP (v2) with 224px and 384px backbones [Zhai et al. , 2023]. 
+
+Leaf Class Datasets. We use CIFAR-10/100 [Alex, 2009] and ImageNet [Deng et al. , 2009] (10/100/1000 leaves) as stan-dard datasets of increasing hierarchy complexity, and CUB [Wah et al. , 2011] as a specialized 200-class bird dataset. The train split is used for hierarchy extraction and alignment train-ing; the test split is used to assess faithfulness and plausibility. 
+
+Ontologies and Concept Bank. We use the WordNet lexi-cal database [Fellbaum, 2010] as a concept bank and SUMO [Niles and Pease, 2001], OpenCyc [Matuszek et al. , 2006], and Yago [Mahdisoltani et al. , 2015] as reference general domain ontologies, linked via existing mappings. We include nouns and adjectives, and treat Subclass and InstanceOf as parent relations. 
+
+Metrics. We measure discriminativity as zero-shot perfor-mance (ZS, ↑), faithfulness via our faithfulness ratio, (soft) tree-traversal inference (tree / tree soft, ↑) and distance to the last correct node ( ↓), plausibility using our hierarchical consistency score ( ↑), and normalized constrained Unordered Tree Edit Distance (nUTED, ↓) [Zhang, 1996] to obtain the closest valid tree. The latter is the minimal number of dele-tion/insertion/leaf rename operations to turn one tree into the other, normalized to [0 , 1] by the operation number of the triv-ial delete-all-insert-all solution [Rico-Juan and Mic ´o, 2003]. Two randomly constructed binary trees for 1000 leaf nodes have a nUTED of approximately 0.54 (see supplementary). Table 1: Faithfulness, tree-traversal accuracy (tree), soft tree-traveral accuracy (tree soft), and zero-shot performance (ZS) by dataset, aver-aged over models and encoders.                 
+
+> tree ( ↑)tree soft ( ↑) faithfulness ( ↑)ZS ( ↑)CIFAR10 82 ± 11 89.0 ± 8.3 94.2 ± 6.8 86.6 ± 8.6 CIFAR100 35 ± 14 59 ± 12 55 ± 15 63 ± 13 CUB 22 ± 18 36 ± 26 37 ± 16 49 ± 33 ImageNet 18 ± 11 39 ± 18 26 ± 15 67.5 ± 8.7
+
+Table 2: Tree-traversal early stopping returns internal nodes instead of incorrect leaves. Left: last correct node distance ( ↓), averaged over encoders and models. Right: average semantic distance ( ↓) from the predicted node to the ground-truth concept in the SUMO ontology (walking distance). Best per dataset in bold .early stop (ours) vanilla CIFAR10 0.35 ± 0.17 0.33 ± 0.20          
+
+> CIFAR100 2.12 ± 0.56 2.43 ± 0.59 CUB 1.11 ± 0.77 1.66 ± 0.60 ImageNet 2.47 ± 0.98 4.3 ± 1.0 CIFAR10 CIFAR100 ImageNet
+> 0
+> 2
+> 4
+> 6
+> SUMO dist. to gt.
+> 1.13
+> 4.32
+> 4.44
+> 1.00
+> 4.24
+> 4.00
+> early stopped
+> vanilla
+
+5.2 Explaining Hierarchies: Faithfulness 
+
+A qualitative global explanation of VLM hierarchies is demon-strated in Figure 2a. To quantitatively assess explanation qual-ity in terms of faithfulness, we use the (relative) performance of local explanations via tree-traversal inference as a proxy. We conducted an ablation study across different leaf set com-plexities, VLM model architectures, and the chosen encoder (text, image, mean of both). 
+
+More Leaves Diminish Faithfulness. The dominating ef-fect is that a higher number of leaf nodes considerably de-creases faithfulness as shown in Table 1: average faithfulness drops from 94 .2 ± 6.8 on CIFAR-10 (10 classes) to 26 ± 15 on ImageNet (1000 classes). Similar decrease in soft tree traversal performance ( 89 to 38 ) indicates that tree-traversal inference takes a wrong turn more easily in deeper trees. While the ef-fect is smaller on image-embedded leaves, it is still significant. As a first pathway, this motivates use of our suggested early stopping. 
+
+Early Stopping Improves Hierarchical Inference. We evaluate whether uncertainty-aware early stopping (UAES) can correctly capture wrong turns in hierarchical inference. Ta-ble 2 reports the undirected tree distance between the predicted output (leaf or early-stopped internal node) and the last cor-rect node, defined as the LCA of the ground-truth leaf and the leaf predicted by vanilla traversal. Early stopping reduces this distance on the larger label sets (CIFAR100/CUB/ImageNet), which means that it often returns semantically appropriate super-categories instead of committing to an incorrect leaf; on CIFAR10 the effect is negligible. Notably, measuring the distance to the ground truth node not in the tree but in the refer-ence ontology SUMO has no significant effect. This validates that early stopping does not change the quality of the semantic alignment against a target ontology, which we inspect in detail next. C RN50 
+
+> C RN101
+> C RN50x4
+> C RN50x16
+> C RN50x64
+> C V-B16
+> C V-B32
+> C V-L14
+> C V-L14@336
+> FLAVA
+> ALIGN
+> SigLIP 224
+> SigLIP 384
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> [%]
+> faithfulness
+> zero-shot C RN50
+> C RN101
+> C RN50x4
+> C RN50x16
+> C RN50x64
+> C V-B16
+> C V-B32
+> C V-L14
+> C V-L14@336
+> FLAVA
+> ALIGN
+> SigLIP 224
+> SigLIP 384
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Hierarchical Consistency
+> Yago
+> SUMO
+> OpenCyc
+
+Figure 3: Faithfulness (top) versus plausibility (bottom) results for different models and backbones, averaged over 3 datasets and 3 leaf encoding types (image, text, both). 
+
+5.3 Agreement with Human Ontologies 
+
+We quantify plausibility by comparing extracted hierarchies against human reference ontologies (OpenCyc, SUMO, and Yago), using the hierarchical consistency metric introduced in Sec. 4.3. Our evaluation is driven along our desiderata: Can discriminability and plausibility be achieved simultaneously? And does the text-to-image alignment in CLIP training also induce semantically aligned hierarchies? 
+
+Plausibility–Discriminativity Trade-off. When consider-ing per-model metrics, zero-shot performance has little predic-tive value about the plausibility, as visualized in Figure 3. More interestingly, zero-shot performance as well as faithfulness are significantly negatively correlated with plausibility score(s) across all ontologies (for zero-shot and SUMO/OpenCyc/Yago: p-values < 0.006 and Pearson r < −0.45 /−0.21 /−0.29 ; for faithfulness: Pearson r < −0.62 /−0.18 /−0.61 and p-value 
+
+< 0.023 for OpenCyc, else 0). Hence, there seems to be a consistent tradeoff between discriminativeness of leaf classes, and plausibility of the induced semantic structure. Modality Gap: Text versus Image Hierarchies. As shown in Figure 4a, image leaf embeddings achieve significantly higher zero-shot and faithfulness scores compared to text leaf embeddings ( +22 ± 13 percent points), which get instead consistently higher plausibility values ( +0 .015 ± 0.032 , p-value < 0.002 ), see Figure 4a. This is confirmed by the signifi-cantly different trees, measured via average nUTED between trees when switching from image to text leaf embeddings (see Figure 4b). Combining text and image information when embedding leaves offers a useful trade-off between discrim-inability and plausibility (cf. Figure 2a and Figure 4a). We then ask whether these trends hold consistently across model families and backbones. 
+
+Across-Model Comparison. Across VLM families, we ob-serve substantial variation in both faithfulness and ontological plausibility. Figure 3 summarizes these trends and highlights that higher zero-shot accuracy does not necessarily imply a hierarchy that is more consistent with human ontologies. image both text                
+
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Hierarchical Consistency
+> 0.71
+> 0.71
+> 0.71
+> 0.80
+> 0.82
+> 0.80
+> 0.87
+> 0.88
+> 0.89
+> CIFAR10
+> image both text
+> 0.71
+> 0.75
+> 0.76
+> 0.79
+> 0.84
+> 0.84
+> 0.76
+> 0.81
+> 0.81
+> CIFAR100
+> image both text
+> 0.78
+> 0.80
+> 0.79
+> 0.90
+> 0.91
+> 0.90
+> 0.85
+> 0.87
+> 0.86
+> ImageNet
+> Yago
+> SUMO
+> OpenCyc tree faithful zero-shot image 49 ± 24 63 ± 22 74 ± 12
+> both 44 ± 27 57 ± 28 74 ± 12 text 25 ± 30 39 ± 32 52 ± 31
+
+(a) Effect of leaf embedding modality. Right: hierarchical consistency ( ↑) against OpenCyc, SUMO, and Yago across CIFAR10/100 and ImageNet. Left: faithfulness metrics averaged over model, dataset, and encoder. C RN50   
+
+> C RN101
+> C RN50x4
+> C RN50x16
+> C RN50x64
+> C V-B16
+> C V-B32
+> C V-L14
+> C V-L14@336
+> FLAVA
+> ALIGN
+> SigLIP 224
+> SigLIP 384
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> normalized UTED
+> Tree Distance ( ): Image Text
+
+(b) nUTED ( ↓) between trees induced by image and text 
+
+encoders of each the same VLM; averaged over standard datasets. nUTED > 0.5 marks worse than random. Figure 4: Results of verifying and comparing encoders against a target ontology (4a) and each other (4b). 
+
+In the next section we evaluate in how far our alignment procedure also confirms this tradeoff between faithfulness and plausibility. 
+
+5.4 Post-hoc Alignment to Target Hierarchies 
+
+We here investigate whether learned ontologies can success-fully be post-hoc corrected, without destroying zero-shot ac-curacy. For this we consider the following tasks: • Validation: Swap two leaves in the semantic tree. • Modality alignment: Turn a tree for image leaf embed-dings into the corresponding one for text embeddings. • Ontological commitment: Steer to closest valid tree. We measure proximity of a current to a target ontology by turn-ing them into their distance matrices and taking the Frobenius norm of their difference. ∆O is defined as the relative change in distance to the target from after manipulation to before. ZS Orig text , ZS Orig midp , ZS UMAP text and ZS UMAP midp denote zero-shot accu-racy before (Orig) and after manipulation (UMAP) and base on (transformed) text embeddings and class midpoints. For this study, we investigate four models, ALIGN, CLIP with ViT-L14@336px backbone, SigLIP-224 and FLAVA (as specified before), on the validation task and run experiments on 2, 500 
+
+random training images and evaluate on 10 , 000 test images of the CIFAR10 dataset. Averaged over three seeds, 10 random swaps and all four models, according to our hyperparameter grid-search the parameter setting αorig = 2 .0, βonto = 1 .0,
+
+γmidp = 2 .0, NUMAP = 250 , minimizes a combined evaluation score ∆O − ZS UMAP midp , which balances ontology alignment and zero-shot performance. Results for the best parameter setting are presented in Ta-ble 3. The general finding is that our approach can cheaply initialize transformations from one latent ontology to an-other, being capable to fully align the original clip embed-ding with an embedding where automotive and frog have been swapped. There is, however, a tradeoff between zero-shot ac-curacy and successful ontology matching, which reveals how much alignment and class discriminability compete. A com-parison against a linear transformation baseline shows how far the true transformation is from being (simply) linear (see supplementary). Results for steering of class hierarchies to-wards their text embeddings and closest valid trees confirm 
+
+Table 3: Results of the ontology manipulation for two swapped leaves; averaged over 10 random swaps and 3 seeds. We report variances exceeding 1.0e − 03 (see supplementary for all variances).                                                       
+
+> Model
+> ∆O↓
+> nUTED
+> ↓
+> ZS UMAP
+> text
+> ↑
+> ZS UMAP
+> midp
+> ↑
+> ZS Orig
+> text
+> ↑
+> ZS Orig
+> midp
+> ↑
+> αorig = 2 .0,βonto = 1 .0,γmidp = 2 .0, N UMAP = 250
+> ALIGN 0.589 ±2.9e-01 0.080 ±3.7e-03 0.579 ±1.3e-03 0.701 0.753 0.804 C V-L14@336 0.850 ±2.8e-01 0.098 ±7.1e-04 0.732 ±4.5e-03 0.858 0.946 0.958 FLAVA 0.731 ±3.9e-01 0.072 ±2.2e-03 0.688 ±1.1e-03 0.786 0.890 0.923 SIGLIP 224 0.720 ±8.6e-02 0.102 ±3.7e-04 0.723 ±2.4e-03 0.837 0.914 0.931
+
+our findings and can be found in the supplementary as well as the details on the hyperparameter study. 
+
+6 Discussion and Outlook 
+
+Our experiments revealed a remaining faithfulness gap . Fu-ture work should further close it, e.g., by shifting to distri-bution -based [Mikriukov et al. , 2025; Lee et al. , 2025] and 
+
+location -aware [Fong and Vedaldi, 2018] concept represen-tations, and removing any background bias in the probing images [Schwalbe et al. , 2025]. Interesting extensions would be concept combinations like 
+
+black cat , e.g., using basis decomposition [Zhang et al. ,2021]; towards arbitrary vision models , e.g., using locked-image text approaches [Zhai et al. , 2022]; comparing against specialized ontologies; more types of assumptions [Speer et al. ,2017] and arbitrary graph structures; and ante-hoc ontology insertion during training. Beyond bias removal, we expect that our technique can 
+
+guide specialization of VLMs using domain specific ontolo-gies, including search for appropriate context prompts for a specific domain. Furthermore, relaxing the strong explainabil-ity assumptions on concept distributions in latent space could not only inform concept entanglement analysis, but also im-prove UAES. 
+
+7 Conclusion 
+
+This paper presented a principled approach to extract the learned class hierarchy induced by a given set of leaf classes from a VLM. Furthermore, we introduced techniques to mea-sure and improve faithfulness and plausibility, where the latter makes direct use of existing human-defined knowledge bases. We generally could uncover a clear mismatch between class hierarchies learned by the text and by the image encoders. Our suggested method to post-hoc train ontology manipulating transformations was able to improve the matching of a learned ontology towards a desired one, with only moderate loss on zero-shot accuracy. This suggests that human-interpretable knowledge can directly be used to align VLM representations with human expectations, and potentially help in closing the gap in text-to-image alignment. 
+
+Acknowledgments 
+
+G.S. and S.T. acknowledge support through the project “chAI” funded by the German Federal Ministry of Research, Technol-ogy and Space (BMFTR), grant no. 16IS24058. A.M. and M.R. gratefully acknowledge financial support from the BMFTR within the project “REFRAME” (grant no. 16IS24073C). E.H., A.M. and M.R. also gratefully acknowledge support through the BMFTR junior research group “UnrEAL” (grant no. 16IS22069). J.H.L. was supported by the German Research Foundation (DFG), project no. 551629603. M.K. acknowl-edges support through the project ”NXT GEN AI METHODS – Generative Methoden f ¨ur Perzeption, Pr ¨adiktion und Pla-nung” funded by the German Federal Ministry for Economic Affairs and Energy. The authors are solely responsible for the content of this publication. 
+
+References 
+
+Tatsuya Akutsu. Tree edit distance problems: Algorithms and applications to bioinformatics. IEICE Trans. Inf. Syst. ,93-D(2):208–218, 2010. Krizhevsky Alex. Learning Multiple Layers of Features from Tiny Images. Master’s thesis, University of Toronto, Canada, April 2009. Morris Alper. Emergent Visual-Semantic Hierarchies in Image-Text Representations. In ECCV . 2025. Samy Badreddine, Artur d’Avila Garcez, Luciano Serafini, and Michael Spranger. Logic Tensor Networks. Artificial Intelligence , 303:103649, February 2022. Alberto Baldrati, Marco Bertini, Tiberio Uricchio, and Alberto Del Bimbo. Effective conditioned and composed image retrieval combining clip-based features. In CVPR , 2022. Manuele Barraco, Marcella Cornia, Silvia Cascianelli, Lorenzo Baraldi, and Rita Cucchiara. The unreasonable effective-ness of clip features for image captioning: an experimental analysis. In CVPR , 2022. Michael A Bender, Martin Farach-Colton, Giridhar Pem-masani, Steven Skiena, and Pavel Sumazin. Lowest common ancestors in trees and directed acyclic graphs. Journal of Algorithms , 57(2):75–94, 2005. Luca Bertinetto, Romain Mueller, Konstantinos Tertikas, Sina Samangooei, and Nicholas A. Lord. Making Better Mis-takes: Leveraging Class Hierarchies With Deep Networks. In CVPR , 2020. Usha Bhalla, Alex Oesterling, Suraj Srinivas, Flavio Calmon, and Himabindu Lakkaraju. Interpreting CLIP with Sparse Linear Concept Embeddings (SpLiCE). In NeurIPS , 2024. Roberto Confalonieri and Giancarlo Guizzardi. On the multi-ple roles of ontologies in explanations for neuro-symbolic AI. Neurosymbolic Artificial Intelligence , 1:NAI–240754, 2025. David F. Crouse. On implementing 2D rectangular assignment algorithms. IEEE Transactions on Aerospace and Electronic Systems , 52(4):1679–1696, August 2016. Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li, and Li Fei-Fei. ImageNet: A large-scale hierarchical image database. In CVPR , 2009. Ankit Dhall, Anastasia Makarova, Octavian Ganea, Dario Pavllo, Michael Greeff, and Andreas Krause. Hierarchical Image Classification Using Entailment Cone Embeddings. In CVPR Workshops , 2020. Sedigheh Eslami and Gerard de Melo. Mitigate the Gap: Improving Cross-Modal Alignment in CLIP. In ICLR , 2024. Christiane Fellbaum. Wordnet. In Theory and applications of ontology: computer applications . 2010. Ruth Fong and Andrea Vedaldi. Net2Vec: Quantifying and explaining how concepts are encoded by filters in deep neural networks. In CVPR , 2018. Kenneth D Forbus and Thomas Hinrich. Analogy and rela-tional representations in the companion cognitive architec-ture. AI Magazine , 38(4):34–42, 2017. Yunhao Ge, Jie Ren, Andrew Gallagher, Yuxiao Wang, Ming-Hsuan Yang, Hartwig Adam, Laurent Itti, Balaji Lakshmi-narayanan, and Jiaping Zhao. Improving Zero-Shot Gener-alization and Robustness of Multi-Modal Models. In Proc. IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 11093–11101, 2023. Amirata Ghorbani, James Wexler, James Y. Zou, and Been Kim. Towards automatic concept-based explanations. In 
+
+NeurIPS , 2019. Aaron Grattafiori and et al. The Llama 3 Herd of Models, 2024. arXiv:2407.21783. Nicola Guarino. Formal Ontologies and Information Systems. In FOIS , June 1998. Chao Jia, Yinfei Yang, Ye Xia, Yi-Ting Chen, Zarana Parekh, Hieu Pham, Quoc Le, Yun-Hsuan Sung, Zhen Li, and Tom Duerig. Scaling up visual and vision-language representa-tion learning with noisy text supervision. In ICML , 2021. Tao Jiang, Lusheng Wang, and Kaizhong Zhang. Alignment of trees — an alternative to tree edit. Theoretical Computer Science , 143(1):137–148, July 1995. Been Kim, Martin Wattenberg, Justin Gilmer, Carrie Cai, James Wexler, Fernanda Viegas, and Rory Sayres. Inter-pretability beyond feature attribution: Quantitative testing with concept activation vectors (TCAV). In ICML , 2018. Claudia Leacock. Combining local context and wordnet simi-larity for word sense identification. In WordNet: An Elec-tronic Lexical Database . 1998. Jae Hee Lee, Georgii Mikriukov, Gesina Schwalbe, Stefan Wermter, and Diedrich Wolter. Concept-Based Explanations in Computer Vision: Where Are We and Where Could We Go? In ECCV Workshops , 2025. Jens Lehmann, Robert Isele, Max Jakob, Anja Jentzsch, Dim-itris Kontokostas, Pablo N. Mendes, Sebastian Hellmann, Mohamed Morsey, Patrick van Kleef, S ¨oren Auer, and Chris-tian Bizer. DBpedia – A large-scale, multilingual knowledge base extracted from Wikipedia. Semantic Web , 6(2):167– 195, March 2015. Douglas B Lenat. Building Large Knowledge-Based Systems .1989. Victor Weixin Liang, Yuhui Zhang, Yongchan Kwon, Serena Yeung, and James Y. Zou. Mind the Gap: Understanding the Modality Gap in Multi-modal Contrastive Representation Learning. In NeurIPS , 2022. Pingchuan Ma, Lennart Rietdorf, Dmytro Kotovenko, Vin-cent Tao Hu, and Bj ¨orn Ommer. Does VLM Classification Benefit from LLM Description Semantics? In AAAI , April 2025. Farzaneh Mahdisoltani, Joanna Asia Biega, and Fabian M. Suchanek. Yago3: A knowledge base from multilingual wikipedias. In CIDR , 2015. Viviana Mascardi, Valentina Cord `ı, Paolo Rosso, et al. Acomparison of upper ontologies. In Woa , 2007. Cynthia Matuszek, John Cabral, M. Witbrock, and John De-Oliveira. An introduction to the syntax and content of cyc. In AAAI Spring Symposium: Formalizing and Compiling Background Knowledge and Its Applications to Knowledge Representation and Question Answering , 2006. Leland McInnes, John Healy, and James Melville. UMAP: Uniform Manifold Approximation and Projection for Di-mension Reduction, 2020. arXiv:1802.03426. Georgii Mikriukov, Gesina Schwalbe, Christian Hellert, and Korinna Bade. Revealing similar semantics inside cnns: An interpretable concept-based comparison of feature spaces. In ECML-PKDD , 2023. Georgii Mikriukov, Gesina Schwalbe, and Korinna Bade. Lo-cal Concept Embeddings for Analysis of Concept Distribu-tions in Vision DNN Feature Spaces. International Journal of Computer Vision , May 2025. Dimity Miller, Niko S ¨underhauf, Alex Kenna, and Keita Ma-son. Open-set recognition in the age of vision-language models. In ECCV , 2024. Ian Niles and Adam Pease. Towards a standard upper ontology. In FOIS , 2001. Zachary Novack, Julian Mcauley, Zachary Chase Lipton, and Saurabh Garg. CHiLS: Zero-Shot Image Classification with Hierarchical Label Sets. In ICML , 2023. Lorena Otero-Cerdeira, Francisco J. Rodr ´ıguez-Mart ´ınez, and Alma G ´omez-Rodr ´ıguez. Ontology matching: A literature review. Expert Systems with Applications , 42(2):949–971, 2015. Benjamin Paaßen, Bassam Mokbel, and Barbara Hammer. A toolbox for adaptive sequence dissimilarity measures for intelligent tutoring systems. In EDM , 2015. Andrew Ponomarev and Anton Agafonov. Ontology Con-cept Extraction Algorithm for Deep Neural Networks. In 
+
+FRUCT , 2022. Andr ´es Felipe Posada-Moreno, Nikita Surya, and Sebastian Trimpe. ECLAD: Extracting Concepts with Local Aggre-gated Descriptors. Pattern Recognition , 147:110146, 2024. Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen Krueger, and Ilya Sutskever. Learning Transferable Visual Models From Natural Language Supervision. In ICML , 2021. Manuel de Sousa Ribeiro and Jo ˜ao Leite. Aligning Artificial Neural Networks and Ontologies towards Explainable AI. In AAAI , May 2021. Juan Ram ´on Rico-Juan and Luisa Mic ´o. Comparison of aesa and laesa search algorithms using string and tree-edit-distances. Pattern Recognition Letters , 24(9):1417–1426, 2003. Karsten Roth, Jae Myung Kim, A. Sophia Koepke, Oriol Vinyals, Cordelia Schmid, and Zeynep Akata. Waffling Around for Performance: Visual Classification with Ran-dom Words and Broad Concepts. In ICCV , 2023. Gesina Schwalbe, Georgii Mikriukov, Edgar Heinert, Stavros Gerolymatos, Mert Keser, Alois Knoll, Matthias Rottmann, and Annika M ¨utze. On Background Bias of Post-Hoc Concept Embeddings in Computer Vision DNNs, 2025. arXiv:2504.08602. Gesina Schwalbe. Verification of size invariance in DNN activations using concept embeddings. In AIAI , 2021. Amanpreet Singh, Ronghang Hu, Vedanuj Goswami, Guil-laume Couairon, Wojciech Galuba, Marcus Rohrbach, and Douwe Kiela. FLAVA: A Foundational Language and Vi-sion Alignment Model. In CVPR , 2022. Robyn Speer, Joshua Chin, and Catherine Havasi. ConceptNet 5.5: An Open Multilingual Graph of General Knowledge. In AAAI , 2017. Catherine Wah, Steve Branson, Peter Welinder, Pietro Perona, and Serge Belongie. The Caltech-UCSD Birds-200-2011 dataset. Technical Report CNS-TR-2011-001, California Institute of Technology, 2011. Alvin Wan, Lisa Dunlap, Daniel Ho, Jihan Yin, Scott Lee, Suzanne Petryk, Sarah Adel Bargal, and Joseph E. Gonzalez. NBDT: Neural-backed decision tree. In ICLR , 2020. Joe H. Ward Jr. Hierarchical Grouping to Optimize an Objec-tive Function. Journal of the American Statistical Associa-tion , 58(301):236–244, 1963. Mert Yuksekgonul, Maggie Wang, and James Zou. Post-hoc Concept Bottleneck Models. In ICLR Workshop on PAIR2Struct , 2022. Xiaohua Zhai, Xiao Wang, Basil Mustafa, Andreas Steiner, Daniel Keysers, Alexander Kolesnikov, and Lucas Beyer. LiT: Zero-Shot Transfer With Locked-Image Text Tuning. In CVPR , 2022. Xiaohua Zhai, Basil Mustafa, Alexander Kolesnikov, and Lu-cas Beyer. Sigmoid loss for language image pre-training. In ICCV , 2023. Kaizhong Zhang and Dennis Shasha. Simple Fast Algorithms for the Editing Distance between Trees and Related Prob-lems. SIAM Journal on Computing , 18(6):1245–1262, De-cember 1989. Kaizhong Zhang, Rick Statman, and Dennis Shasha. On the editing distance between unordered labeled trees. Informa-tion processing letters , 42(3):133–139, 1992. Ruihan Zhang, Prashan Madumal, Tim Miller, Krista A. Ehinger, and Benjamin I. P. Rubinstein. Invertible concept-based explanations for CNN models with non-negative con-cept activation vectors. In AAAI , 2021. Kaizhong Zhang. A constrained edit distance between un-ordered labeled trees. Algorithmica , 15(3):205–222, 1996. Jitian Zhao, Chenghui Li, Frederic Sala, and Karl Rohe. Quan-tifying Structure in CLIP Embeddings: A Statistical Frame-work for Concept Interpretation, 2025. arXiv:2506.13831. Table 4: Walking distance of early-stopped versus vanilla tree-traversal predictions to ground truth node in SUMO. 
+
+dataset early stopped vanilla CIFAR10 1.13 ± 0.69 1.00 ± 0.72 CIFAR100 4.3 ± 1.1 4.2 ± 1.2 ImageNet 4.4 ± 1.3 4.0 ± 1.2 
+
+Table 5: Faithfulness and plausibility metrics by model averaged over encoders. Faithfulness Hierarchical Consistency model tree tree soft faithfulness zero-shot Hier. Consist. (Yago) Hier. Consist. (SUMO) Hier. Consist. (OpenCyc) C RN50 32 ± 26 52 ± 26 52 ± 31 55 ± 20 0.772 ± 0.060 0.881 ± 0.082 0.878 ± 0.073 C RN101 35 ± 26 57 ± 25 57 ± 27 56 ± 22 0.775 ± 0.068 0.876 ± 0.072 0.881 ± 0.074 C RN50x4 34 ± 26 53 ± 26 52 ± 28 60 ± 22 0.775 ± 0.067 0.877 ± 0.072 0.888 ± 0.075 
+
+C RN50x16 35 ± 25 54 ± 25 52 ± 27 63 ± 22 0.782 ± 0.077 0.863 ± 0.065 0.888 ± 0.081 C RN50x64 38 ± 29 56 ± 27 51 ± 31 68 ± 23 0.781 ± 0.072 0.883 ± 0.071 0.876 ± 0.083 C V-B16 42 ± 33 58 ± 29 55 ± 33 69 ± 23 0.773 ± 0.063 0.878 ± 0.076 0.884 ± 0.074 C V-B32 39 ± 32 56 ± 30 53 ± 32 65 ± 23 0.774 ± 0.071 0.875 ± 0.072 0.882 ± 0.085 C V-L14 44 ± 32 58 ± 29 52 ± 30 76 ± 24 0.769 ± 0.072 0.874 ± 0.074 0.880 ± 0.080 C V-L14@336 46 ± 34 60 ± 30 55 ± 32 76 ± 24 0.779 ± 0.074 0.875 ± 0.069 0.880 ± 0.080 FLAVA 40 ± 31 56 ± 28 54 ± 29 65 ± 23 0.769 ± 0.056 0.874 ± 0.076 0.863 ± 0.083 ALIGN 34 ± 26 50 ± 27 50 ± 30 61 ± 20 0.775 ± 0.068 0.865 ± 0.071 0.878 ± 0.081 SigLIP 224 43 ± 31 56 ± 32 53 ± 32 73 ± 24 0.782 ± 0.069 0.884 ± 0.082 0.888 ± 0.077 SigLIP 384 48 ± 33 59 ± 33 54 ± 33 80 ± 24 0.793 ± 0.071 0.887 ± 0.077 0.879 ± 0.071 
+
+# Appendix 
+
+Table of Contents 
+
+A Tabular Results for Plots in the Paper 11 B Faithfulness Results: More Detailed Comparisons 13 
+
+B.1 Hypothesis Tests . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 13 B.2 Comparison of Distance to LCA by Encoder . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 13 B.3 Comparison of Text Embedding Strategies . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15 B.4 Comparison of Datasets . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15 B.5 Comparison of Encoders . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17 B.6 Comparison of Metrics: Soft Tree-traversal Accuracy versus Tree-traversal Accuracy . . . . . . . . . . . . . . 17 
+
+C More Details on Experimental Settings 17 
+
+C.1 Used Implementations . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17 C.2 Hardware Settings and Runtime . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 19 C.3 Ontology Verification Settings: Graph Construction & Metrics . . . . . . . . . . . . . . . . . . . . . . . . . . 19 C.4 Concept Bank Embeddings & Hyperparameter Study . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 20 C.5 Details on Ontology Manipulation & Hyperparameter Study . . . . . . . . . . . . . . . . . . . . . . . . . . . 23 
+
+A Tabular Results for Plots in the Paper 
+
+Tabular results for the plots in the main paper can be found in (in order of the paper) in: • Table 4: Comparison of tree-traversal with and without uncertainty-aware early stopping (UASE) • Table 5: Faithfulness and plausibility by model • Table 6: Faithfulness and plausibility by encoder type and dataset • Table 7: nUTED between text and image encoders Table 6: Plausibility (Hierarchical Consistency) and faithfulness metrics per leaf encoding strategy and per dataset, averaged over models. tree faithfulness zero-shot Yago SUMO OpenCyc CIFAR10 image 85.3 ± 8.8 96.9 ± 2.3 87.9 ± 7.2 0.707 672 0.802 ± 0.012 0.867 ± 0.020 both 86.6 ± 7.6 97.7 ± 1.1 88.6 ± 6.9 0.709 ± 0.014 0.8228 ± 0.0024 0.879 ± 0.011 text 74 ± 13 88.1 ± 8.8 83 ± 11 0.710 ± 0.016 0.798 ± 0.029 0.887 ± 0.031 CIFAR100 image 40.7 ± 9.9 61.2 ± 7.3 66 ± 11 0.7127 ± 0.0087 0.7881 ± 0.0077 0.755 ± 0.017 both 45 ± 10 66.4 ± 7.2 68 ± 11 0.7524 ± 0.0092 0.8366 ± 0.0094 0.809 ± 0.021 text 20.4 ± 7.3 36.0 ± 8.8 56 ± 15 0.757 ± 0.014 0.840 ± 0.012 0.806 ± 0.022 CUB image 42.6 ± 7.4 56.2 ± 4.5 75.4 ± 8.0 0.871 ± 0.025 0.971 ± 0.034 0.9949 ± 0.0098 both 21.4 ± 4.7 31.1 ± 4.8 68.5 ± 9.6 0.910 ± 0.023 0.977 ± 0.031 1.0 text 0.97 ± 0.30 25 ± 11 4.4 ± 1.3 0.824 ± 0.047 0.982 ± 0.019 0.981 ± 0.020 ImageNet image 26.3 ± 4.3 38.4 ± 3.6 68.5 ± 7.7 0.7753 ± 0.0059 0.8968 ± 0.0023 0.8511 ± 0.0065 both 24.5 ± 4.5 34.2 ± 4.1 71.4 ± 7.1 0.7970 ± 0.0020 0.9053 ± 0.0024 0.8703 ± 0.0054 text 3.3 ± 2.1 5.6 ± 4.3 62.7 ± 9.5 0.7947 ± 0.0048 0.8974 ± 0.0039 0.8649 ± 0.0061 Table 7: nUTED between each text and image encoder of the same VLM, averaged over datasets. 
+
+model nUTED clip RN50 0.63 ± 0.14 clip RN101 0.64 ± 0.15 clip RN50x4 0.63 ± 0.14 clip RN50x16 0.65 ± 0.13 clip RN50x64 0.63 ± 0.16 clip ViT-B/16 0.60 ± 0.14 clip ViT-B/32 0.61 ± 0.19 clip ViT-L/14 0.59 ± 0.18 clip ViT-L/14@336px 0.58 ± 0.17 flava flava-full 0.608 ± 0.097 align align-base 0.58 ± 0.21 siglip 224 0.58 ± 0.21 siglip 384 0.56 ± 0.17 
+
+Table 8: Faithfulness metrics by dataset in percent, averaged over models and encoders. 
+
+tree inference acc. tree inference soft acc. faithfulness zero-shot acc. CIFAR10 82 ± 11 89.0 ± 8.3 94.2 ± 6.8 86.6 ± 8.6 CIFAR100 35 ± 14 59 ± 12 55 ± 15 63 ± 13 CUB 22 ± 18 36 ± 26 37 ± 16 49 ± 33 ImageNet 18 ± 11 39 ± 18 26 ± 15 67.5 ± 8.7 CIFAR10 CIFAR100 CUB ImageNet 
+
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> tree
+> tree (soft)
+> faithfulness
+> ZS
+
+Table 9: Faithfulness metrics by encoder and dataset, averaged over models. CIFAR10 CIFAR100 CUB ImageNet        
+
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100 image
+> CIFAR10 CIFAR100 CUB ImageNet
+> text & image
+> CIFAR10 CIFAR100 CUB ImageNet
+> text
+> tree
+> tree (soft)
+> faithfulness
+> ZS
+
+encoder dataset tree tree soft faithfulness zero-shot image CIFAR10 85.3 ± 8.8 92.1 ± 5.1 96.9 ± 2.3 87.9 ± 7.2 CIFAR100 40.7 ± 9.9 62.4 ± 7.1 61.2 ± 7.3 66 ± 11 CUB 42.6 ± 7.4 64.9 ± 5.3 56.2 ± 4.5 75.4 ± 8.0 ImageNet 26.3 ± 4.3 51.3 ± 3.7 38.4 ± 3.6 68.5 ± 7.7 text & image CIFAR10 86.6 ± 7.6 92.6 ± 4.2 97.7 ± 1.1 88.6 ± 6.9 CIFAR100 45 ± 10 68.9 ± 7.3 66.4 ± 7.2 68 ± 11 CUB 21.4 ± 4.7 37.5 ± 5.8 31.1 ± 4.8 68.5 ± 9.6 ImageNet 24.5 ± 4.5 49.6 ± 5.3 34.2 ± 4.1 71.4 ± 7.1 text CIFAR10 74 ± 13 82 ± 100 88.1 ± 8.8 83 ± 11 CIFAR100 20.4 ± 7.3 47.2 ± 9.1 36.0 ± 8.8 56 ± 15 CUB 0.97 ± 0.30 4.2 ± 4.1 25 ± 11 4.4 ± 1.3 ImageNet 3.3 ± 2.1 16.0 ± 9.8 5.6 ± 4.3 62.7 ± 9.5 
+
+B Faithfulness Results: More Detailed Comparisons 
+
+This chapter provides additional, more finegrained statistical insights into the results summarized in the main paper. • Table 8: An additional summary of the faithfulness metrics per dataset 
+
+B.1 Hypothesis Tests 
+
+For all hypothesis tests we consider as significance level a p-value of 0.05 .
+
+Correlations. The p-values of the Pearson Correlation tests 1 proving correlations between zero-shot accuracy and other metrics can be found in Table 10. See the scipy pearsonr implementation 2 for details. For the per-model results see Table 11. 
+
+Zero-shot vs. Tree inference The left-sided t-test against • 0-hypothesis: the difference between zero-shot accuracy and tree inference is normally distributed around 0, and • 1-hypothesis: zero-shot is greater, i.e., the difference is < 0,on 273 experiments yielded a mean difference of 27 .51 , corrected standard deviation of 18 .95 , and a standard error of 1.15 ,resulting in a p-value of 2.23 × 10 −69 (strongly significant). The left-sided t-test against • 0-hypothesis: the difference between zero-shot accuracy and soft tree inference accuracy is normally distributed around 0,and • 1-hypothesis: zero-shot is greater, i.e., the difference is < 0
+
+on 273 experiments yielded a mean difference of 10 .89 , corrected standard deviation of 17 .27 , and a standard error of 1.0455 ,resulting in a p-value of 6.52 × 10 −22 (strongly significant). 
+
+B.2 Comparison of Distance to LCA by Encoder 
+
+Table 12 shows more detailed results on the distance of a tree traversal prediction from the LCA of the leaf prediction with the ground truth, comparing different encoders and datasets. 
+
+> 1
+
+Pearson correlation tests uses the scipy pearsonr implementation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.pearsonr 
+
+> 2
+
+https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.pearsonr.html Table 10: Hypothesis tests: Zero-shot correlated. Results of the two-sided Person Correlation t-test testing for correlation of top-1 zero-shot accuracy (top) respectively faithfulness (bottom) with other metrics (excluding CUB dataset). Experiments vary over 13 models, 3 datasets, and 3 leaf embedding methods. Note that results also proof the respective one-sided case. (a) Correlation with top-1 zero-shot accuracy. 
+
+Pearson Corr. Coeff. direction significant p-value # experiments Onto. Sim. 1 (OpenCyc) −0.2675 -1 ✓ 0.000 007 273 Onto. Sim. 1 (SUMO) −0.3056 -1 ✓ 0.000 000 273 Onto. Sim. 1 (Yago) 0.3362 1 ✓ 0.000 000 273 Hier. Consist. (OpenCyc) −0.0737 -1 × 0.224 595 273 Hier. Consist. (SUMO) −0.3732 -1 ✓ 0.000 000 273 Hier. Consist. (Yago) −0.4324 -1 ✓ 0.000 000 273 tree inference acc. 0.7874 1 ✓ 0.000 000 273 tree inference soft acc. 0.7756 1 ✓ 0.000 000 273 faithfulness 0.6943 1 ✓ 0.000 000 273 
+
+> (b) Correlation with faithfulness.
+
+Pearson Corr. Coeff. direction significant p-value # experiments Onto. Sim. 1 (OpenCyc) −0.3040 -1 ✓ 0.000 000 273 Onto. Sim. 1 (SUMO) −0.4720 -1 ✓ 0.000 000 273 Onto. Sim. 1 (Yago) 0.4149 1 ✓ 0.000 000 273 Hier. Consist. (OpenCyc) −0.1129 -1 × 0.062 474 273 Hier. Consist. (SUMO) −0.6296 -1 ✓ 0.000 000 273 Hier. Consist. (Yago) −0.6418 -1 ✓ 0.000 000 273 tree inference acc. 0.9678 1 ✓ 0.000 000 273 tree inference soft acc. 0.9694 1 ✓ 0.000 000 273     
+
+> Table 11: Hypothesis test: Zero-shot >tree inference accuracy. Results of the one-sided t-tests testing against the 0-hypothesis that top-1 zero-shot accuracy is not different from tree inference / soft tree inference accuracy, instead of being greater. Each test includes more than 10 experiments (different datasets, models, and leaf embedding strategies).
+
+score b tree inference acc. tree inference soft acc. p-value significant p-value significant model ALIGN 0.000 001 ✓ 0.004 130 ✓
+
+C RN101 0.000 001 ✓ 0.669 648 ×
+
+C RN50 0.000 001 ✓ 0.080 912 ×
+
+C RN50x16 0.000 001 ✓ 0.021 844 ✓
+
+C RN50x4 0.000 000 ✓ 0.095 238 ×
+
+C RN50x64 0.000 002 ✓ 0.004 662 ✓
+
+C V-B16 0.000 002 ✓ 0.001 635 ✓
+
+C V-B32 0.000 000 ✓ 0.001 999 ✓
+
+C V-L14 0.000 000 ✓ 0.000 020 ✓
+
+C V-L14@336 0.000 002 ✓ 0.000 129 ✓
+
+FLAVA 0.000 000 ✓ 0.000 786 ✓
+
+SigLIP 224 0.000 001 ✓ 0.000 345 ✓
+
+SigLIP 384 0.000 002 ✓ 0.000 077 ✓Table 12: Detailed results on how much early stopping improves upon predicting correct (super-)categories: Tree walking distances ( ↓) between predicted node and the last correct node (LCA of the ground truth with the leaf predicted by tree traversal); averaged over models. CIFAR10 CIFAR100 CUB ImageNet 
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+> walking dist. to last correct node
+> 0.35
+> 2.12
+> 1.11
+> 2.47
+> 0.33
+> 2.43
+> 1.66
+> 4.28
+
+early stopped 
+
+vanilla 
+
+encoder dataset CIFAR10 CIFAR100 CUB ImageNet image early stop 0.069 ± 0.034 0.190 ± 0.028 0.170 ± 0.027 0.178 ± 0.015 full 0.060 ± 0.035 0.198 ± 0.029 0.199 ± 0.025 0.227 ± 0.025 text early stop 0.086 ± 0.041 0.131 ± 0.039 0.0138 ± 0.0081 0.035 ± 0.023 full 0.090 ± 0.049 0.176 ± 0.044 0.0491 ± 0.0049 0.104 ± 0.036 text & image early stop 0.071 ± 0.036 0.231 ± 0.056 0.070 ± 0.020 0.147 ± 0.013 full 0.064 ± 0.037 0.253 ± 0.064 0.109 ± 0.016 0.242 ± 0.031 LLama3 WordNet WordNet&LLama3                             
+
+> 0
+> 20
+> 40
+> 60
+> 80
+> top-1 zero-shot accuracy LLama3 WordNet WordNet&LLama3
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> hierarch. consistency
+> Hier. Consist. (Yago)
+> Hier. Consist. (SUMO)
+> Hier. Consist. (OpenCyc) LLama3 WordNet WordNet&LLama3
+> 0
+> 20
+> 40
+> 60
+> 80
+> faithfulness
+> ALIGN
+> LLama3 WordNet WordNet&LLama3
+> C RN101
+> LLama3 WordNet WordNet&LLama3
+> C RN50
+> LLama3 WordNet WordNet&LLama3
+> C RN50x16
+> LLama3 WordNet WordNet&LLama3
+> C RN50x4
+> LLama3 WordNet WordNet&LLama3
+> C RN50x64
+> LLama3 WordNet WordNet&LLama3
+> C V-B16
+> LLama3 WordNet WordNet&LLama3
+> C V-B32
+> LLama3 WordNet WordNet&LLama3
+> C V-L14
+> LLama3 WordNet WordNet&LLama3
+> C V-L14@336
+> LLama3 WordNet WordNet&LLama3
+> FLAVA
+> LLama3 WordNet WordNet&LLama3
+> SigLIP 224
+> LLama3 WordNet WordNet&LLama3
+> SigLIP 384
+
+Figure 5: Comparing text embedding strategies: Top 1 zero-shot accuracy per text embedding strategy on CIFAR-10, CIFAR-100, and ImageNet and for different leaf embedding strategies (averaged). Top: averaged over models, bottom: per model. 
+
+B.3 Comparison of Text Embedding Strategies 
+
+To embed concepts, we newly used definition and synonym information from WordNet to create an ensemble of textual descriptions (details in Sec. C.4. This splits our textual description list into the part created solely by means of WordNet, and the part using an LLM (with WordNet disambiguation hints) to add further descriptions. To check whether the LLM-based textual descriptions from [Ma et al. , 2025] are needed on top of the WordNet ones, we compared using the WordNet-only (solely the term, its synonyms and definition), LLM-only (solely descriptions of visual features), and combined parts of the list. 
+
+Results. The detailed results can be found in Figure 5. We tested on text-embedded leaf concepts discriminativity of the embedded concepts (via zero-shot performance), and plausibility of resulting trees (via directed SUMO scores). In summary, the LLM-only version is inferior with respect to the versions using WordNet directly, and even significantly so for zero-shot performance. 
+
+B.4 Comparison of Datasets 
+
+The detailed results showing the negative influence of the number of leaf nodes on faithfulness are shown in Table 8. Table 9 shows this more finegrained showing faithfulness metrics per dataset per encoder. It becomes clear how text embeddings are more impacted by the faithfulness drop in larger trees. This indicates less stable semantic structures. The effect differs between the different leaf embedding strategies, but shows the same trend. Figure 6 concentrates on comparing faithfulness per model across datasets. While the more complex datasets (CUB, ImageNet) show few differences between the faithfulness of different models, slight differences can be observed for the smaller CIFAR10&100. 0
+
+20 
+
+40 
+
+60 
+
+80 
+
+100 
+
+> ImageNet
+
+tree inference acc. 
+
+tree inference soft acc. 
+
+zero-shot acc. 
+
+0
+
+20 
+
+40 
+
+60 
+
+80 
+
+100 
+
+> CUB
+
+0
+
+20 
+
+40 
+
+60 
+
+80 
+
+100 
+
+> CIFAR100
+
+C RN50 
+
+C RN101 
+
+C RN50x4 
+
+C RN50x16 
+
+C RN50x64 
+
+C V-B16 
+
+C V-B32 
+
+C V-L14 
+
+C V-L14@336 
+
+FLAVA 
+
+ALIGN 
+
+SigLIP 224 
+
+SigLIP 384 
+
+0
+
+20 
+
+40 
+
+60 
+
+80 
+
+100 
+
+> CIFAR10
+
+Zero-shot and Tree Inference Accuracies Figure 6: Comparison of datasets: Faithfulness only per dataset and model averaged over text embedding strategies (WordNet, WordNet+LLM). image text & image text 
+
+> 0
+> 20
+> 40
+> 60
+> 80
+> WordNet
+> zero-shot acc.
+> tree inference soft acc.
+> tree inference acc.
+> faithfulness
+
+Figure 7: Comparing leaf embedding strategies: Faithfulness metrics averaged across datasets and models. Table 13: Average maximum depth of trees extracted for different leaf class sets. Averaged over models and encoder modality. 
+
+# classes average maximum tree depth CIFAR10 10 6.3 ± 1.0 CIFAR100 100 20.7 ± 3.7 CUB 200 25.0 ± 5.8 ImageNet 1000 51 ± 22 
+
+B.5 Comparison of Encoders 
+
+In Figure 7 the impact of different text embedding strategies is shown on the overall faithfulness, when varying the leaf embedding strategy and the text embedding strategy (WordNet, WordNet+LLM). 
+
+B.6 Comparison of Metrics: Soft Tree-traversal Accuracy versus Tree-traversal Accuracy 
+
+Soft Tree Inference Accuracy 
+
+The main paper results showed partly strong drops in top-1 tree inference accuracy. A common way to further evaluate zero-shot performance is to consider top-5 or higher performance, i.e., use the induced ranking of leaf nodes to assess whether the correct one is under the top-5 ranked one. While the tree inference also produces rankable confidence scores at each comparison in the traversal, obtaining a ranking directly from the comparisons would require a large number of hyperparameters (the confidence scales in each tree level). We therefore define soft tree inference accuracy : The score is the percentage of the path from root to the correct leaf that the tree’s prediction traversed. This is 0 in case a wrong turn was taken right at the root node, 1 for an exact match, and has a high value if the predicted child was a sibling. For example, for a balanced binary hierarchy of CIFAR10 leaf classes and a root-to-leaf path of length 3, predicting a direct sibling would result in a score of 0.67 instead of 0 for that test sample. The true average tree depths are shown in Table 13. The final soft tree inference accuracy is the mean of the soft accuracies per test sample. The hypothesis is that the tree predictions are not top-1 accurate, but still close to the ground truth (the “wrong turn” is taken close to the leaves). This would imply a high soft tree inference accuracy that is closer to the top-1 zero-shot performance than to the tree inference accuracy. 
+
+Results. Figure 8 shows soft tree inference results by model, and by dataset and leaf embedding mode. It is observed that soft tree accuracy explains away a substantial part of the gap between zero-shot accuracy and tree inference accuracy (a “wrong turn” was taken way down the tree). However, for the datasets with larger amounts of leaves, a substantial gap remains, indicating that 
+
+still the tree inference lacks faithfulness to the zero-shot comparisons , invalidating the hypothesis. 
+
+C More Details on Experimental Settings 
+
+C.1 Used Implementations 
+
+Hierarchical Clustering. For hierarchical clustering we use standard agglomerative clustering [Ward Jr., 1963], with the 
+
+scikit-learn 3 (version 1.6.1) implementation. Following CLIP training, the tree extraction uses cosine similarity both for the affinity in hierarchical clustering as well as for tree inference (see below), and the respective standard setting of average linkage.  
+
+> 3https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering C RN50
+> C RN101
+> C RN50x4
+> C RN50x16
+> C RN50x64
+> C V-B16
+> C V-B32
+> C V-L14
+> C V-L14@336
+> FLAVA
+> ALIGN
+> SigLIP 224
+> SigLIP 384
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+
+Zero-shot and Tree Inference Accuracies  
+
+> zero-shot acc.
+> tree inference acc.
+> tree inference soft acc.
+> faithfulness CIFAR10
+> CIFAR100
+> CUB
+> ImageNet
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+
+image 
+
+> CIFAR10
+> CIFAR100
+> CUB
+> ImageNet
+
+text 
+
+> CIFAR10
+> CIFAR100
+> CUB
+> ImageNet
+
+text & image 
+
+> zero-shot acc.
+> tree inference acc.
+> tree inference soft acc.
+> faithfulness
+
+Figure 8: Explaining the faithfulness gap: Comparison of faithfulness metrics, in particular soft tree inference accuracy, tree inference accuracy, and zero-shot accuracy, averaged over models, datasets, text embedding strategies WordNet & WordNet+LLM, and leaf embeddings trategies. Top: by model; bottom: by dataset and leaf embedding strategy. Models. CLIP: https://github.com/openai/CLIP using backbones ViT-B/16, ViT-L/14@336px, RN50x4, RN50x16, ViT-B/32, ViT-L/14, RN50, RN101, RN50x64. ALIGN: https://huggingface.co/kakaobrain/align-base FLAVA: https://huggingface.co/facebook/flava-full SigLIP: https://huggingface.co/google/siglip-base-patch16-{bb } for backbones (bb) 224, 384. 
+
+Tree Edit Distance. For the normalized UTED we use the edist implementation from Paaßen et al. [2015]. 
+
+C.2 Hardware Settings and Runtime 
+
+Experiments were run on an NVIDIA H100 GPU (95GB VRAM) and an AMD EPYC 9654 96-Core Processor with 1.5TB memory. For the ontology modification experiments, we used an NVIDIA A100 GPU(80GB VRAM) and an four Intel(R) Xeon(R) Gold 6242 CPU @ 2.80GHz with 1.5TB memory. Calculation of the validation metrics scales with the size of the ontology graph. For SUMO, calculations took approximately 1, 2, and 20 seconds for CIFAR10, CIFAR100, and ImageNet respectively. For OpenCyc these times increased to 4, 8, and 80 seconds. Finally, for YAGO, the calculations required approximately 15, 30, and 300 seconds respectively. 
+
+C.3 Ontology Verification Settings: Graph Construction & Metrics 
+
+Graph Construction and Relations 
+
+To evaluate the semantic validity of the VLM-derived hierarchies, we leverage three distinct expert knowledge bases: SUMO ,
+
+OpenCyc , and YAGO 3 . Since these ontologies differ in structure and density, we first normalize them into a consistent Directed Acyclic Graph (DAG) format and then apply a unified scoring metric (Mode 1). For each ontological framework, we construct a taxonomic graph G = ( V, E ) where an edge u → v represents a direct hypernymy relation (“ u is a parent of v”). The specific predicates used to define this connection differ by ontology: • SUMO: We utilize the explicit Subclass and InstanceOf predicates defined in the KIF source files. • OpenCyc: We extract the taxonomic backbone using the Semantic Web standard predicates rdfs:subClassOf and 
+
+rdf:type from the OWL export. • YAGO 3: We filter the massive YAGO knowledge base to isolate the English taxonomic backbone. We utilize 
+
+rdfs:subClassOf and rdf:type relations, strictly excluding time-dependent, spatial, or meta-logical relations to ensure a clean semantic hierarchy. 
+
+Cycle Breaking and DAG Enforcement. While expert ontologies like SUMO are largely hierarchical, large-scale knowledge bases (especially those derived from Wikipedia like YAGO) often contain logical cycles (e.g., A → B → C → A), which render hierarchical distance metrics undefined. To enable valid Lowest Common Ancestor (LCA) calculations, we enforce a Directed Acyclic Graph (DAG) structure for all three ontologies. We employ a depth-first cycle detection algorithm; upon detecting a cycle, we iteratively remove the ”back-edge” (the edge returning to an already visited ancestor) until the graph is strictly hierarchical. This preprocessing ensures that every node in G has a finite path to the root entity. 
+
+Metrics Alternative Consistency Score: Cluster Consistency. To quantify how well a decision tree node P represents a meaningful semantic cluster, we identify the Lowest Common Ancestor (LCA) of its mapped children in the ontology, denoted as LP. Unlike the undirected score used in previous iterations, we employ a robust inverse-decay metric that accounts for the varying semantic density of the different ontologies. The validity score for a parent P is calculated as: S1 (P) = 
+
+
+
+1.0 if P ≡ LP  
+
+> 11+ k·dT(P,LP)
+
+if path exists 
+
+0 otherwise (6) where: • dT (P, LP) is the shortest path distance between the tree parent and the ontological LCA. • k is a density scaling factor derived from the effective semantic depth of the ontology. Based on the empirical average leaf depth across our target ontologies ( Def f ≈ 4.5), we set k ≈ 0.225 . This ensures the score decays to 0.5 at the ”semantic horizon” of approximately 4-5 hops. This metric penalizes clusters where the purported parent is semantically distant from the true common ancestor of its children, while being robust to the different granularities of SUMO, OpenCyc, and YAGO. An illustration of the steps involved to calculate each of the SUMO validation metrics is shown in Figure 9. 
+
+Comparison of the local scores. A comparison of undirected and directed score is shown in Figure 10. Concretely, we test the two scores for the SUMO ontology and the trees resulting from 234 experiments (3 standard datasets, 13 models, 2 text and 3 leaf embedding strategies). This shows that the two are significantly correlated with a Pearson correlation coefficient of 0.86 , and p-value lower than 10 −6. Altogether, the influence of the too specific parent scenarios seems to be neglectable, with the stricter scores being consistently only slightly smaller and showing the same trends. We therefore only report the less strict validity score. (a) Mode 1 (Cluster Consistency). Evaluates if a decision node forms a valid semantic group based on the LCA of its children.   
+
+> (b) Mode 2 (Hierarchical Consistency). Validates structural in-tegrity by verifying directed paths between inferred parent and child concepts. Figure 9: Illustration of the steps involved to calculate the ontology validation metrics.
+
+Intuition behind UTED. Apart from the validity scores described above, we also use unordered tree edit distance (UTED) to compare trees. Figure 12 collects empirical UTED results when comparing binary trees of different size that each have a random assignment of the node labels to the nodes. Notably, this random setting achieves UTED values of approximately 0.35 for very few leaves, stabilizing around 0.5 for mid to large numbers of leaves ( 100 to 1000 , mind the change of scale between 0-100 and 
+
+100 -1000 ). 
+
+C.4 Concept Bank Embeddings & Hyperparameter Study 
+
+In this section we describe in more detail how the embeddings for image and, in particular, textual leaf and concept bank concepts were obtained. Consider a concept C that is specified via image or textual samples x ∈ Spec (C). Similar to other probing techniques based on the interpolatability assumption, we assign to it the embedding space vector 
+
+e(C) := mean  
+
+> x∈Spec (C)
+
+F (x). (7) We consider as sources for the specification set Spec (C) either a set of images containing C taken from a classification dataset (for leaves only); or a set of descriptive textual prompts ; or the mean of a text-based embedding and an image-based one (also leaves only). For generating the textual prompts we enhance the recent ensembling-based technique of [Ma et al. , 2025] by ontology information. They obtain e(C) as the weighted mean of text encodings of the static prompt “a photo of concept ”, and of LLM-generated visual feature descriptions. It is assumed that all ontology concepts map to a set of textual synonyms and a definition, e.g., in the WordNet lexical database [Fellbaum, 2010]. We create static prompts for all of these ( WordNet part of Spec (C)), and also include them in the LLM query for better disambiguation ( LLM part). See supplementary for details. This differs from [Ma 
+
+et al. , 2025] in that they do not attend ambiguity, nor add additional synonyms which required them to use a weighted mean, upvoting the phrase containing the actual term. Note that this technique combines the prompt enhancement from the original CLIP inference [Radford et al. , 2021] with dictionary-enhanced prompting as of [Ge et al. , 2023], and with ensembling ideas from [Roth et al. , 2023] and the recent feature description based ensembling of [Ma et al. , 2025]. 
+
+LLM Queries 
+
+For generating the textual prompts we enhance the technique by [Ma et al. , 2025], considering not only an LLM but also the ontology as source of textual descriptions. The ontology source assumes that the concepts in C map to a synonym set in the WordNet lexical database [Fellbaum, 2010]. Textual descriptions are derived from the synonymous terms and definition as (1) “a photo of term ” for all synonymous terms, (2) “a photo showing a term1 , also described as a term2 , . . . , or a termN ”, and (3) “a photo of a definition ”4.As a second source we query an LLM (Llama3) to create a list of visual features that apply to the concept, such as “whiskers”, and “pointed ears” for cat . To ensure non-ambiguity, the LLM prompt is enhanced as well by the synonyms and definition from WordNet, as detailed below. e(C) is then obtained as the equal weighted mean of all textual descriptions from both sources. Note that this technique combines the prompt enhancement from the original CLIP inference [Radford et al. , 2021], with   
+
+> 4Removing/adapting the article where needed, and for adjectives using “a photo of something that is def ”.
+
+C RN50 
+
+C RN101 
+
+C RN50x4 
+
+C RN50x16 
+
+C RN50x64 
+
+C V-B16 
+
+C V-B32 
+
+C V-L14 
+
+C V-L14@336 
+
+FLAVA 
+
+ALIGN 
+
+SigLIP 224 
+
+SigLIP 384 
+
+0.0 
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 
+
+1.0 SUMO score (directed) 
+
+SUMO score (undirected) CIFAR10 
+
+CIFAR100 
+
+ImageNet 
+
+0.0 
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 
+
+1.0 SUMO score (directed) 
+
+SUMO score (undirected) image text & image text 
+
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+
+WordNet   
+
+> image text & image text
+
+WordNet&LLama3 
+
+> SUMO score (undirected)
+> SUMO score (directed)
+
+image 
+
+text 
+
+text & image 
+
+0.0 
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 
+
+1.0 CIFAR10 
+
+image 
+
+text 
+
+text & image 
+
+CIFAR100 
+
+image 
+
+text 
+
+text & image 
+
+ImageNet 
+
+SUMO score (directed) 
+
+SUMO score (undirected) C RN50 
+
+C RN101 
+
+C RN50x4 
+
+C RN50x16 
+
+C RN50x64 
+
+C V-B16 
+
+C V-B32 
+
+C V-L14 
+
+C V-L14@336 
+
+FLAVA 
+
+ALIGN 
+
+SigLIP 224 
+
+SigLIP 384 
+
+0.0 
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 
+
+1.0 CIFAR10 
+
+C RN50 
+
+C RN101 
+
+C RN50x4 
+
+C RN50x16 
+
+C RN50x64 
+
+C V-B16 
+
+C V-B32 
+
+C V-L14 
+
+C V-L14@336 
+
+FLAVA 
+
+ALIGN 
+
+SigLIP 224 
+
+SigLIP 384 
+
+CIFAR100 
+
+C RN50 
+
+C RN101 
+
+C RN50x4 
+
+C RN50x16 
+
+C RN50x64 
+
+C V-B16 
+
+C V-B32 
+
+C V-L14 
+
+C V-L14@336 
+
+FLAVA 
+
+ALIGN 
+
+SigLIP 224 
+
+SigLIP 384 
+
+ImageNet 
+
+SUMO score (directed) 
+
+SUMO score (undirected) Figure 10: Comparison of the two SUMO validity scores. If not stated otherwise, averaged over models, datasets, leaf and text embedding strategies. dictionary-enhanced prompting as of [Ge et al. , 2023], and with ensembling ideas from [Roth et al. , 2023] and the recent feature description based ensembling of [Ma et al. , 2025]. The rest of this section describes further details on the LLM-based query to create a text specification of a concept. Prompting was done on the Llama3 model [Grattafiori and et al., 2024] 5 via the ollama library 6, and with temperature of 0 to ensure reproducibility. The preceeding system prompt was “You are an expert in visual recognition. Describe the visible traits that would help someone recognize an object in a photo.” The used prompt for a concept with a specified description term (the synonym set name in WordNet) was: “Q: What are useful visual features for distinguishing a lemur in a photo? A: There are several useful visual features to tell there is a lemur in a photo: - four-limbed primate - black, grey, white, brown, or red-brown - wet and hairless nose with curved nostrils - long tail - large eyes - furry bodies - clawed hands and feet Q: What are useful visual features for distinguishing a television in a photo? A: There are several useful visual features to tell there is a television in a photo: - electronic device - black or grey - a large, rectangular screen - a stand or mount to support the screen - one or more speakers - a power cord - input ports for connecting to other devices - a remote control Q: What are useful features for distinguishing a term in a photo? definition 
+
+A: Please list several useful visual features to tell there is a term in a photo. Format your answer as a bullet point list starting with dash (-).” The definition prompt part, if a matching WordNet synonym set is available, is generated as “Here a term , also known as alternative term1 , alternative term2 , . . . , or alternative termN is defined as: def .” where def is the WordNet synonyn set definition, and the alternative terms are the synonyms. The prompt is respectively simplified if no synomyms are available. Articles were changed to ’an’ in presence of respective vocals. For adjectives, “a term in a photo” is replaced by “whether something in a photo is term ”, and “tell there is a term ” is replaced by “tell there is something term ”. The LLM response is parsed to extract all lines where text is started with a dash, taking one line as one visual feature description. An example result of textual descriptions we obtained for the synonym set kitty.n.04 :• Small to medium-sized mammal 
+
+• Furry body with distinctive patterns or colors, such as tabby, calico, or Siamese 
+
+• Whiskers on the face and ears 
+
+• Pointed ears 
+
+• Large eyes with vertical pupils 
+
+• A short, rounded snout 
+
+• Retractable claws 
+
+• Tail that is long and fluffy, or short and stubby 
+
+• Often depicted in a sitting or lying position, as cats are known for their love of napping   
+
+> 5https://ollama.com/library/llama3 6https://github.com/ollama/ollama-python LLama3
+> WordNet
+> WordNet&LLama3
+> 0
+> 20
+> 40
+> 60
+> 80
+> top-1 zero-shot accuracy
+> CIFAR10
+> LLama3
+> WordNet
+> WordNet&LLama3
+> CIFAR100
+> LLama3
+> WordNet
+> WordNet&LLama3
+> ImageNet LLama3
+> WordNet
+> WordNet&LLama3
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> faithfulness
+> CIFAR10
+> LLama3
+> WordNet
+> WordNet&LLama3
+> CIFAR100
+> LLama3
+> WordNet&LLama3
+> CUB
+> LLama3
+> WordNet
+> WordNet&LLama3
+> ImageNet LLama3 WordNet WordNet&LLama3
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> hierarch. consistency
+> Hier. Consist. (Yago)
+> Hier. Consist. (SUMO)
+> Hier. Consist. (OpenCyc)
+
+Figure 11: Comparison of zero-shot performance and faithfulness for textual leaf concepts and different augmenters (top); comparison of hierarchical consistency for different augmenters (bottom); averaged over datasets, models, (and modalities). 
+
+Hyperparameter Study: Comparison of Text Augmenters 
+
+We conducted a comparison of LLM-only, WordNet-only, and combined sources for textual descriptions. This attested the LLM-only version the inferior performance, indicating that descriptions of solely visual features are not sufficient for disambiguition of a concept. Reported results therefore consider WordNet -only text augmentations. These slightly outperformed WordNet+LLM -combined lists of textual descriptions for each concept using Llama3 [Grattafiori and et al., 2024] 7 to generate visual feature descriptions. For embedding a leaf concept we also compare the three modes of text-only, image-only, and average embedding thereof. The comparison is plotted in Figure 11. 
+
+C.5 Details on Ontology Manipulation & Hyperparameter Study 
+
+In this section, we state additional details about the UMAP based embedding transformation. Then, we present additional quantitative results for the hyperparameter search and the additional tasks for ontology manipulation, i.e. Modality alignment: steering embeddings towards the tree extracted from their leave nodes’ text embeddings as well as Ontological commitment: steering them towards the closest valid SUMO tree. Furthermore, we give visual examples of resulting ontology graphs and their embedding structure based on an additional UMAP visualization (now in the usual 2D setting). 
+
+Parametric UMAP transformation. To fit our self-mapping embedding transformation HF for a training set Vorig ⊂ Rn and a VLM F , we first assign target representations initialized as the identities. Custom pairwise distances are then recomputed based on the original Euclidean distances, distances between class representation embeddings e(O), and distances defined by a target class hierarchy T ′ as assigned in Equation (5). Next, we use UMAP to rearrange the embeddings using a variation, where after each update step, all embeddings are projected onto the unit hyper-sphere. This results in a transformation H∗ 
+
+> F
+
+: Vorig −→ VUMAP .Finally, for a transformation that generalizes to Rn, we train a parametric regressor to approximate H∗ 
+
+> F
+
+using a fully connected neural network with 2 hidden layers of n neurons each, ReLU activation, and 500 training epochs. 
+
+Hyperparameter study and leaf swapping. We fitted our hyperparameters for the task of steering an embedding space towards a class hierarchy T ′ which has two swapped leave nodes. This task serves as a reference task. The hyperparameters are explored 
+
+> 7https://ollama.com/library/llama3 Figure 12: Empirical approximation of the expected normalized UTED across randomly generated binary trees with identical leaf sets. Results based on 200 runs for varying numbers of leaf nodes.
+
+for each combination of αorig ∈ { 0.5, 1.0, 2.0}, βonto ∈ { 0.5, 1.0, 2.0}, γmidp ∈ { 0.5, 1.0, 2.0}. We set NUMAP = 250 , which equals the number of samples per class if the classes are balanced in the random training subset. We keep min d = 0 .1 with the default value of UMAP and the parametric model setup remains fixed. For each of the four considered VLMs ALIGN, CLIP with ViT-L14@336 backbone, SigLIP-224 and FLAVA, and each parameter configuration, we randomly swap two non-sibling nodes with positive nUTED and choose the final hyperparameter setting, which we use for all other experiments, based on a combined aggregation score ∆O − ZS UMAP midp . This is as stated in the main paper minimized by αorig = 2 , β onto = 1 , γ midp =2, N UMAP = 250 . Numerical results for the best hyperparameter setting including all variances are presented in Table 14. Based on the best hyperparameters, we ran the experiment per model for 10 random leaf swaps with positive UTED and evaluate its performance on 10000 test samples. To calculate the reference mid point per class, the 2500 randomly subsampled training samples are used. The mean results are presented and discussed in the main paper. For completeness, we list the results including variances in Table 14. 
+
+Steering towards text hierarchy. For the second task, we steer the class hierarchies of image embeddings towards hierarchies extracted from their respective text embeddings. The results, averaged over 5 transformation runs and evaluated on 10000 test samples, are presented in Table 14. Here, the results are mixed: While the transformations did not reduce the average graph distance to the target hierarchies for SigLIP-224, the distance is reduced substantially for FLAVA. As before, reduction in midpoint-based zero-shot performance is moderate. In addition to numerical results, we illustrate the class hierarchy manipulation for a FLAVA transformation both in form of the extracted hierarchical graph representations of original, text-target and transformed embeddings in Figure 13 and standard UMAP visualizations of the original and transformed embeddings in Figures 14 and 15. With the help of the transformation, the embeddings of cat and dog are now further apart and cat and frog moved closer together. Meanwhile the already aligned embeddings have not significantly changed. Except for symmetry, the extracted tree from these transformed embeddings fully aligns with the target tree extracted from the FLAVA text embeddings. 
+
+Steering towards closest valid hierarchies. In our final manipulation experiment, we consider the class hierarchies from the 3 valid SUMO ontologies which are the closest to the extracted ontology from the original model embedding for all models. To steer the embeddings towards each of those, we fit a parametric UMAP transformation three times and calculate the mean per model. Numerical results are displayed in Table 14. On average, for all four models, we can reduce the graph distance to valid trees. However, again, we observe a tradeoff to the (moderate) reduction in midpoint-based zero-shot performance. 
+
+Linear Transformation We replace the non-linear transformation by a linear model and repeat the three tasks: validation, modality alignment and ontological commitment. In Table 15, we show the results. We observe (1) non-linear is in general better in achieving the target ontology with respect to nUTED and ∆O (except for SIGLIP); (2) the linear and the non-linear transformation often achieve similar image embedding zero-shot however, the linear transformation shows distictly worse text embedding zero-shot performance compared to the non-linear transformation. Table 14: Results of the ontology manipulation: Hyperparameter search based on leaf swapping, averaged over 10 swaps and 3 runs (Validation task), adaptation to an ontology extracted from the text embeddings (Modality alignment) and to three SUMO ontologies (Ontological commitment); both averaged over 5 runs. Model ∆O↓
+
+nUTED 
+
+↓
+
+ZS UMAP 
+
+> text
+
+↑
+
+ZS UMAP 
+
+> midp
+
+↑
+
+ZS Orig 
+
+> text
+
+↑
+
+ZS Orig 
+
+> midp
+
+↑
+
+Validation task ALIGN 0.589 ± 2.9e-01 0.080 ± 3.7e-03 0.579 ± 1.3e-03 0.701 ± 1.5e-04 0.753 ± 0.0e+00 0.804 ± 4.1e-06 C V-L14@336 0.850 ± 2.8e-01 0.098 ± 7.1e-04 0.732 ± 4.5e-03 0.858 ± 1.5e-04 0.946 ± 0.0e+00 0.958 ± 4.0e-07 FLAVA 0.731 ± 3.9e-01 0.072 ± 2.2e-03 0.688 ± 1.1e-03 0.786 ± 1.4e-04 0.890 ± 0.0e+00 0.923 ± 3.4e-07 SIGLIP 224 0.720 ± 8.6e-02 0.102 ± 3.7e-04 0.723 ± 2.4e-03 0.837 ± 6.4e-05 0.914 ± 0.0e+00 0.931 ± 1.7e-06 Modality alignment ALIGN 0.723 ± 7.0e-02 0.189 ± 1.9e-03 0.547 ± 1.6e-03 0.674 ± 1.2e-04 0.753 ± 0.0e+00 0.803 ± 6.2e-06 C V-L14@336 0.779 ± 2.2e-03 0.105 ± 0.0e+00 0.782 ± 9.9e-04 0.871 ± 8.9e-05 0.946 ± 0.0e+00 0.958 ± 4.7e-07 FLAVA 0.129 ± 3.1e-02 0.021 ± 8.3e-04 0.720 ± 2.2e-04 0.809 ± 2.7e-05 0.890 ± 0.0e+00 0.923 ± 2.1e-06 SigLIP 224 1.055 ± 1.3e-02 0.211 ± 0.0e+00 0.687 ± 1.9e-03 0.818 ± 2.8e-05 0.914 ± 0.0e+00 0.931 ± 2.1e-06 Ontological commitment ALIGN 0.792 ± 2.8e-02 0.393 ± 5.5e-04 0.554 ± 7.7e-04 0.682 ± 1.1e-04 0.753 ± 0.0e+00 0.803 ± 5.3e-06 C V-L14@336 0.732 ± 1.4e-02 0.411 ± 1.3e-03 0.730 ± 1.8e-03 0.842 ± 2.5e-04 0.946 ± 0.0e+00 0.958 ± 4.0e-07 FLAVA 0.714 ± 2.6e-02 0.400 ± 2.4e-03 0.671 ± 4.5e-04 0.781 ± 3.5e-05 0.890 ± 0.0e+00 0.923 ± 1.8e-06 SigLIP 224 0.889 ± 1.1e-02 0.411 ± 1.3e-03 0.745 ± 3.6e-04 0.820 ± 2.5e-05 0.914 ± 0.0e+00 0.931 ± 1.8e-06       
+
+> rootNode 18
+> Node 17
+> horse Node 15
+> Node 10
+> cat dog
+> Node 13
+> frog Node 11
+> bird deer
+> Node 16
+> Node 12
+> automobile truck
+> Node 14
+> airplane ship
+
+(a) Ontology graph extracted from the embedded testset.       
+
+> rootNode 18
+> Node 14
+> dog Node 12
+> deer horse
+> Node 17
+> Node 15
+> bird Node 13
+> cat frog
+> Node 16
+> Node 10
+> airplane ship
+> Node 11
+> automobile truck
+
+(b) Ontology after learning a transformation of the embeddings.       
+
+> rootcow
+> canis major
+> dog equine
+> deer horse
+> dawdler
+> vehicle
+> motor vehicle
+> automobile truck
+> jetliner
+> airplane ship
+> carinate
+> bird feline
+> cat frog
+
+(c) Target ontology graph extracted from the text embeddings. Figure 13: For the flava-full VLM model we achieved to learn a transformation from the image embedding space to the text embedding space which achieves full alignment of image and text ontology (except for symmetry). Table 15: Simple Linear Model to approximate the denoted embedding transformation, all runs are averaged over five seeds. Model ∆O↓
+
+nUTED 
+
+↓
+
+ZS UMAP 
+
+> text
+
+↑
+
+ZS UMAP 
+
+> midp
+
+↑
+
+ZS Orig 
+
+> text
+
+↑
+
+ZS Orig 
+
+> midp
+
+↑
+
+Validation task ALIGN 0.812 ± 1.7e-01 0.108 ± 2.0e-03 0.485 ± 1.6e-03 0.715 ± 1.3e-04 0.753 ± 0.0e+00 0.803 ± 5.1e-06 C V-L14@336 0.927 ± 2.6e-01 0.103 ± 2.2e-04 0.595 ± 4.3e-03 0.887 ± 9.9e-05 0.946 ± 0.0e+00 0.958 ± 3.8e-07 FLAVA 0.799 ± 3.6e-01 0.090 ± 2.0e-03 0.712 ± 8.8e-04 0.850 ± 9.2e-05 0.890 ± 0.0e+00 0.923 ± 1.7e-06 SigLIP 224 0.547 ± 1.9e-01 0.082 ± 1.9e-03 0.623 ± 4.5e-03 0.861 ± 6.3e-05 0.914 ± 0.0e+00 0.931 ± 1.7e-06 Modality alignment ALIGN 1.013 ± 0.0e+00 0.237 ± 0.0e+00 0.510 ± 3.9e-04 0.693 ± 1.2e-04 0.753 ± 0.0e+00 0.803 ± 6.2e-06 C V-L14@336 0.748 ± 1.1e-03 0.105 ± 0.0e+00 0.690 ± 2.0e-03 0.895 ± 4.5e-05 0.946 ± 0.0e+00 0.958 ± 4.7e-07 FLAVA 0.443 ± 4.4e-03 0.295 ± 8.3e-04 0.729 ± 5.1e-04 0.868 ± 1.7e-05 0.890 ± 0.0e+00 0.923 ± 2.1e-06 SigLIP 224 1.055 ± 1.3e-02 0.211 ± 0.0e+00 0.625 ± 3.2e-03 0.846 ± 4.6e-05 0.914 ± 0.0e+00 0.931 ± 2.1e-06 Ontological commitment ALIGN 0.890 ± 1.7e-02 0.418 ± 2.5e-03 0.497 ± 6.3e-04 0.700 ± 7.8e-05 0.753 ± 0.0e+00 0.803 ± 5.3e-06 C V-L14@336 0.778 ± 1.4e-02 0.422 ± 3.3e-03 0.601 ± 4.7e-03 0.872 ± 2.0e-04 0.946 ± 0.0e+00 0.958 ± 4.0e-07 FLAVA 0.813 ± 3.7e-02 0.402 ± 2.8e-03 0.709 ± 2.2e-04 0.848 ± 1.7e-05 0.890 ± 0.0e+00 0.923 ± 1.8e-06 SigLIP 224 0.889 ± 1.1e-02 0.411 ± 1.3e-03 0.641 ± 2.5e-03 0.849 ± 3.3e-05 0.914 ± 0.0e+00 0.931 ± 1.8e-06 
+
+Figure 14: UMAP visualization of the original embedding space based on the test dataset Figure 15: UMAP visualization after applying the learned transformation to the embedding space of the test dataset

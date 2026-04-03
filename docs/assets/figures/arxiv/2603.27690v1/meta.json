@@ -1,0 +1,78 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.27690v1/fig-001.webp",
+      "caption": "Figure 1. Shot-Type Controlled Visual Story Customization",
+      "page": 1,
+      "index": 1,
+      "width": 496,
+      "height": 414
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27690v1/fig-002.webp",
+      "caption": "Figure 4. Qualitative Comparison between (a) IP-Adapter [48], (b) StoryDiffusion [53], (c) Consistory [33], (d) DreamStory [13], (e) CharaConsist [37] and (f) CustFilmer (Ours) on MSB",
+      "page": 6,
+      "index": 2,
+      "width": 965,
+      "height": 608
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27690v1/fig-003.webp",
+      "caption": "Table 1. Quantitative comparison of prior methods on consistency metrics.",
+      "page": 6,
+      "index": 3,
+      "width": 975,
+      "height": 221
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27690v1/fig-004.webp",
+      "caption": "Figure 5. Qualitative Comparison between (a) IP-Adapter [48], (b) StoryDiffusion [53], (c) Consistory [33], (d) DreamStory [13], (e) CharaConsist [37] and (f) CustFilmer (Ours) on M2SB",
+      "page": 7,
+      "index": 4,
+      "width": 942,
+      "height": 593
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27690v1/fig-005.webp",
+      "caption": "Figure 2. Overview of VstoryGen. (1) Multimodal scripts are generated from an overall text description D, where the reference images of characters (indexed 1 to m) and background scenes (indexed 1 to o) are generated first, and the multimodal scripts (indexed 1 to n) are generated afterward; (2) CustFilmer produces consistent keyframes corresponding to the scripts from 1, · · · , n, respectively; (3) TI2V expands the n keyframes into video.",
+      "page": 3,
+      "index": 5,
+      "width": 486,
+      "height": 378
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27690v1/fig-006.webp",
+      "caption": "Figure 8. Dataset for shot-type control from CMD",
+      "page": 13,
+      "index": 6,
+      "width": 854,
+      "height": 423
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27690v1/fig-007.webp",
+      "caption": "Figure 7. Overview of Multimodal Story Benchmark (MSB)",
+      "page": 13,
+      "index": 7,
+      "width": 977,
+      "height": 382
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27690v1/fig-008.webp",
+      "caption": "Figure 6. Top: Ablation on consistency components (a) Previous frame, (b) w/o TPC&Retrieval, (c) +Retrieval, (d) +TPC&Retrieval. Bottom: Ablation on α, (e) Previous frame, (f) α = 1, (g) α = 0.25, (h) α = 0.125.",
+      "page": 8,
+      "index": 8,
+      "width": 494,
+      "height": 266
+    },
+    {
+      "url": "assets/figures/arxiv/2603.27690v1/fig-009.webp",
+      "caption": "Figure 3. Illustration of CustFilmer, which can take multimodal materials as input to generate sequences of consistent keyframes.",
+      "page": 4,
+      "index": 9,
+      "width": 1024,
+      "height": 622
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.25467v2/fig-001.webp",
+      "caption": "Fig. 2: Qualitative comparison with anomaly detection models adapted for video anomaly detection on the UCSD Ped2 dataset.",
+      "page": 6,
+      "index": 1,
+      "width": 862,
+      "height": 527
+    },
+    {
+      "url": "assets/figures/arxiv/2603.25467v2/fig-002.webp",
+      "caption": "Table 1: Quantitative comparison on UCSD Ped2. Baseline numbers are transcribed from the TAO paper; our results are in the last row.",
+      "page": 7,
+      "index": 2,
+      "width": 964,
+      "height": 273
+    },
+    {
+      "url": "assets/figures/arxiv/2603.25467v2/fig-003.webp",
+      "caption": "Fig. 1: Overview of the GridVAD pipeline. We convert a video into M stratified frame grids and process them by a VLM to generate anomaly proposals. A semantic consolidation step filters inconsistent proposals. The anomaly description is input to a prompt-based object detection model (Grounding DINO) to localize the anomaly, and SAM2 propagates it across frames to produce temporally consistent pixel-level anomaly masks.",
+      "page": 3,
+      "index": 3,
+      "width": 976,
+      "height": 579
+    }
+  ]
+}

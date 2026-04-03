@@ -1,0 +1,660 @@
+Title: Customized Visual Storytelling with Unified Multimodal LLMs
+
+URL Source: https://arxiv.org/pdf/2603.27690v1
+
+Published Time: Tue, 31 Mar 2026 01:11:57 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# Customized Visual Storytelling with Unified Multimodal LLMs 
+
+## Wei-Hua Li 1, Cheng Sun 2, Chu-Song Chen 11National Taiwan University, 2NVIDA 
+
+{d12922009,chusong }@csie.ntu.edu.tw, chengs@nvidia.com 
+
+## Abstract 
+
+Multimodal story customization aims to generate coher-ent story flows conditioned on textual descriptions, refer-ence identity images, and shot types. While recent progress in story generation has shown promising results, most ap-proaches rely on text-only inputs. A few studies incorporate character identity cues (e.g., facial ID), but lack broader multimodal conditioning. In this work, we introduce Vs-toryGen, a multimodal framework that integrates descrip-tions with character and background references to enable customizable story generation. To enhance cinematic diver-sity, we introduce shot-type control via parameter-efficient prompt tuning on movie data, enabling the model to gener-ate sequences that more faithfully reflect cinematic gram-mar. To evaluate our framework, we establish two new benchmarks that assess multimodal story customization from the perspectives of character and scene consistency, text–visual alignment, and shot-type control. Experiments demonstrate that VstoryGen achieves improved consistency and cinematic diversity compared to existing methods. 
+
+## 1. Introduction 
+
+Recent advancements in text-to-video (T2V) or text-and-image-to-video (TI2V) [7, 16, 21, 35] transformers have shown notable progress in generating compelling videos; however, these outputs remain limited to short clips. Sev-eral studies [4, 6, 36] have extended video durations, but the resulting videos are often restricted to slow motion. Be-cause transformer computation and memory costs increase quadratically, sustaining long-term generation is highly de-manding. To address this, research [13] has introduced pipelines that extend video length by first using text-to-image (T2I) models to generate keyframes , which are then expanded into video clips via image-to-video (I2V) or TI2V models. Concatenating these clips enables longer video generation, with keyframes serving as structural anchors for storytelling. Keyframe-based methods align more naturally with storylines and scale effectively to long-form video cre-ation, yet producing videos with structured narratives and Kai's face shifts to a thoughtful 
+
+> expression as he gazes out the
+> window, his hands resting on the
+> windowsill as he contemplates
+> something profound.
+> Kai’s eye depicts a spark of
+> reflection, highlighting his deep
+> contemplation and the world just
+> beyond the glass.
+> Kai leaning against the wall,
+> arms crossed, still lost in his
+> thoughts while gazing at the
+> street outside.
+> Extreme
+> Close -up
+> Medium Shot
+> Character:
+> Kai
+> Scene:
+> Living Room
+> Close up
+> Reference  Images
+> Character:
+> Lana
+> Scene:
+> Bedroom
+> Lana leans forward, carefully
+> flipping through the pages of
+> her sketchbook, her focused
+> expression highlighting her
+> determination.
+> Lana stands and gathers her
+> art supplies from the desk,
+> placing them into a bag while
+> glancing out the window.
+> Lana walks towards the door,
+> her bag slung over one
+> shoulder, as she turns to take
+> one last look at her bedroom.
+> Full Shot
+> Medium Shot
+> Close up
+> Reference  Images
+
+Figure 1. Shot-Type Controlled Visual Story Customization 
+
+coherent characters and scenes remains a challenge. Another related line of research, visual story genera-tion, aims to produce a series of images based on text in-puts [23, 25, 33, 37, 53]. These methods often rely on T2I diffusion models such as stable or latent diffusion [30], dif-fusion transformers [27], or FLUX.1 [18], with CLIP [28] or related models used to encode the input text. Some meth-ods [23, 25, 33, 53] can maintain the consistency of par-ticular subjects (e.g., character faces) generated from text prompts. However, background consistency is also crucial for story generation to ensure narrative coherence. Chara-Consist [37], therefore, improves scene consistency derived from input text. Despite these advances, they cannot lever-age reference images as inputs for guiding character- or scene-specific customization. Moreover, their ability to comprehend complex textual descriptions remains weak, hindering the generation of detailed visual outputs. To address the aforementioned problems, we introduce 
+
+VstoryGen for multimodal story customization, which con-ditions on textual descriptions, reference images, and shot-type controls to generate coherent story sequences. Our ap-proach is inspired by the customization concept in image 
+
+> arXiv:2603.27690v1 [cs.CV] 29 Mar 2026
+
+editing [17, 48]. Reference images and their associated tex-tual descriptions help customize the story sequences with temporal consistency. In addition, customization guidance enables the produced videos to better align with the struc-tured narrative of storytelling. To handle multimodal inputs, the capability to comprehend intricate textual descriptions and their association with images is essential. We leverage the remarkable ability of multimodal large language models (MLLMs) to understand both text and images. In particular, we employ unified MLLMs (UMLLMs) [5, 43], as they can generate multimodal outputs. VstoryGen consists of three stages that transform free-form descriptions into video sequences, as illustrated in Fig. 2. First, multimodal script generation , a prepro-cessing step that constructs structured multimodal scripts (including text prompts, reference images, and shot types) to guide keyframe production. Second, CustFilmer gen-erates an arbitrary number of customized and consistent keyframes according to the scripts. Finally, video gener-ation , which takes the keyframes as anchors and leverages existing TI2V models to expand them into videos. In ad-dition, CustFilmer incorporates shot-type control through prompt tuning with movie data from CMD [2]. This design enables CustFilmer to produce more cinematic views, over-coming the monotony of fixed-view generation in existing methods, as shown in Fig 1. For evaluation, existing benchmarks (e.g., DS500 [33], ConsiStory+ [23]) are limited to text-only inputs. These datasets do not suit assessing the performance of story cus-tomization. To properly evaluate our method, we intro-duce the Multimodal Storyboard Benchmark (MSB) and the Multimodal & Multisubject Storyboard Benchmark (M 2SB), designed to assess multimodal story customiza-tion in single- and multi-subject settings, respectively. Both benchmarks include diverse identity images, backgrounds, narrative scripts, and shot-type annotations, providing a uni-fied basis for fair comparison. Our contributions are summarized as follows: • We propose VstoryGen , a pipeline for long-form story generation with multimodal customization. It provides a framework to support customization based on text prompts, character(s)/scene references, and shot types. • We release two new benchmarks, MSB and M2SB , which contain multimodal materials and provide standardized evaluation for multimodal story customization. 
+
+## 2. Related Works 
+
+In this section, we review several related research topics, including long-form video generation models, MLLMs & UMLLMs, and visual story generation. 
+
+2.1. Long-form Video Generation Models 
+
+Long-form video generation has been a long-standing chal-lenge in the field. Recent works [4, 6, 36] have ex-tended video durations to about one minute, surpassing the lengths achievable by models such as Sora [3] and Veo3 [7]. SEINE [4] is designed to reuse the last few frames of a generated video to predict subsequent ones. LingGen [36] enables linear-complexity generation but remains limited to single scenes and slow motion, without capturing com-plex narratives. TTT-Video [6] produces clips up to one minute long. To further extend video length, existing meth-ods [13, 13] adopt a multi-stage pipeline that first generates keyframes, expands them into short clips via I2V models, and concatenates them into long videos. However, these methods primarily focus on foreground consistency while neglecting scene and contextual coherence, resulting in in-consistent scenes and reduced expressiveness. 
+
+2.2. MLLMs and UMLLMs 
+
+In recent years, MLLMs [1, 22] have extended the ca-pabilities of LLMs [34] by projecting visual features and aligning them with textual representation, thereby enabling strong image understanding and reasoning ability. How-ever, MLLMs can only output text. At the same time, im-age generation with diffusion-based methods [12, 27, 30] and autoregressive-based methods [10] have demonstrated powerful generative capacity. Building on these advances in both multimodal understanding and generative model, re-cent efforts have explored UMLLMs [50] for multimodal understanding and generation. Existing UMLLMs can be divided into three categories based on their backbone archi-tecture: (1) Diffusion Models, (2) Autoregressive models and (3) Fused AR and Diffusion Models. 
+
+2.2.1. Diffusion Models 
+
+Diffusion models have demonstrated remarkable success in image generation. Building on these advances, recent studies have extended diffusion-based frameworks from unimodal settings to multimodal generation, enabling uni-fied modeling of both textual and visual outputs. For in-stance, Dual Diffusion [20] jointly models image and text distributions through a unified denoising diffusion objec-tive. MMaDA [47], a multimodal diffusion foundation model, further introduces a mixed chain-of-thought fine-tuning strategy to unify reasoning formats across vision and language tasks. Despite their promising capabilities, a ma-jor limitation of diffusion-based multimodal models lies in inference efficiency. 
+
+2.2.2. Autoregressive (AR) Models 
+
+AR models have emerged as the dominant paradigm in ex-isting UMLLMs. These models are typically built upon Transformer backbones adapted from LLMs, such as the LLaMA series [34] and the Qwen series [1, 46]. To incorpo-rate visual information, prior studies explore diverse image tokenization strategies during encoding, including semantic tokenization with Vision Transformer (ViT) [9] and pixel-level tokenization with Variation Autoencoder (VAE) [14]. Within this unified AR framework, multimodal embed-dings are autoregressively predicted and subsequently de-coded into text via detokenization modules or visual outputs via pixel-based decoders (e.g., VQVAE [29], VQGAN [10]) or diffusion-based decoders (e.g., Diffusion Transformer (DiT) [27]). Seed-X [11] introduces multi-granularity mod-eling to support image understanding and generation across arbitrary resolutions. Emu3 [38] adopts a fully autoregres-sive formulation by tokenizing all modalities into a sin-gle sequence, enabling unified image and video generation. Janus-Pro [5] employs decoupled image encoders to sep-arate semantic understanding from visual synthesis. Om-niGen2 [41] further integrates text-to-image synthesis, im-age editing, and in-context generation within a rectified-flow framework. These AR-based UMLLMs demonstrate the strong visual understanding and image synthetic ability. 
+
+2.2.3. Fused AR and Diffusion Models 
+
+Fused AR and diffusion modeling has recently emerged as a powerful paradigm for unified vision–language generation. In this framework, textual tokens are produced in an autore-gressive manner, inheriting strong compositional reasoning capabilities of LLMs, while visual content is synthesized through iterative denoising processes following the diffu-sion principle. By combining the complementary strengths of these two paradigms, fused AR–diffusion models achieve both flexible language generation and high-quality image synthesis within a unified architecture. Several recent works exemplify this hybrid design. Show-o [45] integrates autoregressive text modeling with diffusion-based image generation to support multimodal content creation. Transfusion [52] further explores cross-modal token alignment between AR and diffusion branches, enabling coherent joint generation of text and images. Janus-Flow [24] adopts a rectified-flow formulation to unify autoregressive language modeling with diffusion-based vi-sual synthesis, demonstrating improved stability and gener-ation quality across multimodal tasks. In this paper, we focus on AR models for story cus-tomization, as they represent the dominant direction in UM-LLMs. Moreover, AR models naturally support generating story sequences of arbitrary length, enabling flexible and scalable story generation. 
+
+2.3. Visual Story Generation 
+
+The goal of visual story generation is to produce coherent sequences of images that ensure both character and scene consistency while preserving logical continuity throughout the narrative. Prior works have explored this challenge from 𝐷 : Ethan carefully prepares a cup of tea in the kitchen,                                                                 
+
+> moving in amethodical rhythm as he handles the
+> kettle and teacup .After taking amoment to enjoy the
+> warmth of the cup, he packs his sketchbook and
+> leaves the kitchen, making his way to the riverside .
+> 𝑝 !: Ethan stands at the counter, his fingers
+> wrapped around the handle of a kettle as he
+> lifts it to pour boiling water into a teacup.
+> 𝑝 ": Ethan picks up a small spoon and stirs
+> the tea, observing the gentle swirl of the
+> liquid in the cup.
+> 1
+> Multimodal Script 𝑠 !
+> Multimodal Script 𝑠 "
+> 𝐶′ !={𝑐 !}
+> 𝐶′ "={𝑐 !}
+> 𝐶 =𝑐 !,𝐵 ={𝑏 !,𝑏 "}
+> 𝑐 !
+> 𝑏 !𝑏 "
+> 𝑏′ !=𝑏 !
+> 𝑏′ "=𝑏 !
+> 𝐶 !
+> #%&'% ={“Ethan”}
+> 𝑏 !
+> #%&'% =“Kitchen”
+> 𝑘 !: Medium shot
+> 𝐶 "
+> #%&'% ={“Ethan”}
+> 𝑏 "
+> #%&'% =“Kitchen”
+> 𝑘 ": Medium Shot
+> Keyframes
+> CustFilmer
+> TI2V
+> 23
+
+Figure 2. Overview of VstoryGen. (1) Multimodal scripts are generated from an overall text description D, where the reference images of characters (indexed 1 to m) and background scenes (in-dexed 1 to o) are generated first, and the multimodal scripts (in-dexed 1 to n) are generated afterward; (2) CustFilmer produces consistent keyframes corresponding to the scripts from 1, · · · , n ,respectively; (3) TI2V expands the n keyframes into video. 
+
+different perspectives, with early studies focusing primarily on character (foreground) consistency. For instance, ConsiStory [33] is designed to maintain subject identity while aligning with textual descriptions; StoryDiffusion [53] incorporates Consistent Self-Attention to enhance character preservation; and Storynizor [25] introduces ID-Injector and ID-Synchronizer modules for identity consistency. Similarly, StoryWeaver [49], Dream-Story [13], and 1P1S [23] continue to prioritize character consistency. Although these methods improve character preservation, they remain limited in enforcing scene coher-ence, often resulting in discontinuities. CharaConsist [37] advances this direction by leveraging point-tracking atten-tion and adaptive token merging to align foreground and background, but it still relies solely on text inputs, restrict-ing effective customization. In contrast, our approach conditions on a comprehensive set of multimodal materials, including text prompts, fore-ground subjects, background scenes, and shot-type annota-tions. This provides greater flexibility for user customiza-tion, whereas prior approaches cannot accommodate such diverse conditions. 
+
+## 3. Method 
+
+VstoryGen generates coherent sequences with consistent characters, scenes, and diverse content. The solution is scalable to long video generation. First, Multimodal Script Generation uses a Multimodal Generator as Director to Autoregressive Transformer (LLM) 
+
+…                                 
+
+> Story Scripts from Stage 1
+> Char. mention (𝑪 𝟏
+> "𝒕𝒆𝒙𝒕 )
+> Kai
+> Char. mention (𝑪 𝟐
+> "𝒕𝒆𝒙𝒕 )
+> Kai
+> Char. mention (𝑪 𝒏
+> "𝒕𝒆𝒙𝒕 )
+> Kai
+> Bg. mention (𝒃 𝟏
+> "𝒕𝒆𝒙𝒕 )
+> Library
+> Bg. mention (𝒃 𝟐
+> "𝒕𝒆𝒙𝒕 )
+> Library
+> Bg. mention (𝒃 𝒏
+> "𝒕𝒆𝒙𝒕 )
+> Riverside
+> Shot type (𝒌 𝟏 )
+> Medium Shot
+> Shot type (𝒌 𝟐 )
+> Full Shot
+> Shot type (𝒌 𝒏 )
+> Full Shot
+
+…
+
+hidden state ( ℎ!) hidden state ( ℎ") hidden state ( ℎ#)
+
+Visual Reference Memory Bank 
+
+Kai Library Riverside 
+
+Diffusion Transformer (DiT) 
+
+… hidden 
+
+state ( ℎ!)
+
+Refiner (MLP) 
+
+VAE 
+
+Refiner (MLP) 
+
+> Augmented
+> Visual
+> Reference
+
+𝑪 𝒏  
+
+> "𝒕𝒆𝒙𝒕
+
+, 𝒃 𝒏  
+
+> "𝒕𝒆𝒙𝒕
+
+…
+
+Diffusion Transformer (DiT) 
+
+Refiner (MLP) 
+
+VAE 
+
+Refiner (MLP)                                 
+
+> Text Prompt (𝒑 𝟏 )
+> Kai leans over
+> his sketchbook ,…,
+> his brow furrowed
+> in concentration
+> while surrounded
+> by tall
+> bookshelves.
+> Text Prompt (𝒑 𝟐 )
+> Kai steps away
+> from the table,
+> gathering his
+> things ,…at the
+> bookshelves.
+> Text Prompt (𝒑 𝒏 )
+> Kai sits cross -
+> legged on the
+> grass ,…, his
+> face illuminated
+> with excitement
+> to draw.
+
+Diffusion Transformer (DiT) 
+
+shot prompt 
+
+𝐸 $%&' (𝑘 #)
+
+hidden 
+
+state ( ℎ#)
+
+Refiner (MLP) 
+
+VAE 
+
+Refiner (MLP) 
+
+> Initial
+> Visual
+> Reference
+> …
+
+Keyframe 1 Keyframe 2 Keyframe n -1…
+
+Keyframe 1 
+
+Keyframe 2 
+
+Keyframe n 
+
+Text Prompt Consolidation (TPC) 
+
+> Visual
+> Reference
+> Retrieval
+
+shot prompt 
+
+𝐸 $%&' (𝑘 ")
+
+hidden 
+
+state ( ℎ")
+
+𝑪 𝟐  
+
+> "𝒕𝒆𝒙𝒕
+
+, 𝒃 𝟐  
+
+> "𝒕𝒆𝒙𝒕
+
+shot prompt 
+
+𝐸 $%&' (𝑘 !)
+
+𝑪 𝟏  
+
+> "𝒕𝒆𝒙𝒕
+
+, 𝒃 𝟏  
+
+> "𝒕𝒆𝒙𝒕
+> Visual
+> Reference
+> Retrieval
+> Visual
+> Reference
+> Retrieval
+
+Figure 3. Illustration of CustFilmer, which can take multimodal materials as input to generate sequences of consistent keyframes. 
+
+structure the narrative into multimodal scripts. Second, 
+
+CustFilmer customizes the keyframes based on the mul-timodal scripts. We then leverage existing TI2V models to expand generated keyframes into videos. 
+
+3.1. Multimodal Generative Model as Director 
+
+Existing T2I story generation methods [13, 37] commonly rely on powerful generative models (e.g., GPT-4) to pro-duce a sequence of text prompts from a story description. Following this practice, we leverage GPT-4o to prepare text prompts and shot types for each keyframe, as well as refer-ence images (character and background) for the story, and construct the initial visual reference for the next step. For each keyframe, we construct a script st (t = 1 , . . . , n ) based on a free-form story description D, as illustrated in Fig. 2. Given a description D, GPT-4o produces text prompts 
+
+P = {p1, . . . , p n}, each describing a corresponding keyframe. The script st = ( pt, C ′text  
+
+> t
+
+, b ′text  
+
+> t
+
+, k t ) consists of a textual prompt pt, selected textual mentions of charac-ter(s) C′text  
+
+> t
+
+= {c′text t, 0 ...c ′text t,q } and background(s) b′text  
+
+> t
+
+, and a shot type kt ∈ K , where q denotes the number of charac-ters in each script and K denotes the shot-type vocabulary set. The scripts serve as conditions for the next stage, where CustFilmer instantiates them into consistent keyframes. 
+
+3.2. CustFilmer as a Keyframes Generator 
+
+3.2.1. AR-based UMLLM for Image Editing 
+
+One major line of research in UMLLMs adopts AR-based architectures, where multimodal tokens are serialized and modeled sequentially within a unified Transformer back-bone. Recent AR-based UMLLMs further extend this paradigm to image and video editing [39–41, 43]. Instead of injecting visual features into the AR backbone, these ap-proaches encode reference images or videos with a VAE and deliver the embeddings directly to the diffusion de-coder, thereby better preserving low-level visual informa-tion. While such designs significantly improve editing fi-delity, they remain primarily focused on single-step con-tent modification and are not optimized for generating long sequences of coherent story frames. Building upon this AR-based editing UMLLM paradigm, we propose Cust-Filmer, enabling scalable and temporally consistent multi-image generation within a unified model. 
+
+3.2.2. CustFilmer 
+
+Given a multimodal script from the previous stage, the goal of CustFilmer is to generate the corresponding keyframes. A straightforward extension is to adopt multi-turn interac-tions, enabling UMLLMs to generate multiple images se-quentially. However, such multi-turn generation is highly inefficient and prone to error accumulation across turns, making it difficult to preserve long-term consistency. To address these limitations, we propose CustFilmer that restructures existing UMLLMs into an autoregres-sive model with iterative diffusion-based decoders (e.g. DiT [27]), enabling scalable story image generation. In CustFilmer, we introduce three mechanisms to better adapt UMLLMs for visual storytelling: (1) Text Prompt Consol-idation , (2) Keyframe-wise Autoregressive Generation and (3) Visual Reference Memory Bank and Retrieval . These mechanisms improve intra-frame consistency while pre-serving the base model’s customization and generation flex-ibility. An illustration is shown in Fig. 3 
+
+Text Prompt Consolidation (TPC). To achieve consis-tent T2I generation, prior work [23] shows that language models exhibit context consistency, enabling identity and semantic information to be preserved within a consolidated prompt, resulting in coherent CLIP embeddings [28]. Inspired by this property, we propose TPC, which jointly encodes prompts using LLMs to produce text embeddings with stronger semantic and identity consistency than inde-pendent encoding. Specifically, for each story, we group their text prompts P = {p1, . . . , p n} in the same batch for model inference. We then extract their hidden states 
+
+H = {h1, . . . , h n} through an auto-regressive model, as illustrated in Fig. 3. These hidden states represent different events within the same story and serve as semantic condi-tions for keyframe generation in the subsequent stage. 
+
+Keyframe-wise Autoregressive Generation. To enable the generation of arbitrarily long image sequences, we pro-pose a keyframe-wise autoregressive generation framework that propagates temporal information across keyframes. Following prior AR-based UMLLMs for image editing, we employ a VAE to encode pixel-level features from reference images (e.g., character portraits and background scenes) and inject them into the diffusion decoder (e.g., DiT). These reference images are dynamically retrieved based on the current context, including both predefined inputs and pre-viously generated keyframes, as detailed in the next sec-tion. At each step t, the DiT module synthesizes the current keyframe as It = DiT( ht, z t), where ht denotes the hidden state produced by the AR model, and zt denotes the VAE-encoded visual features of the reference images. 
+
+Visual Reference Memory Bank and Retrieval. To en-hance temporal consistency while avoiding reference ambi-guity, we introduce a Visual Reference Memory Bank with a structured retrieval. The memory bank stores both initial reference images (from Stage 1) and previously generated keyframes, organized as a key–value dictionary. Specifi-cally, at each timestep t, the character mentions Ctext  
+
+> t
+
+and background mentions btext  
+
+> t
+
+serve as queries to retrieve the corresponding visual references. Unlike embedding-based retrieval, our approach leverages structured script annota-tions, ensuring precise and interpretable reference selection. In addition to static references, we further retrieve the most recent μ previously generated keyframes {It−i}μi=1 
+
+that share the same character and scene, providing tempo-rally coherent visual cues. This design jointly enforces se-mantic alignment (via structured queries) and temporal con-sistency (via recent frames). The retrieved references are then aggregated and en-coded as: zt = VAE Rt, {Scale α(It−i)}μi=1 
+
+, where Rt =
+
+{C′
+
+> t
+
+, b ′
+
+> t
+
+} denotes the retrieved character and background ref-erences, and α controls the trade-off between consistency and diversity. By combining memory retrieval with recur-sive conditioning on previous frames, our design enables coherent visual information propagation across keyframes. 
+
+3.2.3. Prompt Tuning for Shot-type Control. 
+
+Cinematic storytelling requires diverse visual perspectives. To this end, we introduce a set of shot-type embeddings learned via parameter-efficient prompt tuning [19] on the Condensed Movie Dataset (CMD) [2]. This design en-ables general-purpose UMLLMs to capture the composi-tional priors required for cinematic keyframe generation without retraining the entire model. Let K denote the shot-type vocabulary, and let kt ∈ K represent the shot-type token assigned to script st. Given the hidden state ht at each DiT iteration, we prepend a learnable shot-type em-bedding Eshot (kt) ∈ Rd×N , where d is the embedding di-mension and N denotes the number of tokens, to construct a shot-aware representation: h′ 
+
+> t
+
+= [ Eshot (kt) ; ht ]. The sequence h′ 
+
+> t
+
+is then used to condition the DiT decoder: 
+
+It = DiT( h′
+
+> t
+
+, z t). This hidden-state prefixing enforces shot-specific composition without re-encoding by autore-gressive model, leading to outputs that are visually diverse. 
+
+3.2.4. Multi-subject Story Customization. 
+
+Prior story generation methods [37, 53] are largely re-stricted to single-character settings, which limits their abil-ity to model multi-subject interactions. In contrast, Cust-Filmer incorporates multiple reference images within vi-sual reference retrieval, enabling multi-character story cus-tomization and substantially enhancing narrative flexibility. 
+
+3.3. TI2V Expansion 
+
+As a downstream step, the generated keyframes can be ex-panded into videos using off-the-shelf TI2V models. Rather than relying on the last generated frame (known to cause er-ror accumulation in long-horizon generation), we treat our consistent keyframes from Stage 2 as the anchors for video extension. Given the script prompts from Stage 1 and the keyframes, we employ a TI2V model (e.g., Wan [35]) to (f) CustFilmer (Ours) (a) IP -Adapter (b) StoryDiffusion (c) Consistory (d) DreamStory (e) CharaConsist   
+
+> Zoe sits on a park bench,
+> reaching for her sketchbook
+> while glancing at the
+> picturesque landscape in
+> front of her.
+> Zoe walks away from the
+> park bench, heading
+> towards the entrance of the
+> shopping mall, her bag slung
+> over her shoulder.
+> Zoe lifts her camera, aiming it
+> at a fascinating pattern
+> displayed in the shop window,
+> her finger poised on the
+> shutter.
+> Zoe flips to a blank page in
+> her sketchbook with
+> excitement, ready to capture
+> her mall inspiration through
+> sketches.
+> Park Shopping Mall Zoe
+
+Story Description 
+
+Zoe, the gentle art student with light brown hair, sets out to find inspiration in the 
+
+park. After sketching the serene view on a park bench, she decides to explore the lively 
+
+shopping mall, observing the vibrant colors and patterns around her. Figure 4. Qualitative Comparison between (a) IP-Adapter [48], (b) StoryDiffusion [53], (c) Consistory [33], (d) DreamStory [13], (e) CharaConsist [37] and (f) CustFilmer (Ours) on MSB Table 1. Quantitative comparison of prior methods on consistency metrics. 
+
+Method Base Model Inter-Consistency Intra-Consistency Average Consistency ( ↑)CLIP-I-fg( ↑) CLIP-I-bg( ↑) CLIP-I-fg( ↑) CLIP-I-bg( ↑)IP-Adapter (Arxiv’23) SDXL 0.901 0.936 0.900 0.646 0.846 Consistory (SIGGRAPH’24) SDXL 0.868 0.884 0.883 0.612 0.812 StoryDiffusion (NeurIPS’24) SDXL 0.857 0.900 0.921 0.645 0.831 DreamStory (TPAMI’25) SDXL 0.844 0.858 0.896 0.635 0.808 CharaConsist (ICCV’25) Flux.1 0.904 0.945 0.899 0.659 0.852 CustFilmer (Ours) OmniGen2 0.905 0.961 0.914 0.657 0.858 
+
+produce short clips conditioned on each keyframe. These clips are then concatenated into longer videos. 
+
+## 4. Experiments 
+
+To comprehensively evaluate our approach, we present the experimental setup, results, and analysis. 
+
+4.1. Experimental Setup 
+
+Implementation Details. We restructure OmniGen2 [41] as the backbone. For CustFilmer, we optimize the shot-type prompt for 4,000 iterations using 4 NVIDIA H100 GPUs, and perform inference on a single NVIDIA 5090 GPU. We set α = 0 .75 , d = 2048 and N = 30 in NKP. 
+
+Datasets. Existing datasets (e.g., DS500 [33], ConsiS-tory+ [23]) for story generation are limited to text-only in-puts. To systematically evaluate the performance of our method, we propose the MSB and M 2SB dataset for evalu-ating story customization. MSB and M 2SB consist of 100 stories, each containing 8 scripts, resulting in 800 scripts. In each script, we provide a text prompt, reference images, and a shot-type annotation. To train the shot-type prompt in CustFilmer, we collect images from Condensed Movie Dataset (CMD) [2]. The details of the pipeline regarding MSB, M 2SB, and the dataset for shot-type prompt tuning are provided in Sec. 6 and 7 in the Supplementary. 
+
+Comparison Method. We compare our method with both (f) CustFilmer (Ours) (a) IP -Adapter (b) StoryDiffusion (c) Consistory (d) DreamStory (e) CharaConsist                
+
+> Emma's hand moves briskly
+> across the page as she
+> sketches a still life, her
+> focused expression
+> highlighting her intent.
+> Emma puts down her pencil
+> and smiles at Zoe, who claps
+> her hands in appreciation of
+> the finished artwork .
+> Emma packs her sketchbook
+> into her bag and gestures for
+> Zoe to follow her as they both
+> exit the classroom, their
+> enthusiasm palpable.
+> Zoe sits at a table, opened art
+> book in front of her, as Emma
+> leans over, pointing
+> enthusiastically to a colorful
+> painting, both immersed in
+> the creative process.
+
+Story Description 
+
+In an art classroom, Emma silently sketches a still life while Zoe gently observes her 
+
+work, captivated. After finishing her drawing, Emma transitions to the library, 
+
+where she carefully flips through an art book, inspired by Zoe's creative energy. Classroom Library Zoe Emma Figure 5. Qualitative Comparison between (a) IP-Adapter [48], (b) StoryDiffusion [53], (c) Consistory [33], (d) DreamStory [13], (e) CharaConsist [37] and (f) CustFilmer (Ours) on M 2SB Table 2. Comparison on text alignment/ image quality.                             
+
+> Method CLIP-T( ↑)IAS( ↑)IQS( ↑)STA( ↑)IP-Adapter (Arxiv’23) 0.216 0.449 0.396 0.315 Consistory (SIGGRAPH’24) 0.303 0.431 0.385 0.406 StoryDiffusion (NeurIPS’24) 0.264 0.450 0.414 0.290 DreamStory (TPAMI’25) 0.276 0.438 0.411 0.280 CharaConsist (ICCV’25) 0.265 0.448 0.415 0.247 CustFilmer (Ours) 0.285 0.450 0.423 0.418
+
+training-free and identity-reference approaches. For the training-free category, we select StoryDiffusion [53], Con-siStory [33], DreamStory [13], and CharaConsist [37], which generate stories purely from textual descriptions without visual references. These baselines allow us to eval-uate the benefit of multimodal conditioning. For the identity-reference category, we adopt IP-Adapter [48]. Following [37], we crop the face region of the reference image using RetinaFace [8] before feeding it into IP-Adapter. For models that only accept a single text input, we use captions of both characters and backgrounds as inputs. We aim to demonstrate that even under a more flexible, multimodal setup, our method can still maintain a level of consistency comparable to previous models. 
+
+Evaluation Metrics. Following previous works [37], we 
+
+Table 3. Comparison on multiple subjects story customization. 
+
+Method CLIP-T( ↑) IQS( ↑) IAS( ↑)IP-Adapter (Arxiv’23) 0.249 0.487 0.392 Consistory (SIGGRAPH’24) 0.302 0.463 0.382 StoryDiffusion (NeurIPS’24) 0.253 0.495 0.415 CharaConsist (ICCV’25) 0.263 0.492 0.424 DreamStory (TPAMI’25) 0.265 0.491 0.440 
+
+CustFilmer (Ours) 0.272 0.496 0.439 
+
+employ several metrics to evaluate the performance of our multimodal story generation model. CLIP-T measures the alignment between textual descriptions and generated im-ages, while CLIP-I measures the pairwise CLIP-based im-age similarity. To assess consistency more precisely, we compute CLIP-I-fg and CLIP-I-bg, which evaluate the im-age similarity of foreground and background. We use Di-nov2 [26] and Segment Anything Model [15] to split the foreground and background, and employ Alpha-CLIP [32] to compute the similarity in the mask area. To evaluate the performance of story customization, we define inter-consistency and intra-consistency. Inter-consistency is defined as the similarity between reference images and generated images, while intra-consistency mea-sures the similarity among generated images. In addition, we adopt Identity Similarity (ID-SIM) to assess charac-(e) (f) (g) (h)                    
+
+> (a) (b) (c) (d) Figure 6. Top: Ablation on consistency components (a) Previous frame, (b) w/o TPC&Retrieval, (c) +Retrieval, (d) +TPC&Retrieval. Bottom: Ablation on α, (e) Previous frame, (f)
+> α= 1 , (g) α= 0 .25 , (h) α= 0 .125 .
+
+ter consistency across frames. Specifically, we use Reti-naFace [8] to detect facial regions, extract embeddings with FaceNet [31], and compute the similarity between faces. We also employ IQS and IAS [42] to evaluate the quality and aesthetics of generated images. We further adopt the Shot-Type Alignment (STA) score with a shot-type classi-fier [44] to measure the accuracy of shot-type control. 
+
+4.2. Experimental Results 
+
+Quantitative Results. We compare CustFilmer with IP-Adapter, StoryDiffusion, ConsiStory, and CharaConsist in Tab. 1 and Tab. 2 on MSB. As can be seen in the tables, CustFilmer performs the best on overall consistency, bene-fiting from image references for stronger inter-consistency. For intra-consistency, its foreground scores are lower due to richer action variations from following textual descrip-tions, while CharaConsist attains higher background scores by generating nearly identical scenes. This reflects a trade-off between consistency and diversity. In Tab. 2, our method achieves slightly lower CLIP-T scores than ConsiStory. We attribute it to the use of differ-ent backbones. DreamStory is built upon Stable Diffusion, which employs CLIP text encoders during training, lead-ing to strong alignment with the metrics stemming from CLIPs. This phenomenon is also observed in CharaCon-sist [37]. On multi-subject customization (Tab. 3), Cust-Filmer achieves competitive results on M 2SB. In addition, we extend CustFilmer with TI2V, and com-pare it with a video generation model, Wan2.2 [35]. The comparisons are provided in Sec. 8.1 in the Supplementary. 
+
+Qualitative Results. For the qualitative comparison, we present the results of CustFilmer and other methods on single-subject story customization in Fig. 4 and on multi-subject story customization in Fig. 5. As seen in Fig. 4 and Fig. 5, existing methods struggle to jointly leverage refer-ence images and text, often leading to inconsistencies in backgrounds and character clothing, as in IP-Adapter, Sto-                       
+
+> Table 4. Ablation on TPC and Retrieval on MSB.
+> TPC Retrieval Avg-Consistency
+> ✗✗0.854
+> ✓✗0.855
+> ✗✓0.856
+> ✓✓0.858
+> Table 5. Ablation on different α
+> on MSB.
+> αCLIP-T Avg-Consistency 0.125 0.2894 0.850 0.25 0.2885 0.854 0.50 0.2863 0.857 0.75 0.2852 0.858 1.00 0.2841 0.860
+
+ryDiffusion, and ConsiStory. CharaConsist, while main-taining stable backgrounds, produces scenes that appear overly static. In contrast, CustFilmer generates coherent sequences that preserve character identity while ensuring background consistency. Notably, our method can produce visually richer results by following shot types. 
+
+4.3. Analysis 
+
+Ablation on Consistency Components. To demonstrate the effectiveness of TPC and Visual Reference Retrieval, we show quantitative results on MSB in Tab. 4. Both compo-nents improve consistency, and their combination achieves the best performance. Qualitative examples in Fig. 6 (top row) show that CustFilmer can preserve objects across frames (e.g., the evolving painting) and maintain story flow. 
+
+Ablation on Different Consistent Ratios ( α). In Tab. 5, we ablate different consistency ratios, and the correspond-ing qualitative comparisons are shown in Fig. 6 (bottom row). We observe that increasing α leads to stronger con-sistency across frames, but at the cost of reduced visual di-versity. This is because allocating more tokens to reference images reduces the proportion of text tokens, making the generated results less aligned with textual descriptions and thereby lowering the CLIP-T score. To balance consistency and diversity, we set α = 0 .75 in our experiments. We pro-vide more ablation study in Sec. 8.2 in the Supplementary. 
+
+## 5. Conclusion 
+
+We present VstoryGen, a multimodal framework for story generation. Our method integrates multimodal scripts to generate long visual sequences with both character and scene consistency. To achieve this, we introduced Cust-Filmer, which leverages the power of the multimodal generation model and employs Text Prompt Consolida-tion, Visual Reference Bank and Retrieval, and shot-type–aware prompt tuning to produce coherent and cine-matic keyframes. We further developed MSB and M 2SB, two benchmarks that evaluate story generation from consis-tency, alignment, and shot-type perspectives. Experimental results show that CustFilmer outperforms existing methods in maintaining consistency and enabling controllable story generation. We believe this work provides a step toward more flexible and reliable multimodal story generation, with potential applications in filmmaking and storytelling. References 
+
+[1] Shuai Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, Sibo Song, Kai Dang, Peng Wang, Shijie Wang, Jun Tang, et al. Qwen2. 5-vl technical report. arXiv preprint arXiv:2502.13923 , 2025. 2, 3, 1 [2] Max Bain, Arsha Nagrani, Andrew Brown, and Andrew Zis-serman. Condensed movies: Story based retrieval with con-textual embeddings. In Proceedings of the Asian Conference on Computer Vision , 2020. 2, 5, 6, 1 [3] Tim Brooks, Bill Peebles, Connor Holmes, Will DePue, Yufei Guo, Li Jing, David Schnurr, Joe Taylor, Troy Luh-man, Eric Luhman, et al. Video generation models as world simulators. OpenAI Blog , 2024. 2 [4] Xinyuan Chen, Yaohui Wang, Lingjun Zhang, Shaobin Zhuang, Xin Ma, Jiashuo Yu, Yali Wang, Dahua Lin, Yu Qiao, and Ziwei Liu. Seine: Short-to-long video diffusion model for generative transition and prediction. In Interna-tional Conference on Learning Representations , 2024. 1, 2 [5] Xiaokang Chen, Zhiyu Wu, Xingchao Liu, Zizheng Pan, Wen Liu, Zhenda Xie, Xingkai Yu, and Chong Ruan. Janus-pro: Unified multimodal understanding and generation with data and model scaling. arXiv preprint arXiv:2501.17811 ,2025. 2, 3 [6] Karan Dalal, Daniel Koceja, Jiarui Xu, Yue Zhao, Shihao Han, Ka Chun Cheung, Jan Kautz, Yejin Choi, Yu Sun, and Xiaolong Wang. One-minute video generation with test-time training. In Proceedings of the Computer Vision and Pattern Recognition Conference , 2025. 1, 2 [7] Google DeepMind. Veo 3: Google deepmind text-to-video model with native audio generation. https : / / en . wikipedia.org/wiki/Veo_(text- to- video_ model) , 2025. Latest release version: Veo 3 (May 20, 2025); Accessed: 2025-08-26. 1, 2 [8] Jiankang Deng, Jia Guo, Evangelos Ververas, Irene Kotsia, and Stefanos Zafeiriou. Retinaface: Single-shot multi-level face localisation in the wild. In Proceedings of the Computer Vision and Pattern Recognition Conference , 2020. 7, 8 [9] Alexey Dosovitskiy. An image is worth 16x16 words: Transformers for image recognition at scale. arXiv preprint arXiv:2010.11929 , 2020. 3 [10] Patrick Esser, Robin Rombach, and Bjorn Ommer. Taming transformers for high-resolution image synthesis. In Pro-ceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 12873–12883, 2021. 2, 3 [11] Yuying Ge, Sijie Zhao, Jinguo Zhu, Yixiao Ge, Kun Yi, Lin Song, Chen Li, Xiaohan Ding, and Ying Shan. Seed-x: Mul-timodal models with unified multi-granularity comprehen-sion and generation. arXiv preprint arXiv:2404.14396 , 2024. 3[12] Shuyang Gu, Dong Chen, Jianmin Bao, Fang Wen, Bo Zhang, Dongdong Chen, Lu Yuan, and Baining Guo. Vec-tor quantized diffusion model for text-to-image synthesis. In 
+
+Proceedings of the IEEE/CVF conference on computer vi-sion and pattern recognition , pages 10696–10706, 2022. 2 [13] Huiguo He, Huan Yang, Zixi Tuo, Yuan Zhou, Qiuyue Wang, Yuhang Zhang, Zeyu Liu, Wenhao Huang, Hongyang Chao, and Jian Yin. Dreamstory: Open-domain story visualiza-tion by llm-guided multi-subject consistent diffusion. IEEE Transactions on Pattern Analysis and Machine Intelligence ,2025. 1, 2, 3, 4, 6, 7 [14] Diederik P Kingma and Max Welling. Auto-encoding varia-tional bayes. arXiv preprint arXiv:1312.6114 , 2013. 3 [15] Alexander Kirillov, Eric Mintun, Nikhila Ravi, Hanzi Mao, Chloe Rolland, Laura Gustafson, Tete Xiao, Spencer White-head, Alexander C Berg, Wan-Yen Lo, et al. Segment any-thing. In International Conference on Computer Vision ,2023. 7 [16] Dan Kondratyuk, Lijun Yu, Xiuye Gu, Jos´ e Lezama, Jonathan Huang, Grant Schindler, Rachel Hornung, Vigh-nesh Birodkar, Jimmy Yan, Ming-Chang Chiu, et al. Videopoet: A large language model for zero-shot video gen-eration. International Conference on Machine Learning ,2023. 1 [17] Lingjie Kong, Kai Wu, Chengming Xu, Xiaobin Hu, Wenhui Han, Jinlong Peng, Donghao Luo, Mengtian Li, Jiangning Zhang, Chengjie Wang, et al. Custany: Customizing any-thing from a single example. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 20916– 20925, 2025. 2 [18] Black Forest Labs, Stephen Batifol, Andreas Blattmann, Frederic Boesel, Saksham Consul, Cyril Diagne, Tim Dock-horn, Jack English, Zion English, Patrick Esser, et al. Flux. 1 kontext: Flow matching for in-context image generation and editing in latent space. arXiv preprint arXiv:2506.15742 ,2025. 1 [19] Brian Lester, Rami Al-Rfou, and Noah Constant. The power of scale for parameter-efficient prompt tuning. EMNLP ,2021. 5 [20] Zijie Li, Henry Li, Yichun Shi, Amir Barati Farimani, Yuval Kluger, Linjie Yang, and Peng Wang. Dual diffusion for uni-fied image generation and understanding. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 2779–2790, 2025. 2 [21] Fangfu Liu, Hanyang Wang, Yimo Cai, Kaiyan Zhang, Xi-aohang Zhan, and Yueqi Duan. Video-t1: Test-time scaling for video generation. International Conference on Computer Vision , 2025. 1 [22] Haotian Liu, Chunyuan Li, Qingyang Wu, and Yong Jae Lee. Visual instruction tuning. Advances in neural information processing systems , 36:34892–34916, 2023. 2 [23] Tao Liu, Kai Wang, Senmao Li, Joost van de Weijer, Fa-had Shahbaz Khan, Shiqi Yang, Yaxing Wang, Jian Yang, and Ming-Ming Cheng. One-prompt-one-story: Free-lunch consistent text-to-image generation using a single prompt. International Conference on Learning Representa-tions , 2025. 1, 2, 3, 5, 6 [24] Yiyang Ma, Xingchao Liu, Xiaokang Chen, Wen Liu, Chengyue Wu, Zhiyu Wu, Zizheng Pan, Zhenda Xie, Haowei Zhang, Xingkai Yu, et al. Janusflow: Harmonizing autore-gression and rectified flow for unified multimodal under-standing and generation. In Proceedings of the Computer Vi-sion and Pattern Recognition Conference , pages 7739–7751, 2025. 3 [25] Yuhang Ma, Wenting Xu, Chaoyi Zhao, Keqiang Sun, Qin-feng Jin, Xiaoda Yang, Zeng Zhao, Changjie Fan, and Zhipeng Hu. Storynizor: Consistent story generation via inter-frame synchronized and shuffled id injection. In Pro-ceedings of the AAAI Conference on Artificial Intelligence ,2025. 1, 3 [26] Maxime Oquab, Timoth´ ee Darcet, Th´ eo Moutakanni, Huy Vo, Marc Szafraniec, Vasil Khalidov, Pierre Fernandez, Daniel Haziza, Francisco Massa, Alaaeldin El-Nouby, et al. Dinov2: Learning robust visual features without supervision. 
+
+arXiv preprint arXiv:2304.07193 , 2023. 7 [27] William Peebles and Saining Xie. Scalable diffusion models with transformers. In Proceedings of the IEEE/CVF inter-national conference on computer vision , pages 4195–4205, 2023. 1, 2, 3, 5 [28] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learn-ing transferable visual models from natural language super-vision. In International Conference on Machine Learning .PMLR, 2021. 1, 5 [29] Ali Razavi, Aaron Van den Oord, and Oriol Vinyals. Gener-ating diverse high-fidelity images with vq-vae-2. Advances in Neural Information Processing Systems , 32, 2019. 3 [30] Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Bj¨ orn Ommer. High-resolution image synthesis with latent diffusion models. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 10684–10695, 2022. 1, 2 [31] Florian Schroff, Dmitry Kalenichenko, and James Philbin. Facenet: A unified embedding for face recognition and clus-tering. In Proceedings of the Computer Vision and Pattern Recognition Conference , 2015. 8 [32] Zeyi Sun, Ye Fang, Tong Wu, Pan Zhang, Yuhang Zang, Shu Kong, Yuanjun Xiong, Dahua Lin, and Jiaqi Wang. Alpha-clip: A clip model focusing on wherever you want. In Pro-ceedings of the Computer Vision and Pattern Recognition Conference , 2024. 7 [33] Yoad Tewel, Omri Kaduri, Rinon Gal, Yoni Kasten, Lior Wolf, Gal Chechik, and Yuval Atzmon. Training-free consis-tent text-to-image generation. ACM Transactions on Graph-ics (TOG) , 2024. 1, 2, 3, 6, 7 [34] Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier Martinet, Marie-Anne Lachaux, Timoth´ ee Lacroix, Baptiste Rozi` ere, Naman Goyal, Eric Hambro, Faisal Azhar, et al. Llama: Open and efficient foundation language models. 
+
+arXiv preprint arXiv:2302.13971 , 2023. 2, 3 [35] Team Wan, Ang Wang, Baole Ai, Bin Wen, Chaojie Mao, Chen-Wei Xie, Di Chen, Feiwu Yu, Haiming Zhao, Jianxiao Yang, et al. Wan: Open and advanced large-scale video gen-erative models. arXiv preprint arXiv:2503.20314 , 2025. 1, 5, 8 [36] Hongjie Wang, Chih-Yao Ma, Yen-Cheng Liu, Ji Hou, Tao Xu, Jialiang Wang, Felix Juefei-Xu, Yaqiao Luo, Peizhao Zhang, Tingbo Hou, et al. Lingen: Towards high-resolution minute-length text-to-video generation with linear computa-tional complexity. In Proceedings of the Computer Vision and Pattern Recognition Conference , 2025. 1, 2 [37] Mengyu Wang, Henghui Ding, Jianing Peng, Yao Zhao, Yun-peng Chen, and Yunchao Wei. Characonsist: Fine-grained consistent character generation. International Conference on Computer Vision , 2025. 1, 3, 4, 5, 6, 7, 8 [38] Xinlong Wang, Xiaosong Zhang, Zhengxiong Luo, Quan Sun, Yufeng Cui, Jinsheng Wang, Fan Zhang, Yueze Wang, Zhen Li, Qiying Yu, et al. Emu3: Next-token prediction is all you need. arXiv preprint arXiv:2409.18869 , 2024. 3 [39] Cong Wei, Quande Liu, Zixuan Ye, Qiulin Wang, Xintao Wang, Pengfei Wan, Kun Gai, and Wenhu Chen. Univideo: Unified understanding, generation, and editing for videos. 
+
+arXiv preprint arXiv:2510.08377 , 2025. 4 [40] Chenfei Wu, Jiahao Li, Jingren Zhou, Junyang Lin, Kaiyuan Gao, Kun Yan, Sheng-ming Yin, Shuai Bai, Xiao Xu, Yilei Chen, et al. Qwen-image technical report. arXiv preprint arXiv:2508.02324 , 2025. [41] Chenyuan Wu, Pengfei Zheng, Ruiran Yan, Shitao Xiao, Xin Luo, Yueze Wang, Wanli Li, Xiyan Jiang, Yexin Liu, Junjie Zhou, et al. Omnigen2: Exploration to advanced multimodal generation. arXiv preprint arXiv:2506.18871 , 2025. 3, 4, 6 [42] Haoning Wu, Zicheng Zhang, Weixia Zhang, Chaofeng Chen, Liang Liao, Chunyi Li, Yixuan Gao, Annan Wang, Erli Zhang, Wenxiu Sun, et al. Q-align: Teaching lmms for visual scoring via discrete text-defined levels. International Conference on Machine Learning , 2023. 8 [43] Shitao Xiao, Yueze Wang, Junjie Zhou, Huaying Yuan, Xin-grun Xing, Ruiran Yan, Chaofan Li, Shuting Wang, Tiejun Huang, and Zheng Liu. Omnigen: Unified image genera-tion. In Proceedings of the Computer Vision and Pattern Recognition Conference , 2025. 2, 4 [44] Junyu Xie, Tengda Han, Max Bain, Arsha Nagrani, Es-hika Khandelwal, G¨ ul Varol, Weidi Xie, and Andrew Zisser-man. Shot-by-shot: Film-grammar-aware training-free audio description generation. arXiv preprint arXiv:2504.01020 ,2025. 8, 1 [45] Jinheng Xie, Weijia Mao, Zechen Bai, David Junhao Zhang, Weihao Wang, Kevin Qinghong Lin, Yuchao Gu, Zhijie Chen, Zhenheng Yang, and Mike Zheng Shou. Show-o: One single transformer to unify multimodal understanding and generation. International Conference on Learning Rep-resentations , 2025. 3 [46] An Yang, Anfeng Li, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu, Chang Gao, Chengen Huang, Chenxu Lv, et al. Qwen3 technical report. arXiv preprint arXiv:2505.09388 , 2025. 3 [47] Ling Yang, Ye Tian, Bowen Li, Xinchen Zhang, Ke Shen, Yunhai Tong, and Mengdi Wang. Mmada: Multimodal large diffusion language models. Advances in Neural Information Processing Systems , 2025. 2 [48] Hu Ye, Jun Zhang, Sibo Liu, Xiao Han, and Wei Yang. Ip-adapter: Text compatible image prompt adapter for text-to-image diffusion models. arXiv preprint arXiv:2308.06721 ,2023. 2, 6, 7 [49] Jinlu Zhang, Jiji Tang, Rongsheng Zhang, Tangjie Lv, and Xiaoshuai Sun. Storyweaver: A unified world model for knowledge-enhanced story character customization. In Pro-ceedings of the AAAI Conference on Artificial Intelligence ,2025. 3 [50] Xinjie Zhang, Jintao Guo, Shanshan Zhao, Minghao Fu, Lunhao Duan, Jiakui Hu, Yong Xien Chng, Guo-Hua Wang, Qing-Guo Chen, Zhao Xu, et al. Unified multimodal under-standing and generation models: Advances, challenges, and opportunities. arXiv preprint arXiv:2505.02567 , 2025. 2 [51] Yifu Zhang, Peize Sun, Yi Jiang, Dongdong Yu, Fucheng Weng, Zehuan Yuan, Ping Luo, Wenyu Liu, and Xinggang Wang. Bytetrack: Multi-object tracking by associating every detection box. In European conference on computer vision .Springer, 2022. 1 [52] Chunting Zhou, Lili Yu, Arun Babu, Kushal Tirumala, Michihiro Yasunaga, Leonid Shamis, Jacob Kahn, Xuezhe Ma, Luke Zettlemoyer, and Omer Levy. Transfusion: Pre-dict the next token and diffuse images with one multi-modal model. International Conference on Learning Representa-tions , 2025. 3 [53] Yupeng Zhou, Daquan Zhou, Ming-Ming Cheng, Jiashi Feng, and Qibin Hou. Storydiffusion: Consistent self-attention for long-range image and video generation. Ad-vances in Neural Information Processing Systems , 2024. 1, 3, 5, 6, 7 Customized Visual Storytelling with Unified Multimodal LLMs 
+
+# Supplementary Material 
+
+## 6. Details of MSB & M 2SB 
+
+Since existing storytelling datasets [33] primarily provide story descriptions as text-only inputs, they are insufficient for evaluating story customization, which requires mul-timodal conditioning such as specified characters, back-grounds, and desired shot types. To address this limitation, we introduce two new datasets, MSB and M 2SB, designed specifically for benchmarking multimodal story customiza-tion, as shown in Fig. 7. To construct this dataset, we first employ GPT-4o to gen-erate a diverse set of story outlines along with correspond-ing candidate character and scene images. We then prompt GPT-4o to produce detailed multimodal story scripts for each keyframe, including the full script prompt, reference character and background mentions, and shot-type anno-tations. In total, we generate 100 stories, each contain-ing 8 multimodal scripts, resulting in 800 scripts overall. These datasets enable systematic evaluation of customiza-tion, consistency, and controllability in story visualization models. 
+
+## 7. Dataset for Shot-type Prompt Tuning 
+
+In this section, we describe the pipeline used to construct the dataset for tuning the shot-type prompt. The dataset is built through the following five steps: • Video collection We begin by collecting video data from the Condensed Movie Dataset (CMD) [2]. • Character tracking We apply ByteTrack [51] to track character trajectories across frames, enabling retrieval of the same individual across different shots and scenes. • Frame pairing and identity verification We randomly sample two frames whose temporal distance is larger than a predefined threshold, and use CLIP [28] to verify that both frames depict the same character, thereby avoiding trivial duplicates or copy–paste artifacts. • Shot-type annotation We apply the shot-type classifier from [44] to categorize the target frame into one of the canonical cinematic shot types. • Caption generation Finally, we use Qwen2.5-VL [1] to generate a caption for the target frame, which serves as the textual prompt. The resulting dataset contains 715 example pairs, which we use for training. Example pairs from this dataset are shown in Fig. 8.             
+
+> Table 6. Comparison of VstoryGen and Wan2.2 on MSB
+> Method Clip-T Wan2.2-TI2V-5B (Baseline) 0.240 VstoryGen (w/ Wan2.2) 0.285
+> Table 7. Ablation on Visual Reference Retrieval with different numbers of reference images from previous keyframes.
+> μClip-T Avg-Consistency 00.284 0.855 10.285 0.858
+> 20.282 0.856
+
+## 8. More Experiments and Ablation Study 
+
+8.1. Comparison between Wan2.2 and VstoryGen. 
+
+We compare VstoryGen with the original Wan2.2 [35] model on the MSB benchmark. Since VstoryGen integrates all reference images beforehand, it produces video results that align more closely with the textual descriptions. We compute the CLIP score between each generated video seg-ment and its corresponding text. In Tab. 6, our method achieves higher CLIP scores, indicating that it generates videos that are semantically closer to the given descriptions. 
+
+8.2. Ablation on Visual Reference Retrieval. 
+
+We ablate Visual Reference Retrieval with varying numbers of previous reference images, μ. As shown in Tab. 7, us-ing only the most recent reference frame achieves the best performance, while incorporating earlier frames slightly de-grades results. We hypothesize that multiple temporally dis-tant references introduce conflicting or less relevant visual cues. As model must align its prediction with all references, excessive conditioning may overwhelm the model and di-lute its focus on the most informative frame, It−1. Conse-quently, relying on a single temporally adjacent reference allows the model to maintain a clearer and more stable tem-poral signal, leading to improved consistency. Classroom 
+
+Train Car 
+
+Kitchen 
+
+Park Bench 
+
+Cafe 
+
+Riverside 
+
+Bedroom 
+
+Field Street 
+
+Library 
+
+Shopping Mall 
+
+Laboratory Art Classroom 
+
+Living Room 
+
+Parking Lot 
+
+Dining Room 
+
+Reference Images (Characters) Text Prompts (Stories) 
+
+Emma Zoe 
+
+Ryan Kai 
+
+Ethan 
+
+Lenna 
+
+> "Kai, the warm and approachable
+> boy, spends his afternoon
+> exploring the tranquility of the
+> library. After finishing a book,
+> he gleefully packs his
+> sketchbook and heads to the
+> riverside to draw the scenery."
+
+Reference Images (Scenes) 
+
+> {"Scene": "Library",
+> "Shot type": "Extreme Close -up",
+> "Description": "Kai flips open
+> his sketchbook, revealing a
+> detailed drawing of a tree, his
+> hand poised with a pencil,
+> capturing the essence of the
+> library's calm atmosphere."}
+> {"Scene": "Riverside",
+> "Shot type": "Close -up",
+> "Description": "Kai's hand
+> swiftly glides the pencil across
+> the page, sketching the outline
+> of the trees, with droplets of
+> water occasionally glistening in
+> the sunlight."}
+
+Text Prompts (Scripts) Figure 7. Overview of Multimodal Story Benchmark (MSB) Reference Image Target Images Text Prompt Shot Type 
+
+The young man with curly hair appears to be in a
+
+moment of deep contemplation or perhaps even 
+
+distress . his expression is serious, and his gaze is 
+
+directed off to the side .
+
+Close -up Shot 
+
+A man sitting on a makeshift campsite by a serene 
+
+pond, surrounded by lush greenery and towering 
+
+trees. 
+
+Full Shot 
+
+the character, dressed in a tweed blazer over a 
+
+sweater vest and tie, sits in a dimly lit room with a 
+
+classic, somewhat formal ambiance. 
+
+A man stands in a dimly lit kitchen, his body language 
+
+tense and his expression one of intense 
+
+concentration or perhaps fear. 
+
+Close -up Shot 
+
+Medium Shot 
+
+Figure 8. Dataset for shot-type control from CMD

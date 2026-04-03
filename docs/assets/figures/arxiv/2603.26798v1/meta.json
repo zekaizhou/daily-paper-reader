@@ -1,0 +1,166 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-001.webp",
+      "caption": "Figure 1: Our post-hoc framework to explain (embed 1 given concepts, cluster 2 and name found parents 3 ), verify 4 , and align 5 the semantic hierarchy induced by a VLM in its embedding space.",
+      "page": 1,
+      "index": 1,
+      "width": 551,
+      "height": 356
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-002.webp",
+      "caption": "Figure 3: Faithfulness (top) versus plausibility (bottom) results for different models and backbones, averaged over 3 datasets and 3 leaf encoding types (image, text, both).",
+      "page": 6,
+      "index": 2,
+      "width": 491,
+      "height": 371
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-003.webp",
+      "caption": "Table 14: Results of the ontology manipulation: Hyperparameter search based on leaf swapping, averaged over 10 swaps and 3 runs (Validation task), adaptation to an ontology extracted from the text embeddings (Modality alignment) and to three SUMO ontologies (Ontological commitment); both averaged over 5 runs.",
+      "page": 25,
+      "index": 3,
+      "width": 1010,
+      "height": 438
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-004.webp",
+      "caption": "Figure 13: For the flava-full VLM model we achieved to learn a transformation from the image embedding space to the text embedding space which achieves full alignment of image and text ontology (except for symmetry).",
+      "page": 25,
+      "index": 4,
+      "width": 964,
+      "height": 352
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-005.webp",
+      "caption": "Table 15: Simple Linear Model to approximate the denoted embedding transformation, all runs are averaged over five seeds.",
+      "page": 26,
+      "index": 5,
+      "width": 1037,
+      "height": 437
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-006.webp",
+      "caption": "Figure 14: UMAP visualization of the original embedding space based on the test dataset",
+      "page": 26,
+      "index": 6,
+      "width": 898,
+      "height": 716
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-007.webp",
+      "caption": "Table 12: Detailed results on how much early stopping improves upon predicting correct (super-)categories: Tree walking distances (↓) between predicted node and the last correct node (LCA of the ground truth with the leaf predicted by tree traversal); averaged over models.",
+      "page": 15,
+      "index": 7,
+      "width": 886,
+      "height": 429
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-008.webp",
+      "caption": "Figure 5: Comparing text embedding strategies: Top 1 zero-shot accuracy per text embedding strategy on CIFAR-10, CIFAR-100, and ImageNet and for different leaf embedding strategies (averaged). Top: averaged over models, bottom: per model.",
+      "page": 15,
+      "index": 8,
+      "width": 1050,
+      "height": 247
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-009.webp",
+      "caption": "Figure 10: Comparison of the two SUMO validity scores. If not stated otherwise, averaged over models, datasets, leaf and text embedding strategies.",
+      "page": 21,
+      "index": 9,
+      "width": 1034,
+      "height": 1089
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-010.webp",
+      "caption": "Table 11: Hypothesis test: Zero-shot > tree inference accuracy. Results of the one-sided t-tests testing against the 0-hypothesis that top-1 zero-shot accuracy is not different from tree inference / soft tree inference accuracy, instead of being greater. Each test includes more than 10 experiments (different datasets, models, and leaf embedding strategies).",
+      "page": 14,
+      "index": 10,
+      "width": 610,
+      "height": 391
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-011.webp",
+      "caption": "Table 10: Hypothesis tests: Zero-shot correlated. Results of the two-sided Person Correlation t-test testing for correlation of top-1 zero-shot accuracy (top) respectively faithfulness (bottom) with other metrics (excluding CUB dataset). Experiments vary over 13 models, 3 datasets, and 3 leaf embedding methods. Note that results also proof the respective one-sided case.",
+      "page": 14,
+      "index": 11,
+      "width": 872,
+      "height": 538
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-012.webp",
+      "caption": "Figure 8: Explaining the faithfulness gap: Comparison of faithfulness metrics, in particular soft tree inference accuracy, tree inference accuracy, and zero-shot accuracy, averaged over models, datasets, text embedding strategies WordNet & WordNet+LLM, and leaf embeddings trategies. Top: by model; bottom: by dataset and leaf embedding strategy.",
+      "page": 18,
+      "index": 12,
+      "width": 1031,
+      "height": 891
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-013.webp",
+      "caption": "Figure 11: Comparison of zero-shot performance and faithfulness for textual leaf concepts and different augmenters (top); comparison of hierarchical consistency for different augmenters (bottom); averaged over datasets, models, (and modalities).",
+      "page": 23,
+      "index": 13,
+      "width": 834,
+      "height": 651
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-014.webp",
+      "caption": "Table 9: Faithfulness metrics by encoder and dataset, averaged over models.",
+      "page": 13,
+      "index": 14,
+      "width": 830,
+      "height": 522
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-015.webp",
+      "caption": "Figure 7: Comparing leaf embedding strategies: Faithfulness metrics averaged across datasets and models.",
+      "page": 17,
+      "index": 15,
+      "width": 660,
+      "height": 292
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-016.webp",
+      "caption": "Table 8: Faithfulness metrics by dataset in percent, averaged over models and encoders.",
+      "page": 12,
+      "index": 16,
+      "width": 768,
+      "height": 396
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-017.webp",
+      "caption": "Table 6: Plausibility (Hierarchical Consistency) and faithfulness metrics per leaf encoding strategy and per dataset, averaged over models.",
+      "page": 12,
+      "index": 17,
+      "width": 900,
+      "height": 330
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-018.webp",
+      "caption": "Figure 15: UMAP visualization after applying the learned transformation to the embedding space of the test dataset",
+      "page": 27,
+      "index": 18,
+      "width": 898,
+      "height": 718
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-019.webp",
+      "caption": "Figure 12: Empirical approximation of the expected normalized UTED across randomly generated binary trees with identical leaf sets. Results based on 200 runs for varying numbers of leaf nodes.",
+      "page": 24,
+      "index": 19,
+      "width": 1054,
+      "height": 354
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26798v1/fig-020.webp",
+      "caption": "Figure 6: Comparison of datasets: Faithfulness only per dataset and model averaged over text embedding strategies (WordNet, WordNet+LLM).",
+      "page": 16,
+      "index": 20,
+      "width": 1033,
+      "height": 1156
+    }
+  ]
+}

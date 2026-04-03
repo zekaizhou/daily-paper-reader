@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.25131v1/fig-001.webp",
+      "caption": "Figure 4. Visualization results on C-to-D scenario. From top to bottom: input image, Source-Only, SFDA, 360SFUDA++ [1], our DAPASS, and ground truth (GT). Compared to prior methods, DAPASS yields more accurate boundaries, reduces noise, and better recognizes occluded objects (highlighted in dashed boxes).",
+      "page": 6,
+      "index": 1,
+      "width": 1022,
+      "height": 408
+    },
+    {
+      "url": "assets/figures/arxiv/2603.25131v1/fig-002.webp",
+      "caption": "Table 1. Experimental results of 19 classes in panoramic semantic segmentation on the C-to-D setting. SF: source-free UDA. Bold values indicate the best performance among source-free methods.",
+      "page": 6,
+      "index": 2,
+      "width": 1026,
+      "height": 335
+    },
+    {
+      "url": "assets/figures/arxiv/2603.25131v1/fig-003.webp",
+      "caption": "Figure 5. Visualization results on Spin-to-Span task. From left to right: input image, 360SFUDA++ [1], our DAPASS, and GT.",
+      "page": 7,
+      "index": 3,
+      "width": 1036,
+      "height": 277
+    },
+    {
+      "url": "assets/figures/arxiv/2603.25131v1/fig-004.webp",
+      "caption": "Table 2. Experimental results of 8 classes on Spin-to-Span setting. Bold values indicate best performance among SF methods. ∆ is an improvement over SFDA [11].",
+      "page": 7,
+      "index": 4,
+      "width": 1026,
+      "height": 266
+    },
+    {
+      "url": "assets/figures/arxiv/2603.25131v1/fig-005.webp",
+      "caption": "Figure 2. An overview of the proposed DAPASS. The framework consists of two key modules: a Panoramic Confidence-Guided Denoising (PCGD) module to filter noisy pseudo-labels, and a Cross-Resolution Attention Module (CRAM) to enhance detail-level segmentation by combining HR and LR contexts.",
+      "page": 3,
+      "index": 5,
+      "width": 923,
+      "height": 314
+    },
+    {
+      "url": "assets/figures/arxiv/2603.25131v1/fig-006.webp",
+      "caption": "Figure 3. Illustration of the proposed Panoramic Confidence-Guided Denoising (PCGD) module.",
+      "page": 4,
+      "index": 6,
+      "width": 920,
+      "height": 345
+    }
+  ]
+}

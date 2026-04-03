@@ -1,0 +1,680 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-04-03T20:01:31.833997+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 14,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 30,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2603.27091v1",
+      "source": "arxiv",
+      "title": "Meta-Contrastive Learning for Vision-Language Models via Task-Adaptive CLIP Training",
+      "abstract": "We propose Domain-Conditioned Meta-Contrastive Learning, a framework for improving the cross-domain generalization of vision-language models. While contrastive models such as CLIP achieve strong performance through large-scale training, they rely on a global objective that does not explicitly account for domain shift. To address this limitation, we formulate multimodal learning as a bilevel meta-learning problem over domain-conditioned tasks. Specifically, we introduce domain embeddings that modulate image and text representations, and optimize the model for rapid adaptation to domain-specific distributions via gradient-based inner-loop updates. In addition, we incorporate a cross-domain alignment regularization to encourage domain-invariant representations. Our approach is compatible with standard contrastive training pipelines and can be applied to heterogeneous datasets spanning natural and medical domains. We expect improved robustness under domain shift and enhanced few-shot adaptation performance, highlighting a promising direction for scalable multimodal learning.",
+      "authors": [
+        "Merham Fouladvand",
+        "Peuroly Batra"
+      ],
+      "primary_category": "math.OC",
+      "categories": [
+        "math.OC"
+      ],
+      "published": "2026-03-28T02:25:25+00:00",
+      "link": "https://arxiv.org/pdf/2603.27091v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Meta-learning for cross-domain generalization of VLMs",
+      "llm_evidence_cn": "用于VLM跨域泛化的元学习",
+      "llm_evidence": "用于VLM跨域泛化的元学习",
+      "canonical_evidence": "用于VLM跨域泛化的元学习",
+      "llm_tldr_en": "Introduces Domain-Conditioned Meta-Contrastive Learning to improve VLM adaptation to domain shifts.",
+      "llm_tldr_cn": "引入领域条件元对比学习，以提高VLM对领域偏移的自适应能力。",
+      "llm_tldr": "引入领域条件元对比学习，以提高VLM对领域偏移的自适应能力。",
+      "llm_tags": [
+        "query:vlm-da:composite"
+      ],
+      "matched_query_tag": "query:vlm-da:composite",
+      "matched_query_text": "Papers central to 查找有关使用vlm/mllm解决domain adaptation问题的论文, especially work that connects or combines: v; p; Prompt tuning for domain adaptation in VLMs; Unsupervised or supervised domain adaptation techniques; Vision-Language Models; Multi-modal Large Language Models; How to use vision language models for domain adaptation?; Recent advances in MLLM based domain adaptation methods; Fine tuning VLMs for cross domain robustness.",
+      "matched_requirement_id": "req-composite-vlm-da",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.28555v1",
+      "source": "arxiv",
+      "title": "Domain-Invariant Prompt Learning for Vision-Language Models",
+      "abstract": "Large pre-trained vision-language models like CLIP have transformed computer vision by aligning images and text in a shared feature space, enabling robust zero-shot transfer via prompting. Soft-prompting, such as Context Optimization (CoOp), effectively adapts these models for downstream recognition tasks by learning a set of context vectors. However, CoOp lacks explicit mechanisms for handling domain shifts across unseen distributions. To address this, we propose Domain-invariant Context Optimization (DiCoOp), an extension of CoOp optimized for domain generalization. By employing an adversarial training approach, DiCoOp forces the model to learn domain-invariant prompts while preserving discriminative power for classification. Experimental results show that DiCoOp consistently surpasses CoOp in domain generalization tasks across diverse visual domains.",
+      "authors": [
+        "Arsham Gholamzadeh Khoee",
+        "Yinan Yu",
+        "Robert Feldt"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-03-30T15:18:31+00:00",
+      "link": "https://arxiv.org/pdf/2603.28555v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Domain-invariant prompt learning for Vision-Language Models",
+      "llm_evidence_cn": "视觉语言模型的领域不变提示学习",
+      "llm_evidence": "视觉语言模型的领域不变提示学习",
+      "canonical_evidence": "视觉语言模型的领域不变提示学习",
+      "llm_tldr_en": "Proposes DiCoOp for domain generalization in VLMs using adversarial training for invariant prompts.",
+      "llm_tldr_cn": "提出DiCoOp，通过对抗训练学习领域不变提示，增强VLM的领域泛化能力。",
+      "llm_tldr": "提出DiCoOp，通过对抗训练学习领域不变提示，增强VLM的领域泛化能力。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Prompt tuning for domain adaptation in VLMs",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.27139v1",
+      "source": "arxiv",
+      "title": "The Geometry of Robustness: Optimizing Loss Landscape Curvature and Feature Manifold Alignment for Robust Finetuning of Vision-Language Models",
+      "abstract": "Fine-tuning approaches for Vision-Language Models (VLMs) face a critical three-way trade-off between In-Distribution (ID) accuracy, Out-of-Distribution (OOD) generalization, and adversarial robustness. Existing robust fine-tuning strategies resolve at most two axes of this trade-off. Generalization-preserving methods retain ID/OOD performance but leave models vulnerable to adversarial attacks, while adversarial training improves robustness to targeted attacks but degrades ID/OOD accuracy. Our key insight is that the robustness trade-off stems from two geometric failures: sharp, anisotropic minima in parameter space and unstable feature representations that deform under perturbation. To address this, we propose GRACE (Gram-aligned Robustness via Adaptive Curvature Estimation), a unified fine-tuning framework that jointly regularizes the parameter-space curvature and feature-space invariance for VLMs. Grounded in Robust PAC-Bayes theory, GRACE employs adaptive weight perturbations scaled by local curvature to promote flatter minima, combined with a feature alignment loss that maintains representation consistency across clean, adversarial, and OOD inputs. On ImageNet fine-tuning of CLIP models, GRACE simultaneously improves ID accuracy by 10.8%, and adversarial accuracy by 13.5% while maintaining 57.0% OOD accuracy (vs. 57.4% zero-shot baseline). Geometric analysis confirms that GRACE converges to flatter minima without feature distortion across distribution shifts, providing a principled step toward generalized robustness in foundation VLMs.",
+      "authors": [
+        "Shivang Chopra",
+        "Shaunak Halbe",
+        "Chengyue Huan",
+        "Brisa Maneechotesuwan",
+        "Zsolt Kira"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-28T05:22:00+00:00",
+      "link": "https://arxiv.org/pdf/2603.27139v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "robust finetuning of VLMs for OOD generalization",
+      "llm_evidence_cn": "针对分布外泛化的VLM鲁棒微调",
+      "llm_evidence": "针对分布外泛化的VLM鲁棒微调",
+      "canonical_evidence": "针对分布外泛化的VLM鲁棒微调",
+      "llm_tldr_en": "Optimizes loss landscape and feature alignment for robust VLM finetuning across different distributions.",
+      "llm_tldr_cn": "通过优化损失函数景观和特征流形对齐，实现视觉语言模型在不同分布下的鲁棒微调。",
+      "llm_tldr": "通过优化损失函数景观和特征流形对齐，实现视觉语言模型在不同分布下的鲁棒微调。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Fine tuning VLMs for cross domain robustness",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-03-23-713838-v1",
+      "source": "biorxiv",
+      "title": "HistoSB-Net: Semantic Bridging for Data-Limited Cross-Modal Histopathological Diagnosis",
+      "abstract": "Vision-language models (VLMs) provide a unified framework for multimodal reasoning, yet their representations are primarily learned from natural image-text corpora and often exhibit semantic misalignment when transferred to histopathology, particularly under data-limited diagnostic settings. To address this limitation, we propose HistoSB-Net, a semantic bridging network designed to adapt pre-trained VLMs to multimodal histopathological diagnosis while preserving their original semantic structure. HistoSB-Net introduces a constrained semantic bridging (CSB) module that operates within the self-attention projection space of both vision and text encoders. Instead of employing explicit cross-attention or full fine-tuning, CSB adaptively modulates pre-trained attention projections through a lightweight nonlinear semantic bottleneck, enabling structured cross-modal regulation with limited additional parameters. The framework supports both patch-level and whole-slide image (WSI)-level diagnosis within a unified architecture. Experiments on six pathology benchmarks, comprising two WSI-level and four patch-level datasets, demonstrate consistent improvements over zero-shot inference across 36 backbone-dataset combinations under limited supervision. Further analysis of prototype-based margin distributions and confusion matrices shows that these improvements are accompanied by enhanced intra-class compactness and increased inter-class separation in the embedding space. These results indicate that CSB provides an effective and computationally manageable strategy for adapting pre-trained VLMs to data-limited digital pathology tasks.",
+      "authors": [
+        "Bai, B.",
+        "Shih, T.-C.",
+        "Miyata, K."
+      ],
+      "primary_category": "pathology",
+      "categories": [
+        "pathology"
+      ],
+      "published": "2026-03-26T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.03.23.713838v1.full.pdf",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Adapting pre-trained VLMs to histopathology domain",
+      "llm_evidence_cn": "将预训练VLM适配到组织病理学领域",
+      "llm_evidence": "将预训练VLM适配到组织病理学领域",
+      "canonical_evidence": "将预训练VLM适配到组织病理学领域",
+      "llm_tldr_en": "HistoSB-Net adapts VLMs to histopathological diagnosis using a semantic bridging module.",
+      "llm_tldr_cn": "HistoSB-Net通过语义桥接模块将VLM适配到组织病理学诊断任务中。",
+      "llm_tldr": "HistoSB-Net通过语义桥接模块将VLM适配到组织病理学诊断任务中。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "How to use vision language models for domain adaptation?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.25467v2",
+      "source": "arxiv",
+      "title": "GridVAD: Open-Set Video Anomaly Detection via Spatial Reasoning over Stratified Frame Grids",
+      "abstract": "Vision-Language Models (VLMs) are powerful open-set reasoners, yet their direct use as anomaly detectors in video surveillance is fragile: without calibrated anomaly priors, they alternate between missed detections and hallucinated false alarms. We argue the problem is not the VLM itself but how it is used. VLMs should function as anomaly proposers, generating open-set candidate descriptions that are then grounded and tracked by purpose-built spatial and temporal modules. We instantiate this propose-ground-propagate principle in GridVAD, a training-free pipeline that produces pixel-level anomaly masks without any domain-specific training. A VLM reasons over stratified grid representations of video clips to generate natural-language anomaly proposals. Self-Consistency Consolidation (SCC) filters hallucinations by retaining only proposals that recur across multiple independent samplings. Grounding DINO anchors each surviving proposal to a bounding box, and SAM2 propagates it as a dense mask through the anomaly interval. The per-clip VLM budget is fixed at M+1 calls regardless of video length, where M can be set according to the proposals needed. On UCSD Ped2, GridVAD achieves the highest Pixel-AUROC (77.59) among all compared methods, surpassing even the partially fine-tuned TAO (75.11) and outperforms other zero-shot approaches on object-level RBDC by over 5x. Ablations reveal that SCC provides a controllable precision-recall tradeoff: filtering improves all pixel level metrics at a modest cost in object-level recall. Efficiency experiments show GridVAD is 2.7x more call-efficient than uniform per-frame VLM querying while additionally producing dense segmentation masks.Code and qualitative video results are available at https://gridvad.github.io.",
+      "authors": [
+        "Mohamed Eltahir",
+        "Ahmed O. Ibrahim",
+        "Obada Siralkhatim",
+        "Tabarak Abdallah",
+        "Sondos Mohamed"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-26T14:08:41+00:00",
+      "link": "https://arxiv.org/pdf/2603.25467v2",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "using VLMs for zero-shot anomaly detection without domain training",
+      "llm_evidence_cn": "在无领域训练的情况下使用VLM进行零样本异常检测",
+      "llm_evidence": "在无领域训练的情况下使用VLM进行零样本异常检测",
+      "canonical_evidence": "在无领域训练的情况下使用VLM进行零样本异常检测",
+      "llm_tldr_en": "Uses VLMs as anomaly proposers for training-free, open-set video anomaly detection.",
+      "llm_tldr_cn": "将VLM作为异常提议器，用于无需训练的开放集视频异常检测。",
+      "llm_tldr": "将VLM作为异常提议器，用于无需训练的开放集视频异常检测。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "How to use vision language models for domain adaptation?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.26330v1",
+      "source": "arxiv",
+      "title": "Mitigating the Reasoning Tax in Vision-Language Fine-Tuning with Input-Adaptive Depth Aggregation",
+      "abstract": "Supervised fine-tuning (SFT) on visual instruction data often improves perceptual capabilities in vision-language models (VLMs) while degrading reasoning performance, creating a persistent reasoning tax during post-training. We investigate whether this degradation is related to disrupted access to depth-wise representations, and find that even fixed cross-depth aggregation substantially restores reasoning, suggesting that preserved cross-depth access is an important missing factor in VLM fine-tuning. Building on this observation, we propose Input-Adaptive Depth Aggregation (IADA), a lightweight mechanism that makes cross-depth retrieval input-adaptive, modality-aware, and efficiently parameterized through a low-rank bottleneck. On Qwen3-VL-2B, IADA improves the average reasoning score by 9.5 points and the average perception score by $3.3$ points over LoRA-only fine-tuning with only 0.14M additional parameters, with the strongest gains appearing in parameter-efficient low-rank settings.",
+      "authors": [
+        "Yiming Ren",
+        "Yujiu Yang",
+        "Junjie Wang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-03-27T11:47:39+00:00",
+      "link": "https://arxiv.org/pdf/2603.26330v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Mitigating reasoning degradation in VLM fine-tuning",
+      "llm_evidence_cn": "减轻视觉语言模型微调中的推理性能退化",
+      "llm_evidence": "减轻视觉语言模型微调中的推理性能退化",
+      "canonical_evidence": "减轻视觉语言模型微调中的推理性能退化",
+      "llm_tldr_en": "Proposes IADA to preserve reasoning capabilities during supervised fine-tuning of vision-language models.",
+      "llm_tldr_cn": "提出IADA机制，旨在减轻视觉语言模型在指令微调过程中的推理能力退化。",
+      "llm_tldr": "提出IADA机制，旨在减轻视觉语言模型在指令微调过程中的推理能力退化。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Fine tuning VLMs for cross domain robustness",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2603.27558v1",
+      "source": "arxiv",
+      "title": "Learning to See through Illumination Extremes with Event Streaming in Multimodal Large Language Models",
+      "abstract": "Multimodal Large Language Models (MLLMs) perform strong vision-language reasoning under standard conditions but fail in extreme illumination, where RGB inputs lose irrevocable structure and semantics. We propose Event-MLLM, an event-enhanced model that performs all-light visual reasoning by dynamically fusing event streams with RGB frames. Two key components drive our approach: an Illumination Indicator - a learnable signal derived from a DINOv2 branch that represents exposure degradation and adaptively modulates event-RGB fusion - and an Illumination Correction Loss that aligns fused features with non-degraded (normal-light) semantics in the latent space, compensating for information lost in extreme lighting. We curate the first multi-illumination event-instruction corpus for MLLMs, with 2,241 event-RGB samples (around 6 QA pairs each) across diverse scenes and 17 brightness rates (0.05x - 20x), plus an instruct-following benchmark for reasoning, counting, and fine-grained recognition under extreme lighting. Experiments show that Event-MLLM markedly outperforms general-purpose, illumination-adaptive, and event-only baselines, setting a new state of the art in robust multimodal perception and reasoning under challenging illumination.",
+      "authors": [
+        "Baoheng Zhang",
+        "Jiahui Liu",
+        "Gui Zhao",
+        "Weizhou Zhang",
+        "Yixuan Ma",
+        "Jun Jiang",
+        "Yingxian Chen",
+        "Wilton W. T. Fok",
+        "Xiaojuan Qi",
+        "Hayden Kwok-Hay So"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-29T07:46:32+00:00",
+      "link": "https://arxiv.org/pdf/2603.27558v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "MLLM-based visual reasoning under extreme illumination domain shifts",
+      "llm_evidence_cn": "基于MLLM在极端光照领域偏移下的视觉推理",
+      "llm_evidence": "基于MLLM在极端光照领域偏移下的视觉推理",
+      "canonical_evidence": "基于MLLM在极端光照领域偏移下的视觉推理",
+      "llm_tldr_en": "Enhances MLLMs for all-light reasoning by fusing event streams to handle extreme illumination shifts.",
+      "llm_tldr_cn": "通过融合事件流增强MLLM在极端光照偏移下的全光照推理能力。",
+      "llm_tldr": "通过融合事件流增强MLLM在极端光照偏移下的全光照推理能力。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Recent advances in MLLM based domain adaptation methods",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.25131v1",
+      "source": "arxiv",
+      "title": "Denoise and Align: Towards Source-Free UDA for Robust Panoramic Semantic Segmentation",
+      "abstract": "Panoramic semantic segmentation is pivotal for comprehensive 360° scene understanding in critical applications like autonomous driving and virtual reality. However, progress in this domain is constrained by two key challenges: the severe geometric distortions inherent in panoramic projections and the prohibitive cost of dense annotation. While Unsupervised Domain Adaptation (UDA) from label-rich pinhole-camera datasets offers a viable alternative, many real-world tasks impose a stricter source-free (SFUDA) constraint where source data is inaccessible for privacy or proprietary reasons. This constraint significantly amplifies the core problems of domain shift, leading to unreliable pseudo-labels and dramatic performance degradation, particularly for minority classes. To overcome these limitations, we propose the DAPASS framework. DAPASS introduces two synergistic modules to robustly transfer knowledge without source data. First, our Panoramic Confidence-Guided Denoising (PCGD) module generates high-fidelity, class-balanced pseudo-labels by enforcing perturbation consistency and incorporating neighborhood-level confidence to filter noise. Second, a Contextual Resolution Adversarial Module (CRAM) explicitly addresses scale variance and distortion by adversarially aligning fine-grained details from high-resolution crops with global semantics from low-resolution contexts. DAPASS achieves state-of-the-art performances on outdoor (Cityscapes-to-DensePASS) and indoor (Stanford2D3D) benchmarks, yielding 55.04% (+2.05%) and 70.38% (+1.54%) mIoU, respectively.",
+      "authors": [
+        "Yaowen Chang",
+        "Zhen Cao",
+        "Xu Zheng",
+        "Xiaoxin Mi",
+        "Zhen Dong"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-26T07:54:43+00:00",
+      "link": "https://arxiv.org/pdf/2603.25131v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Source-free UDA for semantic segmentation",
+      "llm_evidence_cn": "语义分割的无源UDA",
+      "llm_evidence": "语义分割的无源UDA",
+      "canonical_evidence": "语义分割的无源UDA",
+      "llm_tldr_en": "Proposes a source-free unsupervised domain adaptation method for robust panoramic semantic segmentation.",
+      "llm_tldr_cn": "提出一种无源无监督领域自适应方法，用于鲁棒的全景语义分割。",
+      "llm_tldr": "提出一种无源无监督领域自适应方法，用于鲁棒的全景语义分割。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Unsupervised or supervised domain adaptation techniques",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.25004v1",
+      "source": "arxiv",
+      "title": "Interpretable Zero-shot Referring Expression Comprehension with Query-driven Scene Graphs",
+      "abstract": "Zero-shot referring expression comprehension (REC) aims to locate target objects in images given natural language queries without relying on task-specific training data, demanding strong visual understanding capabilities. Existing Vision-Language Models~(VLMs), such as CLIP, commonly address zero-shot REC by directly measuring feature similarities between textual queries and image regions. However, these methods struggle to capture fine-grained visual details and understand complex object relationships. Meanwhile, Large Language Models~(LLMs) excel at high-level semantic reasoning, their inability to directly abstract visual features into textual semantics limits their application in REC tasks. To overcome these limitations, we propose \\textbf{SGREC}, an interpretable zero-shot REC method leveraging query-driven scene graphs as structured intermediaries. Specifically, we first employ a VLM to construct a query-driven scene graph that explicitly encodes spatial relationships, descriptive captions, and object interactions relevant to the given query. By leveraging this scene graph, we bridge the gap between low-level image regions and higher-level semantic understanding required by LLMs. Finally, an LLM infers the target object from the structured textual representation provided by the scene graph, responding with detailed explanations for its decisions that ensure interpretability in the inference process. Extensive experiments show that SGREC achieves top-1 accuracy on most zero-shot REC benchmarks, including RefCOCO val (66.78\\%), RefCOCO+ testB (53.43\\%), and RefCOCOg val (73.28\\%), highlighting its strong visual scene understanding.",
+      "authors": [
+        "Yike Wu",
+        "Necva Bolucu",
+        "Stephen Wan",
+        "Dadong Wang",
+        "Jiahao Xia",
+        "Jian Zhang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.MM"
+      ],
+      "published": "2026-03-26T04:05:30+00:00",
+      "link": "https://arxiv.org/pdf/2603.25004v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Zero-shot REC using VLMs and LLM reasoning",
+      "llm_evidence_cn": "结合VLM与LLM推理的零样本指代理解",
+      "llm_evidence": "结合VLM与LLM推理的零样本指代理解",
+      "canonical_evidence": "结合VLM与LLM推理的零样本指代理解",
+      "llm_tldr_en": "Combines VLMs and LLMs for zero-shot referring expression comprehension via query-driven scene graphs.",
+      "llm_tldr_cn": "通过查询驱动的场景图，结合VLM和LLM实现零样本指代目标定位。",
+      "llm_tldr": "通过查询驱动的场景图，结合VLM和LLM实现零样本指代目标定位。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "How to use vision language models for domain adaptation?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.27737v1",
+      "source": "arxiv",
+      "title": "Synergizing Discriminative Exemplars and Self-Refined Experience for MLLM-based In-Context Learning in Medical Diagnosis",
+      "abstract": "General Multimodal Large Language Models (MLLMs) often underperform in capturing domain-specific nuances in medical diagnosis, trailing behind fully supervised baselines. Although fine-tuning provides a remedy, the high costs of expert annotation and massive computational overhead limit its scalability. To bridge this gap without updating the weights of the pre-trained backbone of the MLLM, we propose a Clinician Mimetic Workflow. This is a novel In-Context Learning (ICL) framework designed to synergize Discriminative Exemplar Coreset Selection (DECS) and Self-Refined Experience Summarization (SRES). Specifically, DECS simulates a clinician's ability to reference \"anchor cases\" by selecting discriminative visual coresets from noisy data at the computational level; meanwhile, SRES mimics the cognition and reflection in clinical diagnosis by distilling diverse rollouts into a dynamic textual Experience Bank. Extensive evaluation across all 12 datasets of the MedMNIST 2D benchmark demonstrates that our method outperforms zero-shot general and medical MLLMs. Simultaneously, it achieves performance levels comparable to fully supervised vision models and domain-specific fine-tuned MLLMs, setting a new benchmark for parameter-efficient medical in-context learning. Our code is available at an anonymous repository: https://anonymous.4open.science/r/Synergizing-Discriminative-Exemplars-and-Self-Refined-Experience-ED74.",
+      "authors": [
+        "Wenkai Zhao",
+        "Zipei Wang",
+        "Mengjie Fang",
+        "Di Dong",
+        "Jie Tian",
+        "Lingwei Zhang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-29T15:29:59+00:00",
+      "link": "https://arxiv.org/pdf/2603.27737v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "MLLM-based In-Context Learning for domain-specific medical diagnosis",
+      "llm_evidence_cn": "基于MLLM的领域特定医学诊断上下文学习",
+      "llm_evidence": "基于MLLM的领域特定医学诊断上下文学习",
+      "canonical_evidence": "基于MLLM的领域特定医学诊断上下文学习",
+      "llm_tldr_en": "An ICL framework for MLLMs to capture domain-specific nuances in medical diagnosis without fine-tuning.",
+      "llm_tldr_cn": "一种无需微调即可让MLLM捕捉医学诊断中领域特定细微差别的上下文学习框架。",
+      "llm_tldr": "一种无需微调即可让MLLM捕捉医学诊断中领域特定细微差别的上下文学习框架。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Recent advances in MLLM based domain adaptation methods",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.25467v1",
+      "source": "arxiv",
+      "title": "GridVAD: Open-Set Video Anomaly Detection via Spatial Reasoning over Stratified Frame Grids",
+      "abstract": "Vision-Language Models (VLMs) are powerful open-set reasoners, yet their direct use as anomaly detectors in video surveillance is fragile: without calibrated anomaly priors, they alternate between missed detections and hallucinated false alarms. We argue the problem is not the VLM itself but how it is used. VLMs should function as anomaly proposers, generating open-set candidate descriptions that are then grounded and tracked by purpose-built spatial and temporal modules. We instantiate this propose-ground-propagate principle in GridVAD, a training-free pipeline that produces pixel-level anomaly masks without any domain-specific training. A VLM reasons over stratified grid representations of video clips to generate natural-language anomaly proposals. Self-Consistency Consolidation (SCC) filters hallucinations by retaining only proposals that recur across multiple independent samplings. Grounding DINO anchors each surviving proposal to a bounding box, and SAM2 propagates it as a dense mask through the anomaly interval. The per-clip VLM budget is fixed at M+1 calls regardless of video length, where M can be set according to the proposals needed. On UCSD Ped2, GridVAD achieves the highest Pixel-AUROC (77.59) among all compared methods, surpassing even the partially fine-tuned TAO (75.11) and outperforms other zero-shot approaches on object-level RBDC by over 5x. Ablations reveal that SCC provides a controllable precision-recall tradeoff: filtering improves all pixel level metrics at a modest cost in object-level recall. Efficiency experiments show GridVAD is 2.7x more call-efficient than uniform per-frame VLM querying while additionally producing dense segmentation masks.Code and qualitative video results are available at https://gridvad.github.io.",
+      "authors": [
+        "Mohamed Eltahir",
+        "Ahmed O. Ibrahim",
+        "Obada Siralkhatim",
+        "Tabarak Abdallah",
+        "Sondos Mohamed"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-26T14:08:41+00:00",
+      "link": "https://arxiv.org/pdf/2603.25467v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "VLM as anomaly proposer without domain-specific training",
+      "llm_evidence_cn": "无需领域特定训练，将VLM用作异常提议器",
+      "llm_evidence": "无需领域特定训练，将VLM用作异常提议器",
+      "canonical_evidence": "无需领域特定训练，将VLM用作异常提议器",
+      "llm_tldr_en": "Uses VLMs for zero-shot video anomaly detection by generating open-set candidate descriptions.",
+      "llm_tldr_cn": "利用VLM生成开放集候选描述，实现无需领域特定训练的零样本视频异常检测。",
+      "llm_tldr": "利用VLM生成开放集候选描述，实现无需领域特定训练的零样本视频异常检测。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "How to use vision language models for domain adaptation?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.26798v1",
+      "source": "arxiv",
+      "title": "Explaining, Verifying, and Aligning Semantic Hierarchies in Vision-Language Model Embeddings",
+      "abstract": "Vision-language model (VLM) encoders such as CLIP enable strong retrieval and zero-shot classification in a shared image-text embedding space, yet the semantic organization of this space is rarely inspected. We present a post-hoc framework to explain, verify, and align the semantic hierarchies induced by a VLM over a given set of child classes. First, we extract a binary hierarchy by agglomerative clustering of class centroids and name internal nodes by dictionary-based matching to a concept bank. Second, we quantify plausibility by comparing the extracted tree against human ontologies using efficient tree- and edge-level consistency measures, and we evaluate utility via explainable hierarchical tree-traversal inference with uncertainty-aware early stopping (UAES). Third, we propose an ontology-guided post-hoc alignment method that learns a lightweight embedding-space transformation, using UMAP to generate target neighborhoods from a desired hierarchy. Across 13 pretrained VLMs and 4 image datasets, our method finds systematic modality differences: image encoders are more discriminative, while text encoders induce hierarchies that better match human taxonomies. Overall, the results reveal a persistent trade-off between zero-shot accuracy and ontological plausibility and suggest practical routes to improve semantic alignment in shared embedding spaces.",
+      "authors": [
+        "Gesina Schwalbe",
+        "Mert Keser",
+        "Moritz Bayerkuhnlein",
+        "Edgar Heinert",
+        "Annika Mütze",
+        "Marvin Keller",
+        "Sparsh Tiwari",
+        "Georgii Mikriukov",
+        "Diedrich Wolter",
+        "Jae Hee Lee",
+        "Matthias Rottmann"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-03-26T00:38:38+00:00",
+      "link": "https://arxiv.org/pdf/2603.26798v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Aligning semantic hierarchies in VLM embeddings",
+      "llm_evidence_cn": "对齐VLM嵌入中的语义层次结构",
+      "llm_evidence": "对齐VLM嵌入中的语义层次结构",
+      "canonical_evidence": "对齐VLM嵌入中的语义层次结构",
+      "llm_tldr_en": "Framework to explain and align semantic hierarchies in VLM encoders like CLIP for better classification.",
+      "llm_tldr_cn": "解释并对齐CLIP等VLM编码器语义层次的框架，以提升分类性能。",
+      "llm_tldr": "解释并对齐CLIP等VLM编码器语义层次的框架，以提升分类性能。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Vision-Language Models",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.27999v1",
+      "source": "arxiv",
+      "title": "CLIP-AUTT: Test-Time Personalization with Action Unit Prompting for Fine-Grained Video Emotion Recognition",
+      "abstract": "Personalization in emotion recognition (ER) is essential for an accurate interpretation of subtle and subject-specific expressive patterns. Recent advances in vision-language models (VLMs) such as CLIP demonstrate strong potential for leveraging joint image-text representations in ER. However, CLIP-based methods either depend on CLIP's contrastive pretraining or on LLMs to generate descriptive text prompts, which are noisy, computationally expensive, and fail to capture fine-grained expressions, leading to degraded performance. In this work, we leverage Action Units (AUs) as structured textual prompts within CLIP to model fine-grained facial expressions. AUs encode the subtle muscle activations underlying expressions, providing localized and interpretable semantic cues for more robust ER. We introduce CLIP-AU, a lightweight AU-guided temporal learning method that integrates interpretable AU semantics into CLIP. It learns generic, subject-agnostic representations by aligning AU prompts with facial dynamics, enabling fine-grained ER without CLIP fine-tuning or LLM-generated text supervision. Although CLIP-AU models fine-grained AU semantics, it does not adapt to subject-specific variability in subtle expressions. To address this limitation, we propose CLIP-AUTT, a video-based test-time personalization method that dynamically adapts AU prompts to videos from unseen subjects. By combining entropy-guided temporal window selection with prompt tuning, CLIP-AUTT enables subject-specific adaptation while preserving temporal consistency. Our extensive experiments on three challenging video-based subtle ER datasets, BioVid, StressID, and BAH, indicate that CLIP-AU and CLIP-AUTT outperform state-of-the-art CLIP-based FER and TTA methods, achieving robust and personalized subtle ER.",
+      "authors": [
+        "Muhammad Osama Zeeshan",
+        "Masoumeh Sharafi",
+        "Benoît Savary",
+        "Alessandro Lameiras Koerich",
+        "Marco Pedersoli",
+        "Eric Granger"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-30T03:39:42+00:00",
+      "link": "https://arxiv.org/pdf/2603.27999v1",
+      "tags": [
+        "keyword:VLM DA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Action Unit prompting for VLM personalization",
+      "llm_evidence_cn": "使用动作单元提示进行VLM个性化",
+      "llm_evidence": "使用动作单元提示进行VLM个性化",
+      "canonical_evidence": "使用动作单元提示进行VLM个性化",
+      "llm_tldr_en": "Uses Action Units as structured prompts in CLIP for fine-grained video emotion recognition personalization.",
+      "llm_tldr_cn": "在CLIP中使用动作单元作为结构化提示，实现细粒度视频情感识别的个性化。",
+      "llm_tldr": "在CLIP中使用动作单元作为结构化提示，实现细粒度视频情感识别的个性化。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Prompt tuning for domain adaptation in VLMs",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.27577v1",
+      "source": "arxiv",
+      "title": "Structured Observation Language for Efficient and Generalizable Vision-Language Navigation",
+      "abstract": "Vision-Language Navigation (VLN) requires an embodied agent to navigate complex environments by following natural language instructions, which typically demands tight fusion of visual and language modalities. Existing VLN methods often convert raw images into visual tokens or implicit features, requiring large-scale visual pre-training and suffering from poor generalization under environmental variations (e.g., lighting, texture). To address these issues, we propose SOL-Nav (Structured Observation Language for Navigation), a novel framework that translates egocentric visual observations into compact structured language descriptions for efficient and generalizable navigation. Specifically, we divide RGB-D images into a N*N grid, extract representative semantic, color, and depth information for each grid cell to form structured text, and concatenate this with the language instruction as pure language input to a pre-trained language model (PLM). Experimental results on standard VLN benchmarks (R2R, RxR) and real-world deployments demonstrate that SOL-Nav significantly reduces the model size and training data dependency, fully leverages the reasoning and representation capabilities of PLMs, and achieves strong generalization to unseen environments.",
+      "authors": [
+        "Daojie Peng",
+        "Fulong Ma",
+        "Jun Ma"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.RO"
+      ],
+      "published": "2026-03-29T08:34:05+00:00",
+      "link": "https://arxiv.org/pdf/2603.27577v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "improving generalization under environmental variations in vision-language navigation",
+      "llm_evidence_cn": "提高视觉语言导航在环境变化下的泛化能力",
+      "llm_evidence": "提高视觉语言导航在环境变化下的泛化能力",
+      "canonical_evidence": "提高视觉语言导航在环境变化下的泛化能力",
+      "llm_tldr_en": "SOL-Nav uses structured language descriptions to improve VLM navigation robustness across environments.",
+      "llm_tldr_cn": "SOL-Nav通过结构化语言描述提升了视觉语言导航模型在不同环境下的泛化鲁棒性。",
+      "llm_tldr": "SOL-Nav通过结构化语言描述提升了视觉语言导航模型在不同环境下的泛化鲁棒性。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Fine tuning VLMs for cross domain robustness",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.27690v1",
+      "source": "arxiv",
+      "title": "Customized Visual Storytelling with Unified Multimodal LLMs",
+      "abstract": "Multimodal story customization aims to generate coherent story flows conditioned on textual descriptions, reference identity images, and shot types. While recent progress in story generation has shown promising results, most approaches rely on text-only inputs. A few studies incorporate character identity cues (e.g., facial ID), but lack broader multimodal conditioning. In this work, we introduce VstoryGen, a multimodal framework that integrates descriptions with character and background references to enable customizable story generation. To enhance cinematic diversity, we introduce shot-type control via parameter-efficient prompt tuning on movie data, enabling the model to generate sequences that more faithfully reflect cinematic grammar. To evaluate our framework, we establish two new benchmarks that assess multimodal story customization from the perspectives of character and scene consistency, text-visual alignment, and shot-type control. Experiments demonstrate that VstoryGen achieves improved consistency and cinematic diversity compared to existing methods.",
+      "authors": [
+        "Wei-Hua Li",
+        "Cheng Sun",
+        "Chu-Song Chen"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-29T13:24:51+00:00",
+      "link": "https://arxiv.org/pdf/2603.27690v1",
+      "tags": [
+        "keyword:VLM DA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "parameter-efficient prompt tuning on specific data",
+      "llm_evidence_cn": "在特定数据上进行高效参数提示微调",
+      "llm_evidence": "在特定数据上进行高效参数提示微调",
+      "canonical_evidence": "在特定数据上进行高效参数提示微调",
+      "llm_tldr_en": "Uses prompt tuning in a multimodal LLM framework for customized visual storytelling.",
+      "llm_tldr_cn": "在多模态大模型框架中使用提示微调来实现定制化的视觉故事生成。",
+      "llm_tldr": "在多模态大模型框架中使用提示微调来实现定制化的视觉故事生成。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Prompt tuning for domain adaptation in VLMs",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2603.27999v2",
+      "source": "arxiv",
+      "title": "CLIP-AUTT: Test-Time Personalization with Action Unit Prompting for Fine-Grained Video Emotion Recognition",
+      "abstract": "Personalization in emotion recognition (ER) is essential for an accurate interpretation of subtle and subject-specific expressive patterns. Recent advances in vision-language models (VLMs) such as CLIP demonstrate strong potential for leveraging joint image-text representations in ER. However, CLIP-based methods either depend on CLIP's contrastive pretraining or on LLMs to generate descriptive text prompts, which are noisy, computationally expensive, and fail to capture fine-grained expressions, leading to degraded performance. In this work, we leverage Action Units (AUs) as structured textual prompts within CLIP to model fine-grained facial expressions. AUs encode the subtle muscle activations underlying expressions, providing localized and interpretable semantic cues for more robust ER. We introduce CLIP-AU, a lightweight AU-guided temporal learning method that integrates interpretable AU semantics into CLIP. It learns generic, subject-agnostic representations by aligning AU prompts with facial dynamics, enabling fine-grained ER without CLIP fine-tuning or LLM-generated text supervision. Although CLIP-AU models fine-grained AU semantics, it does not adapt to subject-specific variability in subtle expressions. To address this limitation, we propose CLIP-AUTT, a video-based test-time personalization method that dynamically adapts AU prompts to videos from unseen subjects. By combining entropy-guided temporal window selection with prompt tuning, CLIP-AUTT enables subject-specific adaptation while preserving temporal consistency. Our extensive experiments on three challenging video-based subtle ER datasets, BioVid, StressID, and BAH, indicate that CLIP-AU and CLIP-AUTT outperform state-of-the-art CLIP-based FER and TTA methods, achieving robust and personalized subtle ER. Our code is publicly available at: https://github.com/osamazeeshan/CLIP-AUTT.",
+      "authors": [
+        "Muhammad Osama Zeeshan",
+        "Masoumeh Sharafi",
+        "Benoît Savary",
+        "Alessandro Lameiras Koerich",
+        "Marco Pedersoli",
+        "Eric Granger"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-30T03:39:42+00:00",
+      "link": "https://arxiv.org/pdf/2603.27999v2",
+      "tags": [
+        "keyword:VLM DA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "test-time personalization with action unit prompting for VLMs",
+      "llm_evidence_cn": "针对视觉语言模型的动作单元提示测试时个性化",
+      "llm_evidence": "针对视觉语言模型的动作单元提示测试时个性化",
+      "canonical_evidence": "针对视觉语言模型的动作单元提示测试时个性化",
+      "llm_tldr_en": "CLIP-AUTT uses structured AU prompts for test-time adaptation in video emotion recognition.",
+      "llm_tldr_cn": "CLIP-AUTT利用结构化动作单元提示实现了视频情感识别的测试时自适应个性化。",
+      "llm_tldr": "CLIP-AUTT利用结构化动作单元提示实现了视频情感识别的测试时自适应个性化。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Prompt tuning for domain adaptation in VLMs",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.27995v1",
+      "source": "arxiv",
+      "title": "UniDA3D: A Unified Domain-Adaptive Framework for Multi-View 3D Object Detection",
+      "abstract": "Camera-only 3D object detection is critical for autonomous driving, offering a cost-effective alternative to LiDAR based methods. In particular, multi-view 3D object detection has emerged as a promising direction due to its balanced trade-off between performance and cost. However, existing methods often suffer significant performance degradation under complex environmental conditions such as nighttime, fog, and rain, primarily due to their reliance on training data collected mostly in ideal conditions. To address this challenge, we propose UniDA3D, a unified domain-adaptive multi-view 3D object detector designed for robust perception under diverse adverse conditions. UniDA3D formulates nighttime, rainy, and foggy scenes as a unified multi target domain adaptation problem and leverages a novel query guided domain discrepancy mitigation (QDDM) module to align object features between source and target domains at both batch and global levels via query-centric adversarial and contrastive learning. Furthermore, we introduce a domain-adaptive teacher student training pipeline with an exponential-moving-average teacher and dynamically updated high-quality pseudo labels to enhance consistency learning and suppress background noise in unlabeled target domains. In contrast to prior approaches that require separate training for each condition, UniDA3D performs a single unified training process across multiple domains, enabling robust all-weather 3D perception. On a synthesized multi-view 3D benchmark constructed by generating nighttime, rainy, and foggy counterparts from nuScenes (nuScenes-Night, nuScenes-Rain, and nuScenes-Haze), UniDA3D consistently outperforms state of-the-art camera-only multi-view 3D detectors under extreme conditions, achieving substantial gains in mAP and NDS while maintaining real-time inference efficiency.",
+      "authors": [
+        "Hongjing Wu",
+        "Cheng Chi",
+        "Jinlin Wu",
+        "Yanzhao Su",
+        "Zhen Lei",
+        "Wenqi Ren"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-03-30T03:35:32+00:00",
+      "link": "https://arxiv.org/pdf/2603.27995v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Unified domain-adaptive framework for 3D object detection under adverse conditions",
+      "llm_evidence_cn": "针对恶劣环境下的统一域自适应3D目标检测框架",
+      "llm_evidence": "针对恶劣环境下的统一域自适应3D目标检测框架",
+      "canonical_evidence": "针对恶劣环境下的统一域自适应3D目标检测框架",
+      "llm_tldr_en": "Introduces UniDA3D for robust 3D object detection across diverse environmental domains.",
+      "llm_tldr_cn": "提出 UniDA3D 框架，通过域自适应技术提升自动驾驶在恶劣天气下的3D检测鲁棒性。",
+      "llm_tldr": "提出 UniDA3D 框架，通过域自适应技术提升自动驾驶在恶劣天气下的3D检测鲁棒性。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Unsupervised or supervised domain adaptation techniques",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
