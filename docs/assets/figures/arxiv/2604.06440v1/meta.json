@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.06440v1/fig-001.webp",
+      "caption": "Table 3: Performance of AP and more SOTA PEFT methods on ViT-L/16. Settings follow Tab. 1.",
+      "page": 8,
+      "index": 1,
+      "width": 481,
+      "height": 277
+    },
+    {
+      "url": "assets/figures/arxiv/2604.06440v1/fig-002.webp",
+      "caption": "Table 1: Performance comparison on 19 datasets from 3 benchmarks. Three parameter-efficient baselines (denoted by ◦ ) are compared to AP, where the best performance is highlighted in bold. The most expensive Full-Tune (denoted by • ) serves as the performance reference. Each accuracy value is averaged over 5 trials, with variance omitted due to its negligible values (≤ 0.3%). “Average” column averaged accuracies over all the datasets.",
+      "page": 8,
+      "index": 2,
+      "width": 1016,
+      "height": 336
+    },
+    {
+      "url": "assets/figures/arxiv/2604.06440v1/fig-003.webp",
+      "caption": "Table 2: A performance overview. The efficiency analysis is on (ViT-L, CIFAR-10) with a batch size of 128, and time consumption is based on using a single RTXA6000. ↑ or ↓ indicate whether a larger or smaller value is favored.",
+      "page": 8,
+      "index": 3,
+      "width": 491,
+      "height": 282
+    },
+    {
+      "url": "assets/figures/arxiv/2604.06440v1/fig-004.webp",
+      "caption": "Table 4: Performance comparison in the few-shot setting on the VTAB-1K benchmark. Other settings follow Tab. 1.",
+      "page": 9,
+      "index": 4,
+      "width": 1016,
+      "height": 338
+    },
+    {
+      "url": "assets/figures/arxiv/2604.06440v1/fig-005.webp",
+      "caption": "Figure 4: Layer preference of AP with different model architectures on OxfordPets (Parkhi et al., 2012). CNNs and ViTs exhibit opposite layer preferences. Results on more datasets are provided in Fig. A2.",
+      "page": 5,
+      "index": 5,
+      "width": 973,
+      "height": 202
+    }
+  ]
+}

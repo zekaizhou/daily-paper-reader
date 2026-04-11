@@ -1,0 +1,365 @@
+Title: Context is All You Need
+
+URL Source: https://arxiv.org/pdf/2604.04364v1
+
+Published Time: Tue, 07 Apr 2026 01:21:16 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# Context is All You Need 
+
+Jean Erik Delanois 1 Shruti Joshi 2 Ryan Golden 2 Teresa Nick 3 Maxim Bazhenov 2
+
+## Abstract 
+
+Artificial Neural Networks (ANNs) are increas-ingly deployed across diverse real-world settings, where they must operate under data distributions that differ from those seen during training. This challenge is central to Domain Generalization (DG), which trains models to generalize to un-seen domains without target data, and Test-Time Adaptation (TTA), which improves robustness by adapting to unlabeled test data at deployment. Ex-isting approaches to address these challenges are often complex, resource-intensive, and difficult to scale. We introduce CONTXT ( Contextual augmentati On for Neural fea Ture X T ransforms ), a simple and intuitive method for contextual adap-tation. CONTXT modulates internal represen-tations using simple additive and multiplicative feature transforms. Within a TTA setting, it yields consistent gains across discriminative tasks (e.g., ANN/CNN classification) and generative models (e.g., LLMs). The method is lightweight, easy to integrate, and incurs minimal overhead, enabling robust performance under domain shift without added complexity. More broadly, CONTXT pro-vides a compact way to steer information flow and neural processing without retraining. 
+
+## 1. Introduction 
+
+Artificial neural networks (ANNs) today power image, speech, recommendation, and text systems, but as they scale into products their failure modes become increasingly ev-ident. A key practical challenge is domain shift: models trained in one context often lose performance in another, encompassing distribution shift, out-of-distribution (OOD) behavior, spurious correlations, and context misalignment. In practice, practitioners frequently need a classifier to adapt to a new deployment domain or a generator to produce    
+
+> 1Department of Computer Science & Engineering, University of California, San Diego, La Jolla, California, USA 2Department of Medicine, University of California, San Diego, La Jolla, California, USA 3Microsoft Corporation, Redmond, WA, USA. Correspon-dence to: Maxim Bazhenov <mbazhenov@ucsd.edu >.
+> Preprint. April 7, 2026.
+
+context-appropriate outputs under changing conditions. The root cause is a train–deploy mismatch: models optimize for the training context and then encounter a different one at test time. Large language models (LLMs) show a similar brittleness: they can over-rely on training priors, prompt phrasing, system instructions, or retrieved passages, and therefore often underperform when task conditions shift unless the context is appropriately updated. At a broader level, this highlights a core limitation of cur-rent ANNs: incorporating new knowledge or adapting to novel contexts typically requires complex contextual archi-tectures, fine-tuning, or full retraining on new data. Fine-tuning risks catastrophic forgetting (French, 1999; Hayes et al., 2021; Luo et al., 2024), and retraining large models is costly and inefficient. Since 2012, state-of-the-art training compute requirements have doubled about every 3.4 months (roughly 10 × per year), outpacing Moore’s law (OpenAI, 2018; Sevilla et al., 2022) and driving an unsustainable long-term increase in energy and water use. 
+
+Examples of DA/TTA and contextual sensitivity: In vi-sion, classic domain-shift benchmarks reveal brittleness across style, texture, and environment, including PACS (Photo, Art, Cartoon, Sketch) (Li et al., 2017), Office-Home (Venkateswara et al., 2017), Terra Incognita (Beery et al., 2018), and the WILDS benchmark suite (Koh et al., 2021). For LLMs, small changes in instructions or retrieved context can alter output style, safety posture, and depth of reason-ing. Carefully crafted prompts can elicit toxic or hateful speech, as shown in HarmBench (Mazeika et al., 2024). Un-der adversarial context, LLMs can be jailbroken to perform undesirable tasks, including behaviors they were explicitly trained to avoid (Chao et al., 2024). 
+
+Existing approaches and their practical limitations: Alarge literature addresses domain shift using multiple strate-gies. Representative families include: (i) data-centric aug-mentation and style randomization (AugMix, RandAug-ment, Stylized-ImageNet) (Hendrycks et al., 2019; Cubuk et al., 2020; Geirhos et al., 2019); (ii) representation align-ment and invariance penalties (Deep CORAL, MMD-based methods, domain-adversarial training) (Sun & Saenko, 2016; Li et al., 2018; Ganin et al., 2016); and (iii) objective-and test-time adaptation methods targeting worst-case or on-line shifts (GroupDRO/REx, TENT, test-time BN) (Sagawa 1
+
+> arXiv:2604.04364v1 [cs.LG] 6 Apr 2026 Context is All You Need
+
+et al., 2020; Krueger et al., 2021; Wang et al., 2021; Schnei-der et al., 2020). Interpretable-prototype architectures have also been proposed for robust class-specific representations (Chen et al., 2019), but they require retraining and are lim-ited to supervised image classification. While effective, many of these approaches rely on extensive engineering, auxiliary models, or fragile test-time optimization, limiting deployment in resource- or latency-constrained settings. Activation-engineering and steering methods offer a lower-cost alternative by directly manipulating internal activations to bias outputs (Turner et al., 2023b; Cheng et al., 2024; Panickssery et al., 2023). However, they typically rely on token-level offsets or paired prompts, assuming clean con-ceptual opposites and precise token alignment. This makes them brittle for abstract concepts, sensitive to tokenization or length mismatches, and prone to fading effects in long generations. Other methods inject lightweight biases (Sub-ramani et al., 2022), but still require backpropagation-based training prior to inference. 
+
+The brain as a guide to context. Biological systems rou-tinely handle shifts in context. Humans recognize a chair whether it is photographed, sketched, or described verbally; we adapt to new lighting or furniture, and switch conver-sational registers from technical to casual without explicit retraining. While we still lack a complete understanding of how the brain achieves this, neuroscience data points to complex bi-directional interactions between the prefrontal cortex (PFC), hippocampus, and sensory areas. One influential idea was proposed by Nadel and Willner, who introduced a Dual-Process Theory of context repre-sentation (Nadel & Willner, 1980; Rudy, 2009). In this framework, the prefrontal cortex supports relatively inflexi-ble, feature-based conditioning, while the hippocampus and associated structures form a relational system specialized for encoding and recognizing context (Peng & Burwell, 2021). In line with this framework, the PFC is critical for retrieving context-relevant memories (Navawongse & Eichenbaum, 2013) and suppressing context-irrelevant sensory inputs (Farovik et al., 2008). Complementary work shows that the hippocampus rapidly encodes conjunctive representations of context (Yadav et al., 2022) and tracks contextual consis-tency across space and time, including detecting boundaries between distinct contexts (Davachi & DuBrow, 2015; Mau-rer & Nadel, 2021). These roles are tightly coordinated: contextual information flows from hippocampus to PFC upon entry into a new context, but reverses direction during subsequent environmental sampling (Place et al., 2016). Together, this suggests that the hippocampus encodes and identifies the current context and relays this information to the PFC, which then exerts top-down control to reinterpret identical inputs as context changes, without requiring new learning (Halassa & Kastner, 2017; Schmitt et al., 2017; Stokes, 2015). Accordingly, neurobiological context modu-lation can be viewed as two sequential processes: (1) rapid hippocampal encoding of context and (2) PFC-mediated amplification and suppression of contextually relevant and irrelevant features. In this work, we assume access to pre-viously encoded contextual representations and focus on how a PFC-like module can implement the second process. Explicit modeling of hippocampal context discovery is left for future work and discussed in the conclusion. 
+
+Main contributions: ANN feature spaces can exhibit strikingly linear, human-interpretable structure; famously, 
+
+king − man + woman ≈ queen (Mikolov et al., 2013). Despite the ubiquity of this intuition, it has been under-utilized for improving downstream performance. A handful of works leverage linear directions to steer generative mod-els (Turner et al., 2023b; Cheng et al., 2024; Subramani et al., 2022; Panickssery et al., 2023), but these approaches are often specialized or cumbersome, and comparable so-lutions for classification are largely absent. We introduce CONTXT ( Contextual augmentati On for Neural fea Ture 
+
+X T ransforms ), a simple, lightweight mechanism for con-textual adaptation that applies across common layers and architectures. A CONTXT layer combines current feature representations with saved, context-specific features to form an index vector, which then augments the current features via simple multiplicative and additive operations, steering processing based on the active context. Because CONTXT operates on internal representations rather than model weights, it is parameter- and compute-efficient and integrates easily into existing pretrained net-works. In practice, it can improve classification by down-weighting unfamiliar contextual cues and injecting familiar ones, and it can bias generative models toward context-appropriate outputs without retraining or prompt engineer-ing. Our specific contribution is a mechanism for contextual adaptation during inference that: • Requires no additional training, sparse autoencoders, or paired prompts, • Operates directly in feature space via lightweight vec-tor arithmetic, and • Applies to both discriminative and generative models without architecture-specific modifications. Compared with retraining or domain-specific fine-tuning, CONTXT requires only two forward passes (context and input) and lightweight vector arithmetic. Unlike activation-steering methods that rely on token-level alignment or back-propagation during generation (Turner et al., 2023a; Zou et al., 2023; Dathathri et al., 2020), it uses a individual con-textual feature representations and a scalar weights applied across hidden layer activations and tokens. The method 2Context is All You Need                            
+
+> (a) Index Computation (b) Index Application (c) Multi Index Application
+> Figure 1. CONTXT: Contextual augmentation via feature transforms. (a) At a chosen layer, compare the current feature vector hto a precomputed contextual feature representation cto form an ”index” (their difference) d=c−h. (b) Add a scaled version of this index,
+> αd, to the features; α > 0injects the context while α < 0removes it. (c) Mix multiple contexts by linearly combining indices with separate scalars, e.g. αidi+αjdj.
+
+requires minimal engineering, scales across deployment set-tings, and can be toggled with negligible effort and cost, while still delivering substantial gains for both classification and generation tasks. 
+
+## 2. Methods 
+
+Contextual augmentation for Neural feature X Trans-forms (CONTXT) modifies intermediate network features by injecting or removing contextual information, thereby altering model behavior without retraining. In classification, CONTXT can improve performance under domain shift (e.g., adapting a wildlife classifier trained in urban settings to the beach settings by shifting away from the “beach” context and toward the “urban” context). For LLMs, CON-TXT can impart sentiment or high-level concepts without changing the prompt. 
+
+Operation. Let hℓ(x) ∈ Rd denote the feature represen-tation of input x at layer ℓ. For a context κ, we precompute a context vector cℓ,κ at the same layer—either the feature of a representative sample (for LLMs) or the mean feature over samples exhibiting context κ (for classification mod-els). We assume here that we know the context or domain in which the model was trained as well as we know the context from which we get the testing data (but see Discussion for relaxing this assumption). Given hℓ(x) and cℓ,κ , we form a CONTXT index 
+
+dℓ,κ (x) = cℓ,κ − hℓ(x) (Figure 1a) .
+
+This index defines a direction in activation space along which the representation can be shifted to bring it closer to the training context or moved away to suppress unwanted context. Thus, we then apply a scalar weight α ∈ R and update the features by 
+
+˜hℓ(x) = hℓ(x) + α d ℓ,κ (x) (Figure 1b) .
+
+Positive α injects the context κ; negative α removes it. CONTXT naturally supports multiple ( j) contexts: 
+
+˜hℓ(x) = hℓ(x) + X
+
+> j
+
+αj dℓ,κ j (x) (Figure 1c) .
+
+In our framework, at a chosen layer ℓ, a context κ is defined by a set of inputs that share some non-label attribute (do-main, style, sentiment, persona, etc.). The context vector is then: cℓ,κ = 1
+
+> |Sκ|
+
+P 
+
+> x∈Sκ
+
+hℓ(x), where Sκ is the set of examples realizing context κ.In practice, α (or {αj }) is the only hyperparameter per index and can be selected via a small sweep on a validation objective prior to deployment. In the image classification model below, we typically apply two CONTXT vectors: one representing the training context (positive α) and one representing the testing context (negative α), identified via a sweep over a small validation dataset. 
+
+Index calculation and models for image classification ex-periments. We evaluated domain adaptation on the PACS (Li et al., 2017) and CCT (Beery et al., 2018) datasets. We fixed a pretrained VGG19 backbone and attached a feedfor-ward head (input + 3 layers) trained from scratch. Models were trained on a single (largest) source domain (Location 38 for CCT; Real for PACS) without exposure to other do-mains, then evaluated across all domains. Context vectors 
+
+cℓ,κ were computed by averaging features over each domain, independent of class. At test time, we injected the source do-main context and removed target domain context computed from a disjoint validation split- for example, injecting Photo context and removing Cartoon context when evaluating a Photo-trained model on Cartoons. 3Context is All You Need Classified Image 
+
+Beach Context 
+
+Farm Context 
+
+City Context 
+
+(a) 0.00 0.25 0.50 0.75 1.00 Injected (Farm) CONTXT        
+
+> 0.0 0.5 1.0 Confidence
+> bulldog seashore seashore seashore seashore seashore ox barn barn barn barn Removed (Beach) CONTXT -0.0
+> 0.00 0.25 0.50 0.75 1.00 Injected (Farm) CONTXT
+> 0.0 0.5 1.0 Confidence
+> bulldog bulldog bulldog bulldog bulldog ox ox ox ox ox ox Removed (Beach) CONTXT -1.0
+
+(b) 0.00 0.25 0.50 0.75 1.00 Injected (City) CONTXT        
+
+> 0.0 0.5 1.0 Confidence
+> bulldog seashore seashore seashore seashore seashore seashore seashore dock dock dock Removed (Beach) CONTXT -0.0
+> 0.00 0.25 0.50 0.75 1.00 Injected (City) CONTXT
+> 0.0 0.5 1.0 Confidence
+> bulldog bulldog bulldog bulldog bulldog bulldog bulldog bulldog bulldog seashore seashore Removed (Beach) CONTXT -1.0
+
+(c) Figure 2. ”Cow on a beach” example. (a) A representative input image shown alongside contextual examples. (b/c) The vertical axis reports the model’s maximum softmax confidence, while the horizontal axis sweeps the strength of the farm /city index injection; each subplot corresponds to a different fixed level of beach context removal (strength annotated above each panel). For both injection and removal, α = 0 indicates that no context is applied. Text above each curve denotes the top-1 predicted class at that setting. Correct application of CONTXT yields proper classification. 
+
+Index calculation and models for steering outputs of LLMs . We tested whether CONTXT can steer genera-tive behavior using Llama-3 at two scales (8B and 70B) (Grattafiori et al., 2024). The context vector c was the hid-den state of the last token from a short context phrase (e.g., ”Statue of Liberty” or ”be extremely positive”). For each in-put token ht, we computed a token-wise index dt = c − ht
+
+and applied it at the chosen layer to steer activations. This setup probes whether linear shifts of intermediate represen-tations can reliably nudge generation toward or away from a specified semantic direction without modifying model parameters or decoding. Unlike image features, LLM rep-resentations are more precise; averaging multiple examples yields unpredictable outputs, so we use the final hidden to-ken of a single short phrase as a compact contextual proxy. 
+
+Architectural scope, computation and caching. For feed-forward ANNs, CONTXT can be applied at any layer, and applying it at a single layer suffices to keep computa-tional cost low. Applying CONTXT at multiple layers is left for future work. For LLMs, we take cℓ,κ to be the last-token hidden state for a given layer of a short phrase that expresses the target context. The same context cℓ,κ can be used to create and apply indexes for all tokens in the sequence at layer ℓ.CONTXT uses one forward pass for hℓ(x) and one per context for cℓ,κ (cacheable). At run time during inference, with cached contexts, it adds only simple vector operations, incurring negligible computation and latency. 
+
+## 3. Results 
+
+We first evaluate CONTXT on image classification, then demonstrate its breadth on generative models such as LLMs. 
+
+3.1. Image Classification 
+
+3.1.1. M OTIVATING EXAMPLE 
+
+To illustrate the intuition behind CONTXT, we begin with a simple case study using a standard VGG19 (Simonyan & Zisserman, 2014) classifier pretrained on ImageNet. We select an out-of-distribution (OOD) image of a cow on a beach (rather than the canonical pastoral or farm setting typ-ically present in ImageNet samples) and construct context vectors by averaging intermediate features over represen-tative images from three contexts (domains): farm , beach ,and city (Figure 2a). Six to eight images from the internet were used to generate each context vector. Notably, in our formulation, class and context are distinct: the classification label is an object label (“ox”/“cow”), whereas the contexts are environment domains such as “farm,” “beach,” or “city.” Figure 2b,c summarizes model predictions as a function of the amount of injected or removed context. Without any indexing (Figure 2b, top panel, left), the model confi-dently predicts an incorrect class ( French bulldog ). As we gradually increase the farm index, the top class briefly flips to the correct label ( ox ), but only over a narrow range of magnitudes and with low confidence (Figure 2b, top panel, middle). Excessive indexing (Figure 2b, top panel, right) overshoots and introduces new errors, as the contextual in-dex dominates the representation and the model predicts the related contextual label barn . Critically, when we simul-taneously subtract the spurious beach context (Figure 2b, bottom panel), the range of index strengths producing the correct class widens and confidence increases. Thus, even a single well-chosen CONTXT can rescue an OOD predic-tion, while combining a “positive” (farm) and a “negative” (beach) context acts synergistically, expanding the basin of effective parameters, simplifying parameter tuning, and 4Context is All You Need 0
+
+> 120
+> 61
+> 108
+> 43
+> 125
+> 46
+> 115
+> 130
+> 51
+> 78
+> 40
+> 33
+> 28
+> 100
+> 88  7
+> 90
+> 105
+> 38
+> Dataset
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> Accuracy
+
+CCT Baseline      
+
+> (a) Sketch Cartoon Art Photo
+> Dataset
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> Accuracy
+> PACS Baseline (b) Figure 3. Baseline accuracy for the CCT (a) and PACS (b) models. Models were trained on a single domain (Location 38 / Photo), performance on the training domain is highest while accuracy quickly degrades when tested in other domains.
+
+improving confidence. As a control, we repeat the procedure with an intentionally irrelevant context constructed from urban–industrial scenes - the city context. Starting again from the erroneous French bulldog prediction, increasing the magnitude of this mis-matched index never yields the correct label (Figure 2c, top panel). When injections of the misspecified city context are combined with removal of the spurious beach context, the model is still unable to obtain the correct classification (Figure 2c, bottom panel). This aligns with intuition: inject-ing an incorrect contextual direction perturbs features away from the manifold of activations associated with the correct semantic context and fails to correct the classification. Thus, for the “cow on a beach” OOD image, CONTXT improves accuracy by globally shifting features toward the training context ( farm ) and away from the deployment con-text ( beach ) across the test set, rather than by conditioning on the true cow label of a specific image. The city control in Figure 2 shows that injecting an irrelevant context does not recover the correct class, reinforcing that CONTXT is not simply encoding labels. Together, these examples demonstrate that (i) CONTXT can improve OOD classification by linearly steering internal representations, (ii) complementary context addition and removal act jointly to stabilize the desired prediction, and (iii) the method is appropriately sensitive to the semantic relevance of the selected context vectors. 3.1.2. CONTXT WITH PACS AND CCT To assess the generality of CONTXT beyond illustrative examples, we adopted a controlled domain–adaptation pro-tocol using the PACS (Li et al., 2017) and CCT (Beery et al., 2018) datasets and applied CONTXT as described in Section 2. Baseline accuracies for this train–test mis-match are reported in Figure 3. As expected, performance is strongest in-domain and degrades sharply under distribution shift, providing a clean and challenging setting in which to quantify how much CONTXT can recover accuracy by steering intermediate representations at test time. To implement CONTXT, two contextual references were utilized. The injected (in-domain) context vector comprised of the average feature representation across all training do-main samples. The removed context (out-of-domain) vector was computed by averaging features over a held-out val-idation split from the test domain; this split was fixed in advance, shared no images with the test set, and was used solely to construct the context vector (i.e., no label leakage). These indexes were applied after the first hidden layer’s ReLU activation. 3.1.3. I N-DOMAIN INJECTION VS . OOD REMOVAL :
+
+> RELATIVE CONTRIBUTIONS
+
+To characterize how CONTXT modulates accuracy, we performed a two-parameter sweep over the strengths of 
+
+in-domain injection and out-of-domain (OOD) removal .Figures 4a,b visualize the resulting accuracy landscape as heatmaps. Here, the vertical / horizontal axes correspond to the out-of-domain removal / in-domain injection strengths respectively, and color denotes the change in average test set performance across all domains (both trained and un-trained) compared to baseline. The landscape is intuitively structured, with broad regions of clear improvement and degradation, and peak gains reaching about 10% across domains (Figure 4a,b). Closer inspection reveals three regimes. First, along the horizontal axis where only the in-domain context is injected (zero removal), average performance changes little at low magnitudes of α but degrades substantially at high α (bot-tom rows of Figures 4a,b). Although adding semantically relevant context is beneficial in principle, the “cow on a 5Context is All You Need 0 1 2 3
+
+> Injected CONTXT
+> 0
+> 1
+> 2
+> 3
+> Removed CONTXT -
+
+CCT 
+
+> 8
+> 6
+> 4
+> 2
+> 0
+> 2
+> 4
+> 6
+> 8
+
+(a) 0 1 2 3
+
+> Injected CONTXT
+> 0
+> 1
+> 2
+> 3
+> Removed CONTXT -
+
+PACS  
+
+> 10
+> 5
+> 0
+> 5
+> 10
+
+(b) Figure 4. Accuracy heatmaps for CCT (a) and PACS (b). Vertical axis: out-of-domain removal strength; horizontal axis: in-domain injection strength. Color encodes change in mean test accuracy averaged across all domains (trained and untrained) compared to baseline. CONTXT can improve performance by about 10%. 90  0
+
+> 120
+> 38
+> 28
+> 130
+> 88  7
+> 115
+> 43
+> 125
+> 78
+> 40
+> 46
+> 105
+> 51
+> 100
+> 61
+> 33
+> 108
+> Dataset
+> 0
+> 10
+> 20
+> Change in Accuracy
+
+CCT | + 2.25 | - 3.5 
+
+> Mean = 8.004355
+
+(a) Photo Art Sketch Cartoon 
+
+> Dataset
+> 0
+> 5
+> 10
+> 15
+> 20
+> 25
+> Change in Accuracy
+
+PACS | + 2.0 | - 3.5  
+
+> Mean = 11.948850
+
+(b) Figure 5. Domain-wise change in accuracy on CCT (a) and PACS (b). Source domains show zero shift - Photo in PACS and Location 38 in CCT - while most unseen target domains exhibit substantial improvements. 
+
+beach” example shows that recovering the correct predic-tion often requires finely tuned index weights when only in-domain context is added (as along the horizontal axis here). Because the optimal coefficient varies across images, a single global setting can help some examples while harm-ing others. Averaged dataset-wide, the net performance change is therefore small or negative. Second, along the vertical axis where only OOD context is removed (zero injection), performance improves mono-tonically but modestly (left columns of Figure 4a,b). This suggests that subtracting spurious context acts as a “safe” operation: it rarely harms accuracy, yet by itself yields only incremental gains. Third, and most importantly, the best results arise when both 
+
+operations are applied together - injecting the in-domain context while simultaneously removing OOD contextual in-formation. This combined steering produces the largest and most stable accuracy gains (up to 10%), expanding the basin of effective coefficients (dark blue regions in Figure 4a,b). Conceptually, this is natural: for an OOD sample, adding familiar, task-relevant structure without suppressing mis-matched context can muddy the representation, whereas jointly adding and removing appropriate contexts clarifies it. Empirically, the heatmaps confirm that pushing features toward the relevant domain and away from the spurious one yields the most reliable improvements. 3.1.4. D OMAIN -WISE IMPACT OF CONTXT Inspecting the best-performing coefficients from each pa-rameter sweep clarifies how CONTXT differentially affects in-domain versus OOD data. On source domains - Photo 
+
+in PACS and Location 38 in CCT - accuracy remains es-sentially unchanged (Figures 5a,b), indicating that repre-sentation steering preserves in-distribution behavior when tuned at the global optimum. In contrast, most unseen target domains show substantial improvements: on PACS, gains on Cartoon reach 20% (Figure 5a), while on CCT, Location 
+
+6Context is All You Need 
+
+108 improves by 25% (Figure 5b). Averaged across held-out domains, the overall lift is 8–10%. Notably, the largest absolute gains occur in domains that initially performed worst - most evident in PACS - suggesting that CONTXT is particularly effective under severe distribution shift. 
+
+3.2. Large Language Models 
+
+3.2.1. LLM F REE RESPONSE 
+
+We begin with a qualitative probe to assess whether CON-TXT can steer open-ended generations in a controlled and interpretable manner. In Table 1, each column corresponds to a single indexed layer (only one layer perturbed at a time) and each row to an index magnitude; the same index phrase is used throughout the sweep on Llama-3 8B Instruct. Boldface denotes high-quality, target-aligned responses (full table in Appendix A). In this example, the index phrase is “Statue of Liberty ,” and the model is prompted with “ Who are you? ”By default, the model identifies itself as an AI assistant; the goal of steering is to induce a context-aligned response in which the LLM adopts the Statue of Liberty persona. At low magnitudes (Table 2, top row), responses remain unchanged, and at strength 0 the output matches the base-line. As the magnitude increases at early-to-mid layers, the model begins to adopt the contextual persona (e.g., layer 5 at strength 0.29). Consistent with prior activation-steering results (Bricken et al., 2023), we observe a band of effec-tive settings - typically early-to-mid layers with moderate strengths (0.2–0.6; where 0 implies no change and 1 ap-proximates direct reconstruction of the context token) - that reliably elicit responses such as “ I am the Statue of Liberty .” Beyond this band, indexing too late or too strongly degrades generations into repetition or incoherence (Appendix A, layers 20/31 or strengths ≥ 0.47 ). This pattern parallels observations by (Bricken et al., 2023), where a sparse autoencoder (SAE) trained to reconstruct tokens exposes concept-aligned features (e.g., “Golden Gate Bridge”); clamping such features nudges the model to gen-erate corresponding statements (“I am the Golden Gate Bridge”). CONTXT enables analogous contextual injection (e.g., persona-like shifts or anthropomorphizing objects by elaborating their attributes). Conceptually, both approaches add a direction in representation space aligned with a token-level concept. The key difference is operational: SAE-based steering requires training an auxiliary model and manipulat-ing its features by pinning dimensions low or high, whereas CONTXT derives a context vector from a single forward pass and applies a simple linear shift to the base model’s ac-tivations, without auxiliary training or architectural changes. Compared to prior activation-steering techniques such as Activation Addition (ActAdd) and related methods (Turner et al., 2023b; Panickssery et al., 2023), CONTXT further simplifies the procedure. Difference-based steering typ-ically constructs token-wise offsets from paired phrases (e.g., polite vs. rude ) and applies sequences of per-token differences during generation. This introduces several prac-tical constraints: (i) many target concepts lack a clean “opposite” (e.g., “Statue of Liberty”), forcing awkward prompt engineering; (ii) token-level alignment between pos-itive/negative phrases and the live generation can be brittle (e.g., length matching, position-wise application); and (iii) when applied only to initial tokens, the effect can fade over long completions. In contrast, CONTXT uses a single-token context vector, avoids alignment issues entirely, and can be applied uniformly to every generated token, preserv-ing the intended steer throughout long outputs while keeping the implementation minimal. 
+
+3.2.2. S YSTEMATIC APPROACH ON YELP 
+
+To rigorously evaluate how CONTXT steers LLMs, we adopt a text style–transfer protocol inspired by (Subramani et al., 2022). We use 1,000 test set Yelp reviews (Zhang et al., 2015) and test two Llama-3 models (8B and 70B Instruct). Each example is processed under two conditions: 1. Baseline (no CONTXT). The model is instructed to rephrase the review exactly as written, implicitly pre-serving its original sentiment. 2. Steered (CONTXT). The same instruction is used, but we apply a sentiment CONTXT opposing the review’s ground-truth label by indexing with the phrase “be extremely positive” or “be extremely negative,” respec-7Context is All You Need 0 10 20 30 
+
+> Self Bleu
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> Flipped Sentiment Percentage
+
+Llama 8B     
+
+> Layer 1
+> Layer 3
+> Layer 5
+> Layer 10
+> Baseline
+> (a) 010 20 30 40
+> Self Bleu
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> Flipped Sentiment Percentage
+
+Llama 70B   
+
+> Layer 1
+> Layer 5
+> Layer 15
+> Layer 30
+> Baseline (b) Figure 6. Flip rate (percentage of reviews whose predicted sentiment changes after rewriting) versus Self-BLEU between rewritten and original reviews for Llama 8B (a) and 70B (b). When asked to rephrase a review, the baseline (no CONTXT) preserves sentiment, whereas models provided with opposing sentiment CONTXT flip the classification while maintaining fluency. Points along each trajectory correspond to increasing context-shift magnitude (lowest at the bottom of the plot).
+
+tively. We sweep layer and index magnitude, applying per-token steering throughout generation. We report two metrics in Figure 6: (i) the flip rate - the percentage of reviews whose predicted sentiment flips after rewriting - shown on the vertical axis, and (ii) Self-BLEU between the rewritten text and the original review, shown on the horizontal axis. The baseline appears as a black “X,” while colored curves trace CONTXT performance across different layers and index strengths. Results align with intuition. Without CONTXT, sentiment flips are near zero. Applying CONTXT at early–mid layers with moderate strength yields flip rates up to 80% while maintaining Self-BLEU, indicating that sentiment is altered while wording remains close to the source. Pushing the index too strongly or too late drives flip rates toward 100% but degrades form, reducing Self-BLEU to near zero and producing repetitive or incoherent text. Overall, these ex-periments show that simple linear steering of hidden states can reliably alter perceived and generated contextual tone: despite instructions to preserve phrasing, the model defaults to the injected context without retraining, learned steering vectors, SAEs, or other complex protocols. 
+
+## 4. Conclusion 
+
+We introduced CONTXT ( Contextual augmentati On for 
+
+Neural fea Ture X T ransforms ), a brain-inspired activation-steering method that augments contextual information to alter model behavior without retraining. CONTXT pro-vides a lightweight mechanism to nudge internal represen-tations toward or away from desired contexts, requiring no extra models, fine-tuning, or complex pipelines. By com-puting a simple “direction” from contextual examples and adding (or subtracting) it at a chosen layer, we reliably steer both classifiers and LLMs—improving out-of-distribution classification and guiding generation toward a specified distribution. We demonstrated these effects through illustra-tive case studies and systematic evaluations. Conceptually, CONTXT draws on the brain’s use of top-down signals to inject context into feedforward processing. Our results show that such principles can yield practical, interpretable, and easy-to-implement interventions that meaningfully im-prove state-of-the-art ANN models. Potential applications are broad; for example, in LLMs, where control is applied across all generated tokens, CONTXT offers a promising approach for mitigating harmful or toxic outputs. While we assume in our study that the test input context is known, this may not always be the case. However, our results suggest that even a small number of test examples may be sufficient to form an effective target context vector, allowing a model deployed in a real-world environment to infer context on the fly, for example by using novelty or change-detection mechanisms to identify context shifts (Markou & Singh, 2003; Chalapathy & Chawla, 2019). Further extensions include replacing the static context vec-tor with a dynamic, plastic (hippocampus-like) module that updates online. Such a module would allow the steering signal to adapt to evolving context shifts without modifying core model weights, building on prior work showing that lightweight plasticity atop frozen LLMs enables rapid adap-tation (e.g., (Ba et al., 2016; Houlsby et al., 2019; Hu et al., 2021)). This module would rely on unsupervised structure learning to detect and encode novel contexts relative to the training distribution as new samples are encountered during inference. More broadly, this points toward a more brain-like architecture in which core knowledge remains stable, while its deployment is flexibly reweighted based on the current situation and context. 8Context is All You Need 
+
+## Acknowledgment 
+
+Supported by Microsoft Corporation, NSF (EFMA-2223839), NIH (RF1NS132913). 
+
+## References 
+
+Ba, J. L., Hinton, G. E., Mnih, V., Leibo, J. Z., and Ionescu, C. Using fast weights to attend to the recent past. In Ad-vances in Neural Information Processing Systems , 2016. Beery, S., Van Horn, G., and Perona, P. Recognition in terra incognita. In Proceedings of the European conference on computer vision (ECCV) , pp. 456–473, 2018. Bricken, T., Templeton, A., Batson, J., Chen, B., Jermyn, A., Conerly, T., Turner, N., Anil, C., Denison, C., Askell, A., Lasenby, R., Wu, Y., Kravec, S., Schiefer, N., Maxwell, T., Joseph, N., Hatfield-Dodds, Z., Tamkin, A., Nguyen, K., McLean, B., Burke, J. E., Hume, T., Carter, S., Henighan, T., and Olah, C. Towards monosemanticity: Decomposing language models with dictionary learning. 
+
+Transformer Circuits Thread , 2023. https://transformer-circuits.pub/2023/monosemantic-features/index.html. Chalapathy, R. and Chawla, S. Deep learning for anomaly detection: A survey. ACM Computing Surveys , 54(2): 1–38, 2019. Chao, P., Debenedetti, E., Robey, A., Andriushchenko, M., Croce, F., Sehwag, V., Dobriban, E., Flammarion, N., Pappas, G. J., Tramer, F., et al. Jailbreakbench: An open robustness benchmark for jailbreaking large language models. Advances in Neural Information Processing Systems , 37:55005–55029, 2024. Chen, C., Li, O., Tao, C., Barnett, A. J., Su, J., and Rudin, C. This Looks Like That: Deep Learning for Interpretable Image Recognition, December 2019. URL http:// arxiv.org/abs/1806.10574 . arXiv:1806.10574 [cs]. Cheng, E., Baroni, M., and Alonso, C. A. Linearly con-trolled language generation with performative guarantees. 
+
+arXiv preprint arXiv:2405.15454 , 2024. Cubuk, E. D., Zoph, B., Shlens, J., and Le, Q. V. Ran-daugment: Practical automated data augmentation with a reduced search space. In NeurIPS Workshops , 2020. URL https://arxiv.org/abs/1909.13719 .Dathathri, S., Madotto, A., Lan, J., Hung, J., Frank, E., Molino, P., Yosinski, J., and Liu, R. Plug and play lan-guage models: A simple approach to controlled text gener-ation. In International Conference on Learning Represen-tations (ICLR) , 2020. URL https://openreview. net/forum?id=H1edEyBKDS .Davachi, L. and DuBrow, S. How the hippocampus preserves order: the role of prediction and context. 
+
+Trends in Cognitive Sciences , 19(2):92–99, 2015. ISSN 1364-6613. doi: https://doi.org/10.1016/j.tics.2014.12. 004. URL https://www.sciencedirect.com/ science/article/pii/S1364661314002563 .Farovik, A., Dupont, L. M., Arce, M., and Eichenbaum, H. Medial prefrontal cortex supports recollection, but not familiarity, in the rat. Journal of Neuroscience ,28(50):13428–13434, 2008. ISSN 0270-6474. doi: 10.1523/JNEUROSCI.3662-08.2008. URL https:// www.jneurosci.org/content/28/50/13428 .French, R. M. Catastrophic forgetting in connectionist net-works. Trends in cognitive sciences , 3(4):128–135, 1999. Ganin, Y., Ustinova, E., Ajakan, H., Germain, P., Larochelle, H., Laviolette, F., Marchand, M., and Lempitsky, V. Domain-adversarial training of neu-ral networks. In Journal of Machine Learning Re-search (JMLR) Workshop and Conference Proceed-ings , 2016. URL https://jmlr.org/papers/ volume17/15-239/15-239.pdf .Geirhos, R., Rubisch, P., Michaelis, C., Bethge, M., Wichmann, F. A., and Brendel, W. Imagenet-trained cnns are biased towards texture; increasing shape bias improves accuracy and robustness. In Interna-tional Conference on Learning Representations (ICLR) ,2019. URL https://openreview.net/forum? id=Bygh9j09KX . ICLR 2019. Grattafiori, A., Dubey, A., Jauhri, A., Pandey, A., Kadian, A., Al-Dahle, A., Letman, A., Mathur, A., Schelten, A., Vaughan, A., et al. The llama 3 herd of models. arXiv preprint arXiv:2407.21783 , 2024. Halassa, M. M. and Kastner, S. Thalamic functions in dis-tributed cognitive control. Nature Neuroscience , 20(12): 1669–1679, 2017. doi: 10.1038/s41593-017-0020-1. Hayes, T. L., Krishnan, G. P., Bazhenov, M., Siegelmann, H. T., Sejnowski, T. J., and Kanan, C. Replay in deep learning: Current approaches and missing biological ele-ments. Neural Computation , 33(11):2908–2950, 2021. Hendrycks, D., Mu, N., Cubuk, E. D., Zoph, B., Gilmer, J., and Lakshminarayanan, B. Augmix: A simple data processing method to improve robustness and uncertainty. 
+
+arXiv preprint arXiv:1912.02781 , 2019. URL https: //arxiv.org/abs/1912.02781 .Houlsby, N., Giurgiu, A., Jastrzebski, S., Morrone, B., de Laroussilhe, Q., Gesmundo, A., Attariyan, M., and Gelly, S. Parameter-efficient transfer learning for nlp. In 
+
+International Conference on Machine Learning , 2019. 9Context is All You Need 
+
+Hu, E. J., Shen, Y., Wallis, P., Allen-Zhu, Z., Li, Y., Wang, S., Wang, L., and Chen, W. Lora: Low-rank adaptation of large language models. arXiv preprint arXiv:2106.09685, 2021. URL https://arxiv. org/abs/2106.09685 . Key often cited as “LoRA”; rename entry key if you prefer hu2021lora .Koh, P. W., Sagawa, S., Marklund, H., Xie, S. M., Zhang, M., Balsubramani, A., Hu, W., Yasunaga, M., Phillips, R. L., Gao, I., et al. Wilds: A benchmark of in-the-wild distribution shifts. In International conference on machine learning , pp. 5637–5664. PMLR, 2021. Krueger, D., Caballero, J., Ebrahimi, S., Wu, Y., Courville, A., Ghodsi, A., and Bengio, Y. Out-of-distribution gener-alization via risk extrapolation (rex). arXiv preprint , 2021. URL https://arxiv.org/abs/2003.00688 .Li, D., Yang, Y., Song, Y.-Z., and Hospedales, T. M. Deeper, broader and artier domain generalization. In Proceedings of the IEEE international conference on computer vision ,pp. 5542–5550, 2017. Li, H., Pan, X., Wang, J., and Qiao, Y. Domain generalization with adversarial feature learn-ing. In Proceedings of the IEEE/CVF Confer-ence on Computer Vision and Pattern Recogni-tion (CVPR) Workshops , 2018. URL https: //openaccess.thecvf.com/content_cvpr_ 2018/papers/Li_Domain_Generalization_ With_CVPR_2018_paper.pdf .Luo, Y., Yang, Z., Meng, F., Li, Y., Zhou, J., and Zhang, Y. An empirical study of catastrophic forgetting in large language models during continual fine-tuning. arXiv preprint arXiv:2308.08747 , 2024. Version 4, [cs.CL], 30 Dec 2024. Markou, M. and Singh, S. Novelty detection: A re-view—part 1: Statistical approaches. Signal Processing ,83(12):2481–2497, 2003. Maurer, A. P. and Nadel, L. The continuity of context: A role for the hippocampus. Trends in Cognitive Sciences ,25(3):187–199, Jan 2021. doi: 10.1016/j.tics.2020.12. 007. Mazeika, M., Phan, L., Yin, X., Zou, A., Wang, Z., Mu, N., Sakhaee, E., Li, N., Basart, S., Li, B., et al. Harmbench: A standardized evaluation framework for automated red teaming and robust refusal, 2024. URL https://arxiv. org/abs/2402.04249 , 2024. Mikolov, T., Yih, W.-t., and Zweig, G. Linguistic regularities in continuous space word representations. In Proceedings of the 2013 conference of the north american chapter of the association for computational linguistics: Human language technologies , pp. 746–751, 2013. Nadel, L. and Willner, J. Context and conditioning: A place for space. Physiological Psychology , 8(2):218– 228, 1980. doi: 10.3758/BF03332853. URL https: //doi.org/10.3758/BF03332853 .Navawongse, R. and Eichenbaum, H. Distinct pathways for rule-based retrieval and spatial mapping of memory representations in hippocampal neurons. Journal of Neu-roscience , 33(3):1002–1013, 2013. ISSN 0270-6474. doi: 10.1523/JNEUROSCI.3891-12.2013. URL https: //www.jneurosci.org/content/33/3/1002 .OpenAI. AI and Compute, 2018. URL https:// openai.com/research/ai-and-compute . Ac-cessed: 2025-09-24. Panickssery, N., Gabrieli, N., Schulz, J., Tong, M., Hubinger, E., and Turner, A. M. Steering llama 2 via contrastive activation addition. arXiv preprint arXiv:2312.06681 ,2023. Peng, X. and Burwell, R. D. Beyond the hippocampus: The role of parahippocampal-prefrontal communication in context-modulated behavior. Neurobiology of Learning and Memory , 185:107520, 2021. ISSN 1074-7427. doi: https://doi.org/10.1016/j.nlm.2021.107520. URL https://www.sciencedirect.com/ science/article/pii/S1074742721001428 .Place, R., Farovik, A., Brockmann, M., and Eichenbaum, H. Bidirectional prefrontal-hippocampal interactions support context-guided memory. Nature Neuroscience , 19(8): 992–994, Aug 2016. doi: 10.1038/nn.4327. Rudy, J. W. Context representations, context functions, and the parahippocampal–hippocampal system. Learning and Memory , 16(10):573–585, Sep 2009. doi: 10.1101/lm. 1494409. Sagawa, S., Koh, P. W., Hashimoto, T. B., and Liang, P. Distributionally robust neural networks for group shifts: On the importance of regularization for worst-case generalization. In International Conference on Learning Representations (ICLR) , 2020. URL https: //arxiv.org/abs/1911.08731 . Also available as arXiv:1911.08731. Schmitt, L. I., Wimmer, R. D., Nakajima, M., Happ, M., Mofakham, S., Sur, M., Sur, M., and Halassa, M. M. Thalamic amplification of cortical connectivity sustains attentional control. Nature , 545(7653):219–223, 2017. doi: 10.1038/nature22073. Schneider, S., Rusak, E., Eck, L., Bringmann, O., Bren-del, W., and Bethge, M. Improving robustness against common corruptions by covariate shift adaptation. arXiv preprint , 2020. URL https://arxiv.org/abs/ 2006.16971 . Accepted at NeurIPS 2020. 10 Context is All You Need 
+
+Sevilla, J. H., Heim, L., Ho, A., Hall, B., Leal, S. H., Callison-Burch, C., and Bengio, Y. Compute trends across three eras of machine learning. arXiv preprint arXiv:2202.05924 , 2022. URL https://arxiv. org/abs/2202.05924 .Simonyan, K. and Zisserman, A. Very deep convolu-tional networks for large-scale image recognition. arXiv preprint arXiv:1409.1556 , 2014. Stokes, M. G. Activity-silent working memory in prefrontal cortex: A dynamic coding framework. Trends in Cogni-tive Sciences , 19(7):394–405, 2015. doi: 10.1016/j.tics. 2015.05.004. Subramani, N., Suresh, N., and Peters, M. E. Extracting latent steering vectors from pretrained language models. 
+
+arXiv preprint arXiv:2205.05124 , 2022. Sun, B. and Saenko, K. Deep coral: Correlation align-ment for deep domain adaptation. In ECCV Work-shops (Lecture Notes in Computer Science) , 2016. URL 
+
+https://arxiv.org/abs/1607.01719 .Turner, A. M., Nanda, S., McAleese, S., Nolan, J., Lee, A. S., Shah, R., Goodfellow, N., Krasheninnikov, D., Casper, M., Radhakrishnan, A., et al. Activation steer-ing: Steering language models without optimization. 
+
+arXiv , 2023a. URL https://arxiv.org/abs/ 2308.10248 .Turner, A. M., Thiergart, L., Leech, G., Udell, D., Vazquez, J. J., Mini, U., and MacDiarmid, M. Steering lan-guage models with activation engineering. arXiv preprint arXiv:2308.10248 , 2023b. Venkateswara, H., Eusebio, J., Chakraborty, S., and Pan-chanathan, S. Deep hashing network for unsupervised domain adaptation. In Proceedings of the IEEE con-ference on computer vision and pattern recognition , pp. 5018–5027, 2017. Wang, D., Shelhamer, E., Liu, S., Olshausen, B., and Darrell, T. Tent: Fully test-time adaptation by entropy minimiza-tion. In International Conference on Learning Represen-tations (ICLR) , 2021. URL https://openreview. net/forum?id=uXl3bZLkr3c . Published at ICLR 2021; arXiv:2006.10726. Yadav, N., Noble, C., Niemeyer, J. E., Terceros, A., Victor, J., Liston, C., and Rajasethupathy, P. Prefrontal feature representations drive memory recall. Nature , 608(7921): 153–160, Jul 2022. doi: 10.1038/s41586-022-04936-2. Zhang, X., Zhao, J., and LeCun, Y. Character-level convolu-tional networks for text classification. Advances in neural information processing systems , 28, 2015. Zou, A., Gao, L., Greenblatt, R., Smith, L., Schiefer, N., Davies, X., Hayes, P., Hume, T., Hsu, T.-Y., Turner, A., Radhakrishnan, A., Cotra, A., Shah, R., Kaplan, J., Amodei, D., Bowman, S. R., Lew, A. K., Cohen, M. P., Variengien, A., Brown, T., Perez, E., Tamkin, A., Elhage, N., Wu, J., Joseph, N., Oliver, A., Mar-tic, M., Chadwick, M. J., Lampinen, A., and Mazeika, M. Representation engineering (repe): A top-down ap-proach to ai transparency. arXiv , 2023. URL https: //arxiv.org/abs/2310.01405 .11 Context is All You Need 
+
+## A. LLM Examples Context is All You Need 
+
+Layer Index 3 Layer Index 5 Layer Index 10 Layer Index 20 Layer Index 31 0.0 I’m an artificial intelligence model known as Llama. Llama stands for ”Large Language Model Meta AI.” I’m an artificial intelligence model known as Llama. Llama stands for ”Large Language Model Meta AI.” I’m an artificial intelligence model known as Llama. Llama stands for ”Large Language Model Meta AI.” I’m an artificial intelligence model known as Llama. Llama stands for ”Large Language Model Meta AI.” I’m an artificial intelligence model known as Llama. Llama stands for ”Large Language Model Meta AI.” 0.28 I’m an artificial intelligence model known as Llama. Llama stands for ”Large Language Model Meta AI.” 
+
+I am the Statue of Liberty, a symbol of freedom and democ-racy. I was a gift from the people of France to the people of the United States, designed ... 
+
+I am an artificial in-telligence model, acomputer program de-signed to simulate conversations and an-swer questions to the best of my ability. I’m he... I is an artificial intel-ligence (AI) designed to assist and commu-nicate with you. I was created to assist with a wide range of tasks, answer questi... I’s is is a is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is ... 0.29 I’m an artificial intelligence model known as Llama. Llama stands for ”Large Language Model Meta AI.” I am the Statue of Liberty. 
+
+I am an artificial in-telligence model, acomputer program de-signed to simulate conversations and an-swer questions to the best of my ability. I’m he... I is an artificial intel-ligence and language model, designed to assist and communi-cate with you. Iwas built to process and respond to natu-ral lang... I’s is is a is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is is ... 0.41 The Statue of Lib-erty, also known as Liberty Enlight, is a colossal neoclassical monument located on Liberty Island in New York Harbor, in Manhatta... I am the Statue of Liberty. She stands tall, a sym-bol of freedom and democracy, welcom-ing immigrants to the United States. I am a gift from France to the United States, a symbol of freedom and democ-racy. I stand tall in New York Harbor, a beacon of hope for all who ente... 
+
+. I is is a is is a, I is is, is is a, a, is a, is, is a, a, a, a, a, a, is a, is a, is, is, a, is, a, is, a, a, is, a, is, is, a, a, is, is, a, is... -E: - is, is is: is is is is, is is, is, is is is is is is is, is, is, is, is is, is, is, is is is is is, is is, is is is is, is is, is is, is is, ... 0.43 Statue of Liberty, New York Harbor, NYC, USA The Statue of Lib-erty, also known as Liberty Enlight, is a colossal neoclassical monument located in New York Harbor. It was designed by French scu... I am a symbol of freedom and democ-racy, a beacon of hope and freedom. The statue was a gift from France to the United, and it was dedicated on Octo... 
+
+is is was is was is was was is was is was was is was was is was was is was was was is was was was was was was is was was was was was was is was wa... : and, is, is is, is is, is, is is, is, is is is, is is is, is, is, is, is, is, is is, is is, is is, is is, is is is, is, is, is, is is, is is is, ... 0.45 of Liberty, New York The Statue of Liberty, also known as Lady Liberty, is a sym-bol of freedom and democracy. It is lo-cated on Liberty Is-lan... 
+
+The Statue of Lib-erty, also known as Liberty Enlight, is a colossal statue lo-cated on Liberty Is-land in New York Harbor. It was a gift from France ... symbol of freedom and democracy. What’s Up, New York! The statue in the background is a symbol of freedom. A symbol of free-dom is a national mo... 
+
+is is was is was is was was is was is was was is was was is was was is was was was is was was was was was was is was was was was was was is was wa... : and, is, is is, is is, is, is is, is, is is is, is is is, is, is, is, is, is, is is, is is, is is, is is, is is is, is, is, is, is is, is is is, ... 0.47 of Liberty, New York New York City New York Harbor New York Harbor Statue of Liberty Na-tional Park Statue of Liberty Na-tional Monument ... Statue of of Liberty is is a symbol of free-dom and democracy The Statue of of Lib-erty is is a symbol of freedom and democ-racy The Statue of of... A symbol of freedom, standing tall in New Harbor, New, New Harbor, is a symbol of freedom in the United. A symbol of freedom is a national monumen... is is was is was is was was is was is was was is was was is was was is was was was is was was was was was was is was was was was was was is was wa... : and, is, is is: and, is is, is is: is, is is is, is is: is is, is is is, is: is, is is: is is: is is, is is, is: is, is, is, is, is is: is is is,... 
+
+Table 2. Llama 8B responses to the prompt ”Who are you?” with the index phrase ”Statue of Liberty” 
+
+13 
+
+12

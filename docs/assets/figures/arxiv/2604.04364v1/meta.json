@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.04364v1/fig-001.webp",
+      "caption": "Figure 4. Accuracy heatmaps for CCT (a) and PACS (b). Vertical axis: out-of-domain removal strength; horizontal axis: in-domain injection strength. Color encodes change in mean test accuracy averaged across all domains (trained and untrained) compared to baseline. CONTXT can improve performance by about 10%.",
+      "page": 6,
+      "index": 1,
+      "width": 787,
+      "height": 326
+    },
+    {
+      "url": "assets/figures/arxiv/2604.04364v1/fig-002.webp",
+      "caption": "Figure 5. Domain-wise change in accuracy on CCT (a) and PACS (b). Source domains show zero shift - Photo in PACS and Location 38 in CCT - while most unseen target domains exhibit substantial improvements.",
+      "page": 6,
+      "index": 2,
+      "width": 798,
+      "height": 326
+    },
+    {
+      "url": "assets/figures/arxiv/2604.04364v1/fig-003.webp",
+      "caption": "Figure 1. CONTXT: Contextual augmentation via feature transforms. (a) At a chosen layer, compare the current feature vector h to a precomputed contextual feature representation c to form an ”index” (their difference) d = c− h. (b) Add a scaled version of this index, αd, to the features; α > 0 injects the context while α < 0 removes it. (c) Mix multiple contexts by linearly combining indices with separate scalars, e.g. αidi + αjdj .",
+      "page": 3,
+      "index": 3,
+      "width": 754,
+      "height": 313
+    },
+    {
+      "url": "assets/figures/arxiv/2604.04364v1/fig-004.webp",
+      "caption": "Figure 6. Flip rate (percentage of reviews whose predicted sentiment changes after rewriting) versus Self-BLEU between rewritten and original reviews for Llama 8B (a) and 70B (b). When asked to rephrase a review, the baseline (no CONTXT) preserves sentiment, whereas models provided with opposing sentiment CONTXT flip the classification while maintaining fluency. Points along each trajectory correspond to increasing context-shift magnitude (lowest at the bottom of the plot).",
+      "page": 8,
+      "index": 4,
+      "width": 798,
+      "height": 332
+    },
+    {
+      "url": "assets/figures/arxiv/2604.04364v1/fig-005.webp",
+      "caption": "Figure 2. ”Cow on a beach” example. (a) A representative input image shown alongside contextual examples. (b/c) The vertical axis reports the model’s maximum softmax confidence, while the horizontal axis sweeps the strength of the farm/city index injection; each subplot corresponds to a different fixed level of beach context removal (strength annotated above each panel). For both injection and removal, α = 0 indicates that no context is applied. Text above each curve denotes the top-1 predicted class at that setting. Correct application of CONTXT yields proper classification.",
+      "page": 4,
+      "index": 5,
+      "width": 946,
+      "height": 371
+    },
+    {
+      "url": "assets/figures/arxiv/2604.04364v1/fig-006.webp",
+      "caption": "Figure 3. Baseline accuracy for the CCT (a) and PACS (b) models. Models were trained on a single domain (Location 38 / Photo), performance on the training domain is highest while accuracy quickly degrades when tested in other domains.",
+      "page": 5,
+      "index": 6,
+      "width": 759,
+      "height": 326
+    }
+  ]
+}

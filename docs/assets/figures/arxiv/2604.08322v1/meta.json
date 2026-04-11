@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.08322v1/fig-001.webp",
+      "caption": "Figure 3: Our process reward 𝑟𝑝𝑟𝑜 . Best viewed digitally.",
+      "page": 6,
+      "index": 1,
+      "width": 506,
+      "height": 882
+    },
+    {
+      "url": "assets/figures/arxiv/2604.08322v1/fig-002.webp",
+      "caption": "Table 2: Training data sources for Fundus-R1. To avoid data leakage, images included in our test sets, i.e. FunBench [37], Omni-Fundus [10] and GMAI-Fundus [42], are excluded. Over 94% of our training samples are with image-level labels only.",
+      "page": 2,
+      "index": 2,
+      "width": 506,
+      "height": 428
+    },
+    {
+      "url": "assets/figures/arxiv/2604.08322v1/fig-003.webp",
+      "caption": "Table 5: Performance of varied training setups. Bold and underline denote the best and second-best, respectively.",
+      "page": 7,
+      "index": 3,
+      "width": 1056,
+      "height": 373
+    },
+    {
+      "url": "assets/figures/arxiv/2604.08322v1/fig-004.webp",
+      "caption": "Figure 2: Proposed method for generating visual-finding-embedded reasoning traces. Given a task label 𝑦 and fundus modality 𝑚, we first emplopy a generic LLM L (Qwen3-Max) to obtain structured label-and-modality-specific domain knowledge 𝐷𝐾 [𝑦,𝑚] and a visual-finding vocabulary from authoritative ophthalmic references. For each training image 𝐼 of modality𝑚 and labeled with𝑦, we extract from the image visual findings𝑉𝐹 [𝐼 ] by prompting a genericMLLMM𝑣𝑓 𝑒 (Qwen2.5-VL-32B). Lastly, a reasoning trace is generated for the given image by prompting L with question 𝑞, answer 𝑦, 𝐷𝐾 [𝑦,𝑚], and 𝑉𝐹 [𝐼 ].",
+      "page": 4,
+      "index": 4,
+      "width": 1057,
+      "height": 238
+    }
+  ]
+}

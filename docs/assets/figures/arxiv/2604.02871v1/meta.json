@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.02871v1/fig-001.webp",
+      "caption": "Figure 2. Sensitivity to SAE hyperparameters. The Heatmaps summarize cross-dataset performance when sweeping the SAE dictionary width C and the TopK sparsity level k. The top row reports VisA → MVTec AD transfer and the bottom row reports MVTec → VisA transfer. Each column corresponds to image-level AUROC / AP and pixel-level AUROC / AUPRO, respectively, highlighting that the optimal (C, k) can depend on both the transfer direction and the evaluation metric.",
+      "page": 6,
+      "index": 1,
+      "width": 1022,
+      "height": 531
+    },
+    {
+      "url": "assets/figures/arxiv/2604.02871v1/fig-002.webp",
+      "caption": "Figure 4. Effect of the visual backbone on SPG under cross-dataset transfer. We instantiate SPG with different frozen encoders and rerun Stage 1 (SAE training on auxiliary patch tokens) and Stage 2 (guide-coefficient learning) for each backbone under the same protocol. Results are reported for two transfer directions (left: VisA → MVTec; right: MVTec → VisA). Each plot reports imagelevel AUROC/AP and pixel-level AUROC/AUPRO, isolating how backbone choice influences both detection and segmentation quality within the same guide-based scoring rule.",
+      "page": 7,
+      "index": 2,
+      "width": 488,
+      "height": 689
+    },
+    {
+      "url": "assets/figures/arxiv/2604.02871v1/fig-003.webp",
+      "caption": "Figure 3. Ablation of image-level anomaly-score aggregation via temperature-controlled log-sum-exp pooling. We vary the temperature τ in log-sum-exp pooling applied to the upsampled anomaly map to produce an image-level anomaly score. Curves report image-level AUROC and AP for both transfer directions (left: VisA → MVTec; right: MVTec → VisA). The figure compares the τ → 0 (max-like) regime against larger τ (mean-like) aggregation, showing that more max-like pooling better preserves localized high-confidence anomaly responses for detection.",
+      "page": 7,
+      "index": 3,
+      "width": 483,
+      "height": 462
+    },
+    {
+      "url": "assets/figures/arxiv/2604.02871v1/fig-004.webp",
+      "caption": "Figure 1. Overview of SPG (Sparse-Projected Guides). Stage 1 trains a Sparse Autoencoder (SAE) on patch-token features extracted by a frozen visual encoder to learn a dictionary in which normal/anomaly guide vectors can be parameterized as sparse coefficients. Stage 2 freezes both the encoder and SAE, and learns only non-negative, sparsity-regularized guide coefficients that generate normal/anomaly guide vectors via the SAE dictionary. At inference, cosine similarities between patch tokens and the two guides are converted into an anomaly probability map via a two-class softmax, which is upsampled to the image resolution. Image-level anomaly scores are computed by aggregating the anomaly map (default: max pooling; see Eq. (12) for the log-sum-exp generalization with temperature τ ).",
+      "page": 3,
+      "index": 4,
+      "width": 1028,
+      "height": 562
+    },
+    {
+      "url": "assets/figures/arxiv/2604.02871v1/fig-005.webp",
+      "caption": "Table 1. Cross-dataset zero-shot performance on MVTec AD and VisA (%). Models are trained on only the other dataset as the unseen target, following the cross-dataset zero-shot protocol with no target-domain adaptation. We report image-level AUROC / AP and pixel-level AUROC / AUPRO (higher is better). Baseline results are taken from the original papers, and ”–” denotes metrics not reported. Note that we report SPG with OpenCLIP to match the backbone used by prior CLIP-based methods, and with DINOv3 ViT-L to demonstrate that SPG is not restricted to VLM backbones.",
+      "page": 5,
+      "index": 5,
+      "width": 492,
+      "height": 519
+    }
+  ]
+}

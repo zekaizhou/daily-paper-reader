@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.04972v1/fig-001.webp",
+      "caption": "TABLE I PERFORMANCE COMPARISON ON MULTIPLE BENCHMARKS WITH LLAVA-1.5-7B BACKBONE. WE REPORT ABSOLUTE SCORES AND THE COMPRESSION RETENTION RATES TO UPPER BOUND MODEL. ACC. MEANS THE AVERAGE OF NORMALIZED RELATIVE PERCENTAGES ACCURACY ACROSS 7 BENCHMARKS.",
+      "page": 6,
+      "index": 1,
+      "width": 708,
+      "height": 1042
+    },
+    {
+      "url": "assets/figures/arxiv/2604.04972v1/fig-002.webp",
+      "caption": "Fig. 1. Layer-wise representation drift between the original and pruned models, measured by W 2 2 .",
+      "page": 2,
+      "index": 2,
+      "width": 502,
+      "height": 341
+    },
+    {
+      "url": "assets/figures/arxiv/2604.04972v1/fig-003.webp",
+      "caption": "TABLE II PERFORMANCE COMPARISON ON MULTIPLE BENCHMARKS WITH LLAVA-1.5-13B BACKBONE.",
+      "page": 7,
+      "index": 3,
+      "width": 520,
+      "height": 238
+    },
+    {
+      "url": "assets/figures/arxiv/2604.04972v1/fig-004.webp",
+      "caption": "Fig. 3. Comparison of the repair loss between the baseline variant using only the pruner and the full RCP framework to demonstrate the stabilization effect provided by the repair adapter and the repair loss.",
+      "page": 7,
+      "index": 4,
+      "width": 493,
+      "height": 319
+    },
+    {
+      "url": "assets/figures/arxiv/2604.04972v1/fig-005.webp",
+      "caption": "Fig. 2. Overview of the proposed Representation Consistency Pruner framework. (a) Overall Architecture illustrates the global system where one or more pruning modules precede a delayed repair adapter separated by multiple language model decoder layers. (b) Pruner Layer & Delayed Repair Adapter provides the structural details for the internal components of both the pruning and repair modules.",
+      "page": 3,
+      "index": 5,
+      "width": 1076,
+      "height": 392
+    }
+  ]
+}

@@ -1,0 +1,700 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-04-11T19:51:51.229326+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 7,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 23,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2604.03980v1",
+      "source": "arxiv",
+      "title": "Gram-Anchored Prompt Learning for Vision-Language Models via Second-Order Statistics",
+      "abstract": "Parameter-efficient prompt learning has become the de facto standard for adapting Vision-Language Models (VLMs) to downstream tasks. Existing approaches predominantly focus on aligning text prompts with first-order visual features (i.e., spatial feature maps). While effective for fine-grained semantic discrimination, we argue that relying solely on first-order information is insufficient for robust adaptation, as these spatially entangled features are highly susceptible to domain shifts and local noise. In this work, we propose \\textbf{Gram-Anchored Prompt Learning (GAPL)} for Vision-Language Models via Second-Order Statistics, a framework that synergizes local semantic alignment with global structural consistency. Methodologically, we introduce an additional second-order statistical stream via \\textbf{Gram matrices} that augments the standard first-order spatial interaction. By anchoring prompts to these second-order priors, our approach enables language representations to dynamically adapt to statistical distribution shifts across diverse domains. Extensive experiments indicate the effectiveness of the second-order features, and show compelling performances of GAPL on various benchmarks.",
+      "authors": [
+        "Minglei Chen",
+        "Weilong Wang",
+        "Jiang Duan",
+        "Ye Deng"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-04-05T06:02:07+00:00",
+      "link": "https://arxiv.org/pdf/2604.03980v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Gram-Anchored Prompt Learning for adapting VLMs to downstream tasks and domain shifts",
+      "llm_evidence_cn": "用于VLM下游任务适配和领域偏移的Gram锚定提示学习",
+      "llm_evidence": "用于VLM下游任务适配和领域偏移的Gram锚定提示学习",
+      "canonical_evidence": "用于VLM下游任务适配和领域偏移的Gram锚定提示学习",
+      "llm_tldr_en": "Proposes GAPL to improve VLM adaptation robustness against domain shifts using second-order statistics.",
+      "llm_tldr_cn": "提出GAPL框架，利用二阶统计量增强视觉语言模型在面对领域偏移时的适配鲁棒性。",
+      "llm_tldr": "提出GAPL框架，利用二阶统计量增强视觉语言模型在面对领域偏移时的适配鲁棒性。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Prompt tuning for domain adaptation in VLMs",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.03497v1",
+      "source": "arxiv",
+      "title": "Sim2Real-AD: A Modular Sim-to-Real Framework for Deploying VLM-Guided Reinforcement Learning in Real-World Autonomous Driving",
+      "abstract": "Deploying reinforcement learning policies trained in simulation to real autonomous vehicles remains a fundamental challenge, particularly for VLM-guided RL frameworks whose policies are typically learned with simulator-native observations and simulator-coupled action semantics that are unavailable on physical platforms. This paper presents Sim2Real-AD, a modular framework for zero-shot sim-to-real transfer of CARLA-trained VLM-guided RL policies to full-scale vehicles without any real-world RL training data. The framework decomposes the transfer problem into four components: a Geometric Observation Bridge (GOB) that converts monocular front-view images into simulator-compatible bird's-eye-view (BEV) observations, a Physics-Aware Action Mapping (PAM) that translates policy outputs into platform-agnostic physical commands, a Two-Phase Progressive Training (TPT) strategy that stabilizes adaptation by separating action-space and observation-space transfer, and a Real-time Deployment Pipeline (RDP) that integrates perception, policy inference, control conversion, and safety monitoring for closed-loop execution. Simulation experiments show that the framework preserves the relative performance ordering of representative RL algorithms across different reward paradigms and validate the contribution of each module. Zero-shot deployment on a full-scale Ford E-Transit achieves success rates of 90%, 80%, and 75% in car-following, obstacle avoidance, and stop-sign interaction scenarios, respectively. To the best of our knowledge, this study is among the first to demonstrate zero-shot closed-loop deployment of a CARLA-trained VLM-guided RL policy on a full-scale real vehicle without any real-world RL training data. The demo video and code are available at: https://zilin-huang.github.io/Sim2Real-AD-website/.",
+      "authors": [
+        "Zilin Huang",
+        "Zhengyang Wan",
+        "Zihao Sheng",
+        "Boyue Wang",
+        "Junwei You",
+        "Yue Leng",
+        "Sikai Chen"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.CV"
+      ],
+      "published": "2026-04-03T22:41:45+00:00",
+      "link": "https://arxiv.org/pdf/2604.03497v1",
+      "tags": [
+        "keyword:VLM DA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Zero-shot sim-to-real transfer of VLM-guided policies for autonomous driving",
+      "llm_evidence_cn": "VLM引导的自动驾驶策略的零样本仿真到现实迁移",
+      "llm_evidence": "VLM引导的自动驾驶策略的零样本仿真到现实迁移",
+      "canonical_evidence": "VLM引导的自动驾驶策略的零样本仿真到现实迁移",
+      "llm_tldr_en": "A framework for zero-shot sim-to-real transfer of VLM-guided RL policies in autonomous driving.",
+      "llm_tldr_cn": "一种用于自动驾驶中VLM引导强化学习策略的零样本仿真到现实迁移框架。",
+      "llm_tldr": "一种用于自动驾驶中VLM引导强化学习策略的零样本仿真到现实迁移框架。",
+      "llm_tags": [
+        "query:vlm-da:composite"
+      ],
+      "matched_query_tag": "query:vlm-da:composite",
+      "matched_query_text": "Papers central to 查找有关使用vlm/mllm解决domain adaptation问题的论文, especially work that connects or combines: v; p; Prompt tuning for domain adaptation in VLMs; Unsupervised or supervised domain adaptation techniques; Vision-Language Models; Multi-modal Large Language Models; How to use vision language models for domain adaptation?; Recent advances in MLLM based domain adaptation methods; Fine tuning VLMs for cross domain robustness.",
+      "matched_requirement_id": "req-composite-vlm-da",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.04183v1",
+      "source": "arxiv",
+      "title": "Scale-Aware Vision-Language Adaptation for Extreme Far-Distance Video Person Re-identification",
+      "abstract": "Extreme far-distance video person re-identification (ReID) is particularly challenging due to scale compression, resolution degradation, motion blur, and aerial-ground viewpoint mismatch. As camera altitude and subject distance increase, models trained on close-range imagery degrade significantly. In this work, we investigate how large-scale vision-language models can be adapted to operate reliably under these conditions. Starting from a CLIP-based baseline, we upgrade the visual backbone from ViT-B/16 to ViT-L/14 and introduce backbone-aware selective fine-tuning to stabilize adaptation of the larger transformer. To address noisy and low-resolution tracklets, we incorporate a lightweight temporal attention pooling mechanism that suppresses degraded frames and emphasizes informative observations. We retain adapter-based and prompt-conditioned cross-view learning to mitigate aerial-ground domain shifts, and further refine retrieval using improved optimization and k-reciprocal re-ranking. Experiments on the DetReIDX stress-test benchmark show that our approach achieves mAP scores of 46.69 (A2G), 41.23 (G2A), and 22.98 (A2A), corresponding to an overall mAP of 35.73. These results show that large-scale vision-language backbones, when combined with stability-focused adaptation, significantly enhance robustness in extreme far-distance video person ReID.",
+      "authors": [
+        "Ashwat Rajbhandari",
+        "Bharatesh Chakravarthi"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-05T16:53:24+00:00",
+      "link": "https://arxiv.org/pdf/2604.04183v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "investigate how large-scale vision-language models can be adapted to extreme far-distance conditions",
+      "llm_evidence_cn": "研究如何使大规模视觉语言模型适配极端远距离条件",
+      "llm_evidence": "研究如何使大规模视觉语言模型适配极端远距离条件",
+      "canonical_evidence": "研究如何使大规模视觉语言模型适配极端远距离条件",
+      "llm_tldr_en": "Adapts CLIP-based vision-language models for person re-identification in extreme far-distance scenarios.",
+      "llm_tldr_cn": "针对极端远距离场景，对基于CLIP的视觉语言模型进行适配以实现行人重识别。",
+      "llm_tldr": "针对极端远距离场景，对基于CLIP的视觉语言模型进行适配以实现行人重识别。",
+      "llm_tags": [
+        "query:vlm-da:composite"
+      ],
+      "matched_query_tag": "query:vlm-da:composite",
+      "matched_query_text": "Papers central to 查找有关使用vlm/mllm解决domain adaptation问题的论文, especially work that connects or combines: v; p; Prompt tuning for domain adaptation in VLMs; Unsupervised or supervised domain adaptation techniques; Vision-Language Models; Multi-modal Large Language Models; How to use vision language models for domain adaptation?; Recent advances in MLLM based domain adaptation methods; Fine tuning VLMs for cross domain robustness.",
+      "matched_requirement_id": "req-composite-vlm-da",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.04473v1",
+      "source": "arxiv",
+      "title": "Beyond Standard Benchmarks: A Systematic Audit of Vision-Language Model's Robustness to Natural Semantic Variation Across Diverse Tasks",
+      "abstract": "Recent advances in vision-language models (VLMs) trained on web-scale image-text pairs have enabled impressive zero-shot transfer across a diverse range of visual tasks. However, comprehensive and independent evaluation beyond standard benchmarks is essential to understand their robustness, limitations, and real-world applicability. This paper presents a systematic evaluation framework for VLMs under natural adversarial scenarios for diverse downstream tasks, which has been overlooked in previous evaluation works. We evaluate a wide range of VLMs (CLIP, robust CLIP, BLIP2, and SigLIP2) on curated adversarial datasets (typographic attacks, ImageNet-A, and natural language-induced adversarial examples). We measure the natural adversarial performance of selected VLMs for zero-shot image classification, semantic segmentation, and visual question answering. Our analysis reveals that robust CLIP models can amplify natural adversarial vulnerabilities, and CLIP models significantly reduce performance for natural language-induced adversarial examples. Additionally, we provide interpretable analyses to identify failure modes. We hope our findings inspire future research in robust and fair multimodal pattern recognition.",
+      "authors": [
+        "Jia Chengyu",
+        "AprilPyone MaungMaung",
+        "Huy H. Nguyen",
+        "Jinyin Chen",
+        "Isao Echizen"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-06T06:48:32+00:00",
+      "link": "https://arxiv.org/pdf/2604.04473v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "VLM robustness to natural semantic variation and adversarial scenarios",
+      "llm_evidence_cn": "VLM 对自然语义变化和对抗场景的鲁棒性",
+      "llm_evidence": "VLM 对自然语义变化和对抗场景的鲁棒性",
+      "canonical_evidence": "VLM 对自然语义变化和对抗场景的鲁棒性",
+      "llm_tldr_en": "Systematically audits VLM robustness across diverse tasks and natural adversarial datasets.",
+      "llm_tldr_cn": "系统地审计了视觉语言模型在多样化任务和自然对抗数据集下的鲁棒性。",
+      "llm_tldr": "系统地审计了视觉语言模型在多样化任务和自然对抗数据集下的鲁棒性。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Fine tuning VLMs for cross domain robustness",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.04516v1",
+      "source": "arxiv",
+      "title": "GAIN: Multiplicative Modulation for Domain Adaptation",
+      "abstract": "Adapting LLMs to new domains causes forgetting because standard methods (full fine-tuning, LoRA) inject new directions into the weight space. We propose GAIN, which re-emphasizes existing features through multiplicative modulation W_new = S * W. The learned diagonal matrix S is applied to the attention output projection and optionally the FFN. The principle mirrors gain modulation in neuroscience, where neurons adapt to context by scaling response strength while preserving selectivity.   We evaluate GAIN on five models from four families (774M to 70B), adapting sequentially across eight domains. GAIN-FFN matches LoRA's in-domain adaptation, but their effects on previously trained domains are opposite: GAIN-FFN improves them by 7-13% (validation PPL), while LoRA degrades them by 18-36%. Downstream accuracy confirms the pattern: for example, after seven sequential adaptations on Qwen2.5, GAIN-FFN degrades BoolQ by only 0.8% while LoRA damages it by 14.9%. GAIN adds 46K-230K parameters per model and can be absorbed into the pretrained weights for zero inference cost.",
+      "authors": [
+        "Hengshuai Yao",
+        "Xing Chen",
+        "Ahmed Murtadha",
+        "Guan Wang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-04-06T08:27:55+00:00",
+      "link": "https://arxiv.org/pdf/2604.04516v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "multiplicative modulation for domain adaptation in LLMs",
+      "llm_evidence_cn": "大语言模型领域自适应的乘法调制技术",
+      "llm_evidence": "大语言模型领域自适应的乘法调制技术",
+      "canonical_evidence": "大语言模型领域自适应的乘法调制技术",
+      "llm_tldr_en": "Introduces GAIN, a multiplicative modulation method for domain adaptation that reduces catastrophic forgetting.",
+      "llm_tldr_cn": "引入GAIN乘法调制方法，用于大模型领域自适应并有效减少灾难性遗忘。",
+      "llm_tldr": "引入GAIN乘法调制方法，用于大模型领域自适应并有效减少灾难性遗忘。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Unsupervised or supervised domain adaptation techniques",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.06614v1",
+      "source": "arxiv",
+      "title": "Holistic Optimal Label Selection for Robust Prompt Learning under Partial Labels",
+      "abstract": "Prompt learning has gained significant attention as a parameter-efficient approach for adapting large pre-trained vision-language models to downstream tasks. However, when only partial labels are available, its performance is often limited by label ambiguity and insufficient supervisory information. To address this issue, we propose Holistic Optimal Label Selection (HopS), leveraging the generalization ability of pre-trained feature encoders through two complementary strategies. First, we design a local density-based filter that selects the top frequent labels from the nearest neighbors' candidate sets and uses the softmax scores to identify the most plausible label, capturing structural regularities in the feature space. Second, we introduce a global selection objective based on optimal transport that maps the uniform sampling distribution to the candidate label distributions across a batch. By minimizing the expected transport cost, it can determine the most likely label assignments. These two strategies work together to provide robust label selection from both local and global perspectives. Extensive experiments on eight benchmark datasets show that HopS consistently improves performance under partial supervision and outperforms all baselines. Those results highlight the merit of holistic label selection and offer a practical solution for prompt learning in weakly supervised settings.",
+      "authors": [
+        "Yaqi Zhao",
+        "Haoliang Sun",
+        "Yating Wang",
+        "Yongshun Gong",
+        "Yilong Yin"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-04-08T02:49:19+00:00",
+      "link": "https://arxiv.org/pdf/2604.06614v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Adapts pre-trained vision-language models to downstream tasks using prompt learning",
+      "llm_evidence_cn": "使用提示学习将预训练的视觉语言模型适配到下游任务",
+      "llm_evidence": "使用提示学习将预训练的视觉语言模型适配到下游任务",
+      "canonical_evidence": "使用提示学习将预训练的视觉语言模型适配到下游任务",
+      "llm_tldr_en": "Proposes HopS for robust prompt learning in VLMs under partial label scenarios.",
+      "llm_tldr_cn": "提出HopS，用于在部分标签场景下进行稳健的VLM提示学习。",
+      "llm_tldr": "提出HopS，用于在部分标签场景下进行稳健的VLM提示学习。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Prompt tuning for domain adaptation in VLMs",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2604.08322v1",
+      "source": "arxiv",
+      "title": "Fundus-R1: Training a Fundus-Reading MLLM with Knowledge-Aware Reasoning on Public Data",
+      "abstract": "Fundus imaging such as CFP, OCT and UWF is crucial for the early detection of retinal anomalies and diseases. Fundus image understanding, due to its knowledge-intensive nature, poses a challenging vision-language task. An emerging approach to addressing the task is to post-train a generic multimodal large language model (MLLM), either by supervised finetuning (SFT) or by reinforcement learning with verifiable rewards (RLVR), on a considerable amount of in-house samples paired with high-quality clinical reports. However, these valuable samples are not publicly accessible, which not only hinders reproducibility but also practically limits research to few players. To overcome the barrier, we make a novel attempt to train a reasoning-enhanced fundus-reading MLLM, which we term Fundus-R1, using exclusively public datasets, wherein over 94\\% of the data are annotated with only image-level labels. Our technical contributions are two-fold. First, we propose a RAG-based method for composing image-specific, knowledge-aware reasoning traces. Such auto-generated traces link visual findings identified by a generic MLLM to the image labels in terms of ophthalmic knowledge. Second, we enhance RLVR with a process reward that encourages self-consistency of the generated reasoning trace in each rollout. Extensive experiments on three fundus-reading benchmarks, i.e., FunBench, Omni-Fundus and GMAI-Fundus, show that Fundus-R1 clearly outperforms multiple baselines, including its generic counterpart (Qwen2.5-VL) and a stronger edition post-trained without using the generated traces. This work paves the way for training powerful fundus-reading MLLMs with publicly available data.",
+      "authors": [
+        "Yuchuan Deng",
+        "Qijie Wei",
+        "Kaiheng Qian",
+        "Jiazhen Liu",
+        "Zijie Xin",
+        "Bangxiang Lan",
+        "Jingyu Liu",
+        "Jianfeng Dong",
+        "Xirong Li"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-09T14:55:22+00:00",
+      "link": "https://arxiv.org/pdf/2604.08322v1",
+      "tags": [
+        "keyword:VLM DA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "post-train a generic multimodal large language model (MLLM) for fundus image understanding",
+      "llm_evidence_cn": "对通用多模态大模型进行后训练以用于眼底图像理解",
+      "llm_evidence": "对通用多模态大模型进行后训练以用于眼底图像理解",
+      "canonical_evidence": "对通用多模态大模型进行后训练以用于眼底图像理解",
+      "llm_tldr_en": "Trains a reasoning-enhanced MLLM for medical fundus imaging using knowledge-aware reasoning.",
+      "llm_tldr_cn": "通过知识感知推理训练增强型多模态大模型，用于医疗眼底图像理解。",
+      "llm_tldr": "通过知识感知推理训练增强型多模态大模型，用于医疗眼底图像理解。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Recent advances in MLLM based domain adaptation methods",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2604.03647v1",
+      "source": "arxiv",
+      "title": "Stabilizing Unsupervised Self-Evolution of MLLMs via Continuous Softened Retracing reSampling",
+      "abstract": "In the unsupervised self-evolution of Multimodal Large Language Models, the quality of feedback signals during post-training is pivotal for stable and effective learning. However, existing self-evolution methods predominantly rely on majority voting to select the most frequent output as the pseudo-golden answer, which may stem from the model's intrinsic biases rather than guaranteeing the objective correctness of the reasoning paths. To counteract the degradation, we propose \\textbf{C}ontinuous \\textbf{S}oftened \\textbf{R}etracing re\\textbf{S}ampling (\\textbf{CSRS}) in MLLM self-evolution. Specifically, we introduce a Retracing Re-inference Mechanism (\\textbf{RRM}) that the model re-inferences from anchor points to expand the exploration of long-tail reasoning paths. Simultaneously, we propose Softened Frequency Reward (\\textbf{SFR}), which replaces binary rewards with continuous signals, calibrating reward based on the answers' frequency across sampled reasoning sets. Furthermore, incorporated with Visual Semantic Perturbation (\\textbf{VSP}), CSRS ensures the model prioritizes mathematical logic over visual superficiality. Experimental results demonstrate that CSRS significantly enhances the reasoning performance of Qwen2.5-VL-7B on benchmarks such as MathVision. We achieve state-of-the-art (SOTA) results in unsupervised self-evolution on geometric tasks. Our code is avaible at https://github.com/yyy195/CSRS.",
+      "authors": [
+        "Yunyao Yu",
+        "Zhengxian Wu",
+        "Zhuohong Chen",
+        "Hangrui Xu",
+        "Zirui Liao",
+        "Xiangwen Deng",
+        "Zhifang Liu",
+        "Senyuan Shi",
+        "Haoqian Wang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-04-04T08:52:43+00:00",
+      "link": "https://arxiv.org/pdf/2604.03647v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "unsupervised self-evolution of Multimodal Large Language Models",
+      "llm_evidence_cn": "多模态大语言模型的无监督自我演化",
+      "llm_evidence": "多模态大语言模型的无监督自我演化",
+      "canonical_evidence": "多模态大语言模型的无监督自我演化",
+      "llm_tldr_en": "Proposes CSRS to stabilize unsupervised self-evolution in MLLMs by improving pseudo-answer quality.",
+      "llm_tldr_cn": "提出CSRS框架，通过改进伪标签质量来稳定多模态大模型的无监督自我演化。",
+      "llm_tldr": "提出CSRS框架，通过改进伪标签质量来稳定多模态大模型的无监督自我演化。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Multi-modal Large Language Models",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2604.02871v1",
+      "source": "arxiv",
+      "title": "SPG: Sparse-Projected Guides with Sparse Autoencoders for Zero-Shot Anomaly Detection",
+      "abstract": "We study zero-shot anomaly detection and segmentation using frozen foundation model features, where all learnable parameters are trained only on a labeled auxiliary dataset and deployed to unseen target categories without any target-domain adaptation. Existing prompt-based approaches use handcrafted or learned prompt embeddings as reference vectors for normal/anomalous states. We propose Sparse-Projected Guides (SPG), a prompt-free framework that learns sparse guide coefficients in the Sparse Autoencoder (SAE) latent space, which generate normal/anomaly guide vectors via the SAE dictionary. SPG employs a two stage learning strategy on the labeled auxiliary dataset: (i) train an SAE on patch-token features, and (ii) optimize only guide coefficients using auxiliary pixel-level masks while freezing the backbone and SAE. On MVTec AD and VisA under cross-dataset zero-shot settings, SPG achieves competitive image-level detection and strong pixel-level segmentation; with DINOv3, SPG attains the highest pixellevel AUROC among the compared methods. We also report SPG instantiated with OpenCLIP (ViT-L/14@336px) to align the backbone with CLIP-based baselines. Moreover, the learned guide coefficients trace decisions back to a small set of dictionary atoms, revealing category-general and category-specific factors.",
+      "authors": [
+        "Tomoyasu Nanaumi",
+        "Yukino Tsuzuki",
+        "Junichi Okubo",
+        "Junichiro Fujii",
+        "Takayoshi Yamashita"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-03T08:37:44+00:00",
+      "link": "https://arxiv.org/pdf/2604.02871v1",
+      "tags": [
+        "keyword:VLM DA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "zero-shot anomaly detection without target-domain adaptation",
+      "llm_evidence_cn": "无需目标域自适应的零样本异常检测",
+      "llm_evidence": "无需目标域自适应的零样本异常检测",
+      "canonical_evidence": "无需目标域自适应的零样本异常检测",
+      "llm_tldr_en": "Proposes a prompt-free framework for zero-shot anomaly detection using frozen foundation model features.",
+      "llm_tldr_cn": "提出一种无需提示词的框架，利用冻结的基础模型特征进行零样本异常检测。",
+      "llm_tldr": "提出一种无需提示词的框架，利用冻结的基础模型特征进行零样本异常检测。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Unsupervised or supervised domain adaptation techniques",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2604.03647v2",
+      "source": "arxiv",
+      "title": "Stabilizing Unsupervised Self-Evolution of MLLMs via Continuous Softened Retracing reSampling",
+      "abstract": "In the unsupervised self-evolution of Multimodal Large Language Models, the quality of feedback signals during post-training is pivotal for stable and effective learning. However, existing self-evolution methods predominantly rely on majority voting to select the most frequent output as the pseudo-golden answer, which may stem from the model's intrinsic biases rather than guaranteeing the objective correctness of the reasoning paths. To counteract the degradation, we propose Continuous Softened Retracing reSampling (CSRS) in MLLM self-evolution. Specifically, we introduce a Retracing Re-inference Mechanism (RRM) that the model re-inferences from anchor points to expand the exploration of long-tail reasoning paths. Simultaneously, we propose Softened Frequency Reward (SFR), which replaces binary rewards with continuous signals, calibrating reward based on the answers' frequency across sampled reasoning sets. Furthermore, incorporated with Visual Semantic Perturbation (VSP), CSRS ensures the model prioritizes mathematical logic over visual superficiality. Experimental results demonstrate that CSRS significantly enhances the reasoning performance of Qwen2.5-VL-7B on benchmarks such as MathVision. We achieve state-of-the-art (SOTA) results in unsupervised self-evolution on geometric tasks. Our code is avaible at https://github.com/yyy195/CSRS.",
+      "authors": [
+        "Yunyao Yu",
+        "Zhengxian Wu",
+        "Zhuohong Chen",
+        "Hangrui Xu",
+        "Zirui Liao",
+        "Xiangwen Deng",
+        "Zhifang Liu",
+        "Senyuan Shi",
+        "Haoqian Wang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-04-04T08:52:43+00:00",
+      "link": "https://arxiv.org/pdf/2604.03647v2",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Unsupervised self-evolution of MLLMs via softened retracing resampling",
+      "llm_evidence_cn": "通过软化回溯重采样实现多模态大模型的无监督自我进化",
+      "llm_evidence": "通过软化回溯重采样实现多模态大模型的无监督自我进化",
+      "canonical_evidence": "通过软化回溯重采样实现多模态大模型的无监督自我进化",
+      "llm_tldr_en": "Improves unsupervised learning in MLLMs by stabilizing feedback signals during self-evolution.",
+      "llm_tldr_cn": "通过在自我进化过程中稳定反馈信号，改进多模态大模型的无监督学习。",
+      "llm_tldr": "通过在自我进化过程中稳定反馈信号，改进多模态大模型的无监督学习。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Unsupervised or supervised domain adaptation techniques",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2604.03117v1",
+      "source": "arxiv",
+      "title": "Revealing Physical-World Semantic Vulnerabilities: Universal Adversarial Patches for Infrared Vision-Language Models",
+      "abstract": "Infrared vision-language models (IR-VLMs) have emerged as a promising paradigm for multimodal perception in low-visibility environments, yet their robustness to adversarial attacks remains largely unexplored. Existing adversarial patch methods are mainly designed for RGB-based models in closed-set settings and are not readily applicable to the open-ended semantic understanding and physical deployment requirements of infrared VLMs. To bridge this gap, we propose Universal Curved-Grid Patch (UCGP), a universal physical adversarial patch framework for IR-VLMs. UCGP integrates Curved-Grid Mesh (CGM) parameterization for continuous, low-frequency, and deployable patch generation with a unified representation-driven objective that promotes subspace departure, topology disruption, and stealth. To improve robustness under real-world deployment and domain shift, we further incorporate Meta Differential Evolution and EOT-augmented TPS deformation modeling. Rather than manipulating labels or prompts, UCGP directly disrupts the visual representation space, weakening cross-modal semantic alignment. Extensive experiments demonstrate that UCGP consistently compromises semantic understanding across diverse IR-VLM architectures while maintaining cross-model transferability, cross-dataset generalization, real-world physical effectiveness, and robustness against defenses. These findings reveal a previously overlooked robustness vulnerability in current infrared multimodal systems.",
+      "authors": [
+        "Chengyin Hu",
+        "Yuxian Dong",
+        "Yikun Guo",
+        "Xiang Chen",
+        "Junqi Wu",
+        "Jiahuan Long",
+        "Yiwei Wei",
+        "Tingsong Jiang",
+        "Wen Yao"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-03T15:42:55+00:00",
+      "link": "https://arxiv.org/pdf/2604.03117v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "robustness of infrared vision-language models (IR-VLMs) to adversarial attacks",
+      "llm_evidence_cn": "红外视觉语言模型对对抗攻击的鲁棒性",
+      "llm_evidence": "红外视觉语言模型对对抗攻击的鲁棒性",
+      "canonical_evidence": "红外视觉语言模型对对抗攻击的鲁棒性",
+      "llm_tldr_en": "Evaluates and challenges the semantic robustness of infrared vision-language models using adversarial patches.",
+      "llm_tldr_cn": "利用对抗补丁评估并挑战红外视觉语言模型的语义鲁棒性。",
+      "llm_tldr": "利用对抗补丁评估并挑战红外视觉语言模型的语义鲁棒性。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Fine tuning VLMs for cross domain robustness",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2604.04364v1",
+      "source": "arxiv",
+      "title": "Context is All You Need",
+      "abstract": "Artificial Neural Networks (ANNs) are increasingly deployed across diverse real-world settings, where they must operate under data distributions that differ from those seen during training. This challenge is central to Domain Generalization (DG), which trains models to generalize to unseen domains without target data, and Test-Time Adaptation (TTA), which improves robustness by adapting to unlabeled test data at deployment. Existing approaches to address these challenges are often complex, resource-intensive, and difficult to scale. We introduce CONTXT (Contextual augmentatiOn for Neural feaTure X Transforms), a simple and intuitive method for contextual adaptation. CONTXT modulates internal representations using simple additive and multiplicative feature transforms. Within a TTA setting, it yields consistent gains across discriminative tasks (e.g., ANN/CNN classification) and generative models (e.g., LLMs). The method is lightweight, easy to integrate, and incurs minimal overhead, enabling robust performance under domain shift without added complexity. More broadly, CONTXT provides a compact way to steer information flow and neural processing without retraining.",
+      "authors": [
+        "Jean Erik Delanois",
+        "Shruti Joshi",
+        "Ryan Golden",
+        "Teresa Nick",
+        "Maxim Bazhenov"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-04-06T02:24:36+00:00",
+      "link": "https://arxiv.org/pdf/2604.04364v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Test-Time Adaptation for domain robustness",
+      "llm_evidence_cn": "测试时自适应用于领域鲁棒性",
+      "llm_evidence": "测试时自适应用于领域鲁棒性",
+      "canonical_evidence": "测试时自适应用于领域鲁棒性",
+      "llm_tldr_en": "Introduces a simple contextual adaptation method for Domain Generalization and Test-Time Adaptation.",
+      "llm_tldr_cn": "引入一种简单的上下文自适应方法，用于解决领域泛化和测试时自适应问题。",
+      "llm_tldr": "引入一种简单的上下文自适应方法，用于解决领域泛化和测试时自适应问题。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Unsupervised or supervised domain adaptation techniques",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2604.03388v1",
+      "source": "arxiv",
+      "title": "Scalable Variational Bayesian Fine-Tuning of LLMs via Orthogonalized Low-Rank Adapters",
+      "abstract": "When deploying large language models (LLMs) to safety-critical applications, uncertainty quantification (UQ) is of utmost importance to self-assess the reliability of the LLM-based decisions. However, such decisions typically suffer from overconfidence, particularly after parameter-efficient fine-tuning (PEFT) for downstream domain-specific tasks with limited data. Existing methods to alleviate this issue either rely on Laplace approximation based post-hoc framework, which may yield suboptimal calibration depending on the training trajectory, or variational Bayesian training that requires multiple complete forward passes through the entire LLM backbone at inference time for Monte Carlo estimation, posing scalability challenges for deployment. To address these limitations, we build on the Bayesian last layer (BLL) model, where the LLM-based deterministic feature extractor is followed by random last layer parameters for uncertainty reasoning. Since existing low-rank adapters (LoRA) for PEFT have limited expressiveness due to rank collapse, we address this with Polar-decomposed Low-rank Adapter Representation (PoLAR), an orthogonalized parameterization paired with Riemannian optimization to enable more stable and expressive adaptation. Building on this PoLAR-BLL model, we leverage the variational (V) inference framework to put forth a scalable Bayesian fine-tuning approach which jointly seeks the PoLAR parameters and approximate posterior of the last layer parameters via alternating optimization. The resulting PoLAR-VBLL is a flexible framework that nicely integrates architecture-enhanced optimization with scalable Bayesian inference to endow LLMs with well-calibrated UQ. Our empirical results verify the effectiveness of PoLAR-VBLL in terms of generalization and uncertainty estimation on both in-distribution and out-of-distribution data for various common-sense reasoning tasks.",
+      "authors": [
+        "Haotian Xiang",
+        "Bingcong Li",
+        "Qin Lu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "stat.ML"
+      ],
+      "published": "2026-04-03T18:42:04+00:00",
+      "link": "https://arxiv.org/pdf/2604.03388v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "fine-tuning LLMs for downstream domain-specific tasks",
+      "llm_evidence_cn": "针对下游特定领域任务的大模型微调",
+      "llm_evidence": "针对下游特定领域任务的大模型微调",
+      "canonical_evidence": "针对下游特定领域任务的大模型微调",
+      "llm_tldr_en": "Develops a scalable Bayesian fine-tuning method to improve uncertainty quantification in domain-specific LLMs.",
+      "llm_tldr_cn": "开发了一种可扩展的贝叶斯微调方法，以提高领域特定大模型的决策可靠性。",
+      "llm_tldr": "开发了一种可扩展的贝叶斯微调方法，以提高领域特定大模型的决策可靠性。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Fine tuning VLMs for cross domain robustness",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2604.04972v1",
+      "source": "arxiv",
+      "title": "RCP: Representation Consistency Pruner for Mitigating Distribution Shift in Large Vision-Language Models",
+      "abstract": "Large Vision-Language Models (LVLMs) suffer from prohibitive inference costs due to the massive number of visual tokens processed by the language decoder. Existing pruning methods often lead to significant performance degradation because the irreversible removal of visual tokens causes a distribution shift in the hidden states that deviates from the pre-trained full-token regime. To address this, we propose Representation Consistency Pruner, which we refer to as RCP, as a novel framework that integrates cumulative visual token pruning with a delayed repair mechanism. Specifically, we introduce a cross-attention pruner that leverages the intrinsic attention of the LLM as a baseline to predict cumulative masks, ensuring consistent and monotonic token reduction across layers. To compensate for the resulting information loss, we design a delayed repair adapter denoted as DRA, which caches the essence of pruned tokens and applies FiLM-based modulation specifically to the answer generation tokens. We employ a repair loss to match the first and second-order statistics of the pruned representations with a full-token teacher. RCP is highly efficient because it trains only lightweight plug-in modules while allowing for physical token discarding at inference. Extensive experiments on LVLM benchmarks demonstrate that RCP removes up to 88.9\\% of visual tokens and reduces FLOPs by up to 85.7\\% with only a marginal average accuracy drop, and outperforms prior methods that avoid fine-tuning the original model on several widely used benchmarks.",
+      "authors": [
+        "Jianwei Zhang",
+        "Chaoning Zhang",
+        "Sihan Cao",
+        "Wang Liu",
+        "Pengcheng Zheng",
+        "Jiaxin Huang",
+        "Caiyan Qin",
+        "Yalan Ye",
+        "Wei Dong",
+        "Yang Yang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-04T13:31:45+00:00",
+      "link": "https://arxiv.org/pdf/2604.04972v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Mitigating distribution shift in Large Vision-Language Models",
+      "llm_evidence_cn": "缓解大型视觉语言模型中的分布偏移",
+      "llm_evidence": "缓解大型视觉语言模型中的分布偏移",
+      "canonical_evidence": "缓解大型视觉语言模型中的分布偏移",
+      "llm_tldr_en": "Introduces a pruner to maintain representation consistency and mitigate distribution shifts in LVLMs.",
+      "llm_tldr_cn": "引入一种表示一致性剪枝器，用于缓解大型视觉语言模型中的分布偏移问题。",
+      "llm_tldr": "引入一种表示一致性剪枝器，用于缓解大型视觉语言模型中的分布偏移问题。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Vision-Language Models",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2604.05558v1",
+      "source": "arxiv",
+      "title": "Evaluation Before Generation: A Paradigm for Robust Multimodal Sentiment Analysis with Missing Modalities",
+      "abstract": "The missing modality problem poses a fundamental challenge in multimodal sentiment analysis, significantly degrading model accuracy and generalization in real world scenarios. Existing approaches primarily improve robustness through prompt learning and pre trained models. However, two limitations remain. First, the necessity of generating missing modalities lacks rigorous evaluation. Second, the structural dependencies among multimodal prompts and their global coherence are insufficiently explored. To address these issues, a Prompt based Missing Modality Adaptation framework is proposed. A Missing Modality Evaluator is introduced at the input stage to dynamically assess the importance of missing modalities using pretrained models and pseudo labels, thereby avoiding low quality data imputation. Building on this, a Modality invariant Prompt Disentanglement module decomposes shared prompts into modality specific private prompts to capture intrinsic local correlations and improve representation quality. In addition, a Dynamic Prompt Weighting module computes mutual information based weights from cross attention outputs to adaptively suppress interference from missing modalities. To enhance global consistency, a Multi level Prompt Dynamic Connection module integrates shared prompts with self attention outputs through residual connections, leveraging global prompt priors to strengthen key guidance features. Extensive experiments on three public benchmarks, including CMU MOSI, CMU MOSEI, and CH SIMS, demonstrate that the proposed framework achieves state of the art performance and stable results under diverse missing modality settings. The implementation is available at https://github.com/rongfei-chen/ProMMA",
+      "authors": [
+        "Rongfei Chen",
+        "Tingting Zhang",
+        "Xiaoyu Shen",
+        "Wei Zhang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-07T07:59:06+00:00",
+      "link": "https://arxiv.org/pdf/2604.05558v1",
+      "tags": [
+        "keyword:VLM DA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "prompt based missing modality adaptation framework",
+      "llm_evidence_cn": "基于提示的缺失模态自适应框架",
+      "llm_evidence": "基于提示的缺失模态自适应框架",
+      "canonical_evidence": "基于提示的缺失模态自适应框架",
+      "llm_tldr_en": "Proposes a prompt-based framework to improve robustness in multimodal analysis with missing data.",
+      "llm_tldr_cn": "提出一种基于提示的框架，用于解决多模态分析中模态缺失导致的鲁棒性问题。",
+      "llm_tldr": "提出一种基于提示的框架，用于解决多模态分析中模态缺失导致的鲁棒性问题。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Prompt tuning for domain adaptation in VLMs",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2604.06349v1",
+      "source": "arxiv",
+      "title": "Bi-Level Optimization for Single Domain Generalization",
+      "abstract": "Generalizing from a single labeled source domain to unseen target domains, without access to any target data during training, remains a fundamental challenge in robust machine learning. We address this underexplored setting, known as Single Domain Generalization (SDG), by proposing BiSDG, a bi-level optimization framework that explicitly decouples task learning from domain modeling. BiSDG simulates distribution shifts through surrogate domains constructed via label-preserving transformations of the source data. To capture domain-specific context, we propose a domain prompt encoder that generates lightweight modulation signals to produce augmenting features via feature-wise linear modulation. The learning process is formulated as a bi-level optimization problem: the inner objective optimizes task performance under fixed prompts, while the outer objective maximizes generalization across the surrogate domains by updating the domain prompt encoder. We further develop a practical gradient approximation scheme that enables efficient bi-level training without second-order derivatives. Extensive experiments on various SGD benchmarks demonstrate that BiSDG consistently outperforms prior methods, setting new state-of-the-art performance in the SDG setting.",
+      "authors": [
+        "Marzi Heidari",
+        "Hanping Zhang",
+        "Hao Yan",
+        "Yuhong Guo"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.CV"
+      ],
+      "published": "2026-04-07T18:28:42+00:00",
+      "link": "https://arxiv.org/pdf/2604.06349v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Proposes a bi-level optimization framework for single domain generalization using prompt encoders",
+      "llm_evidence_cn": "提出一种使用提示编码器的单领域泛化双层优化框架",
+      "llm_evidence": "提出一种使用提示编码器的单领域泛化双层优化框架",
+      "canonical_evidence": "提出一种使用提示编码器的单领域泛化双层优化框架",
+      "llm_tldr_en": "Introduces BiSDG for single domain generalization by decoupling task learning from domain modeling.",
+      "llm_tldr_cn": "通过将任务学习与领域建模解耦，引入BiSDG用于单领域泛化。",
+      "llm_tldr": "通过将任务学习与领域建模解耦，引入BiSDG用于单领域泛化。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Unsupervised or supervised domain adaptation techniques",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2604.06440v1",
+      "source": "arxiv",
+      "title": "Visual prompting reimagined: The power of the Activation Prompts",
+      "abstract": "Visual prompting (VP) has emerged as a popular method to repurpose pretrained vision models for adaptation to downstream tasks. Unlike conventional model fine-tuning techniques, VP introduces a universal perturbation directly into the input data to facilitate task-specific fine-tuning rather than modifying model parameters. However, there exists a noticeable performance gap between VP and conventional fine-tuning methods, highlighting an unexplored realm in theory and practice to understand and advance the input-level VP to reduce its current performance gap. Towards this end, we introduce a generalized concept, termed activation prompt (AP), which extends the scope of the input-level VP by enabling universal perturbations to be applied to activation maps within the intermediate layers of the model. By using AP to revisit the problem of VP and employing it as an analytical tool, we demonstrate the intrinsic limitations of VP in both performance and efficiency, revealing why input-level prompting may lack effectiveness compared to AP, which exhibits a model-dependent layer preference. We show that AP is closely related to normalization tuning in convolutional neural networks and vision transformers, although each model type has distinct layer preferences for prompting. We also theoretically elucidate the rationale behind such a preference by analyzing global features across layers. Through extensive experiments across 29 datasets and various model architectures, we provide a comprehensive performance analysis of AP, comparing it with VP and parameter-efficient fine-tuning baselines. Our results demonstrate AP's superiority in both accuracy and efficiency, considering factors such as time, parameters, memory usage, and throughput.",
+      "authors": [
+        "Yihua Zhang",
+        "Hongkang Li",
+        "Yuguang Yao",
+        "Aochuan Chen",
+        "Shuai Zhang",
+        "Pin-Yu Chen",
+        "Meng Wang",
+        "Sijia Liu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-04-07T20:28:24+00:00",
+      "link": "https://arxiv.org/pdf/2604.06440v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "visual prompting to repurpose pretrained vision models for adaptation to downstream tasks",
+      "llm_evidence_cn": "视觉提示用于将预训练视觉模型适配到下游任务",
+      "llm_evidence": "视觉提示用于将预训练视觉模型适配到下游任务",
+      "canonical_evidence": "视觉提示用于将预训练视觉模型适配到下游任务",
+      "llm_tldr_en": "Introduces Activation Prompts as a generalized visual prompting method for model adaptation.",
+      "llm_tldr_cn": "引入激活提示作为一种通用的视觉提示方法，用于模型任务适配。",
+      "llm_tldr": "引入激活提示作为一种通用的视觉提示方法，用于模型任务适配。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Prompt tuning for domain adaptation in VLMs",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

@@ -1,0 +1,631 @@
+Title: GAIN: Multiplicative Modulation for Domain Adaptation
+
+URL Source: https://arxiv.org/pdf/2604.04516v1
+
+Published Time: Tue, 07 Apr 2026 01:52:07 GMT
+
+Number of Pages: 19
+
+Markdown Content:
+# GAIN: Multiplicative Modulation for Domain Adaptation 
+
+Hengshuai Yao 1,2 Xing Chen 1 Ahmed Murtadha 1 Guan Wang 11Sapient Intelligence 
+
+> 2
+
+Department of Computing Science, University of Alberta 
+
+hengshu1@ualberta.ca, raincchio@gmail.com, murtadha20@gmail.com, imonenext@gmail.com 
+
+April 7, 2026 
+
+Abstract 
+
+Adapting LLMs to new domains causes forgetting because standard methods (full fine-tuning, LoRA) inject new directions into the weight space. We propose GAIN , which re-emphasizes 
+
+existing features through multiplicative modulation Wnew = S · W . The learned diagonal matrix 
+
+S is applied to the attention output projection and optionally the FFN. The principle mirrors 
+
+gain modulation in neuroscience, where neurons adapt to context by scaling response strength while preserving selectivity. We evaluate GAIN on five models from four families (774M to 70B), adapting sequentially across eight domains. GAIN-FFN matches LoRA’s in-domain adaptation, but their effects on previously trained domains are opposite: GAIN-FFN improves them by 7–13% (validation PPL), while LoRA degrades them by 18 –36% . Downstream accuracy confirms the pattern: for example, after seven sequential adaptations on Qwen2.5, GAIN-FFN degrades BoolQ by only 0.8% while LoRA damages it by 14 .9% . GAIN adds 46K–230K parameters per model and can be absorbed into the pretrained weights for zero inference cost. 
+
+# 1 Introduction 
+
+Large language models are powerful general-purpose systems but underperform on specialized domains, motivating adaptation. Full fine-tuning updates all parameters and is well known to forget catastrophically (Kirkpatrick et al., 2017). LoRA (Hu et al., 2022) is a parameter-efficient alternative that updates far fewer parameters and reduces forgetting. But forgetting remains a significant problem—Biderman et al. (2024b) trace it to “intruder dimensions”: new directions injected into the weight space that interfere with pretrained capabilities. Specifically, LoRA adds a low-rank perturbation to the weight matrix ( Wnew = W + BA ), and the perturbation BA can introduce directions outside the pretrained output space. We propose to prevent intruder dimensions during domain adaptation. Since pretrained models are trained on diverse corpora and already encode features for many domains, adaptation can 
+
+re-emphasize existing features rather than adding new ones. Our method, GAIN , scales the weight matrix directly: 
+
+Wnew = S · W (1) where S is a diagonal matrix that scales rows of W . The output directions of the adapted weight are unchanged—the adapted model can only use features that already exist in the pretrained weights (Proposition 1). This principle is inspired by gain modulation in neuroscience (Salinas and 1
+
+> arXiv:2604.04516v1 [cs.LG] 6 Apr 2026
+
+Thier, 2000; Andersen and Mountcastle, 1985): neurons adjust response amplitude based on context without changing what they respond to (Section 3). GAIN applies this principle to the attention output projection and optionally the FFN (Section 2). We evaluate on five models from four families (774M to 70B) and eight domains, with three key findings: 1. Structural forgetting prevention. GAIN adapts with near-zero forgetting at every learning rate. Both backward forgetting (damage to earlier-trained domains) and forward interference (damage to not-yet-trained domains) arise from additive methods introducing directions outside the pretrained output space; GAIN prevents both by construction. 2. Positive transfer under sequential adaptation. Across eight sequential domains and five models, GAIN-FFN improves previously trained domains by 7–13% (validation PPL), while LoRA degrades them by 18 –36% . Downstream accuracy confirms: on Qwen2.5, GAIN-FFN degrades BoolQ by only 0.8% while LoRA damages it by 14 .9% .3. No forgetting–adaptation tradeoff. LoRA can reduce forgetting via L2 regularization or conservative learning rates, but only by sacrificing in-domain adaptation—and these techniques require domain boundaries. GAIN achieves strong adaptation with near-zero forgetting simultaneously, requiring no regularization and no domain boundaries. 
+
+# 2 Methods 
+
+We propose two methods: GAIN scales the attention output projection, and GAIN-FFN extends this to the FFN. 
+
+2.1 GAIN 
+
+We instantiate Eq. 1 for the attention output projection WO. A transformer with L layers and H
+
+heads computes: output = [ head 1, . . . , head H ] WO (2) where WO ∈ Rdmodel ×dmodel projects concatenated head outputs into the residual stream. GAIN inserts a diagonal scaling matrix before WO:output = [ head 1, . . . , head H ] S W O, S = diag (s1, . . . , s dmodel ) (3) Each si is a learned scaling factor. This gives dmodel parameters per layer, dmodel × L total. For example, with GPT-2 Large ( dmodel = 1280 , L = 36 ), this is 46,080 parameters. We freeze all pretrained weights and initialize S = I, so that training starts from the pretrained model. After training, S is absorbed into the weights: WO ← S · WO, adding zero inference cost. 
+
+2.2 GAIN-FFN 
+
+Eq. 1 scales rows of W (left multiplication). The complementary form, which we use for the FFN, scales columns: 
+
+W new = W · S (4) GAIN-FFN is an instance of Eq. 4 applied to the FFN. Each transformer layer contains a feed-forward network: the up-projection Wup maps from dmodel to dffn (typically 4× larger), a nonlinearity 2is applied, and the down-projection Wdown maps back. GAIN-FFN scales the dffn -dimensional intermediate activations: FFN (h) = Wdown · Sffn · σ(Wup · h), Sffn = diag (sffn  
+
+> 1
+
+, . . . , s ffn  
+
+> dffn
+
+) (5) where h is the hidden state from the attention sublayer. After training, this is absorbed as 
+
+Wdown ← Wdown ·Sffn . We scale the dffn -dimensional intermediate rather than the dmodel -dimensional output, because each intermediate dimension corresponds to a learned feature in the FFN. GAIN-FFN adds dffn × L parameters (184K for GPT-2 Large, where dffn = 5120 ), bringing the total to 230K. The table below compares parameter counts with LoRA. 
+
+Method Structure Params/layer Total (GPT-2) GAIN diag (dmodel ) on WO dmodel = 1280 46,080 GAIN-FFN diag on WO + Wdown dmodel + dffn 230,400 LoRA ( r = 1 ) W + BA (additive) 2rd model 92,160 LoRA ( r = 2 ) W + BA (additive) 2rd model 184,320 
+
+# 3 Multiplicative Modulation 
+
+This section discusses why multiplicative modulation preserves pretrained capabilities while additive methods do not, and traces the connection to gain modulation in neuroscience. In transformers, each layer’s output is added to a shared hidden state (the residual stream). The output projection WO determines what each attention layer contributes. LoRA modifies WO
+
+additively: LoRA: Wnew = WO + BA (additive) (6) The perturbation BA is independent of WO, so for input h, the output (WO + BA )h = WOh +
+
+BAh includes BAh —a term that can introduce entirely new directions. GAIN modifies weights multiplicatively: GAIN: W new  
+
+> O
+
+= S · WO (7) GAIN-FFN: W new down = Wdown · Sffn (8) Both are instances of diagonal scaling (left and right multiplication, respectively). The following proposition shows that both forms preserve the pretrained output space. 
+
+Proposition 1 (Output Space Preservation) . For diagonal S and weight matrix W :1. Left multiplication : rowspace (S · W ) ⊆ rowspace (W )
+
+2. Right multiplication : colspan (W · S) ⊆ colspan (W )
+
+That is, multiplicative modulation can only produce outputs within the pretrained model’s output subspace. Proof. (1) The i-th row of S · W is si · w⊤ 
+
+> i
+
+, a scaling of the i-th row of W , hence in rowspace (W ).(2) The j-th column of W · S is sj · wj , a scaling of the j-th column of W , hence in colspan (W ).The “ ⊆” becomes “ =” when all si > 0, since no row or column is zeroed out. In our experiments, learned scaling factors remain well above zero (e.g., smin = 0 .94 on GPT-2 at lr = 10 −3), so the 3stronger equality holds in practice. In contrast, LoRA does not preserve the pretrained output space: the perturbation BA is independent of W , so the output space of W + BA can escape that of W .Biderman et al. (2024b) show that LoRA introduces “intruder dimensions”—out-of-subspace singular vectors causally linked to forgetting. Chen et al. (2024) show that LoRA minima can be sharp in full parameter space. GAIN avoids the first issue: Proposition 1 prevents intruder dimensions by construction. Since it holds at every layer, the guarantee composes through depth; for LoRA, intruder dimensions at early layers compound through subsequent layers. The second issue is also mitigated, since the diagonal constraint restricts optimization to a narrow subspace anchored at the pretrained weights, reducing the chance of reaching sharp minima in full parameter space. 
+
+3.1 Connection to Neuroscience 
+
+GAIN’s multiplicative principle is inspired by neuroscience. Gain modulation (Treue and Martínez-Trujillo, 1999; Salinas and Thier, 2000; Salinas and Abbott, 2001) shows that when a neuron’s output is multiplicatively scaled, its selectivity—the features it responds to—is preserved; only the amplitude changes. Additive perturbation, by contrast, shifts selectivity. The connection goes beyond analogy. Take GAIN for example. The attention output can be rewritten as: 
+
+h · (S · WO) = ( h · S) · WO (9) The left-hand side is the weight modification view (Eq. 1). The right-hand side offers a second perspective: GAIN does not modify WO at all—it scales the hidden activations h before they enter 
+
+WO. Each diagonal entry si is a gain applied to the i-th dimension of h, amplifying or suppressing that dimension’s contribution. This mirrors gain modulation in neuroscience: context-dependent scaling of neural responses, with the downstream projection unchanged. GAIN-FFN has the same interpretation: (Wdown · Sffn ) · z = Wdown · (Sffn · z) scales the FFN intermediate activations z before the down-projection. 
+
+# 4 Single-Domain Adaptation 
+
+We adapt pretrained models to one new domain, then measure in-domain improvement and cross-domain damage. The sequential setting follows in §5. 
+
+Setup. Each experiment freezes a pretrained model and trains only GAIN (or LoRA) parameters on a calibration set ( ∼200K tokens, 5 epochs). We use PubMedQA medical abstracts as the primary adaptation domain because it represents a clear distributional shift from web pretraining data and has associated downstream benchmarks (MedQA, MMLU medical). We measure in-domain adaptation by perplexity on the target domain (PubMed PPL). Forgetting is measured by cross-domain perplexity (LAMBADA, WikiText-103) and general benchmarks (HellaSwag, ARC-Easy, PIQA, WinoGrande) before and after adaptation. Table 1 compares GAIN, GAIN-FFN, and LoRA on GPT-2 (774M) across learning rates. GAIN adapts with near-zero forgetting across its entire LR range. GAIN-FFN (230K params) approaches LoRA’s adaptation strength while maintaining near-zero cross-domain damage. LoRA exhibits the forgetting–adaptation tradeoff: at lr = 10 −3, in-domain PPL improves by 7.4% but WT-103 rises by 1.1% ; at lr = 10 −2, WT-103 rises by 10 .4% and ARC-Easy drops by 4.7 points. GAIN does not exhibit this tradeoff. Training cost is comparable to LoRA: both methods freeze the pretrained model and backpropa-gate only through their respective parameters. GAIN’s diagonal scaling requires fewer multiply-adds 4Table 1: GPT-2 (774M) adapted on PubMedQA. PPL columns: % change in perplexity ( ↓ = better). Benchmark columns: accuracy change on general tasks. PubMed is in-domain; all others measure forgetting. PPL ∆% ( ↓ better) Benchmark ∆ (accuracy) Method LR Params PubMed WT-103 LAMB ARC-E HellaS PIQA WinoGr GAIN 3×10 −4 46K −0.7 +0 .0 −0.1 +0 .0 +0 .1 +0 .1 −0.1
+
+GAIN 10 −3 46K −2.0 +0 .1 −0.4 −0.1 +0 .1 +0 .1 −0.1
+
+GAIN 3×10 −3 46K −4.2 +0.3 −0.9 −0.3 +0 .0 +0 .0 −0.1
+
+GAIN-FFN 10 −3 230K −5.1 +0 .1 −2.0 −0.7 −0.1 +0 .2 +0 .2
+
+GAIN-FFN 3×10 −3 230K −8.3 +1 .0 −2.9 −1.1 −0.1 +0 .1 +0 .2
+
+LoRA 10 −4 92K −0.5 +0 .0 −0.1 +0 .0 +0 .1 +0 .1 +0 .1
+
+LoRA 3×10 −4 92K −3.2 +0 .1 −0.7 −0.1 +0 .0 +0 .0 −0.1
+
+LoRA 10 −3 92K −7.4 +1 .1 −3.0 −1.2 −0.4 −0.1 −0.2
+
+LoRA 10 −2 92K −7.7 +10 .4 +7.1 −4.7 −0.7 −0.8 −0.2       
+
+> GAIN = WOscaling. GAIN-FFN = WO+Wdown scaling. PPL: % change. Benchmarks: accuracy ∆.
+
+per step than LoRA’s matrix products. Single-domain adaptation results are consistent across model scales (Mistral-7B through Llama-2-70B) and domains (PubMedQA, PG-19); see Appendix F. At matched aggressive learning rates (GAIN lr = 10 −2, LoRA lr = 3 ×10 −3), LoRA diverges on two of three models while GAIN adapts with zero forgetting (Appendix G). We also tested domain-specific classification tasks: GAIN improves MedQA accuracy by +4 .3
+
+points and financial sentiment by +12 .0 points without degrading general benchmarks. LoRA achieves comparable task accuracy but degrades general benchmarks by 1–2% ; at higher LR, LoRA collapses MedQA to 28.6 ( −22 .7 points). Full results in Appendix H. 
+
+# 5 Sequential Multi-Domain Adaptation 
+
+In practice, models are adapted to new domains over time—for example, a medical deployment followed by legal, then financial. Each new adaptation risks erasing earlier ones, a tension known as the stability-plasticity dilemma (Kirkpatrick et al., 2017). Continual learning methods address this with replay buffers or regularization. GAIN requires none of these mechanisms—its protection follows from the multiplicative structure itself (Proposition 1). 
+
+5.1 Sequential Adaptation Across 8 Domains 
+
+We select eight domains spanning different genres and formats (medical abstracts, encyclopedia, financial news, fiction, question answering, narrative completion, sentiment, commonsense) and train on them sequentially (Medical → WikiText → Financial → PG-19 → MedQA → LAMBADA 
+
+→ SST-2 → HellaSwag), with 200K tokens and 200 steps × 5 epochs per domain. After training on each domain, we evaluate PPL on all domains. Table 2 shows the full adaptation matrix. The upper triangle (gray) measures forward interference—whether training on domain i damages not-yet-trained domains. The lower tri-angle measures whether earlier-trained domains are preserved or forgotten. The diagonal measures in-domain adaptation. 5Table 2: Sequential adaptation on GPT-2 Large (774M). Entries = % PPL change vs. pretrained (negative = improved, positive = degraded). Diagonal = in-domain adaptation; lower triangle = effect on earlier-trained domains; upper triangle = effect on not-yet-trained domains.                                                                                                                                           
+
+> GAIN (lr = 10 −3, % PPL change vs. pretrained baseline) After training Med WT Fin PG MdQ LB SST HS +Med −2.9+0 .0−0.0−1.3−0.3−0.6−0.0−0.2
+> +WT −3.0−11 .0−0.1−3.8−0.2−1.5−2.1−0.3
+> +Fin −2.9−11 .1−5.6−2.9+0 .0−2.6−1.6−0.4
+> +PG −2.8−11 .0−5.7−24 .0−0.1−4.3−1.7−0.2
+> +MdQ −2.4−10 .6−5.4−23 .9−8.0−5.0−1.4−0.3
+> +LB −2.2−10 .0−5.2−23 .8−8.1−14 .2−0.7+0 .5
+> +SST −2.1−10 .6−4.8−23 .6−7.8−14 .0−11 .9+0 .5
+> +HS −2.2−10 .3−4.6−23 .5−7.5−13 .5−11 .7−8.5
+> LoRA (lr = 10 −3, % PPL change vs. pretrained baseline) +Med −9.8+1 .0+2 .5−16 .2+3 .1−2.4+2 .5+0 .6
+> +WT +32 .5−25 .2+16 .3−4.7+16 .2+18 .0−1.2+8 .7
+> +Fin +7 .2−8.4−13 .4−9.1+3 .9−4.2+3 .3+3 .0
+> +PG +4 .7−9.8−4.2−25 .5+3 .7−0.9−0.3+3 .4
+> +MdQ +15 .0+1 .2+6 .4−20 .9−23 .9−0.9+3 .6+6 .9
+> +LB +14 .5+14 .5+15 .5−15 .4−6.8−28 .1+12 .3+10 .0
+> +SST +30 .7+23 .6+11 .6−4.1+0 .2+5 .6−24 .2+24 .5
+> +HS +22 .6+31 .0+37 .4−4.5+15 .0+22 .5+1 .6−20 .8
+
+Upper triangle: why is interference near zero? GAIN’s gray entries are uniformly small— training on one domain barely affects predictions on others. Figure 1 shows why: GAIN’s per-token loss changes are small and symmetric around zero ( σ ≈ 0.12 ), so improvements and worsenings cancel and the net domain-level effect is near zero. To see why the changes cancel, consider the effect of one domain’s training. Each domain changes the scaling factors by a small increment ∆si, so the loss change on an unrelated domain 
+
+B is approximately ∆ℓB ≈ ∑ 
+
+> i
+
+∆si · ∂ℓ B /∂s i. The increments ∆si are optimized for the current domain; on unrelated domain B, they are approximately uncorrelated with B’s loss gradient. The sum of small, uncorrelated terms averages to near zero. Consistent with this, cross-domain scaling factor correlations are near zero ( r = 0 .00 –0.14 ; see “Why does positive transfer occur?” below). LoRA’s additive perturbation is fundamentally different: it introduces directions outside the pretrained feature space that domain B was never calibrated for, producing coherent (non-canceling) damage ( σ ≈ 0.30 , 3× larger). 
+
+Lower triangle: earlier domains are preserved. Here, domain B was trained before domain A,so B’s adaptation is already encoded in S. Training on A applies element-wise multiplicative updates to S. In our experiments, domain-specific adaptations are approximately orthogonal ( r = 0 .00 –0.14 ): 
+
+A’s updates concentrate on different dimensions than B’s, leaving B’s adaptation largely intact. LoRA’s additive updates lack this property: successive low-rank perturbations operate in a shared subspace where new updates can directly overwrite old ones. Empirically, GAIN’s PG-19 improves by 24 .0% at step 4 and retains 23 .5% after four more domains—the adaptation is not erased. Every lower-triangle entry shows improvement. LoRA’s improvements are destroyed rapidly: Medical improves by 9.8% at step 1 but degrades to +32 .5% 
+
+after just one more domain (WikiText), and reaches +22 .6% after all eight. Even at LoRA’s safe 61.5 1.0 0.5 0.0 0.5 1.0 1.5                           
+
+> loss (nats)
+> 0
+> 5
+> 10
+> 15
+> 20
+> 25
+> Density
+> GAIN: =0.110
+> LoRA: =1.172
+> PG-19
+> GAIN
+> LoRA
+> 1.5 1.0 0.5 0.0 0.5 1.0 1.5
+> loss (nats)
+> GAIN: =0.078
+> LoRA: =0.671
+> LAMBADA
+> 1.5 1.0 0.5 0.0 0.5 1.0 1.5
+> loss (nats)
+> GAIN: =0.056
+> LoRA: =0.320
+> FINANCIAL
+> 1.5 1.0 0.5 0.0 0.5 1.0 1.5
+> loss (nats)
+> GAIN: =0.039
+> LoRA: =0.279
+> SST2
+> Per-token loss change after medical adaptation (GPT-2 Large)
+
+Figure 1: Per-token loss change on four unrelated domains after medical adaptation (GPT-2 Large). GAIN ( σ ≈ 0.12 ) is 3× narrower than LoRA ( σ ≈ 0.30 ). learning rate (lr = 3 ×10 −4), degradation still accumulates to 10 .2% (Appendix, Table 6). These results suggest that forgetting and interference are both driven by feature departure :additive perturbation introducing directions outside the pretrained output space. GAIN avoids feature departure because of Proposition 1: multiplicative scaling cannot introduce new output directions. LoRA has no such structural guarantee. 
+
+Why does positive transfer occur? GAIN not only avoids forgetting—it improves earlier domains (negative lower-triangle entries in Table 2). To understand the mechanism, we ask: do different domains learn similar scaling factors? We train GAIN-FFN independently on each of five domains (five separate models, each starting from the pretrained model) and compare the resulting scaling factors. Most of the adaptation is domain-specific: cross-domain correlations are near zero (r = 0 .00 –0.14 ). However, 20 –40% of the variance is shared across all domains. In this shared component, all five domains agree on which dimensions to suppress and which to amplify. We hypothesize that this shared component corrects pretrained feature weightings that are suboptimal for downstream text generally. Training on any domain applies this correction, benefiting all others. We verify this with a causal ablation. After training on each domain, we decompose the scaling update into its shared and domain-specific components. Removing the shared component halves positive transfer. Keeping only the shared component retains 81% of it. The shared component is thus both necessary and largely sufficient for positive transfer. This result is robust across learning rates (GAIN-FFN: positive transfer from lr = 5 × 10 −4
+
+to 3×10 −3; LoRA forgets at every LR, see Appendix Table 6), domain orderings ( 13 .3 ± 1.1% 
+
+improvement across eight random orderings on GPT-2, 8.5 ± 0.7% on Mistral-7B), and data scales (10 × more data: still positive transfer, Appendix K). It also holds across model scales: 
+
+Model Family GAIN-FFN LoRA GPT-2 Large (774M) OpenAI 12 .9% better 17 .9% worse Mistral-7B Mistral AI 7.0% better 28 .0% worse Qwen2.5-7B Alibaba 6.6% better 36 .1% worse Llama-2-13B Meta 8.8% better 24 .0% worse Llama-2-70B Meta 8.1% better 19 .5% worse Avg PPL change on earlier-trained domains after eight sequential adaptations. 
+
+Across five models from four families (774M to 70B), GAIN-FFN improves earlier-trained domains while LoRA degrades them. The result holds across different architectures, tokenizers, and model scales. This directly validates the intruder dimension accumulation predicted by Biderman et al. (2024b): GAIN’s multiplicative constraint (Proposition 1) prevents this accumulation by construction. 75.2 The stability-plasticity tradeoff 
+
+The stability-plasticity dilemma (Kirkpatrick et al., 2017; McCloskey and Cohen, 1989) holds that learning new information necessarily interferes with old—a tension observed across neural networks from MLPs to LLMs. Biderman et al. (2024a) show that LoRA exhibits this tradeoff: it learns less and forgets less than full fine-tuning. Our sequential experiments confirm the same pattern for LoRA: reducing forgetting via conservative learning rates or L2 regularization ( ℓtotal =
+
+ℓLM + λ ∑
+
+> i
+
+(pi − pprev  
+
+> i
+
+)2) always sacrifices in-domain adaptation (Figure 2). L2 also requires domain boundaries to know when to save parameters; GAIN needs no such signal. GAIN operates in a different regime. Higher learning rates still trade some preservation for adaptation, but the entire GAIN curve lies above zero—earlier domains improve at every operating point (Figure 2). GAIN-FFN at lr = 3 ×10 −3 reaches −21 .9% in-domain improvement, matching LoRA’s −21 .4% , while still improving earlier domains by 6.7% (Appendix J). At the more conservative lr = 10 −3, GAIN-FFN achieves −17 .9% , comparable to LoRA at its safe LR ( −17 .6% )which requires 5× more training steps. 
+
+Method Params Steps In-domain ↓ Earlier domains GAIN ( WO ) 46K 200 −10 .8% 10 .5% better GAIN-FFN (lr = 10 −3) 230K 200 −17 .9% 12 .9% better 
+
+GAIN-FFN (lr = 3×10 −3) 230K 200 −21 .9% 6.7% better 
+
+LoRA ( r = 1 , lr = 10 −3) 92K 200 −21 .4% 17 .9% worse LoRA ( r = 2 , lr = 10 −3) 184K 200 −22 .6% 14 .5% worse LoRA ( r = 1 , lr = 3 ×10 −4) 92K 1000 −17 .6% 7.2% worse In-domain: avg diagonal PPL change ( ↓ = better). Earlier domains: avg PPL change. GAIN-FFN at lr = 10 −3: 13 .3 ± 1.1% improvement over eight random orderings. 
+
+At matched in-domain adaptation ( ∼21%), the methods have opposite effects on earlier domains: GAIN-FFN improves them by 6.7% while LoRA degrades them by 17 .9% . LoRA r = 2 (184K params, comparable to GAIN-FFN’s 230K) still degrades by 14 .5% , confirming that the issue is additive vs multiplicative, not parameter count. 
+
+5.3 Downstream benchmarks after sequential adaptation 
+
+The previous results measure perplexity on domain-specific text. Do the conclusions extend to general-purpose benchmarks? We train GAIN-FFN and LoRA sequentially on seven domains (excluding HellaSwag, which is also used as an evaluation benchmark), then evaluate on seven benchmarks not seen during training (Table 3). Table 3: Benchmark accuracy change after seven sequential domain adaptations (acc_norm). Same hyperparameters across all models (lr = 10 −3, 200 steps, 5 epochs per domain). None of the benchmarks appear in the training domains.                                                                                                                            
+
+> GPT-2 (774M) Mistral-7B Qwen2.5-7B Llama-13B Llama-70B Base GAIN LoRA Base GAIN LoRA Base GAIN LoRA Base GAIN LoRA Base GAIN LoRA ARC-E 46 .6−1.4−1.979 .5+1 .5−10 .777 .4+3.8−0.276 .4+0 .5+1 .579 .5+1.4+0 .2
+> ARC-C 25 .1−1.0−0.154 .3+0 .3−10 .051 .2+3.1−0.149 .0+0 .0+2 .557 .0+1.4−1.0
+> BoolQ 60 .5−2.1−7.884 .3−1.2−9.284 .3−0.8−14 .982 .5−1.4−2.385 .3−2.5−14 .6
+> HellaS 45 .3−0.9−2.181 .2+0 .1−4.178 .9+0 .4−0.979 .7+0 .9−5.384 .3+0.7−7.1
+> OBQA 31 .2−1.8−2.246 .2+0 .0−3.047 .4−1.0−2.845 .6+0 .4−3.249 .0−0.2−10 .6
+> PIQA 69 .2−1.3−2.682 .8−0.1−5.279 .9+0 .2−1.580 .6+0 .0−1.782 .5−0.2−5.8
+> WinoGr 55 .3+0 .4+0 .375 .1−0.4−3.472 .5+0 .7−2.872 .2+1 .0−2.680 .3−1.1−9.1
+
+80 5 10 15 20 25 
+
+> In-domain adaptation (PPL improvement %)
+> 20
+> 15
+> 10
+> 5
+> 0
+> 5
+> 10
+> 15
+> Earlier domains preservation (PPL improvement %)
+> lr=1e-3
+> lr=3e-4
+> =0.01
+> =0.1
+> lr=1e-3
+> lr=3e-3
+> LoRA (LR tuning)
+> LoRA (L2 reg.)
+> GAIN-FFN
+
+Figure 2: LoRA’s forgetting-adaptation tradeoff. Red points are LoRA with different learning rates and L2 regularization strengths ( λ). GAIN-FFN (blue stars) operates in a different regime—the entire curve lies above zero. GAIN-FFN preserves benchmarks across all five models. On GPT-2, changes are within ±2% .On larger models, GAIN-FFN often improves benchmarks (Qwen ARC-Easy +3 .8% , Llama-70B ARC-Easy +1 .4% ), consistent with the positive transfer observed in PPL. LoRA damages most benchmarks by 2–15% , with BoolQ particularly vulnerable ( −14 .9% on Qwen, −14 .6% on Llama-70B). All results use identical hyperparameters (lr = 10 −3, 200 steps, 5 epochs) across all five models. 
+
+# 6 Conclusion 
+
+We propose GAIN, a multiplicative approach to domain adaptation that scales existing features rather than adding new directions. The theoretical basis is Proposition 1: diagonal scaling preserves the pretrained output space, preventing the intruder dimensions that cause forgetting in additive methods like LoRA. Across eight domains, five models from four families (774M to 70B), and multiple random orderings, GAIN-FFN improves earlier-trained domains by 7–13% while LoRA degrades them by 
+
+18 –36% . On seven downstream benchmarks, GAIN-FFN preserves or improves accuracy while LoRA damages BoolQ by up to 14 .9% . The stability-plasticity tradeoff that governs additive methods does not apply: GAIN operates entirely in the positive-transfer regime. These results hold at 10 ×
+
+larger data budgets, across learning rates, and with identical hyperparameters across all models. GAIN adds 46K–230K parameters per model, requires no domain boundaries or regularization, and can be absorbed into the pretrained weights for zero inference cost. Limitations include the assumption that pretrained features are sufficient for all target domains, and the lack of evaluation on instruction-tuned models or very long domain sequences ( ≫ 8). 
+
+# References 
+
+R. A. Andersen and V. B. Mountcastle. The influence of the angle of gaze upon the excitability of the light-sensitive neurons of the posterior parietal cortex. Journal of Neuroscience , 5(5): 91218–1235, 1985. D. Biderman, J. Portes, J. J. G. Ortiz, M. Paul, P. Greengard, C. Jennings, D. King, S. Goodman, N. Prashanth, et al. LoRA learns less and forgets less. Transactions on Machine Learning Research (TMLR) , 2024a. S. Biderman, N. Prashanth, J. Portes, S. Pillai, B. Garrett, and A. Jermyn. LoRA vs full fine-tuning: An illusion of equivalence. arXiv preprint arXiv:2410.21228 , 2024b. T. Chen, L. Li, X. Wu, Z. Chen, and R. He. Flat-LoRA: Low-rank adaptation over a flat loss landscape. arXiv preprint arXiv:2409.14396 , 2024. T. Dettmers, A. Pagnoni, A. Holtzman, and L. Zettlemoyer. QLoRA: Efficient finetuning of quantized LLMs. In NeurIPS , 2023. E. J. Hu, Y. Shen, P. Wallis, Z. Allen-Zhu, Y. Li, S. Wang, L. Wang, and W. Chen. LoRA: Low-rank adaptation of large language models. In ICLR , 2022. J. Kirkpatrick, R. Pascanu, N. Rabinowitz, J. Veness, G. Desjardins, A. A. Rusu, K. Milan, J. Quan, T. Ramalho, A. Grabska-Barwinska, et al. Overcoming catastrophic forgetting in neural networks. 
+
+Proceedings of the National Academy of Sciences , 114(13):3521–3526, 2017. V. Lingam, A. N. Gupta, R. Peswani, N. Phueaksri, and A. Sabharwal. Svft: Parameter-efficient fine-tuning with singular vectors. In NeurIPS , 2024. H. Liu, D. Tam, M. Muqeeth, J. Mohta, T. Huang, M. Bansal, and C. Raffel. Few-shot parameter-efficient fine-tuning is better and cheaper than in-context learning. In NeurIPS , 2022. S.-Y. Liu, C.-Y. Wang, H. Yin, P. Molchanov, Y.-C. F. Wang, K.-T. Cheng, and M.-H. Chen. DoRA: Weight-decomposed low-rank adaptation. arXiv preprint arXiv:2402.09353 , 2024. A. Mallya and S. Lazebnik. Packnet: Adding multiple tasks to a single network by iterative pruning. In CVPR , 2018. M. McCloskey and N. J. Cohen. Catastrophic interference in connectionist networks: The sequential learning problem. Psychology of Learning and Motivation , 24:109–165, 1989. D. Rolnick, A. Ahuja, J. Schwarz, T. Lillicrap, and G. Wayne. Experience replay for continual learning. In NeurIPS , 2019. E. Salinas and L. F. Abbott. Coordinate transformations in the visual system: How to generate gain fields and what to compute with them. Progress in Brain Research , 130:175–190, 2001. E. Salinas and P. Thier. Gain modulation: A major computational principle of the central nervous system. Neuron , 27(1):15–21, 2000. S. Treue and J. C. Martínez-Trujillo. Feature-based attention influences motion processing gain in macaque visual cortex. Nature , 399(6736):575–579, 1999. Z. Wang et al. Pica: Column space projection for parameter-efficient fine-tuning. arXiv preprint arXiv:2505.20211 , 2025. T. Zhang, B. Li, and C. Liu. Hira: Hadamard high-rank adaptation of large language models. In 
+
+ICLR , 2025. 10 A Related Work 
+
+LoRA and variants (Hu et al., 2022; Dettmers et al., 2023; Liu et al., 2024) add low-rank perturbations to weight matrices. We show these additive methods live on a forgetting–adaptation tradeoff curve that multiplicative methods avoid. Biderman et al. (2024b) identify “intruder dimensions” in LoRA that interfere with pretrained capabilities—our Proposition 1 shows GAIN avoids these by construction. Chen et al. (2024) show that LoRA minima can be deceptively sharp in full parameter space, causing forgetting. (IA) 3 (Liu et al., 2022) scales keys, values, and FFN activations multiplicatively for few-shot classification. HiRA (Zhang et al., 2025) uses Hadamard products of pretrained weights with low-rank matrices. SVFT (Lingam et al., 2024) scales singular values of pretrained weights. PiCa (Wang et al., 2025) projects gradients onto the pretrained column space. All are multiplicative but none studies forgetting or sequential adaptation. We confirm that (IA) 3 also exhibits positive transfer in the sequential setting ( −14 .2% , comparable to GAIN-FFN’s −12 .9% ), validating that the multiplicative principle—not GAIN’s specific parameterization—is the key mechanism (Appendix L). Continual learning methods address forgetting through replay buffers (Rolnick et al., 2019), regularization (Kirkpatrick et al., 2017), or architecture partitioning (Mallya and Lazebnik, 2018). GAIN is not a continual learning method—its protection follows from the multiplicative structure (Proposition 1). 
+
+# B Sequential Adaptation on Mistral-7B 
+
+Table 4 replicates the sequential adaptation experiment (Table 2) on Mistral-7B with domain order WikiText → Medical → Financial → PG-19 → MedQA → LAMBADA → SST-2 → HellaSwag. The pattern is consistent: GAIN preserves all earlier domains while LoRA accumulates catastrophic forgetting. 
+
+# C Sequential Adaptation at Higher Learning Rate 
+
+Table 5 shows GAIN at lr = 3 ×10 −3 on GPT-2 Large. In-domain adaptation is nearly 2× stronger than lr = 10 −3 (e.g., WikiText −15 .8% vs −11 .0% ), while earlier domains still improve by 11 .4% 
+
+on average. Minor forward interference appears on later domains (HellaSwag +4 .2% in the upper triangle) and the medical adaptation erodes from −5.7% to −0.7% . This is explained by the wider scaling range: at lr = 3 × 10 −3, smin = 0 .83 and smax = 1 .19 (vs. 0.94 –1.06 at lr = 10 −3), with only 55 .6% of dimensions within [0 .95 , 1.05] (vs. 98 .7% ). The perturbation bound is looser, but still bounded—all scaling factors remain within [0 .8, 1.2] , far tighter than LoRA’s unbounded perturbation. 
+
+# D LoRA at Safe Learning Rate 
+
+Table 6 shows LoRA at lr = 3 ×10 −4 (the safe LR from Table 1 where single-domain forgetting is near zero). Even at this conservative LR, sequential adaptation accumulates +10 .2% average forgetting after eight domains. LoRA’s forgetting in sequential settings is not a learning rate tuning issue—it is structural. 11 Table 4: Sequential adaptation on Mistral-7B (200K tokens per domain). Same format as Table 2. 
+
+GAIN (lr = 10 −3, % PPL change vs. pretrained baseline) After training WT Med Fin PG MdQ LB SST HS +WT −23 .1
+
++Med −23 .2 −1.2
+
++Fin −23 .1 −1.1 −5.0
+
++PG −22 .9 −1.1 −5.0 −0.3
+
++MdQ −22 .7 −1.1 −4.9 −0.2 −4.6
+
++LB −22 .6 −1.0 −5.0 +0 .0 −4.5 −6.5
+
++SST −22 .4 −0.9 −4.9 +0 .2 −4.4 −6.4 −6.9
+
++HS −22 .1 −0.8 −4.7 +0 .3 −4.2 −6.2 −6.9 −9.3
+
+LoRA (lr = 10 −3, % PPL change vs. pretrained baseline) +WT −30 .9
+
++Med −10 .8 +0 .1
+
++Fin −1.7 +6 .3 −7.8
+
++PG +5 .7 +6 .7 +1 .3 +11 .2
+
++MdQ +10 .9 +9 .7 +7 .4 +16 .1 −8.7
+
++LB +15 .3 +11 .0 +13 .7 +17 .1 +7 .4 −8.6
+
++SST +43 .6 +20 .0 +48 .0 +39 .6 +17 .9 +78 .5 −15 .4
+
++HS +44 .4 +21 .8 +50 .6 +52 .0 +19 .3 +57 .6 +18 .6 −19 .0
+
+# E Loss Landscape Analysis 
+
+Figure 3 interpolates from pretrained ( α = 0 ) to adapted ( α = 1 ) weights on Mistral-7B. Both methods reduce in-domain PPL, but GAIN’s cross-domain loss stays flat (LAMBADA PPL 13 .90 –13 .92 )while LoRA’s rises steeply ( 13 .90 → 16 .21 ). Multiplicative adaptation moves along a flat valley; additive adaptation crosses a ridge. This flatness extends to multi-domain combinations. We train GAIN and LoRA separately on WikiText and Medical text, then evaluate on a 2D grid combining both adaptation directions. GAIN’s domain directions are nearly orthogonal (cosine similarity 0.002 ) vs. LoRA ( 0.033 , 16 ×
+
+higher). Figure 4 shows the result: GAIN’s cross-domain loss is constant regardless of how domains are combined (range 0.007 in log PPL), while LoRA’s varies 885 × more. 
+
+# F Single-Domain Adaptation Across Model Scales 
+
+Table 7 shows single-domain adaptation (PubMedQA) across four models from two families (774M to 70B). GAIN adapts with near-zero cross-domain damage at every scale. LoRA at lr = 10 −3
+
+damages LAMBADA increasingly with model size; even at its safe LR ( 3×10 −4), cross-domain damage remains. GAIN achieves in-domain adaptation ( −1.3% to −3.1% ) with near-zero cross-domain damage (LAMBADA within ±0.4% ) and benchmark changes within ±0.5 at every scale from 7B to 70B. LoRA at its default LR damages LAMBADA by +0 .5% to +2 .7% and PubMed by +1 .4% to +8 .3% 
+
+on two of three models; at safe LR, forgetting is controlled but adaptation is modest. 
+
+Domain generality. On Llama-2-70B adapted to PG-19 (fiction, a different domain from 12 Table 5: Sequential adaptation on GPT-2 Large at lr = 3 ×10 −3 (GAIN). Same format as Table 2. Stronger adaptation with minor interference on later domains.                                                                          
+
+> GAIN (lr = 3 ×10 −3, % PPL change vs. pretrained baseline) After training Med WT Fin PG MdQ LB SST HS +Med −5.7+0 .2+0 .0−3.5−0.3−1.3+0 .1−0.2
+> +WT −4.9−15 .8+0 .5−6.4+0 .2−1.6−2.7+0 .2
+> +Fin −3.9−15 .3−8.6−4.4+0 .7−3.6−1.0+0 .5
+> +PG −3.5−14 .5−8.2−25 .0+0 .5−5.0−1.0+0 .8
+> +MdQ −2.1−13 .4−7.2−24 .2−14 .2−5.5−0.2+1 .5
+> +LB −1.3−11 .7−6.0−23 .0−13 .3−20 .4+1 .2+3 .8
+> +SST −0.6−11 .6−4.5−22 .0−12 .2−19 .3−17 .1+4 .2
+> +HS −0.7−10 .5−3.9−21 .0−10 .7−17 .3−16 .0−13 .8
+
+Table 6: Sequential adaptation: LoRA at safe lr = 3 ×10 −4 on GPT-2 Large. Same format as Table 2. Even at the safe LR, forgetting accumulates to +10 .2% .
+
+LoRA (lr = 3 ×10 −4, % PPL change vs. pretrained baseline) After training Med WT Fin PG MdQ LB SST HS +Med −5.6 +0 .2 +0 .1 −3.5 −0.3 −1.3 +0 .2 −0.3
+
++WT +3 .8 −19 .7 +2 .4 −5.6 +4 .7 +2 .8 −2.5 +2 .4
+
++Fin +3 .0 −13 .9 −9.1 −12 .6 +2 .5 −4.9 +0 .6 +1 .1
+
++PG +1 .5 −11 .7 −6.8 −25 .5 +1 .9 −5.4 −1.2 +1 .4
+
++MdQ +9 .3 −5.1 −1.0 −21 .9 −17 .3 −3.8 +1 .4 +2 .7
+
++LB +5 .4 +1 .3 +4 .3 −19 .2 −7.1 −24 .6 +8 .9 +4 .9
+
++SST +10 .9 +5 .7 +9 .8 −6.9 +2 .4 −7.1 −21 .3 +12 .0
+
++HS +15 .9 +8 .5 +26 .4 −2.0 +16 .9 +3 .2 −3.9 −17 .0
+
+PubMedQA): Method LR PG-19 ∆PPL LAMBADA ∆PPL GAIN 10 −3 −0.9% −0.1% 
+
+LoRA 10 −3 +17 .5% +20 .9% 
+
+The same pattern holds on a different domain: GAIN adapts with zero forgetting while LoRA causes catastrophic cross-domain damage ( +20 .9% LAMBADA). 
+
+# G GAIN vs LoRA at Matched Learning Rates 
+
+Table 1 compares GAIN and LoRA at their respective default LRs. To ensure a fair comparison at comparable aggressiveness, we also test GAIN at lr = 10 −2 and LoRA at lr = 3 ×10 −3 (both more aggressive than their defaults): LoRA at lr = 3 ×10 −3 diverges catastrophically on two of three models. On Llama-2-13B where LoRA does not diverge, it achieves slightly better in-domain adaptation ( −28 .4% vs −25 .7% ) but at the cost of +10% LAMBADA forgetting. GAIN at lr = 10 −2 is uniformly safe: strong adaptation with LAMBADA within ±0.2% across all scales. 13 0.0 0.2 0.4 0.6 0.8 1.0         
+
+> Interpolation (0=pretrained, 1=adapted)
+> 5.4
+> 5.6
+> 5.8
+> 6.0
+> 6.2
+> 6.4
+> 6.6
+> WikiText-103 PPL
+> Pretrained Adapted
+> In-domain Loss
+> NeuralGain (multiplicative)
+> LoRA (additive)
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> Interpolation (0=pretrained, 1=adapted)
+> 14.0
+> 14.5
+> 15.0
+> 15.5
+> 16.0
+> LAMBADA PPL
+> Cross-domain Loss (Forgetting)
+> NeuralGain (multiplicative)
+> LoRA (additive)
+
+Figure 3: Loss landscape interpolation on Mistral-7B. Left: in-domain PPL decreases for both. Right: GAIN’s cross-domain loss is flat; LoRA’s rises steeply. Table 7: Single-domain adaptation (PubMedQA) across model scales. PPL columns: % change ( ↓
+
+= better). PubMed is in-domain; LAMBADA measures forgetting. Benchmarks: accuracy (4 tasks averaged). PPL ∆% Benchmark ∆ (accuracy) Model Method Params PubMed LAMB ARC-E HellaS PIQA WinoGr Mistral-7B GAIN 131K −3.1 −0.4 −0.3 −0.2 −0.5 +0 .0
+
+LoRA (lr = 10 −3) 262K +5 .4 +2 .7 +0 .6 +0 .3 −0.3 −0.1
+
+LoRA (lr = 3 ×10 −4) 262K −3.7 −0.0 +0 .4 +0 .1 −0.3 −0.1
+
+Llama-2-13B GAIN 205K −2.4 −0.3 −0.1 +0 .4 +0 .0 +0 .5
+
+LoRA (lr = 10 −3) 410K +1 .4 −0.2 −1.3 +0 .9 +0 .2 −0.5
+
+LoRA (lr = 3 ×10 −4) 410K −4.0 −0.2 −0.7 +0 .3 +0 .0 −0.1
+
+Llama-2-70B GAIN 655K −1.3 −0.1 +0 .0 +0 .1 +0 .2 +0 .8
+
+LoRA (lr = 10 −3) 1.3M +8 .3 +0 .5 −0.9 +0 .9 +0 .0 −0.3
+
+LoRA (lr = 3 ×10 −4) 1.3M −4.1 −0.5 −0.6 +0 .3 +0 .0 +0 .9
+
+# H Domain-Specific Classification Tasks 
+
+GAIN’s benefits extend beyond perplexity to classification accuracy. We train on domain-specific data and evaluate on domain-specific benchmarks. 
+
+MedQA. GAIN trained on PubMedQA (classification loss, lr = 3 ×10 −3) improves MedQA 4-option accuracy from 51.3 to 55.6 ( +4 .3 points) on Mistral-7B, with all general benchmarks within 
+
+±0.8:
+
+Method MedQA ARC-E HellaS LAMB PIQA WinoGr Baseline 51.3 79.5 81.2 74.9 82.8 75.1 GAIN 55 .6 +0 .8 −0.2 −0.1 −0.1 −0.3
+
+LoRA (lr = 3 ×10 −4) 55.9 −1.5 −0.5 −0.3 −1.5 −0.9
+
+LoRA (lr = 10 −3) 28.6 −11 .5 −1.0 +0 .3 +0 .0 −0.1
+
+GAIN and LoRA (safe LR) achieve comparable MedQA improvement, but LoRA’s general 14 0.50 0.25 0.00 0.25 0.50 0.75 1.00 1.25 1.50 
+
+> WikiText adaptation strength
+> 0.50
+> 0.25
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> 1.00
+> 1.25
+> 1.50
+> Medical adaptation strength
+
+NeuralGain (multiplicative)         
+
+> Pretrained
+> WikiText adapted
+> Medical adapted
+> 0.50 0.25 0.00 0.25 0.50 0.75 1.00 1.25 1.50
+> WikiText adaptation strength
+> 0.50
+> 0.25
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> 1.00
+> 1.25
+> 1.50
+> Medical adaptation strength
+
+LoRA (additive) 
+
+> Pretrained
+> WikiText adapted
+> Medical adapted
+> 2.629
+> 2.955
+> 3.282
+> 3.609
+> 3.935
+> 4.262
+> 4.589
+> LAMBADA Log PPL
+> 2.629
+> 2.955
+> 3.282
+> 3.609
+> 3.935
+> 4.262
+> 4.589
+> LAMBADA Log PPL
+
+Cross-domain Loss Landscape: Two Domain Adaptations Combined Figure 4: Cross-domain loss when WikiText and Medical adaptations are combined. Left : GAIN— uniform blue; any combination preserves LAMBADA. Right : LoRA—red regions appear when adaptations are combined. Table 8: GAIN (lr = 10 −2) vs LoRA (lr = 3 ×10 −3) on WikiText adaptation. GAIN adapts strongly with zero forgetting at every scale. LoRA diverges on Mistral-7B and Llama-2-70B, and causes 
+
++10% forgetting on Llama-2-13B. GAIN (lr = 10 −2) LoRA (lr = 3 ×10 −3)Model WikiText LAMBADA WikiText LAMBADA Mistral-7B −15 .9% +0 .2% +213% +180% 
+
+Llama-2-13B −25 .7% −0.1% −28 .4% +10 .0% 
+
+Llama-2-70B −18 .0% +0 .1% +12 .3% +35 .6% 
+
+benchmark damage is 2–3× larger. At LoRA’s default LR ( 10 −3), MedQA collapses to 28.6 ( −22 .7
+
+points). 
+
+Financial sentiment. GAIN trained on financial news sentiment (lr = 10 −3) improves financial sentiment accuracy from 56.4% to 68.4% ( +12 .0 points) and SST-2 from 55.7 to 62.4 ( +6 .7 points), with all general benchmarks within ±1.0:
+
+Method Financial SST-2 ARC-E HellaS WinoGr Baseline 56.4 55.7 79.5 81.2 75.1 GAIN 68 .4 (+12 .0) 62 .4 (+6 .7) +0 .7 +0 .2 +1 .0
+
+LoRA (lr = 3 ×10 −4) 66 .6 (+10 .2) 71 .0 (+15 .3) +1 .3 −0.2 −1.1
+
+LoRA (lr = 10 −3) 75 .4 (+19 .0) 88 .3 (+32 .6) −1.6 −2.4 −1.3
+
+LoRA at lr = 10 −3 achieves stronger task-specific adaptation ( +19 .0) but at the cost of 1–
+
+2% degradation on general benchmarks. GAIN provides moderate adaptation ( +12 .0) with zero degradation. 15 I Full Fine-Tuning Comparison 
+
+Full fine-tuning on ∼200K tokens is catastrophic: Model In-domain ∆PPL LAMBADA ∆PPL GPT-2 Large −24 .1% +16 .2% 
+
+Mistral-7B +62 .0% +220 .5% 
+
+On GPT-2, full fine-tuning achieves strong in-domain adaptation ( −24 .1% ) but damages LAM-BADA ( +16 .2% ). On Mistral-7B, 200K tokens is far too little data for full fine-tuning—the model diverges ( +62% in-domain, +220% cross-domain). GAIN avoids both failure modes through its multiplicative constraint. 
+
+# J GAIN-FFN Learning Rate Sweep 
+
+Table 10 shows how GAIN-FFN’s adaptation–preservation balance varies with learning rate on GPT-2 Large (sequential 8-domain adaptation). At lr = 10 −3 (paper default), GAIN-FFN adapts moderately with strong positive transfer. At lr = 3 ×10 −3, in-domain adaptation reaches −21 .9% ,matching LoRA’s −21 .4% at lr = 10 −3, while earlier domains still improve by 6.7% . At lr = 10 −2,training destabilizes: in-domain adaptation is strongest ( −22 .5% ) but earlier domains degrade by 
+
++13 .5% .This degradation is not forgetting in the LoRA sense (no intruder dimensions are introduced). Strictly, Proposition 1 holds even for negative si—a negative scaling factor reverses a dimension’s sign but does not escape the output space. However, sign-flipping a hidden dimension effectively inverts the feature that downstream layers have been calibrated for, causing optimization instability rather than structural departure. Table 9 tracks the scaling factor distribution across domains: Table 9: Scaling factor statistics after each sequential domain (GPT-2 Large). At lr = 10 −3, factors stay positive and tightly concentrated. At lr = 3 ×10 −3, factors go negative by domain 5. At lr = 10 −2,factors go negative by domain 2 and reach −1.33 by domain 8. Negative scaling factors sign-flip hidden dimensions, destroying the multiplicative guarantee.                                                           
+
+> lr = 10 −3lr = 3 ×10 −3lr = 10 −2
+> After smin smax % tight smin smax % tight smin smax % tight +Dom 1 0.94 1.06 99 .90.84 1.16 67 .60.52 1.48 29 .3
+> +Dom 2 0.78 1.25 73 .30.40 1.62 38 .1−0.76 2.36 16 .6
+> +Dom 4 0.61 1.40 55 .80.07 1.94 27 .8−0.83 2.87 12 .9
+> +Dom 6 0.34 1.78 42 .7−0.38 2.15 22 .3−1.25 3.06 11 .5
+> +Dom 8 0.24 1.77 36 .8−0.51 2.28 19 .3−1.33 3.11 10 .4
+> % tight = percentage of scaling factors in [0 .95 ,1.05] .
+
+At lr = 10 −3, all scaling factors remain positive ( smin = 0 .24 ) through all eight domains, and the output space preservation guarantee holds. At lr = 3 ×10 −3, some factors go negative by domain 5 (smin = −0.17 ), sign-flipping hidden dimensions—this is not the injection of new directions (as in LoRA) but the inversion of existing ones, a form of training instability. At lr = 10 −2, factors go negative by domain 2 and reach smin = −1.33 by domain 8. The practical safe range for GAIN-FFN is lr ≤ 10 −3 (all factors positive) to lr = 3 ×10 −3 (mild instability on late domains). 16 Table 10: GAIN-FFN learning rate sweep on GPT-2 Large (sequential 8-domain adaptation, 200K tokens/domain). In-domain: avg diagonal PPL improvement. Earlier domains: avg PPL change on previously trained domains (negative = improvement).                             
+
+> LR In-domain ↓Earlier domains Regime
+> 5×10 −4−14 .6% −12 .8%better conservative
+> 10 −3−17 .9% −12 .9%better default
+> 2×10 −3−20 .7% −10 .1%better aggressive
+> 3×10 −3−21 .9% −6.7%better matches LoRA in-domain
+> 10 −2−22 .5% +13 .5% worse unstable LoRA ( 10 −3)−21 .4% +17 .9% worse —
+
+GAIN-FFN maintains positive transfer across a wide learning rate range ( 5×10 −4 to 3×10 −3, a 
+
+6× range). At lr = 3 ×10 −3, it matches LoRA’s in-domain adaptation while still improving earlier domains—the opposite of LoRA’s 17 .9% degradation. Training becomes unstable only at lr = 10 −2,where the diagonal constraint is no longer sufficient to keep perturbations small. 
+
+Does forward interference accumulate? At lr = 10 −3, forward interference remains bounded through all eight domains (Table 9: all si > 0, % tight decreases gradually). The scaling factor trajectory suggests interference is bounded by the learning rate, not by the number of domains. For very long domain sequences ( ≫ 8), lower learning rates or periodic re-normalization of S toward identity could maintain the guarantee. We leave evaluation on 20+ domain sequences to future work. 
+
+# K Scaling to Larger Data Budgets 
+
+Our main experiments use 200K tokens per domain. To test whether the results hold at realistic data scales, we repeat the sequential 8-domain experiment with 10 × more data (2M tokens per domain, 200 steps × 5 epochs). At 2M tokens, GAIN-FFN maintains positive transfer ( −10 .2% avg improvement on earlier domains) while LoRA’s forgetting is comparable to the 200K setting ( +17 .8% avg degradation). We replicate this on Mistral-7B: GAIN-FFN shows −7.2% positive transfer while LoRA degrades by 
+
++45 .5% —even worse than at 200K ( +28 .0% ). The pattern holds across data scales and model sizes:                                      
+
+> Model Method Tokens In-domain ↓Earlier domains GPT-2 (774M) GAIN-FFN 200K −17 .9% −12 .9%better
+> GAIN-FFN 2M −17 .1% −10 .2%better
+> LoRA 200K −21 .4% +17 .9% worse LoRA 2M −20 .4% +17 .8% worse Mistral-7B GAIN-FFN 200K −7.0% −7.0%better
+> GAIN-FFN 2M −9.8% −7.2%better
+> LoRA 200K −14 .0% +28 .0% worse LoRA 2M −13 .2% +45 .5% worse
+
+GAIN-FFN’s positive transfer is slightly reduced at larger data budgets because more training drives scaling factors further from unity, but remains solidly positive at both scales. LoRA’s forgetting is unchanged on GPT-2 and worsens on Mistral-7B at 2M tokens—the intruder dimension problem is structural, not data-dependent, and compounds with stronger adaptation. 17 Table 11: Sequential adaptation with 2M tokens per domain (GPT-2 Large). Same format as Table 2. GAIN-FFN maintains positive transfer; LoRA’s forgetting worsens. 
+
+GAIN-FFN (2M tokens, lr = 10 −3, % PPL change vs. pretrained) After training Med WT Fin PG MdQ LB SST HS +Med −6.8 +0 .5 −0.3 −3.1 −0.1 −2.7 +0 .5 −0.4
+
++WT −4.1 −17 .6 +0 .0 −2.8 +0 .3 −2.5 −3.7 +0 .7
+
++Fin −2.9 −15 .9 −11 .7 −3.0 −0.7 −7.7 −1.0 +0 .2
+
++PG −3.1 −14 .7 −10 .9 −12 .6 −1.0 −8.3 −1.5 +0 .9
+
++MdQ −0.7 −12 .2 −9.7 −9.9 −23 .1 −9.1 +1 .4 +2 .3
+
++LB +0 .0 −10 .9 −8.0 −7.1 −20 .9 −25 .5 +3 .0 +3 .9
+
++SST +1 .0 −11 .0 −5.7 −4.3 −19 .3 −23 .1 −22 .9 +6 .4
+
++HS +1 .4 −8.6 −4.6 −2.3 −16 .9 −20 .7 −19 .9 −16 .4
+
+LoRA (2M tokens, lr = 10 −3, % PPL change vs. pretrained) +Med −9.7 +2 .1 +0 .9 −5.2 +3 .7 −3.4 +2 .4 +0 .5
+
++WT +32 .2 −24 .0 +14 .6 +3 .5 +13 .0 +24 .4 +1 .4 +13 .0
+
++Fin +6 .3 −6.5 −13 .5 +0 .8 +2 .9 −5.4 +3 .1 +3 .0
+
++PG +3 .5 −8.7 −4.8 −12 .9 +1 .5 −2.1 +0 .9 +2 .8
+
++MdQ +12 .8 +4 .1 +5 .7 −4.6 −26 .0 −0.9 +4 .0 +7 .4
+
++LB +14 .1 +7 .1 +8 .9 +1 .5 −3.2 −29 .5 +10 .6 +11 .7
+
++SST +42 .8 +21 .7 +22 .5 +12 .2 +13 .8 +1 .6 −26 .2 +40 .1
+
++HS +22 .0 +22 .1 +34 .9 +9 .2 +19 .1 +14 .9 +2 .2 −21 .0
+
+# L Comparison with (IA) 3
+
+(IA) 3 (Liu et al., 2022) is another multiplicative method that scales keys, values, and FFN activations. If multiplicative modulation is the key to preventing forgetting, (IA) 3 should also exhibit positive transfer in the sequential setting. Table 12 confirms this. Table 12: (IA) 3 sequential adaptation on GPT-2 Large (lr = 10 −3, 200K tokens/domain). (IA) 3 shows positive transfer, confirming that the multiplicative principle—not GAIN’s specific parameterization— prevents forgetting. 
+
+(IA) 3 (lr = 10 −3, % PPL change vs. pretrained baseline) After training Med WT Fin PG MdQ LB SST HS +Med −5.7 +0 .1 +0 .2 −3.3 −0.4 −1.4 +0 .1 −0.4
+
++WT −4.9 −17 .7 +0 .6 −5.0 −0.0 −1.7 −3.2 +0 .2
+
++Fin −4.1 −17 .3 −9.9 −6.9 −0.1 −4.9 −1.7 +0 .2
+
++PG −3.8 −16 .6 −9.6 −25 .6 −0.4 −6.1 −2.0 +0 .3
+
++MdQ −2.6 −15 .5 −8.7 −24 .7 −17 .5 −7.1 −1.2 +0 .9
+
++LB −2.4 −13 .9 −8.0 −23 .3 −16 .9 −22 .8 +0 .8 +2 .8
+
++SST −1.9 −14 .7 −7.2 −22 .8 −16 .2 −22 .1 −18 .5 +2 .6
+
++HS −2.3 −14 .2 −6.8 −22 .0 −15 .5 −20 .7 −18 .0 −13 .8
+
+(IA) 3 shows −14 .2% avg improvement on earlier domains—comparable to GAIN-FFN’s −12 .9% .Both multiplicative methods exhibit positive transfer while LoRA degrades earlier domains by 
+
++17 .9% :18 Method Type In-domain ↓ Earlier domains GAIN-FFN multiplicative −17 .9% −12 .9% better         
+
+> (IA) 3multiplicative −16 .3% −14 .2%better
+> LoRA additive −21 .4% +17 .9% worse
+
+This confirms that the multiplicative principle (Proposition 1) is the key mechanism, not the specific choice of which weight matrices to scale. Both GAIN-FFN and (IA) 3 stay within the pretrained output space; both show positive transfer. The methods differ in which dimensions they scale (GAIN: WO and Wdown ; (IA) 3: keys, values, and FFN inputs), but the structural guarantee is the same. Neither is a special case of the other: GAIN scales the output projections (affecting what is produced ), while (IA) 3 scales inputs to the attention computation (affecting what is attended to ). The methods are complementary and could be combined. 19
