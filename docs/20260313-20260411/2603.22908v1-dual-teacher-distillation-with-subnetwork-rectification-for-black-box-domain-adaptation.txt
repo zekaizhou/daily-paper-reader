@@ -1,0 +1,417 @@
+Title: Dual-Teacher Distillation with Subnetwork Rectification for Black-Box Domain Adaptation
+
+URL Source: https://arxiv.org/pdf/2603.22908v1
+
+Published Time: Wed, 25 Mar 2026 00:47:15 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+> THIS MANUSCRIPT IS UNDER REVIEW AT IEEE TRANSACTIONS ON MULTIMEDIA. 1
+
+# Dual-Teacher Distillation with Subnetwork Rectification for Black-Box Domain Adaptation 
+
+Zhe Zhang, Jing Li, Wanli Xue, Xu Cheng, Senior Member, IEEE , Jianhua Zhang, Senior Member, IEEE ,Qinghua Hu, Senior Member, IEEE , and Shengyong Chen, Senior Member, IEEE 
+
+Abstract —Assuming that neither source data nor the source model is accessible, black-box domain adaptation represents a highly practical yet extremely challenging setting, as transfer-able information is restricted to the predictions of the black-box source model, which can only be queried using target samples. Existing approaches attempt to extract transferable knowledge through pseudo-label refinement or by leveraging external vision–language models (ViLs), but they often suffer from noisy supervision or insufficient utilization of the semantic priors provided by ViLs, which ultimately hinder adaptation performance. To overcome these limitations, we propose a dual-teacher distillation with subnetwork rectification (DDSR) model that jointly exploits the specific knowledge embedded in black-box source models and the general semantic information of a ViL. DDSR adaptively integrates their complementary predictions to generate reliable pseudo-labels for the target domain and intro-duces a subnetwork-driven regularization strategy to mitigate overfitting caused by noisy supervision. Furthermore, the refined target predictions iteratively enhance both the pseudo-labels and ViL prompts, enabling more accurate and semantically consistent adaptation. Finally, the target model is further optimized through self-training with class-wise prototypes. Extensive experiments on multiple benchmark datasets validate the effectiveness of our approach, demonstrating consistent improvements over state-of-the-art methods, including those using source data or models. 
+
+Index Terms —Black-box domain adaptation, knowledge distil-lation, subnetwork, adaptive fusion, vision-language model. 
+
+I. I NTRODUCTION 
+
+# UNSUPERVISED domain adaptation (UDA) [1], [2] ad-dresses the challenge of distribution shifts when trans-ferring knowledge from a labeled source domain to an un-labeled target domain. Conventional UDA methods assume simultaneous access to both source and target data. However, this assumption is often unrealistic in practice, as source data is frequently subject to privacy restrictions or cannot be shared. To mitigate this limitation, source-free domain adaptation (SFDA) [3]–[5] relies solely on a source model pre-trained with labeled source data and adapts it to the unlabeled target domain. Nevertheless, since raw source samples can potentially be reconstructed through generative techniques [6] when the source model is available, the risk of private information leakage remains. To address this issue, black-box domain adaptation (BBDA) [7] treats the source model as a black-box predictor, trans-ferring knowledge to the target domain solely through the predictions it produces on target samples. In this setting, both the source data and the internal details of the source model, such as its architecture and parameters, are inaccessible, which makes BBDA highly challenging. Beyond preserving privacy, BBDA does not require the target model to share the same structure as the source model, since the latter’s design is unknown. This flexibility enables effective adaptation even on resource-constrained devices. Moreover, as artificial intelligence services delivered via APIs become increasingly popular [8], the BBDA paradigm—where the target model queries the source model for predictions—aligns well with this trend. Considering these factors, BBDA is both important and holds significant potential for future development. Compared to UDA and SFDA, research on BBDA remains relatively limited. Due to the stricter constraints in the BBDA setting, existing UDA and SFDA methods cannot be directly applied. Distribution shifts between the source and target domains often cause the black-box source model to produce in-accurate predictions on target samples. To maximize the utility of target data, most BBDA methods focus on reducing predic-tion noise through techniques such as knowledge distillation [7], [9], consistency learning [10], and feature regularization [11]. However, without high-level semantic supervision, the performance of these data-driven approaches remains limited. Beyond exploiting black-box predictions, other works [12], [13] incorporate the vision-language (ViL) model named CLIP [14] in target model training. Benefiting from diverse training data and semantically driven objectives, ViLs capture general semantic knowledge beyond pixel-level or local features, mak-ing them more robust to distribution shifts. Nevertheless, their performance on specific domains may be unsatisfactory, and the knowledge learned by ViLs may be heterogeneous with that of the black-box source model. As a result, the application of ViLs in BBDA is still limited. Inspired by prior works [12], [13], we propose a dual-teacher distillation with subnetwork rectification (DDSR) for BBDA. As depicted in Fig. 1, DDSR is structured in two stages. In the first one, CLIP [14] is introduced to act as an auxiliary teacher alongside the black-box source model, forming a dual-teacher framework for knowledge distillation. Target samples are fed into both teachers to obtain category predictions, which are then integrated by an adaptive predic-tion fusion module. The fused predictions serve as pseudo-labels to supervise the training of the target neural network as the student. To mitigate overfitting to noisy pseudo-labels, we introduce a subnetwork that shares part of the structure and parameters with the target network. This subnetwork rectifies the target network through output alignment and gradient divergence. As training progresses, the target model produces increasingly reliable predictions, which are leveraged to refine pseudo-labels and update CLIP prompts in an online manner, ensuring both remain tailored to the target domain.  
+
+> arXiv:2603.22908v1 [cs.CV] 24 Mar 2026 THIS MANUSCRIPT IS UNDER REVIEW AT IEEE TRANSACTIONS ON MULTIMEDIA. 2
+
+In the second stage, we first extract target features and their predicted class labels by the target model. Next, class-wise prototypes are computed based on the features of each class. Finally, the labels of target samples are corrected according to their nearest prototypes, and the refined labels are used as pseudo-labels to further optimize the target model. Our contributions can be summarized as follows:  
+
+> •
+
+To leverage both the specific knowledge of the black-box source model and the general semantics of CLIP, we design an adaptive prediction fusion that integrates their predictions to generate pseudo-labels for training the target model. To further reduce overfitting to noisy labels, we employ a subnetwork to regularize the target model through output consistency and gradient discrepancy.  
+
+> •
+
+As training proceeds, the progressively enhanced pre-dictions of the target model are leveraged to iteratively refine the pseudo-labels and the CLIP prompts, promoting effective adaptation to the target domain. Finally, class-wise prototypes are utilized to correct the predictions of the target model, enabling fine-tuning under more accurate and semantically consistent supervision.  
+
+> •
+
+Extensive experiments on multiple benchmarks validate the effectiveness of our approach and show that it con-sistently outperforms state-of-the-art methods, including those with access to source data or source models. The remainder of this paper is organized as follows. Section II reviews the related work. Section III presents the problem setting and details the proposed method. Section IV reports the experimental results and analysis on multiple benchmarks. Finally, Section V concludes the paper. II. R ELATED WORK 
+
+A. Domain Adaptation 
+
+To mitigate the distributional discrepancy between the two domains, unsupervised domain adaptation (UDA) approaches have evolved along several major directions, including feature alignment [15], [16], adversarial learning [17]–[19], and self-supervised representation learning [20]–[24]. Despite their effectiveness, these approaches require direct access to source data, which limits their applicability in privacy-sensitive or proprietary scenarios. Source-free domain adaptation (SFDA) [5] addresses this limitation by assuming that the source data are inaccessible during adaptation, while the pre-trained source model is available. Most SFDA methods rely on pseudo-label self-training as the core strategy. A representative example, SHOT [3], decouples the feature extractor and classifier from the source model and optimizes the target model via en-tropy minimization and information maximization. Subsequent studies improve upon this by incorporating consistency regu-larization [25] or class-wise prototype alignment [26], [27]. Although SFDA effectively removes the need for source data, it still depends on the source model, which may pose potential privacy risks and hindering broader deployment [7]. 
+
+B. Black-box Domain Adaptation 
+
+Black-box Domain Adaptation (BBDA) pushes this bound-ary further by assuming that neither the source data nor the source model is accessible; instead, only the predictions from the black-box source model can be queried. This scenario better reflects real-world conditions, such as cross-institutional collaboration and commercial model adaptation, where data sharing or model exposure is prohibited. However, BBDA faces unique challenges in alleviating domain shift and mitigat-ing pseudo-label noise, as transferable information is limited to model outputs only. Early BBDA studies, such as DINE [7], introduce entropy-based self-training to iteratively refine pseudo-labels using the black-box source outputs. Subsequent works extend this paradigm by exploring distribution calibra-tion [28], feature separation [29], memorization mechanism [30], and regularization-based strategies [11]. While these approaches employ various strategies to address the key chal-lenges of pseudo-label unreliability in BBDA, they primarily rely on the noisy outputs of the black-box source model while neglecting high-level semantic information, ultimately resulting in performance bottlenecks. Recently, with the emergence of vision–language (ViL) models [31], several BBDA methods [12], [13] have leveraged CLIP [14] to introduce semantic priors and mitigate noisy supervision. For instance, BBC [13] selects between the source model and CLIP predictions for each target sample based on confidence scores. In AEM [12], the target-domain model consists of one feature extractor and two classifiers. The source model and a ViL model are employed to supervise the learning of separate classifiers, while adversarial learning between the feature extractor and the two classifiers enables feature alignment and knowledge distillation from both models to the target model. Our proposed approach jointly exploits the task-specific knowledge embedded in black-box source models and the general semantic priors of pre-trained CLIP. Unlike previous methods, it adaptively integrates their complementary predictions to produce reliable pseudo-labels and employs a subnetwork-driven regularization strategy to alleviate overfit-ting to noisy supervision. 
+
+C. Vision-language Model 
+
+The goal of vision–language models (ViLs) is to establish semantic associations between visual and linguistic modalities, thereby enabling cross-modal understanding. As a represen-tative ViL model, CLIP [14] achieves effective alignment between images and text via large-scale contrastive learning on over 400 million image–text pairs. To leverage its strong zero-shot generalization and rich semantic knowledge, we incorporate CLIP predictions to enhance the quality of pseudo-labels in our method. III. M ETHODOLOGY 
+
+A. Preliminaries 
+
+In the BBDA setting, neither the labeled source data nor the parameters of the pre-trained source model fs are accessible during the target model training. Source knowledge is available only through the class predictions produced by the black-box source model on target samples. The unavailable labeled data of the source domain is denoted as Ds = {xis, y is}ns
+
+> i=1
+
+, where 
+
+ns is the total number of samples in the source domain, and THIS MANUSCRIPT IS UNDER REVIEW AT IEEE TRANSACTIONS ON MULTIMEDIA. 3target subnetwork  
+
+> target network
+> ……
+> target images
+> EMA updates
+> black -box source model
+> predictions correction with
+> class -wise prototypes
+> target network
+> adaptive prediction fusion
+
+## Stage one  Stage two 
+
+> prompts
+> CLIP
+> ℒ𝑑𝑡 ℒ𝑠𝑟
+> ℒ𝑐𝑚 self
+
+           
+
+> ො𝑦 𝑐 ො𝑦 𝑏
+> ො𝑦
+> ො𝑦 𝑡
+> yes
+> no
+> ො𝑦 =1−𝛼
+> 2⋅ො𝑦 𝑐 +𝛼
+> 2⋅ො𝑦 𝑏 tt
+
+n n           
+
+> ො𝑦 =𝛼 ⋅ො𝑦 𝑐 +1−𝛼 ⋅ො𝑦 𝑏
+
+Parameter learnable  Parameter frozen Data flow  Predicted categories  Class -wise prototypes  
+
+> ……
+> target images
+
+Fig. 1: The overview of our proposed DDSR framework. The training process consists of two stages. In the first stage, DDSR adaptively integrates the complementary predictions from the black-box source model and CLIP to generate reliable pseudo-labels for the target domain. A subnetwork-driven regularization strategy is introduced to alleviate overfitting caused by noisy supervision. The target predictions are further employed to iteratively update pseudo-labels through exponential moving average (EMA) and to refine the ViL prompts via the loss Lcm . In the second stage, the target model is further optimized through self-training based on class-wise prototypes, leading to more discriminative and semantically consistent feature representations. 
+
+xis ∈ X s, yis ∈ Y s. The unlabled data of the target domain is denoted as Dt = {xit}nt
+
+> i=1
+
+, where nt is the total number of samples in the target domain, and xit ∈ X t. Given such constrained source information, the goal of BBDA is to train a robust target model ft = gt ◦ ht that can accurately predict 
+
+yit ∈ Y t for target samples, where gt and ht denote the feature extractor and classifier, respectively. The source and target domains share the same label space Ys = Yt, where |Y t| = C.As shown in Fig.1, our framework consists of two stages. In the first one, we exploit both the source knowledge from the black-box source model and the semantic information provided by CLIP. Specifically, the entropy of the predictions from the two models is computed to adaptively determine their weights in the predictive fusion module, producing fused predictions that serve as noisy pseudo-labels for distilling knowledge into the target model. To reduce overfitting to noisy pseudo-labels, a subnetwork is initialized with partial parameters of the target model and employed to regularize the training of the target model. Moreover, predictions from the target model are leveraged to progressively refine the pseudo-labels and adapt the CLIP prompts, injecting target-specific information into the supervision. In the stage two, further refinement is performed by com-puting class-wise prototypes and reassigning each sample to the class of its nearest prototype. The corrected predictions are then used to fine-tune the target model, yielding additional performance improvements. 
+
+B. Stage One 1) Dual-Teacher Knowledge Distillation: Knowledge dis-tillation (KD) [9] facilitates the transfer of knowledge from a high-performing teacher model to a student model. Since KD does not depend on the internal structure or parameters of the source model, it is particularly suitable for the BBDA setting, where the source model serves as the teacher and the target model as the student. Although the source and target domains share the same label space, substantial distribution shifts often exist between them, which can cause the source model to produce noisy predictions on target samples. To mitigate this issue, we incorporate CLIP [14] as an additional teacher. Trained on large-scale image-text paired data, CLIP provides strong semantic understanding and cross-domain gen-eralization, thereby enhancing the reliability of the pseudo-labels and improving the robustness of KD. We obtain the label predictions of the target samples xt
+
+from both the source model and CLIP. Let ˆyb denote the soft predictions generated by the black-box source model, and ˆyc
+
+denote those from CLIP. The fusion of these two predictions serves as the teacher signal for knowledge distillation. We find the fusion ratio between ˆyb and ˆyc plays a critical role in deter-mining the effectiveness of distillation. Rather than manually setting this ratio, we propose an adaptive prediction fusion module that accounts for both the uncertainty of predictions and the number of target samples nt. To quantify uncertainty, we compute the entropy of the predictions from the source model and CLIP, denoted as Hb and Hc, respectively: 
+
+Hb = Exit∈X t h  ˆyib
+
+ , (1) THIS MANUSCRIPT IS UNDER REVIEW AT IEEE TRANSACTIONS ON MULTIMEDIA. 4
+
+Hc = Exit∈X t h  ˆyic
+
+ , (2) where h(ˆ yib) = − PCj=1 (ˆ yib)j log(ˆ yib)j denotes the entropy of the black-box source model’s prediction for the i-th target sample xit, while h(ˆ yic) denotes the entropy of the CLIP prediction for the same sample. The adaptive predition fusion is then defined as follows, 
+
+ˆy =
+
+(  1 − α
+
+> 2
+
+ · ˆyc + α 
+
+> 2
+
+· ˆyb, if nt > ˜nt
+
+α · ˆyc + (1 − α) · ˆyb, otherwise (3) where α = Hc/(Hb+Hc), and ˜nt is the threshold for the target domain size. When the target domain contains a sufficient number of samples ( nt > ˜nt), the predictions of CLIP are generally more certain and thus assigned a higher weight, while the influence of the source model is moderated. In contrast, when the number of target samples is limited, the fu-sion mechanism allocates higher weights to the source model, even though its predictions are not necessarily more certain than those of CLIP. This design may seem counterintuitive, yet our empirical study validates its effectiveness (see section IV-E). A reasonable interpretation is that source knowledge is more critical than the semantic information provided by CLIP when the target domain size is relatively small. This adaptive strategy dynamically balances the strengths of both models under varying size of the target data. The fused predictions ˆy encapsulate the knowledge from both teachers. To transfer this knowledge, we minimize the Kullback–Leibler (KL) divergence between the target model’s predictions ˆyt and ˆy, thereby guiding the target model to learn from the dual teachers while adapting to the target domain. The KL loss is defined as: 
+
+Lkd = Exit∈X t DKL 
+
+ ˆyi ∥ ˆyit
+
+ , (4) where DKL denotes the KL divergence, ˆyit = ft(xit), and ˆyi
+
+works as a pseudo-label for a target sample xit.Given the source information is highly constrained, the underlying structure of the target data should also be exploited. Specifically, we employ a Mixup-based consistency loss [32], [33] to improve the robustness and generalization of the target model. By linearly interpolating two randomly selected samples along with their corresponding predictions, the model is regularized to produce consistent outputs for the mixed inputs. The details are as follows: 
+
+Lmix = Exti ,x tj ∈X t Eλ∼Beta( α,α )
+
+DKL 
+
+ ft(Mix λ(xti, x tj )) Mix λ(ˆ yti , ˆytj ) , (5) where ft denotes the target model, Mix λ(a, b ) = λ · a + (1 −
+
+λ) · b represents the Mixup operation.. The model collapse is alleviated through the information maximization loss [3] whose definition is as follows, 
+
+Lim = h
+
+
+
+Exit∈X t ˆyit
+
+
+
+− Exit∈X t h  ˆyit
+
+ , (6) where h is the same entropy function in Eq.(2). Increasing the first term promots the diversity of predictions across the entire target domain, while decreasing the second one encourages prediction certainty for each target sample. Overall loss function of the dual-teacher knowledge distil-lation, denoted as Ldt , is defined as follows, 
+
+Ldt = Lkd + Lmix − L im , (7) where Ldt is both knowledge-guided ( Lkd ) and data-driven (Lmix and Lim ). 
+
+2) Subnetwork Rectification: Since the pseudo-labels ˆy are inherently noisy, knowledge distillation may become sub-optimal if the target model overfits incorrect signals from the teachers. To mitigate this issue, we employ a network-based regularization strategy [11]. Specifically, we optimize the Jensen–Shannon divergence between the outputs of alightweight subnetwork and those of the full target model, which facilitates adaptation on the target domain. In addition, by enlarging the gradient discrepancy between the subnetwork and the full model, we introduce a controlled perturbation that enforces them to capture complementary knowledge, thereby reducing overfitting to noisy pseudo-labels. We denote the weights of the full target model as Wf ull 
+
+and those of the subnetwork as Wsub . A ratio γ ∈ (0 , 1) is introduced to construct the subnetwork by selecting the first 
+
+γ·100% of the weights from each layer of the target model. For clarity, we represent the outputs of the target model and the subnetwork as ft(xt; Wf ull ) and ft(xt; Wsub ), respectively. The outputs divergence loss Lod is defined as follows: 
+
+Lod = DJS (ft (xt; Wsub )∥ft (xt; Wf ull )) , (8) where DJS denotes the Jensen–Shannon (JS) divergence loss. Compared with directly employing KL divergence loss, the JS divergence loss enables the output distributions of the target model and the subnetwork to align more closely and in a more stable manner [11]. The adaptation process faces two extremes: early on, the subnetwork differs greatly from the full network and in-troduces harmful errors, while later it becomes too similar, offering little transferable knowledge. To balance these cases, we define a weighted gradient discrepancy loss as follows, 
+
+Lwg = (1+exp ( −h(ft(xt; Wsub )))) cosine (gf ull , g sub ), (9) where gf ull = ∂Lod  
+
+> ∂W f ull
+
+, gsub = ∂Lod  
+
+> ∂W sub
+
+, and cosine (·, ·) stands for the cosine similarity function. Minimizing cosine similarity to enforce divergent learning, while the left term adaptively adjusts its strength: uncertain subnetwork predictions reduce the weight, whereas confident ones increase it. The overall loss function for the subnetwork rectification is composed of the above two loss functions as follows: 
+
+Lsr = ϵ · L od + ζ · L wg . (10) where Lod aligns the subnetwork and the full target network in the outputs space, Lwg drives the target model to learn diverse representations, and ϵ, ζ are trade-off hyperparameters. 
+
+3) Self-Distillation and Prompts Fine-Tune: As optimiza-tion of the stage one proceeds, the predictions of the target model become more reliable and can be exploited to refine the pseudo-labels. We term this process self-distillation, as the model’s own outputs are used in knowledge distillation, where THIS MANUSCRIPT IS UNDER REVIEW AT IEEE TRANSACTIONS ON MULTIMEDIA. 5
+
+the refined pseudo-labels guide its further training. Specifi-cally, we employ the exponential moving average strategy [34], [35] to update the pseudo-labels ˆy as below, 
+
+ˆy ← β · ˆy + (1 − β) · ˆyt (11) where β is a hyper-parameter set to 0.9. Moreover, to improve the adaptability of CLIP to the target domain, we leverage the predictions of the target model to fine-tune the learnable prompts of frozen CLIP. Specifically, we introduce a consistency-maximization loss [12], [36]: 
+
+Lcm = −ˆyt · ˆyc, (12) Since ˆyc = CLIP (xt, w ) with w as the learnable prompts, the optimal prompts are obtained as ˆw = arg min w Lcm .
+
+4) Training Objective of Stage One: The optimal target model is formulated as 
+
+ˆft = arg min 
+
+> ft
+
+(Ldt + Lsr ), (13) where Ldt and Lsr are defined in Eq.(7) and Eq.(10). 
+
+C. Stage Two 
+
+Although stage one updates the pseudo-labels ˆy and fine-tunes the CLIP prompts, the pseudo-labels inevitably remain noisy, which can hinder the training of the target model. We propose to further improve the target model through self-training in stage two. Inspired by prior works [37], [38], we first compute class-wise prototypes μ based on the features extracted by the target model and its predicted class assignments as follows, 
+
+μc =
+
+Pnc 
+
+> i=1
+
+pci qi
+
+Pnc 
+
+> i=1
+
+pci
+
+, 1 ≤ c ≤ C, (14) where pci denotes the probability predicted by the target model that sample xit belongs to class c , while qi = gt(xit),representing the feature of xit extracted by the feature extractor. Then, we calculate the cosine distance between each sample 
+
+xit and all the prototypes, and assign the category of the nearest prototype as the self-training pseudo-lable ¯yit:
+
+¯yit = arg min  
+
+> c
+
+D (qi, μ c) , (15) where D(·, ·) is the cosine distance function. Finally, the target model is further self-trained through the cross-entropy loss with ¯yit and ˆyit:
+
+Lself = Exit∈X t Lent 
+
+ ¯yit, ˆyit
+
+ , (16) where Lent denotes the cross entropy. The training objective of this stage is expressed as ˆft = arg min ft Lself .IV. EXPERIMENTS 
+
+A. Datasets 
+
+We evaluate our approach on three widely used domain adaptation benchmark datasets: Office-31 [46] contains three domains, namely Amazon (A), Webcam (W), and DSLR (D), with 31 categories and about 4,652 images, exhibiting clear domain shifts; Office-Home [47] includes four domains: Art (Ar), Clipart (Cl), Product (Pr), and Real-World (Rw). It covers TABLE I: Results (%) on Office-31. “Source” denotes apply-ing the pre-trained source model. “ ✓” indicates the use of a ViL model. “Avg.” is the average accuracy across tasks. Bold 
+
+indicates the best results, underline denotes the second best.                                                                                                                                           
+
+> Type Method ViL A→DA→WD→AD→WW→AW→DAvg. -Source ✗80.7 74.7 59.1 94.8 63.6 97.6 78.4 UDA MCD [39] ✗92.2 88.6 69.5 98.5 69.7 100.0 86.5 FixBi [40] ✗95.0 96.1 99.3 100.0 78.7 79.4 91.4 HMA(CAN) [41] ✗95.8 95.1 79.3 99.3 77.6 100.0 91.2 DAPL [42] ✓81.7 80.3 81.2 81.8 81.0 81.3 81.2 SFDA SHOT [3] ✗94.0 90.1 74.7 98.4 74.3 99.9 88.6 AaD [43] ✗96.4 92.1 99.1 100.0 75.0 76.5 89.9 TPDS [44] ✗97.1 94.5 75.7 98.7 75.7 99.8 90.2 BBDA DINE [7] ✗91.7 87.5 72.9 96.3 73.7 98.5 86.7 SEAL [29] ✗95.1 88.3 77.6 96.0 76.7 99.3 88.8 RAIN [11] ✗93.8 88.8 75.5 96.8 76.7 99.5 88.5 RFC [28] ✗94.4 93.0 76.7 95.6 77.5 98.1 89.2 MLR [45] ✗94.6 92.2 78.2 96.0 79.3 99.6 90.0 BBC [13] ✓93.8 91.7 82.4 92.7 82.2 95.6 89.8 AEM [12] ✓95.1 94.0 81.8 98.2 82.6 99.4 91.9 DDSR (Ours) ✓96.8 95.7 84.5 98.8 84.4 98.4 93.1
+
+65 categories with over 15,000 images and is challenging due to large inter-domain variations in common office and home objects; VisDA-17 [48] is a large-scale synthetic-to-real benchmark with 152,000 synthetic source images and 55,000 real target images across 12 categories. Its scale and domain discrepancy make it a standard for evaluating black-box adaptation and cross-domain generalization. 
+
+B. Compared Methods and Evaluation Metric 
+
+The compared methods are divided into three groups. The first group is UDA methods that have access to source domain data, such as MCD [39], FixBi [40], HMA(CAN) [41], and DAPL [42]. The second one contains SFDA methods, where source data is unavailable but the pre-trained source model can be inherited by the target model, including SHOT [3], AaD [43], and TPDS [44]. The third group covers BBDA methods, where neither source data nor the pre-trained model is accessible, and only predictions from the source model are provided, including DINE [7], SEAL [29], RAIN [11], RFC [28], MLR [45], BBC [13], and AEM [12]. Classification accuracy on target domains is used as the evaluation metric. 
+
+C. Implementation Details 
+
+Network architecture. To ensure fair comparison with state-of-the-art black-box domain adaptation methods, we strictly follow the settings in DINE [7]. For both source and target models, a pre-trained ResNet-50 [49] is used as the feature extractor on Office-31 and Office-Home, while a pre-trained ResNet-101 is adopted for the more challenging VisDA-17. In the target network, the original fully connected (FC) layer is replaced with a bottleneck layer followed by batch normalization, and the classifier is implemented as a FC layer with weight normalization. For the source model, we only insert a single FC layer after the feature extractor. For the ViL model, we adopt the widely used CLIP ViT-B/32. The pseudo-labels ˆy and learnable prompts are updated at the beginning of each epoch. 
+
+Training protocols and hyperparameters. The same train-ing protocols as previous works [7], [12] are adopted. We optimize the network using mini-batch stochastic gradient THIS MANUSCRIPT IS UNDER REVIEW AT IEEE TRANSACTIONS ON MULTIMEDIA. 6
+
+TABLE II: Results (%) on Office-Home. “Source” denotes applying the pre-trained source model. “ ✓” indicates the use of a ViL model. “Avg.” is the average accuracy across tasks. Bold indicates the best results, underline denotes the second best.                                                                                                                                                                                                                                                 
+
+> Type Method ViL Ar →Cl Ar →Pr Ar →Rw Cl →Ar Cl →Pr Cl →Rw Pr →Ar Pr →Cl Pr →Rw Rw →Ar Rw →Cl Rw →Pr Avg. -Source ✗44.2 67.8 74.2 52.6 62.7 64.5 52.3 39.7 73.5 65.3 45.7 78.1 64.9 UDA MCD [39] ✗48.9 68.3 74.6 61.3 67.6 68.8 57.0 47.1 75.1 69.1 52.2 79.6 64.1 FixBi [40] ✗58.1 77.3 80.4 67.7 79.5 78.1 65.8 57.9 81.7 76.4 62.9 86.7 72.7 HMA(CAN) [41] ✗60.6 79.1 82.9 68.9 77.5 79.3 69.1 55.9 83.5 74.6 62.3 84.4 73.2 DAPL [42] ✓54.1 84.3 84.4 74.4 83.7 85.0 74.5 54.6 84.8 75.2 54.7 83.8 74.5 SFDA SHOT [3] ✗57.1 78.1 81.5 68.0 78.2 78.1 67.4 54.9 82.2 73.3 58.8 84.3 71.8 AaD [43] ✗59.3 79.3 82.1 68.9 79.8 79.5 67.2 57.4 83.1 72.1 58.5 85.4 72.7 TPDS [44] ✗59.3 80.3 82.1 70.6 79.4 80.9 69.8 56.8 82.1 74.5 61.2 85.3 73.5 BBDA DINE [7] ✗54.2 77.9 81.6 65.9 77.7 79.9 64.1 50.5 82.1 71.1 58.0 84.3 70.6 SEAL [29] ✗58.5 81.4 84.7 71.7 80.4 82.1 72.2 54.3 86.0 76.2 60.6 86.3 74.5 RAIN [11] ✗57.0 79.7 82.8 67.9 79.5 81.2 67.7 53.2 84.6 73.3 59.6 85.6 73.0 RFC [28] ✗57.4 80.0 82.8 67.0 80.6 80.2 68.3 57.8 82.8 72.8 59.3 85.9 72.9 MLR [45] ✗57.6 80.3 82.7 68.7 78.0 79.7 66.6 57.3 81.7 74.1 60.4 86.3 72.8 BBC [13] ✓67.5 87.4 87.1 76.4 89.0 87.3 76.7 66.7 87.3 78.1 66.2 89.3 79.9 AEM [12] ✓65.4 88.3 89.5 80.1 90.7 89.7 78.9 61.4 89.9 79.2 63.6 90.8 80.6 DDSR (Ours) ✓70.0 91.1 90.1 81.5 91.0 90.3 81.6 69.8 90.3 81.8 70.0 91.1 83.2
+
+TABLE III: Results (%) on VisDA-17. “Source” denotes applying the pre-trained source model. “ ✓” indicates the use of a ViL model. “Avg.” is the average accuracy across tasks. Bold indicates the best results, underline denotes the second best. 
+
+Type Method ViL plane bcycl bus car horse knife mcycl person plant sktbrd train truck Avg. - Source ✗ 57.1 11.9 50.5 73.1 43.8 4.2 60.1 12.2 55.3 21.1 87.2 6.5 43.4 UDA MCD [39] ✗ 87.0 60.9 83.7 64.0 88.9 79.6 84.7 76.9 88.6 40.3 83.0 25.8 71.9 FixBi [40] ✗ 96.1 87.8 90.5 90.3 96.8 95.3 92.8 88.7 97.2 94.2 90.9 25.7 87.2 HMA(CAN) [41] ✗ 97.6 88.4 84.3 76.0 98.4 97.1 91.3 81.4 97.0 96.7 88.8 60.7 88.1 DAPL [42] ✓ 97.8 83.1 88.8 77.9 97.4 91.5 94.2 79.7 88.6 89.3 92.5 62.0 86.9 SFDA SHOT [3] ✗ 94.3 88.5 80.1 57.3 93.1 94.9 80.7 80.3 91.5 89.1 86.3 58.2 82.9 AaD [43] ✗ 97.4 90.5 80.8 76.2 97.3 96.1 89.8 82.9 95.5 93.0 92.0 64.7 88.0 TPDS [44] ✗ 97.6 91.5 89.7 83.4 97.5 96.3 92.2 82.4 96.0 94.1 90.9 40.4 87.6 BBDA DINE [7] ✗ 95.3 85.9 80.1 53.4 93.0 37.7 80.7 79.2 86.3 89.9 85.7 60.4 77.3 SEAL [29] ✗ 97.9 92.2 88.0 73.5 97.1 96.1 92.4 85.7 93.9 95.6 91.2 66.4 89.2 RAIN [11] ✗ 96.6 86.8 83.0 70.9 94.5 81.8 84.2 83.6 90.9 89.5 89.4 64.0 82.7 RFC [28] ✗ 95.6 89.7 87.8 75.8 96.5 96.5 90.4 82.8 96.0 70.0 85.7 55.1 85.2 MLR [45] ✗ 96.5 88.5 82.6 69.4 96.0 96.3 89.3 81.8 96.0 95.7 93.1 56.2 86.8 BBC [13] ✓ 98.5 92.7 87.3 78.5 98.1 97.6 92.1 84.7 93.3 96.5 95.1 72.8 90.6 
+
+AEM [12] ✓ 98.6 88.1 89.7 74.8 98.0 93.9 93.0 89.3 90.1 97.2 95.2 63.5 89.3 DDSR (Ours) ✓ 98.4 92.2 89.7 75.1 98.4 97.6 93.2 83.2 94.0 97.3 94.2 73.1 90.6 
+
+descent with momentum 0.9 and weight decay 1e−3. The learning rate for the newly added layers is set to 10 times that of the pre-trained layers. Specifically, it is 1e−2 for all datasets, except 1e−3 for VisDA-17. The batch size is 64. For hyperparameters in our method, we set ϵ = 0 .6, ζ = 0 .3 in Eq. (10), ˜nt = 1000 in Eq. (3), and the ratio γ = 0 .84 for subnetwork construction. For VisDA-17, Stage I and Stage II are trained for 15 and 10 epochs, respectively; for the other datasets, 25 and 10 epochs are used. All reported results are averaged over three random seeds. Experiments are conducted with PyTorch on a single Nvidia RTX GPU. 
+
+D. Experimental Results 
+
+Tables I, II, and III present results on Office-31, Office-Home, and VisDA, where the best scores are shown in bold 
+
+and the second best are underlined. All compared methods are grouped into three categories: UDA, SFDA, and BBDA. The “Source” baseline directly applies the pre-trained source model to predict target samples. In the ViL column, “ ✓” and “✗” denote whether a ViL model is used. “Avg.” indicates the average accuracy across all tasks in each dataset. Results of all compared methods are taken from the original papers. 
+
+Office-31. As shown in Table I, our method outperforms other BBDA approaches across all tasks, with the only excep-tion of a slight drop on W →D. It achieves the best average accuracy (Avg.) of 93.1%, surpassing AEM and BBC by 1.2% and 3.3%, respectively, both of which are recent BBDA methods leveraging ViLs. When compared with UDA and SFDA methods that exploit source data or source models, our approach does not always obtain the best performance on each tasks but still yields the highest Avg. by a notable margin. 
+
+Office-Home. As shown in Table II, our model consistently surpasses all compared methods across the three groups on every task of Office-Home, demonstrating comprehensive su-periority. In particular, on Rw →Cl, it outperforms the second-best method by a substantial margin of 3.8%. Furthermore, it achieves an average accuracy of 83.2%, exceeding AEM and BBC by 2.6% and 3.3%, respectively. 
+
+VisDA-17. As shown in Table III, our method achieves the highest average accuracy among all competitors and ranks first or second on more than half of the tasks. In addition, it delivers performance comparable to BBC and AEM, two state-of-the-art BBDA methods, across individual tasks. Overall, across the three datasets, our proposed method THIS MANUSCRIPT IS UNDER REVIEW AT IEEE TRANSACTIONS ON MULTIMEDIA. 7   
+
+> (a) Source (D →A) (b) Ours (D →A) (c) Source (W →A) (d) Ours (W →A)
+
+Fig. 2: t-SNE visualizations of target features for D →A and W →A on Office-31. Each point represents a target sample in the feature space, with colors indicating different classes. The source model produces scattered distributions with substantial overlaps in (a) and (c), whereas our method generates well-separated clusters in (b) and (d), demonstrating its effectiveness in mitigating domain shift. (Best viewed in color and with magnification.) 45.0%                  
+
+> 50.0%
+> 55.0%
+> 60.0%
+> 65.0%
+> 70.0%
+> 75.0%
+> 1510 15 20 25 30 35
+> Accuracy
+> Epoch
+> Stage One Stage Two
+> (a) Ar →Cl 74.0%
+> 76.0%
+> 78.0%
+> 80.0%
+> 82.0%
+> 84.0%
+> 86.0%
+> 1510 15 20 25 30 35
+> Accuracy
+> Epoch
+> Stage One Stage Two (b) D →A
+
+Fig. 3: Training convergence and stability. Accuracy curves on Ar →Cl and D →A tasks show rapid performance improvement followed by stable convergence. TABLE IV: Accuracy (%) under different values of the thresh-old ˜nt on several tasks of Office-31 and Office-Home. The best performance is consistently achieved when ˜nt = 1000 .                                   
+
+> ˜ntA→DA→WD→AAr →Pr Cl →Ar 200 91.3 91.2 84.5 91.1 81.5
+> 600 96.8 91.2 84.5 91.1 81.5
+> 1000 96.8 95.7 84.5 91.1 81.5
+> 2500 96.8 95.7 84.5 91.1 81.1 3000 96.8 95.7 83.4 91.1 81.1 4500 96.8 95.7 83.4 90.7 81.1
+
+consistently achieves state-of-the-art performance. Moreover, we find that BBDA methods incorporating ViLs consistently outperform those that do not. This indicates that, under the stringent conditions where both the source data and model are inaccessible, introducing a ViL model capable of extracting and leveraging high-level semantic information can effectively compensate for these limitations. 
+
+E. Experimental Analysis 
+
+Feature visualization. For the adaptation tasks D →A and W→A on Office-31, we employ t-SNE [50] to visualize the target domain feature space extracted by the pre-trained source model and our method. As shown in Fig.2, each point denotes a target sample in the feature space, and different colors indicate distinct categories. In (a) and (c), the scattered and overlapping distributions produced by the source model highlight its inability to cope with domain shifts. In contrast, in (b) and (d), our method yields well-separated clusters with clear inter-class margins, demonstrating improved feature dis-crimination and confirming the effectiveness of our approach in mitigating domain shift. 
+
+Training convergence and stability. As shown in Fig. 3, for both Ar →Cl and D →A tasks, the prediction accuracy of our method increases rapidly in the early training epochs and then gradually converges to a stable level, demonstrating the stability and reliability of the training process. 
+
+Hyperparameter study. The hyperparameters of our ap-proach include the threshold ˜nt in Eq. (3), the subnetwork ratio γ, and the trade-off weights ϵ and ζ for balancing Lod 
+
+and Lwg in Eq. (10). To ensure fair comparison, all parameters are fixed except for the one under analysis. According to Eq. (3), the selection of different fusion strate-gies for ˆyb and ˆyc is determined by the relationship between the threshold ˜nt and the size of the target domain. As long as this relationship remains unchanged, the fusion strategy also remains fixed, leading to stable model performance. To determine an appropriate value for ˜nt, we assess its impact on several tasks in Office-31 and Office-Home by varying its values. As reported in Table IV, the accuracy consistently peaks when ˜nt is set to 1000, confirming the rationality of this choice. For instance, in the A →W task, the target domain W contains 795 samples. When ˜nt is set to 200 or 600, the condition nt > ˜nt holds, and the accuracy remains at 91.2%. However, when ˜nt ≥ 1000 , the condition nt < ˜nt holds, switching to the alternative fusion strategy and yielding an accuracy of 95.7%. To analyze the effect of the subnetwork ratio γ, we vary its value from 0.64 to 1.0 and evaluate performance on the Ar →Rw task of Office-Home and the D →A task of Office-31. As shown in Fig. 4, the optimal accuracy is achieved at γ = 0 .84 , confirming the appropriateness of this choice. Furthermore, the results indicate that the accuracy remains consistently stable across a broad range of γ values, suggesting low sensitivity and strong robustness of our method in practice. To identify the optimal hyperparameter combination of ϵ
+
+and ζ in Eq. (10), we conducted a sensitivity analysis on the Ar →Cl task of the Office-Home dataset. As shown in THIS MANUSCRIPT IS UNDER REVIEW AT IEEE TRANSACTIONS ON MULTIMEDIA. 882.0%           
+
+> 84.0%
+> 86.0%
+> 88.0%
+> 90.0%
+> 92.0%
+> 0.64 0.68 0.72 0.76 0.8 0.84 0.88 0.92 0.96 1
+> Accuracy
+> Ar→Rw D→A
+
+Fig. 4: Effect of the subnetwork ratio γ on the Ar →Rw task of Office-Home and the D →A task of Office-31. The accuracy reaches its peak when γ = 0 .84 , while remaining stable across different values, showing the robustness of the method. Fig. 5, variations in these hyperparameters have a relatively minor impact on the accuracy, indicating that our method maintains stable performance across a broad range of pa-rameter values and thus requires no extensive hyperparameter tuning in practice. Moreover, this stability suggests that the performance gains of our approach primarily arise from the soundness of its overall structural design rather than from specific hyperparameter configurations. 
+
+Effectiveness of adaptive prediction fusion. As illustrated in Fig. 6, we assess the effectiveness of the proposed adaptive prediction fusion on the Office-31 dataset by comparing our full model with a variant in which this component is removed, and the fused predictions ˆy are obtained by simply averaging the outputs of CLIP and the black-box source model. Across all adaptation tasks in Office-31, our full model consistently surpasses the variant, yielding an average accuracy gain of 1.5%, thereby demonstrating the effectiveness of the adaptive prediction fusion mechanism. Although CLIP exhibits strong generalization ability across diverse visual recognition tasks, its training objective primarily focuses on global semantic alignment, potentially neglecting fine-grained local details. Moreover, as CLIP is trained on large-scale data, it may inad-vertently learn and amplify dataset biases. Therefore, fusing CLIP and source-model predictions with fixed averaging can lead to significant performance degradation on certain datasets. In contrast, our adaptive prediction fusion dynamically adjusts the weighting between the two models according to the characteristics of the target domain, effectively mitigating this issue and ensuring consistently superior performance. 
+
+Empirical study on adaptive prediction fusion. As dis-cussed in Section (III-B1), when the target domain is small, i.e., nt ≤ ˜nt, the adopted fusion strategy ˆy = α · ˆyc +(1 − α) · ˆyb may appear counterintuitive. According to its definition, α reflects the relative uncertainty of the CLIP predictions compared with those of the source model. A larger 
+
+α indicates lower confidence in ˆyc. Intuitively, the weight assigned to ˆyc should decrease as α increases, suggesting that 
+
+ˆy = (1 − α 
+
+> 2
+
+)· ˆyc + α 
+
+> 2
+
+· ˆyb would be a more intuitive formulation, while ˆy = α · ˆyc + (1 − α) · ˆyb appears less aligned with this intuition. Nevertheless, although the strategy in Eq. (3) may 
+
+Fig. 5: Sensitivity analysis of hyperparameters ϵ and ζ on the Ar →Cl task of Office-Home. Performance remains stable across a wide range of parameter settings, demonstrating low dependence on hyperparameter tuning. 70.0%        
+
+> 80.0%
+> 90.0%
+> 100.0%
+> A→D A→W D→A D→W W→A W→D Avg.
+> Accuracy
+> Tasks
+> full model variant
+
+Fig. 6: Ablation study of adaptive prediction fusion on Office-31. Our full model outperforms the variant using fixed av-eraging by 1.5% on average, verifying the effectiveness of adaptively balancing the CLIP and source model predictions. 0      
+
+> 0.5
+> 1
+> 1.5
+> 2
+> 2.5
+> A→D A→W D→A D→W W→A W→D
+> Entropy
+> Tasks
+> CLIP Source black-box model
+
+Fig. 7: Prediction entropy of CLIP vs. the source model on Office-31. CLIP consistently shows lower entropy, especially on large domains, keeping α < 0.5.seem counterintuitive at first glance, our empirical findings demonstrate that it effectively balances the contributions of ˆycTHIS MANUSCRIPT IS UNDER REVIEW AT IEEE TRANSACTIONS ON MULTIMEDIA. 980.0%        
+
+> 85.0%
+> 90.0%
+> 95.0%
+> 100.0%
+> 0.2 0.4 0.6 0.8
+> Accuracy
+> Weights of the CLIP predictions
+> A→D D→A A→W Ar→Pr Cl→Ar
+
+Fig. 8: Accuracy with different CLIP weights (0.2–0.8) on Office-31 and Office-Home tasks. Small domains favor smaller weights, while large domains benefit from larger ones, sup-porting Eq. (3). and ˆyb, thereby improving performance across domains. The sizes of the Office-31 domains D, W, and A are 498, 795, and 2817, respectively. With ˜nt = 1000 , domains D and W are considered small, whereas A is considered large. As shown in Fig. 7, the prediction entropy of CLIP is consistently lower than that of the source model across all domains, with a more significant advantage on large domains. In other words, CLIP predictions are always more confident than those of the source model, which ensures that α remains below 0.5 and decreases further as the target domain size increases. The sizes of the Office-Home domains Ar, Cl, Pr, and Rw are 2427, 4365, 4439, and 4357, respectively. With 
+
+˜nt = 1000 , all Office-Home domains are regarded as large. To further analyze the impact of weighting, we select several tasks with diverse target domain sizes from Office-31 and Office-Home. For these tasks, we manually adjust the weight assigned to CLIP predictions in Eq. (3) to values 0.2, 0.4, 0.6, and 0.8, and evaluate the corresponding accuracies. As shown in Fig. 8, for small target domains (A →D, A →W), smaller weights (0.2, 0.4) assigned to CLIP predictions yield higher accuracies, which is consistent with the fusion strategy in Eq. (3). Conversely, for large domains (D →A, Ar →Pr, Cl →Ar), larger weights (0.6, 0.8) lead to better accuracy, again validating the design of Eq. (3). However, the weight should not increase indefinitely in large domains; instead, an optimal value exists. For instance, in the task Ar →Pr, accuracy peaks when the weight is set to 0.6. In summary, this explains why the counterintuitive design is in fact reasonable when analyzed from the empirical perspective. 
+
+Ablation study . To assess the contribution of each loss in our framework, we conduct ablation studies on the D →A and W→A tasks of Office-31, with results summarized in Table V. A ‘ ✓’ indicates the inclusion of a loss, while ‘ ✗’ denotes its removal. Since Lkd minimizes the discrepancy between the target model predictions and pseudo labels from the adaptive fusion, it serves as the core objective and is always retained. Compared with using Lkd alone (first row), our full method (last row) improves accuracy by 5.4% on D →A and 5.1% on W →A. Rows two to five show the impact of removing individual losses: excluding Lmix causes drops of 0.9% and TABLE V: Ablation results on Office-31 (D →A and W →A), showing the contribution of each loss. A ‘ ✓’ indicates in-clusion and ‘ ✗’ denotes removal. Removing Lim causes the largest performance drop, while all components together yield gains of 5.4% and 5.1% over using Lkd alone.                                           
+
+> Lkd Lmix Lim Lsr Lself D→AW→A
+> ✓✗✗✗✗79.1 79.3
+> ✓✗✓✓✓83.6 83.6
+> ✓✓✗✓✓80.3 80.4
+> ✓✓✓✗✓83.8 83.9
+> ✓✓✓✓✗83.5 83.7
+> ✓✓✓✓✓84.5 84.4
+
+0.8%; removing Lim leads to larger degradations of 4.2% and 4.0%, highlighting its importance; ablating Lsr reduces accuracy by 0.7% and 0.5%, confirming its role in mitigating overfitting; and excluding Lself lowers accuracy by 1.0% and 0.7%, validating its benefit in the second training stage. V. CONCLUSION In this paper, we propose a novel framework for the challenging black-box domain adaptation. Rather than solely relying on the zero-shot capability of ViL models to generate pseudo-labels, our method introduces an adaptive prediction fusion mechanism that dynamically integrates semantic knowl-edge from the ViL model and task-specific knowledge from the source black-box model. The fusion strategy is adaptively selected according to the size of the target domain. The frame-work consists of two stages. In the first stage, pseudo-labels produced by adaptive prediction fusion guide the training of the target model, with an auxiliary subnetwork employed to mitigate overfitting. In the second stage, the target model is further refined through self-training. Nevertheless, the present framework does not explicitly address category shifts between the source and target domains, which will be explored as an important avenue for future research. REFERENCES [1] T.-B. Li, Y.-T. Su, D. Song, W.-H. Li, Z.-Q. Wei, and A.-A. Liu, “Pro-gressive fourier adversarial domain adaptation for object classification and retrieval,” IEEE Transactions on Multimedia , vol. 26, pp. 4540– 4553, 2024. I [2] L. Zhang and X. Gao, “Transfer adaptation learning: A decade survey,”                       
+
+> IEEE Transactions on Neural Networks and Learning Systems , vol. 35, no. 1, pp. 23–44, 2022. I [3] J. Liang, D. Hu, and J. Feng, “Do we really need to access the source data? source hypothesis transfer for unsupervised domain adaptation,” in International conference on machine learning .PMLR, 2020, pp. 6028–6039. I, II-A, III-B1, I, IV-B, II, III [4] J. Li, Z. Yu, Z. Du, L. Zhu, and H. T. Shen, “A comprehensive survey on source-free domain adaptation,” IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 46, no. 8, pp. 5743–5762, 2024. I [5] P. Liu, J. Li, M. Zhao, W. Xue, Q. Hu, and S. Chen, “Domain-division based progressive learning for source-free domain adaptation,” IEEE Transactions on Multimedia , pp. 1–13, 2025. I, II-A [6] I. J. Goodfellow, J. Pouget-Abadie, M. Mirza, B. Xu, D. Warde-Farley, S. Ozair, A. Courville, and Y. Bengio, “Generative adversarial nets,” in
+> Proceedings of the 27th International Conference on Neural Information Processing Systems-Volume 2 , 2014, pp. 2672–2680. I [7] J. Liang, D. Hu, J. Feng, and R. He, “Dine: Domain adaptation from single and multiple black-box predictors,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , 2022, pp. 8003–8013. I, II-A, II-B, I, IV-B, IV-C, IV-C, II, III THIS MANUSCRIPT IS UNDER REVIEW AT IEEE TRANSACTIONS ON MULTIMEDIA. 10
+
+[8] J. Achiam, S. Adler, S. Agarwal, L. Ahmad, I. Akkaya, F. L. Aleman, D. Almeida, J. Altenschmidt, S. Altman, S. Anadkat et al. , “Gpt-4 technical report,” arXiv preprint arXiv:2303.08774 , 2023. I [9] G. Hinton, O. Vinyals, and J. Dean, “Distilling the knowledge in a neural network,” arXiv preprint arXiv:1503.02531 , 2015. I, III-B1 [10] H. Zhang, Y. Zhang, K. Jia, and L. Zhang, “Unsupervised domain adaptation of black-box source models,” in 32nd British Machine Vision Conference 2021, BMVC 2021, Online, November 22-25, 2021 . BMVA Press, 2021, p. 147. I [11] Q. Peng, Z. Ding, L. Lyu, L. Sun, and C. Chen, “RAIN: regularization on input and network for black-box domain adaptation,” in Proceed-ings of the Thirty-Second International Joint Conference on Artificial Intelligence, IJCAI 2023, 19th-25th August 2023, Macao, SAR, China .ijcai.org, 2023, pp. 4118–4126. I, II-B, III-B2, III-B2, I, IV-B, II, III [12] S. Xiao, M. Ye, Q. He, S. Li, S. Tang, and X. Zhu, “Adversarial experts model for black-box domain adaptation,” in Proceedings of the 32nd ACM International Conference on Multimedia , 2024, pp. 8982–8991. I, II-B, II-B, III-B3, I, IV-B, IV-C, II, III [13] L. Tian, M. Ye, L. Zhou, and Q. He, “Clip-guided black-box domain adaptation of image classification,” Signal, Image and Video Processing ,vol. 18, no. 5, pp. 4637–4646, 2024. I, II-B, II-B, I, IV-B, II, III [14] A. Radford, J. W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal, G. Sastry, A. Askell, P. Mishkin, J. Clark et al. , “Learning transferable visual models from natural language supervision,” in International conference on machine learning . PMLR, 2021, pp. 8748–8763. I, II-B, II-C, III-B1 [15] M. Long, Y. Cao, J. Wang, and M. Jordan, “Learning transferable features with deep adaptation networks,” in International conference on machine learning . PMLR, 2015, pp. 97–105. II-A [16] M. Long, H. Zhu, J. Wang, and M. I. Jordan, “Unsupervised domain adaptation with residual transfer networks,” Advances in neural infor-mation processing systems , vol. 29, 2016. II-A [17] Y. Ganin, E. Ustinova, H. Ajakan, P. Germain, H. Larochelle, F. Lavi-olette, M. March, and V. Lempitsky, “Domain-adversarial training of neural networks,” Journal of machine learning research , vol. 17, no. 59, pp. 1–35, 2016. II-A [18] X. Jin, C. Lan, W. Zeng, and Z. Chen, “Domain prompt tuning via meta relabeling for unsupervised adversarial adaptation,” IEEE Transactions on Multimedia , vol. 26, pp. 8333–8347, 2024. II-A [19] J. Li, L. Yang, Q. Wang, and Q. Hu, “Wdan: A weighted discriminative adversarial network with dual classifiers for fine-grained open-set do-main adaptation,” IEEE Transactions on Circuits and Systems for Video Technology , vol. 33, no. 9, pp. 5133–5147, 2023. II-A [20] X.-Q. Liu, P.-F. Zhang, X. Luo, Z. Huang, and X.-S. Xu, “Textadapter: Self-supervised domain adaptation for cross-domain text recognition,” 
+
+IEEE Transactions on Multimedia , vol. 26, pp. 9854–9865, 2024. II-A [21] G. French, M. Mackiewicz, and M. Fisher, “Self-ensembling for visual domain adaptation,” in International Conference on Learning Represen-tations , 2018. II-A [22] G. Kang, L. Jiang, Y. Yang, and A. G. Hauptmann, “Contrastive adaptation network for unsupervised domain adaptation,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,2019, pp. 4893–4902. II-A [23] Q. He, S. Xiao, M. Ye, X. Zhu, F. Neri, and D. Hou, “Independent feature decomposition and instance alignment for unsupervised domain adaptation,” in Proceedings of the thirty-second international joint conference on artificial intelligence , 2023, pp. 819–827. II-A [24] J. Li, L. Yang, and Q. Hu, “Enhancing multi-source open-set domain adaptation through nearest neighbor classification with self-supervised vision transformer,” IEEE Transactions on Circuits and Systems for Video Technology , vol. 34, no. 4, pp. 2648–2662, 2024. II-A [25] L. Tang, K. Li, C. He, Y. Zhang, and X. Li, “Consistency regularization for generalizable source-free domain adaptation,” in Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) Workshops , October 2023, pp. 4323–4333. II-A [26] L. Zhou, N. Li, M. Ye, X. Zhu, and S. Tang, “Source-free domain adaptation with class prototype discovery,” Pattern Recognition , vol. 145, p. 109974, 2024. II-A [27] Z. Qiu, Y. Zhang, H. Lin, S. Niu, Y. Liu, Q. Du, and M. Tan, “Source-free domain adaptation via avatar prototype generation and adaptation,” in International Joint Conference on Artificial Intelligence , 2021. II-A [28] S. Zhang, C. Shen, S. L¨ u, and Z. Zhang, “Reviewing the forgotten classes for domain adaptation of black-box predictors,” in Proceedings of the AAAI Conference on Artificial Intelligence , vol. 38, no. 15, 2024, pp. 16 830–16 837. II-B, I, IV-B, II, III [29] M. Xia, J. Zhao, G. Lyu, Z. Huang, T. Hu, G. Chen, and H. Wang, “A separation and alignment framework for black-box domain adaptation,” in Proceedings of the AAAI Conference on Artificial Intelligence , vol. 38, no. 14, 2024, pp. 16 005–16 013. II-B, I, IV-B, II, III [30] J. Zhang, J. Huang, X. Jiang, and S. Lu, “Black-box unsupervised domain adaptation with bi-directional atkinson-shiffrin memory,” in 
+
+Proceedings of the IEEE/CVF International Conference on Computer Vision , 2023, pp. 11 771–11 782. II-B [31] J. Zhang, J. Huang, S. Jin, and S. Lu, “Vision-language models for vision tasks: A survey,” IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 46, no. 8, pp. 5625–5644, 2024. II-B [32] Z. Hongyi, C. Moustapha, Y. N. Dauphin, and D. Lopez-Paz, “mixup: Beyond empirical risk minimization,” in International conference on learning representations , 2018, pp. 1–13. III-B1 [33] Z. Zhang, H. Wang, J. Geng, X. Deng, and W. Jiang, “A new data augmentation method based on mixup and dempster-shafer theory,” 
+
+IEEE Transactions on Multimedia , vol. 26, pp. 4998–5013, 2024. III-B1 [34] K. Kim, B. Ji, D. Yoon, and S. Hwang, “Self-knowledge distillation with progressive refinement of targets,” in Proceedings of the IEEE/CVF international conference on computer vision , 2021, pp. 6567–6576. III-B3 [35] S. Laine and T. Aila, “Temporal ensembling for semi-supervised learn-ing,” in International Conference on Learning Representations , 2017. III-B3 [36] K. Zhou, J. Yang, C. C. Loy, and Z. Liu, “Learning to prompt for vision-language models,” International Journal of Computer Vision , vol. 130, no. 9, pp. 2337–2348, 2022. III-B3 [37] M. Caron, P. Bojanowski, A. Joulin, and M. Douze, “Deep clustering for unsupervised learning of visual features,” in Proceedings of the European conference on computer vision , 2018, pp. 132–149. III-C [38] J. Liang, D. Hu, Y. Wang, R. He, and J. Feng, “Source data-absent unsupervised domain adaptation through hypothesis transfer and labeling transfer,” IEEE Transactions on Pattern Analysis and Machine Intelli-gence , vol. 44, no. 11, pp. 8602–8617, 2021. III-C [39] K. Saito, K. Watanabe, Y. Ushiku, and T. Harada, “Maximum classifier discrepancy for unsupervised domain adaptation,” in Proceedings of the IEEE conference on computer vision and pattern recognition , 2018, pp. 3723–3732. I, IV-B, II, III [40] J. Na, H. Jung, H. J. Chang, and W. Hwang, “Fixbi: Bridging domain spaces for unsupervised domain adaptation,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , 2021, pp. 1094–1103. I, IV-B, II, III [41] L. Zhou, M. Ye, X. Zhu, S. Xiao, X.-Q. Fan, and F. Neri, “Homeomor-phism alignment for unsupervised domain adaptation,” in Proceedings of the IEEE/CVF International Conference on Computer Vision , 2023, pp. 18 699–18 710. I, IV-B, II, III [42] C. Ge, R. Huang, M. Xie, Z. Lai, S. Song, S. Li, and G. Huang, “Domain adaptation via prompt learning,” IEEE Transactions on Neural Networks and Learning Systems , 2023. I, IV-B, II, III [43] S. Yang, S. Jui, J. Van De Weijer et al. , “Attracting and dispersing: A simple approach for source-free domain adaptation,” Advances in Neural Information Processing Systems , vol. 35, pp. 5802–5815, 2022. I, IV-B, II, III [44] S. Tang, A. Chang, F. Zhang, X. Zhu, M. Ye, and C. Zhang, “Source-free domain adaptation via target prediction distribution searching,” 
+
+International journal of computer vision , vol. 132, no. 3, pp. 654–672, 2024. I, IV-B, II, III [45] W. Li, W. Zhao, X. Pan, P. Zhou, and H. Yang, “Leveraging multi-level regularization for efficient domain adaptation of black-box predictors,” 
+
+Pattern Recognition , vol. 165, p. 111611, 2025. I, IV-B, II, III [46] K. Saenko, B. Kulis, M. Fritz, and T. Darrell, “Adapting visual category models to new domains,” in European conference on computer vision .Springer, 2010, pp. 213–226. IV-A [47] H. Venkateswara, J. Eusebio, S. Chakraborty, and S. Panchanathan, “Deep hashing network for unsupervised domain adaptation,” in Pro-ceedings of the IEEE conference on computer vision and pattern recognition , 2017, pp. 5018–5027. IV-A [48] X. Peng, B. Usman, N. Kaushik, J. Hoffman, D. Wang, and K. Saenko, “Visda: The visual domain adaptation challenge,” arXiv preprint arXiv:1710.06924 , 2017. IV-A [49] K. He, X. Zhang, S. Ren, and J. Sun, “Deep residual learning for image recognition,” in Proceedings of the IEEE conference on computer vision and pattern recognition , 2016, pp. 770–778. IV-C [50] L. v. d. Maaten and G. Hinton, “Visualizing data using t-sne,” Journal of machine learning research , vol. 9, no. Nov, pp. 2579–2605, 2008. IV-E

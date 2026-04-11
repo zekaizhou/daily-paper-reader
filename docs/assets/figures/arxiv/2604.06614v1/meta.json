@@ -1,0 +1,118 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.06614v1/fig-001.webp",
+      "caption": "Fig. 1: Illustration of the transport cost matrix and the resulting transport plan between the uniform source instance distribution (Source) and the target candidate label distribution (Target).",
+      "page": 6,
+      "index": 1,
+      "width": 666,
+      "height": 213
+    },
+    {
+      "url": "assets/figures/arxiv/2604.06614v1/fig-002.webp",
+      "caption": "Table 11: Testing phases: (a) module validity, (b) λ sensitivity.",
+      "page": 26,
+      "index": 2,
+      "width": 699,
+      "height": 1002
+    },
+    {
+      "url": "assets/figures/arxiv/2604.06614v1/fig-003.webp",
+      "caption": "Table 7: Testing accuracy (%) under uni-prompt across five rand confusion rates.",
+      "page": 21,
+      "index": 3,
+      "width": 616,
+      "height": 1034
+    },
+    {
+      "url": "assets/figures/arxiv/2604.06614v1/fig-004.webp",
+      "caption": "Table 13: Testing accuracy (%) of HopS under uni-prompt across three backbones.",
+      "page": 29,
+      "index": 4,
+      "width": 582,
+      "height": 229
+    },
+    {
+      "url": "assets/figures/arxiv/2604.06614v1/fig-005.webp",
+      "caption": "Table 8: Testing accuracy (%) under cls-prompts across five rand confusion rates.",
+      "page": 22,
+      "index": 5,
+      "width": 623,
+      "height": 1034
+    },
+    {
+      "url": "assets/figures/arxiv/2604.06614v1/fig-006.webp",
+      "caption": "Fig. 2: HopS achieves the best testing accuracy under uni-prompt (top) and clsprompts (bottom) across five rand confusion rates.",
+      "page": 10,
+      "index": 6,
+      "width": 702,
+      "height": 315
+    },
+    {
+      "url": "assets/figures/arxiv/2604.06614v1/fig-007.webp",
+      "caption": "Fig. 3: HopS achieves the best averaged testing accuracy across three confusion rates (left). The guiding effect of LDF on GOP (right).",
+      "page": 10,
+      "index": 7,
+      "width": 725,
+      "height": 292
+    },
+    {
+      "url": "assets/figures/arxiv/2604.06614v1/fig-008.webp",
+      "caption": "Table 9: Testing accuracy (%) under uni-prompt across two insd confusion rates.",
+      "page": 23,
+      "index": 8,
+      "width": 577,
+      "height": 523
+    },
+    {
+      "url": "assets/figures/arxiv/2604.06614v1/fig-009.webp",
+      "caption": "Table 10: Testing accuracy (%) under uni-prompt with insd confusion rates γc=0.80.",
+      "page": 23,
+      "index": 9,
+      "width": 571,
+      "height": 237
+    },
+    {
+      "url": "assets/figures/arxiv/2604.06614v1/fig-010.webp",
+      "caption": "Table 12: Testing accuracy (%) of HopS under uni (left) and cls (right) prompts.",
+      "page": 28,
+      "index": 10,
+      "width": 610,
+      "height": 1073
+    },
+    {
+      "url": "assets/figures/arxiv/2604.06614v1/fig-011.webp",
+      "caption": "Table 5: Testing accuracy (%) of models under the uni-prompt and cls-prompts.",
+      "page": 19,
+      "index": 11,
+      "width": 719,
+      "height": 219
+    },
+    {
+      "url": "assets/figures/arxiv/2604.06614v1/fig-012.webp",
+      "caption": "Fig. 17: Testing accuracy of the HopS across different B under five confusion rates.",
+      "page": 27,
+      "index": 12,
+      "width": 725,
+      "height": 868
+    },
+    {
+      "url": "assets/figures/arxiv/2604.06614v1/fig-013.webp",
+      "caption": "Table 18: Sensitivity of LDF to k and τ .",
+      "page": 31,
+      "index": 13,
+      "width": 717,
+      "height": 225
+    },
+    {
+      "url": "assets/figures/arxiv/2604.06614v1/fig-014.webp",
+      "caption": "Fig. 18: Comparison results under 4/8-shot settings across eight datasets",
+      "page": 31,
+      "index": 14,
+      "width": 725,
+      "height": 354
+    }
+  ]
+}

@@ -1,0 +1,636 @@
+Title: What Makes VLMs Robust? Towards Reconciling Robustness and Accuracy in Vision-Language Models
+
+URL Source: https://arxiv.org/pdf/2603.12799v1
+
+Published Time: Mon, 16 Mar 2026 00:55:15 GMT
+
+Number of Pages: 28
+
+Markdown Content:
+# What Makes VLMs Robust? Towards Reconciling Robustness and Accuracy in Vision-Language Models 
+
+Sen Nie 1,2, Jie Zhang 1,2, Zhongqi Wang 1,2, Zhaoyang Wei 2, Shiguang Shan 1,2,and Xilin Chen 1,2 
+
+> 1
+
+State Key Laboratory of AI Safety, Institute of Computing Technology, Chinese Academy of Sciences, Beijing 100190, China  
+
+> 2
+
+University of Chinese Academy of Sciences, Beijing 100049, China 
+
+Abstract. Achieving adversarial robustness in Vision-Language Models (VLMs) inevitably compromises accuracy on clean data, presenting a long-standing and challenging trade-off. In this work, we revisit this trade-off by investigating a fundamental question: What makes VLMs robust? Through a detailed analysis of adversarially fine-tuned models, we examine how robustness mechanisms function internally and how they interact with clean accuracy. Our analysis reveals that adversarial robustness is not 
+
+uniformly distributed across network depth. Instead, unexpectedly, it is primarily localized within the shallow layers, driven by a low-frequency spectral bias and input-insensitive attention patterns. Meanwhile, updates to the deep layers tend to undermine both clean accuracy and robust gener-alization. Motivated by these insights, we propose Adversarial Robustness 
+
+Adapt ation ( R-Adapt ), a simple yet effective framework that freezes all pre-trained weights and introduces minimal, insight-driven adaptations only in the initial layers. This design achieves an exceptional balance be-tween adversarial robustness and clean accuracy. R-Adapt further supports 
+
+training-free, model-guided, and data-driven paradigms , offering flexible pathways to seamlessly equip standard models with robustness. Extensive evaluations on 18 datasets and diverse tasks demonstrate our state-of-the-art performance under various attacks. Notably, R-Adapt gen-eralizes efficiently to large vision-language models ( e.g ., LLaVA, Qwen-VL) to enhance their robustness. Our project page is available here. 
+
+Keywords: Vision-Language Models · Adversarial Robustness R-Adapt        
+
+> Adversarial
+> Fine-Tuning
+> Input Image
+> Gaussian
+> Input Filter ...
+> Embedding Layer
+> Multi-Head
+> Self-Attention
+> Block 1
+> Fixed
+> Robust ness
+> Anchor
+> Layer Norm
+> Layer Norm
+> (only in block 1)
+> Clean Accuracy (%)
+> Adversarial Robustness (%) under AutoAttack
+> ε= 4/255
+> (a) Ours: Adversarial Robustness Adapt ation ( R-Adapt )(b) Average Performance on 16 Widely Used Datasets
+> Training-Free
+> Variant
+> Data-Driven
+> Variant
+> MLP
+> (Feed-Forward)
+> Model-guided
+> Variant
+
+Fig. 1: Drawing upon the insights from adversarially fine-tuned models, we propose the R-Adapt framework. Notably, compared to the standard AFT baseline, FARE [51], R-Adapt +
+
+requires ↓ 640 × fewer training images, yet delivers gains in both clean accuracy ( ↑10.8% )and adversarial robustness ( ↑4.4% ), averaged across 16 classification benchmarks.  
+
+> arXiv:2603.12799v1 [cs.CV] 13 Mar 2026 2S. Nie et al.
+
+## 1 Introduction 
+
+Large-scale Vision-Language Models (VLMs), exemplified by CLIP [48], have redefined the paradigm of representation learning. By training from web-scale data, these models achieve superior zero-shot generalization across diverse downstream tasks. Despite this success, their vulnerability to adversarial attacks [15, 58, 72] remains a critical concern. Even imperceptible perturbations can severely impair the model’s visual understanding, leading to unreliable outputs [20, 35, 81] and posing significant safety risks in real-world deployments [43, 47, 59, 62, 73]. To mitigate this vulnerability, Adversarial Fine-Tuning (AFT) has emerged as a primary defense strategy for VLMs [51,60]. It realigns the model’s representation space by fine-tuning on adversarial examples, thereby enforcing more robust de-cision boundaries. However, despite its effectiveness in bolstering robustness, this paradigm inherently introduces a Robustness-Accuracy Trade-off . The optimiza-tion on adversarial data inevitably impacts the well-calibrated pre-trained feature space, leading to a substantial degradation in clean-data performance [77], as illustrated in Fig. 1 (b). Since the versatility of VLMs stems from their expansive and well-calibrated feature spaces, sacrificing standard accuracy fundamentally compromises their utility as universal foundation models. Moreover, conventional AFT methods generally incur significant computational overhead and are prone to overfitting [40], leading to poor robust generalization. Therefore, efficiently enhancing adversarial robustness while preserving competitive clean accuracy remains a critical open problem. 
+
+In this work, we delve into the internal functional shifts of adversarially fine-tuned VLMs to uncover the underlying mechanisms governing this trade-off. This exploration naturally begins with a fundamental question: What makes VLMs robust? Through a layer-wise analysis utilizing Centered Kernel Alignment [28] and progressive module replacement, we observe that adversarial robustness is not uniformly accumulated across the depth of the network. Instead, it has already been largely established within the shallow layers . Further-more, we identify a two-stage robust pattern at the early stages of the network: 
+
+(i) the embedding layer develops a low-frequency spectral bias, functioning as a low-pass filter that effectively attenuates high-frequency adversarial noise before it propagates deeper into the network, and (ii) the first attention block exhibits an input-insensitive attention pattern, largely shifting focus away from fragile low-level visual primitives ( e.g ., edges and textures) towards more consistent, non-semantic regions ( e.g ., white background regions). Additionally, we find that modifications to the deep layers are correlated with the degradation of clean accuracy and broad robustness, as updating deep-layer weights compromises the zero-shot generalization capacity inherited from the pre-training phase. Leveraging these insights, we propose Adversarial Robustness Adapt ation (R-Adapt ), a remarkably simple yet highly effective framework to reconcile the 
+
+Robustness-Accuracy Trade-off . As shown in Fig. 1 (a), R-Adapt keeps the pre-trained backbone strictly frozen to preserve its powerful generalization capabilities. It intervenes exclusively at the shallowest stages through two concise components: a Gaussian Input Filter (GIF) and a Fixed Robustness Anchor (FRA). The GIF acts R-Adapt 3
+
+as a conservative frequency gate applied to the input image, attenuating the high-frequency noise typically exploited by adversarial perturbations. Complementing this, the FRA is injected into the first transformer block to simulate an input-insensitive attention pattern characteristic of robust models. By mitigating early-stage sensitivity to fragile, low-level visual primitives, R-Adapt compels the model to rely on more stable structural cues in subsequent transformer blocks. To ensure broad applicability, we introduce a flexible framework comprising three paradigms for acquiring the robustness anchor: (i) a training-free ex-traction method that derives the anchor directly from a standard model using a uniform white input, enhancing baseline robustness without any optimiza-tion; (ii) a model-guided transfer strategy that seamlessly extracts a robust prior from an existing adversarially fine-tuned model; and (iii) a data-driven optimization approach (termed R-Adapt +) designed to improve robustness without relying on pre-existing robust models. By optimizing the anchor on a limited set of adversarial samples ( e.g ., 2k images), R-Adapt + learns a universal, input-agnostic strategy to suppress fragile low-level features. Once optimized, this anchor remains fixed and transfers directly to all downstream tasks without retraining. Notably, this data-efficient paradigm achieves superior robustness compared to standard AFT methods that typically require massive datasets ( e.g ., 1.28M images), while effectively preventing degradation in clean accuracy. Extensive experiments across 18 benchmark datasets validate the broad efficacy of R-Adapt against diverse attack paradigms on zero-shot classifica-tion, image-text retrieval, visual question answering, and captioning. Crucially, compared to standard AFT methods, R-Adapt effectively mitigates the severe degradation of clean-task performance, yielding a significantly superior robustness-accuracy trade-off. Furthermore, empirical evaluations demonstrate that R-Adapt efficiently extends to larger vision-language models ( e.g ., LLaVA), ensuring comprehensive safety with minimal impact on clean performance. 
+
+## 2 Preliminaries and Related Work 
+
+Large-scale pre-trained Vision-Language Models (VLMs), exemplified by CLIP [48], have established a new paradigm for zero-shot generalization [34, 54, 85]. Specifi-cally, for zero-shot classification, this process can be formulated as an image-text matching problem. Formally, consider an input image x and a set of K candi-date category descriptions {ti}Ki=1 , typically constructed using templates ( e.g ., “a photo of a {class}”). Let zv = f (x) and zt,i = g(ti) denote the visual and textual embeddings extracted by the vision encoder f (·) and the text encoder 
+
+g(·), respectively. The probability of x belonging to the i-th class ( yi) is computed using the cosine similarity cos( ·, ·) between these embeddings as: 
+
+p(yi|x) = exp( τ · cos( zv , zt,i )) 
+
+PKj=1 exp( τ · cos( zv , zt,j )) , (1) where τ is the temperature parameter, and the predicted label is ˆy = arg max i p(yi|x).Despite their impressive performance, models such as CLIP remain vulnerable to 4 S. Nie et al. 
+
+imperceptible adversarial perturbations [12, 24, 36, 80, 83], posing severe risks to visual safety [33, 37, 88]. To mitigate this, existing adversarial defense mechanisms are primarily categorized into model-level defenses and sample-level defenses. 
+
+Model-Level Defenses for VLMs. Model-level strategies enhance the robust-ness of VLMs by directly updating the network parameters θ. These approaches are primarily divided into adversarial training and adversarial fine-tuning. (i) Adversarial Training (AT) involves training models from scratch on large-scale datasets [64,68,84] to establish baseline robustness; however, this approach typically requires prohibitive computational resources [63, 69]. (ii) Adversarial Fine-Tuning 
+
+(AFT) is adopted to bolster robustness more efficiently by building upon pre-trained weights. AFT methods typically formulate a min–max optimization problem: 
+
+min  
+
+> θ
+
+E(x,y )∼ ˆP
+
+
+
+max  
+
+> ∥δ∥∞≤ϵ
+
+L (fθ (x + δ), y )
+
+
+
+, (2) where (x, y ) ∼ ˆP denotes a sample pair drawn from the empirical distribution. By minimizing the objective L against the adversarial perturbation δ within an ℓ∞-ball of radius ϵ, the model achieves robustness. Methods such as TeCoA [40], PMG-AFT [60], TGA [75], AdvSimplex [11], Aos [10], and others [3,23] refine the training objectives to mitigate catastrophic forgetting [26, 55], while FARE [51] and Sim-CLIP+ [22] employ unsupervised learning to improve generalization. Despite this progress, existing methods continue to incur high training overhead and experience severe degradation in clean performance. Consequently, how to efficiently enhance robustness while maintaining high clean performance remains a critical challenge. This challenge motivates the proposed R-Adapt framework. 
+
+Sample-Level Defenses for VLMs. Sample-level defenses focus on adapting the input prompt or test instances while maintaining frozen model weights. (i) Ad-versarial Prompt-Tuning (APT) explores the optimization of soft prompts to align adversarial features [65,86] ( e.g ., APT [31], AdvPT [78], FAP [87], AOM [56], and FedAPT [76]). Although APT preserves the original representation space, it often entails a trade-off regarding flexibility: the learned prompts frequently exhibit limited cross-task transferability, commonly requiring additional optimization for new datasets or categories to achieve optimal performance. Another research direction focuses on (ii) Test-Time Defenses (TTD), which employ strategies such as textual alignment ( e.g ., TAPT [61], R-TPT [52], Nap-tuning [79], and COLA [89]) or visual purification ( e.g ., TTE [46], MimicDiffusion [53], TTC [71], CLIPure [82], and CSR [42]). While effective, these instance-specific optimizations introduce high inference latency, thereby hindering real-time applications. Con-versely, the proposed R-Adapt is a universal and highly generalizable approach that requires no additional training for downstream datasets or samples, enabling efficient zero-shot robustness without compromising inference speed. 
+
+## 3 Insights over Adversarially Fine-tuned VLMs 
+
+Adversarial Fine-Tuning (AFT) serves as the most prevalent approach for en-hancing the robustness of VLMs; however, it incurs a significant degradation in R-Adapt 5Standard CLIP        
+
+> Standard CLIP
+> Adversarial Robustness (%)
+> (a) CKA Analysis ( the first 12 blocks) between Standard CLIP and its
+> Adversarially Fine-Tuned Counterparts (FARE and TeCoA)
+> (b) Adversarial Robustness under Progressive Replacement
+> of Standard CLIP with FARE (top) or TeCoA (bottom)
+> FARE Blocks TeCoA
+> ...
+> ...
+> no replacement (ORI) → full replacement (Full)
+
+Fig. 2: Layer-wise Analysis. (a) CKA analysis reveals a clear representational gap at the initial stage, indicating a fundamental functional shift within the shallow layers. (b) Progressive replacement demonstrates an early saturation of adversarial robustness, emphasizing the critical roles of the Embedding layer (denoted as Emb. ) and the first Attention block (denoted as B1-Attn) in driving the model’s overall robustness. 
+
+clean performance. This challenge is widely recognized as the Robustness-Accuracy Trade-off . Although existing studies have explored various properties of adversarially fine-tuned models, including improved interpretability [16, 17, 27, 66], perceptual quality [7], and transferability [9, 50], the underlying mechanisms governing this trade-off remain largely under-explored. This exploration naturally begins with a fundamental question: What makes VLMs robust? Guided by this inquiry, we first investigate the internal sources of robustness in fine-tuned models, and subsequently analyze the emergence of this trade-off to explore pathways for its optimization. 
+
+3.1 Shallow Layers as the Primary Driver of Adversarial Robustness 
+
+Although AFT provides models with robustness, the specific internal changes remain unclear. To understand these mechanisms, we analyze the functional dis-crepancies between the standard and adversarially fine-tuned CLIP models using 
+
+Centered Kernel Alignment (CKA) [28,67]. Given its invariance to orthogonal trans-formations and isotropic scaling, CKA serves as an effective metric for evaluating the similarity of layer-wise representations and capturing the intrinsic functional shifts. For two layer representations X ∈ Rn×d and Y ∈ Rn×d, where n denotes the number of samples and d denotes the feature dimension, CKA is defined as: 
+
+CKA (K, L) = HSIC (K,L)
+
+√HSIC (K,K)HSIC (L,L) = tr (KHLH )
+
+√tr (KHKH )tr (LHLH ) , (3) where K = XX ⊤ and L = YY ⊤ are Gram matrices, and H = In − 1 
+
+> n
+
+11 ⊤ is the centering matrix [18]. The CKA results comparing standard CLIP and its fine-tuned robust counterparts (FARE and TeCoA) are visualized in Fig. 2 (a), where higher values (indicated in bright yellow) denote greater representational similarity. From this visualization, two distinct phenomena emerge. First, a pronounced representational gap appears at the initial stage; specifically, the first block of the robust CLIP models exhibits minimal functional similarity with any layer of standard CLIP. Second, the high-similarity regions deviate from the main diagonal. The early blocks of standard CLIP ( e.g ., the first block) share closer representational similarities with deeper blocks of the robust CLIP models ( e.g ., the third to sixth 6 S. Nie et al. (a) The Spectral Shift Map of      
+
+> Convolutional Kernels (FARE - CLIP)
+> CLIP FARE CLIP FARE origin al image origin al image
+> (b) Visualization of Attention Maps from the First Block of Standard CLIP and FARE
+> Low
+> Frequencies
+> High
+> Frequencies
+
+Fig. 3: Visualizations. (a) The Spectral Shift Map ( ∆S) of the embedding layer demon-strates that the FARE model amplifies the low-frequency signals while suppressing the high-frequency components. (b) The attention maps of the first block show that the FARE model develops an input-insensitive mechanism by redirecting the attention to consistent non-semantic regions ( e.g ., the blank backgrounds, particularly evident in the second row). 
+
+blocks) rather than the shallow counterparts. This highlights a functional shift in the first block after AFT, where standard low-level feature extraction is deferred to subsequent blocks. We hypothesize that this functional reorganization is related to the established adversarial robustness after AFT. To further investigate this, we conduct a Progressive Replacement Experiment on Caltech256 dataset [19] (more results in Appendix A), where we cumulatively replace the modules of standard CLIP with those from robust models (FARE/TeCoA). The corresponding adversarial robustness against AutoAttack ( ϵ = 4 /255 ) is illustrated in Fig. 2 (b). Notably, the results demonstrate that adversarial robustness is not gradually accumulated across the network depth; rather, it has already been largely established within the shallow layers . Replacing the embedding layer (denoted as Emb. ) alone yields a substantial gain ( e.g ., 0% →
+
+55.0% for FARE). Additionally, further replacing the attention module of the first block (denoted as B1-Attn ) nearly saturates robustness performance ( e.g ., 80.7% for FARE). This implies that robust features are largely consolidated within the initial stages, with subsequent layers contributing marginal gains. Since shallow layers intrinsically process low-level visual primitives ( e.g ., edges and textures) [41, 49], they naturally serve as an initial gate to suppress subtle adversarial perturbations, preventing error propagation to deeper semantic layers. 
+
+3.2 Two-Stage Robustness in Early Layers: Low-Pass Filtering and Input-Insensitive Attention Pattern 
+
+Since the embedding layer and the first attention block are crucial for robustness, we delve deeper into their internal functional transformations induced by AFT. 
+
+(i) Spectral Bias towards Low Frequencies. The embedding layer in CLIP is implemented as a strided convolution with the weights W ∈ RCout ×Cin ×K×K ,where K and Cin /C out denote the spatial kernel size and channel dimensions, respectively. According to the Convolution Theorem [25], spatial convolution is equivalent to point-wise multiplication in the frequency domain. This motivates us to investigate the mechanism of the convolutional layer from a spectral perspective. To characterize the frequency bias induced by AFT, we introduce the Spectral Shift Map (∆S). This metric is derived via the 2D Discrete Fourier Transform (DFT), defined as F(W)u,v = P 
+
+> x,y
+
+Wx,y e−i2π( ux K + vy K ). The spectral shift is calculated as: R-Adapt 7
+
+∆Su,v = |F (WFARE )u,v | − |F (WCLIP )u,v |, (4) where (u, v ) represent the frequency coordinates. As illustrated in Fig. 3 (a), the resulting map ∆S exhibits a distinct pattern: a high-magnitude positive cluster in the center (corresponding to low frequencies) surrounded by neutral or negative values in the peripheral high-frequency regions. This shift indicates that the convolutional kernels in the robust models have evolved to exhibit a pronounced tendency for low-pass filtering . By amplifying the low-frequency signals ( e.g ., global shapes and structures), while suppressing the high-frequency components, the embedding layer effectively acts as an initial denoising gate. Consequently, it mitigates the impact of adversarial noise before propagating to the subsequent layers. 
+
+(ii) Attention Redirection to Non-Semantic Regions. We further investigate the critical first attention block. Fig. 3 (b) compares the attention maps of the [CLS] token for the standard and robust models. The standard CLIP model exhibits attention patterns that align closely with semantic object boundaries and textures. In contrast, the robust FARE model displays a counterintuitive behavior: the attention becomes highly focused on seemingly meaningless, highlighted white regions , which are often located in the background or nondescript areas. This phenomenon is particularly pronounced in samples with blank backgrounds (as shown in Fig. 3 (b), second row). To quantify this observation, we compute the cosine similarity between the outputs of the first attention block for a uniform white input and 500 random images. Notably, the robust model yields an average similarity as high as 0.95, which stands in sharp contrast to the value of 0.37 observed in the standard CLIP model. Such high similarity indicates that the robust model develops 
+
+an input-insensitive attention pattern in the first attention block . We attribute this to a natural noise filtering mechanism: saturated white regions (with pixel values near 255) easily absorb bounded subtle adversarial perturbations with negligible relative impact. By anchoring on these stable, non-semantic areas, the first block prevents error propagation, compelling deeper layers to rely on robust global cues rather than fragile textures. This functional repurposing of the first attention block naturally explains why standard low-level feature extraction is deferred to subsequent layers (Sec. 3.1). Further examples across diverse models and Shapley value analyses of specific attention heads are provided in the Appendix B. In summary, the robustness of fine-tuned CLIP is closely characterized by a two-stage mechanism at the entrance of the network: (i) filtering out high-frequency noise via low-pass convolutional kernels, and (ii) developing input-insensitive attention patterns that anchor on stable, non-semantic regions. 
+
+3.3 Discussions on the Robustness-Accuracy Trade-off 
+
+While the initial layers establish the foundation of robustness, the impact of the remaining network requires further investigation. We extend the Progressive Replacement Experiment to evaluate both the source dataset utilized for AFT (ImageNet) and an out-of-distribution dataset (Flowers102). Additional results across various datasets are provided in Appendix C. As shown in Fig. 4: (i) in the in-distribution analysis, we observe that during the cumulative replacement of 8 S. Nie et al. ImageNet Flower s102  
+
+> Trade-off
+> Overfitting
+> Overfitting
+> Performance (%)
+> Performance (%)
+> Fig. 4: We visualize the performance trends during the cumulative substitution of standard CLIP modules with weights from a model adversarially fine-tuned on ImageNet (FARE).
+
+the early layers, the robustness of the model improves, yet the clean performance simultaneously declines. This divergence underscores the intrinsic Robustness-Accuracy Trade-off ; (ii) in the out-of-distribution analysis, we observe a distinct 
+
+Overfitting phenomenon. Unlike the trends on the source dataset, both the transfer robustness and the clean performance on the unseen distribution gradually deteriorate as more layers are substituted . This degradation stems from the overfitting of AFT to the specific distribution of the training data. The intermediate and deep layers of the network are responsible for integrating the semantic information from the images [14]. However, AFT inevitably drives the semantic processing within these layers to overfit the training set, thereby compromising the broader generalization of both robustness and clean accuracy. Overall, as the progressive substitution extends to the deeper layers, the model faces the dual challenges of the Robustness-Accuracy Trade-off and Overfitting .Given that the foundation of robustness is primarily established in the shallow stages, the optimal strategy is to maximally preserve the weights of the original model, restricting adjustments solely to the shallow layers .This approach facilitates robustness while maximally retaining the generalization capabilities of the model. This insight motivates our proposed R-Adapt. 
+
+## 4 Methodology 
+
+4.1 R-Adapt: Towards Reconciling Robustness and Accuracy 
+
+Driven by the insights in Sec. 3, we propose Adversarial Robustness Adapt ation (R-Adapt ), a lightweight adaptation framework. R-Adapt introduces two modules to a frozen standard CLIP model: a Gaussian Input Filter and a Fixed Robustness Anchor in the first attention block. The overall framework is illustrated in Fig. 1 (a). Notably, this simple yet effective design yields substantial performance gains, serving as strong empirical validation of our insights regarding robust VLMs. 
+
+Gaussian Input Filter (GIF). Inspired by the observation that robust models naturally suppress high-frequency components to enhance intrinsic robustness, we introduce a Gaussian low-pass filter before the embedding layer to emulate this pattern. Formally, given an input image x, the filtered input ˜x is computed as: 
+
+˜x = F−1(F(x) · H) = F−1
+
+
+
+F(x) ⊙ exp 
+
+
+
+− D2
+
+2D20
+
+ 
+
+, (5) where F and F−1 denote the Fourier transform and its inverse, ⊙ is the Hadamard product, D represents the distance matrix from the frequency center, and D0 is R-Adapt 9A uniform         
+
+> white input
+> ATTN FNN
+> Standard CLIP
+> Emb.
+> ×N
+> Training-Free
+> Anchor
+> A uniform
+> white input
+> ATTN FNN
+> Adversarial ly Fine-tuned CLIP
+> Emb.
+> ×N
+> Model-guided
+> Anchor
+> ATTN FNN
+> Standard CLIP
+> Emb.
+> ×N
+> Data-Driven
+> Anchor
+> ADV
+> Limited
+> image data
+> (a) R-Adapt
+> CLIP (b) R-Adapt 1(c) R-Adapt +
+> AFT
+
+Fig. 5: Illustration of three Robustness Anchor acquisition paradigms. (a) Training-Free: direct extraction from the standard CLIP model using a uniform white input; (b) Model-Guided: extraction from an adversarially fine-tuned model M; (c) Data-Driven (R-Adapt +): optimization of the anchor using a limited amount of adversarial data. 
+
+the cutoff frequency. This operation functions as a conservative frequency gate. Typically configured with a cutoff frequency of D0 = 40 , this filter preserves essential semantic details. Additionally, it effectively attenuates the extremely high-frequency noise commonly exploited by adversarial samples, thereby mitigating potential perturbations before they propagate into the network. 
+
+Fixed Robustness Anchor (FRA). The core of R-Adapt lies in modifying the attention mechanism of the first block to simulate the input-insensitive attention pattern found in robust models. Let h(1) ∈ RN×D be the output of the Multi-Head Self-Attention (MHSA) layer in the first block, where N denotes the sequence length of visual tokens and D represents the embedding dimension. We alter the computational flow by injecting a Fixed Robustness Anchor A ∈ RN×D. The modified output ˆh(1) is computed as a linear combination: ˆh(1) = α · A + β · h(1) ,where α and β are scalar coefficients that balance the preservation of original semantic features and the injection of robustness priors. Functionally, this anchor stabilizes the output of the first attention module, effectively neutralizing its sensitivity to fragile low-level visual features . By inhibiting these early-stage responses, it compels the network to bypass dependencies on local textures and instead focus on more stable structural information in subsequent layers. Importantly, this modification is exclusive to the first block; all subsequent layers remain frozen and identical to those of the standard CLIP model. This minimal intervention preserves the rich semantic knowledge encapsulated in the deep layers, thereby efficiently enhancing adversarial robustness with minimal degradation to the powerful generalization capabilities of the original model. 
+
+4.2 Acquisition of the Robustness Anchor 
+
+To ensure broad applicability, R-Adapt employs a flexible mechanism to obtain the robustness anchor. As illustrated in Fig. 5, we propose three paradigms: (i) training-free extraction, (ii) model-guided transfer, and (iii) data-driven optimization. 
+
+(i) Training-Free Anchor. As the most efficient instantiation, this variant requires neither training nor external robust weights. We extract the anchor directly from the pre-trained standard CLIP by feeding a uniform white image 
+
+xwhite to capture the attention response of the first block: 10 S. Nie et al. 
+
+A = MHSA (1) 
+
+> CLIP
+
+(Embed CLIP (xwhite )) , (6) where Embed CLIP (·) denotes the patch embedding projection and MHSA (1) 
+
+> CLIP
+
+(·)
+
+denotes the Multi-Head Self-Attention operation of the first Transformer block. The anchor A serves to neutralize the sensitivity to early-stage noise, encouraging the model to prioritize robust global structures in subsequent layers. 
+
+(ii) Model-Guided Anchor. In scenarios where an adversarially fine-tuned model M (e.g., FARE) is accessible, we leverage this model to extract a more potent anchor. Specifically, we obtain the anchor A by feeding the same uniform white image xwhite into M and capturing the attention response of the first block: 
+
+A = MHSA (1)  
+
+> M
+
+(Embed M(xwhite )) . (7) This extracted anchor is then integrated into a frozen standard CLIP. This process combines a robust prior with a clean backbone to balance the trade-off between robustness and accuracy. Furthermore, decoupling the anchor from M prevents the inheritance of overfitting patterns, which effectively enhances generalization. 
+
+(iii) Data-Driven Anchor. To further enhance the robustness of the training-free approach without relying on existing adversarially fine-tuned models, we propose R-Adapt +. In this paradigm, we freeze the standard CLIP and optimize only the anchor A using a standard cross-entropy loss on a small set of adversarial examples: 
+
+min  
+
+> A
+
+E(xadv ,y )∼D small [LCE (f (xadv ; A), y )] . (8) We initialize A with the attention response of the first block from a uniform white image. Notably, once optimized on the small-scale data, this learned anchor is fixed for all subsequent tasks and datasets . The universality of the learned anchor stems from the ability to learn an input-agnostic strategy for suppressing fragile low-level features through substitution with a stable reference, rather than memorizing specific category semantics. Consequently, R-Adapt + remains ex-ceptionally data-efficient ; it achieves superior robustness using only 2k samples. In contrast, standard AFT typically exhausts the entire ImageNet dataset ( 1.28M 
+
+images, more than 640 ×) yet fails to match the performance of our approach, suf-fering from a significant degradation in clean accuracy and suboptimal robustness. 
+
+## 5 Experiments 
+
+5.1 Setup Datasets. Following previous work, we employ a comprehensive benchmark suite of 16 datasets. Specifically, we evaluate on general object recognition (ImageNet [8], CIFAR-10/100 [30], STL10 [5], Caltech-101/256 [13, 19]), fine-grained classifica-tion (OxfordPets [45], Flowers102 [44], Food101 [1], StanfordCars [29]), scene recognition (SUN397 [70], Country211 [48]), and domain-specific applications (FGV-CAircraft [39], EuroSAT [21], DTD [4], PCAM [57]). Beyond image classification, we extend evaluation to diverse tasks, utilizing MS COCO [32] for visual question answering (VQA) and image captioning and Flickr30k [74] for image-text retrieval. R-Adapt 11 
+
+Table 1: Zero-shot Clean Accuracy and Adversarial Robustness (%) across 16 widely-used datasets. The best and second-best results in each column are highlighted in bold and underlined , respectively. R-Adapt M assumes access to a robust model M and uses it only 
+
+to extract a robustness anchor; inference uses a frozen standard CLIP with GIF and FRA. 
+
+Method ImageNet CIFAR10 CIFAR100 STL10 Caltech101 Caltech256 OxfordPets Flowers102 Food101 StanfordCars SUN397 Country211 FGVCA EuroSAT DTD PCAM Avg 
+
+Clean Accuracy 
+
+CLIP 69.7 93.4 65.0 99.4 86.2 88.1 93.5 73.7 90.8 79.1 66.8 23.9 28.9 54.8 53.1 49.6 69.8 
+
+R-Adapt CLIP 63.9 92.2 67.0 98.8 85.8 86.0 91.6 69.4 83.6 66.7 64.5 18.7 23.8 50.2 46.1 51.6 66.2 
+
+TeCoA 69.2 73.7 44.0 93.1 80.8 79.2 76.1 35.6 36.2 34.5 47.8 5.2 10.6 19.3 33.2 55.1 49.6 
+
+R-Adapt T eCoA 63.4 92.5 65.4 98.6 84.8 86.7 91.1 68.7 83.9 69.3 65.6 19.0 23.7 39.6 42.1 53.3 65.5 ( ↑15.9) 
+
+TGA 72.6 83.9 50.9 96.1 81.0 84.3 84.2 53.0 58.5 39.5 57.4 6.5 12.3 28.5 42.9 48.9 56.3 
+
+R-Adapt T GA 64.0 91.7 67.1 98.6 85.7 86.2 90.3 67.8 82.9 64.9 65.5 19.1 21.4 49.0 45.4 51.3 65.7 ( ↑9.4) 
+
+FARE 63.9 76.6 45.9 96.2 85.3 83.9 86.6 55.0 49.4 64.7 57.1 8.3 21.3 12.3 37.3 55.7 56.2 
+
+R-Adapt F ARE 61.7 91.9 64.0 98.2 84.6 86.4 90.1 66.3 80.7 67.5 65.6 16.7 23.9 37.8 41.0 56.0 64.5 ( ↑8.3) 
+
+R-Adapt + 66.9 93.6 68.1 98.8 86.8 87.3 91.9 71.2 81.5 70.9 65.9 17.8 26.1 45.6 47.3 52.4 67.0 
+
+Adversarial Robustness under AutoAttack (ϵ = 4 /255 )
+
+CLIP 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 
+
+R-Adapt CLIP 43.6 64.4 40.7 92.3 76.2 75.5 55.8 50.6 58.7 36.2 49.4 6.5 11.1 30.4 33.9 49.0 48.4 
+
+TeCoA 67.0 73.6 43.6 92.7 80.5 78.3 72.1 33.6 34.5 23.6 45.4 4.7 15.2 19.1 32.2 55.2 48.2 
+
+R-Adapt T eCoA 47.8 80.0 51.2 95.3 78.8 79.4 65.4 55.3 68.4 46.2 54.8 8.1 16.6 29.4 34.6 49.9 53.8 ( ↑6.6) 
+
+TGA 65.6 75.6 43.7 93.4 78.9 79.2 72.6 42.9 48.2 22.9 50.9 5.2 12.2 24.7 37.6 48.8 50.2 
+
+R-Adapt T GA 44.3 77.2 51.9 93.3 77.8 77.1 59.6 53.1 62.4 35.8 52.6 8.0 12.7 34.5 32.3 49.7 51.4 ( ↑1.2) 
+
+FARE 60.2 75.2 44.9 94.8 83.6 81.0 77.2 48.7 45.8 49.4 55.5 5.9 20.0 11.3 34.6 56.8 52.8 
+
+R-Adapt F ARE 49.7 83.6 53.3 96.0 80.2 79.7 69.5 54.8 70.4 51.0 57.1 8.6 17.7 30.0 34.8 52.6 55.6 ( ↑2.8) 
+
+R-Adapt + 64.0 83.1 57.4 96.2 80.7 81.8 70.8 58.4 68.7 45.9 55.8 8.9 17.3 37.0 39.7 49.6 57.2 
+
+Implementation Details. For baselines (TeCoA [40], FARE [51], TGA [75]), we strictly follow their default configurations, training on the full ImageNet ( ∼1.28M 
+
+images) for 2 epochs with an L∞ perturbation bound of ϵ = 4 /255 . In our R-Adapt framework, the GIF cutoff frequency is typically set to D0 = 40 . The FRA scalar coefficients are typically set to α = 1 .2, β = 0 for the standard R-Adapt M, and 
+
+α = 0 .8, β = 0 .2 for R-Adapt +. Comprehensive hyperparameter configurations and the empirical rationales governing these selections are detailed in Appendix D. The data-driven R-Adapt + optimizes the anchor for 10 epochs on a randomly selected subset of 2k ImageNet images under the same ϵ = 4 /255 bound with baselines. 
+
+5.2 Main results Results on Zero-shot Classification. As shown in Tab. 1, all R-Adapt variants significantly preserve clean accuracy ( 64%–67% ), whereas baselines range from only 49% to 56%, severely compromising the model’s clean accuracy. Notably, the training-free R-Adapt CLIP achieves an average robustness of 48.4%, slightly exceeding even the adversarially fine-tuned TeCoA (48.2%). R-Adapt + sets a new state-of-the-art with 57.2% average robustness, further validating our insights into early-layer robustification. While baselines such as TeCoA, TGA, and FARE remain competitive on ImageNet, their performance degrades across broader benchmarks. 12 S. Nie et al. 
+
+Table 2: Zero-shot classification performance (%) averaged across 16 datasets under different attack types (PGD [38], C&W [2], and AutoAttack [6]: APGD-CE) and noise budgets. The last row ( ∆) denotes the performance gain of R-Adapt + over FARE.                                                                                                                  
+
+> PGD C&W APGD-CE Method Clean ϵ=1/255
+> ϵ=2/255
+> ϵ=4/255
+> ϵ=1/255
+> ϵ=2/255
+> ϵ=4/255
+> ϵ=1/255
+> ϵ=2/255
+> ϵ=4/255
+> CLIP 69.8 1.6 0.0 0.0 1.1 0.1 0.0 1.6 0.0 0.0
+> R-Adapt CLIP 66.2 ↓3.6 56.4 ↑54.8 50.0 ↑50.0 39.2 ↑39.2 55.7 ↑54.6 54.0 ↑53.9 53.9 ↑53.9 58.8 ↑58.8 54.1 ↑54.1 48.4 ↑48.4
+> TeCoA 49.6 48.7 48.6 48.4 48.7 48.8 48.7 48.8 48.7 48.2
+> R-Adapt T eCoA 65.5 ↑15.9 59.9 ↑11.2 55.7 ↑7.1 49.3 ↑0.9 59.8 ↑11.1 59.4 ↑10.6 59.2 ↑10.5 60.7 ↑11.9 58.1 ↑9.4 53.8 ↑5.6
+> TGA 56.3 53.8 52.4 49.6 54.2 53.9 53.7 53.8 52.6 50.2
+> R-Adapt T GA 65.7 ↑9.4 57.3 ↑3.5 53.4 ↑1.0 48.7 ↓0.9 57.1 ↑2.9 55.8 ↑1.9 55.7 ↑2.0 59.5 ↑5.7 55.6 ↑3.0 51.4 ↑1.2
+> FARE 56.2 54.5 54.2 53.7 54.6 54.5 54.5 54.6 53.3 52.8
+> R-Adapt F ARE 64.5 ↑8.3 59.7 ↑5.2 57.0 ↑2.8 53.8 ↑0.1 59.8 ↑5.2 59.6 ↑5.1 59.6 ↑5.1 60.3 ↑5.7 58.3 ↑5.0 55.6 ↑2.8
+> R-Adapt +67.0 61.3 57.9 53.5 60.3 59.4 59.4 63.1 60.5 57.2
+> ∆↑10.8 ↑6.8 ↑3.7 ↓0.2 ↑5.7 ↑4.9 ↑4.9 ↑8.5 ↑7.2 ↑4.4
+
+Table 3: The 16-datasets averaged performance under AutoAttack: DLR (loss-calibrated), FAB (boundary-based), and Square (gradient-free).                                       
+
+> Method Clean DLR FAB Square
+> ϵ=2/255
+> ϵ=4/255
+> ϵ=2/255
+> ϵ=4/255
+> ϵ=2/255
+> ϵ=4/255
+> CLIP 69.8 0.2 0.0 27.7 27.7 26.9 17.6 FARE 56.2 54.6 54.2 54.8 54.8 54.7 54.5 R-Adapt +67.0 62.9 59.2 62.4 62.4 65.1 63.3
+> ∆↑10.8 ↑8.3 ↑5.0 ↑7.6 ↑7.6 ↑10.4 ↑8.8
+
+Table 4: Zero-shot Image →Text re-trieval performance (%) on Flickr30k. Recall@ k denotes the top k hit rate.                                   
+
+> Method Clean ϵ= 2 /255 ϵ= 4 /255
+> R@1 R@10 R@1 R@10 R@1 R@10
+> CLIP 86.0 99.2 0.4 1.2 0.1 0.2 FARE 78.3 97.7 77.8 97.5 77.3 97.3 R-Adapt +83.6 99.0 79.7 98.4 77.5 97.8
+> ∆↑5.3 ↑1.3 ↑1.9 ↑0.9 ↑0.2 ↑0.5
+
+Results under Diverse Attacks. Tab. 2 assesses R-Adapt across various stan-dard algorithms, including PGD [38], C&W [2], and AutoAttack [6] (APGD-CE). R-Adapt + consistently yields state-of-the-art robustness; notably, at ϵ = 1 /255 , it outperforms FARE by 6.8% and 8.5% under PGD and APGD-CE, respectively. Tab. 3 reports performance under the remaining AutoAttack components, repre-senting loss-calibrated (DLR), boundary-based (FAB), and gradient-free (Square) attacks. Across these paradigms, R-Adapt + maintains its superiority over the lead-ing AFT method, FARE. It achieves improvements of 10.4% and 8.8% against the Square attack ( ϵ = 2 /255 and 4/255 , respectively), while simultaneously boosting clean accuracy by 10.8% . Collectively, these results validate the broad efficacy of our framework across different perturbation characteristics and attack paradigms. 
+
+Results on Image-Text Retrieval. We further evaluate R-Adapt on retrieval to verify whether it preserves cross-modal structural alignment under attacks designed to push image embeddings away from their corresponding text features. As shown in Tab. 4, standard AFT (FARE) severely disrupts the clean embedding manifold, causing Clean R@1 to drop from 86.0% to 78.3%. In contrast, R-Adapt +
+
+maintains superior structural integrity, preserving a high clean R@1 ( 83.6% ). Notably, R-Adapt + achieves 79.7% robust R@1 at ϵ = 2 /255 , a 1.9% lead over FARE (77.8%) that only narrows under the more relaxed R@10 metric. 
+
+Extending R-Adapt to LLaVA for Robust Captioning and VQA. We fur-ther apply R-Adapt to LLaVA to showcase its broad applicability (see Appendix E for Qwen3-VL results). Adversarial examples are generated using the strong V-R-Adapt 13 Which animal is observing calmly?                                                
+
+> ADV ADV ADV
+> What type of animal is visible in the picture?
+> Please describe this image in one sentence?
+> ADV ADV ADV
+> What is the object near the sidewalk? Please describe this image in one sentence?
+> LLaVA: The lion in the image
+> appears to be calmly observing ...
+> LLaVA +R-Adapt :... calmly
+> observing ... is a large brown bear .
+> LLaVA: ... a group of horned animals,
+> which are likely oxen or bulls .
+> LLaVA +R-Adapt :The picture features
+> a group of goats .
+> LLaVA: Agreen and white bus is
+> parked on the side of the road.
+> LLaVA +R-Adapt :Ablue and white
+> trolley is parked on the side ...
+> LLaVA: Amailbox stands near the
+> edge of the sidewalk by the yellow ...
+> LLaVA +R-Adapt :... of the sidewalk
+> by the yellow line is a fire hydrant ...
+> LLaVA: Adinosaur is shown with
+> its mouth open, standing on a ...
+> LLaVA +R-Adapt :Agiraffe is
+> standing in a field with its head up.
+> ADV ADV
+> What is the elongated, yellow object?
+> LLaVA: The elongated, yellow object
+> is a doughnut .
+> LLaVA +R-Adapt :The elongated,
+> yellow object is a banana .ADV
+> ADV
+
+Fig. 6: Visualization examples for visual question answering and image captioning tasks. 
+
+Attack (single object manipulation) [43] ( ℓ∞, ϵ = 16 /255 , 300 steps) for rigorous evaluation. Under this setting, both Visual Question Answering (VQA) and Cap-tioning (CAP) accuracy are defined as the proportion of responses that correctly identify the original object. Following its protocol, we evaluate R-Adapt on 300 
+
+randomly sampled COCO images, each associated with 3 VQA pairs. As detailed in Tab. 5, the empirical results demonstrate that as the training noise budget 
+
+Table 5: CAP and VQA tasks on LLaVA. The "Setting" column denotes training budget for R-Adapt +’s anchor. 
+
+Method Setting CAP VQA 
+
+Clean Rob. Clean Rob. No Defense — 100.0 21.3 100.0 22.6 R-Adapt +
+
+ϵ = 4 /255 100.0 38.7 100.0 36.3 
+
+ϵ = 8 /255 100.0 64.3 98.7 61.9 
+
+ϵ = 16 /255 99.3 85.3 98.3 79.4 
+
+increases to approach the intensity of the attack, the robust performance improves significantly. For instance, when the train-ing perturbation budget (setting) escalates from 4 to 16 , the robust accuracy of R-Adapt + on the CAP task increases from 
+
+38 .7% to 85 .3% , and similarly from 36 .3% 
+
+to 79 .4% on the VQA task. This positive correlation indicates that the proposed method can acquire superior robustness by elevating the intensity of training noise, albeit at the cost of a marginal degra-dation in clean performance ( e.g ., the clean VQA accuracy slightly decreases from 100 .0% to 98 .3% ). These empirical findings indicate that R-Adapt can be seamlessly extended to broader LVLMs to promote comprehensive safety. The corresponding visualization results are illustrated in Fig. 6 for a qualitative demonstration of R-Adapt’s efficacy in maintaining precise semantic grounding. 
+
+5.3 Ablation Study The R-Adapt framework. We evaluate the individual contributions of two core components in R-Adapt: the Gaussian Input Filter (GIF) and the Fixed Robust-ness Anchor (FRA). As reported in Tab. 6, the vanilla model yields zero robustness across all benchmarks under AutoAttack ( ϵ = 4 /255 ). While integrating either 
+
+Table 6: Ablation on R-Adapt framework. 
+
+GIF FRA Caltech256 Food101 SUN397 EuroSAT clean rob clean rob clean rob clean rob 
+
+× × 88.1 0.0 90.8 0.0 66.8 0.0 54.8 0.0 
+
+× ✓ 88.3 44.2 84.1 16.3 67.2 17.6 42.2 1.8 
+
+✓ × 87.3 57.5 85.8 30.3 64.9 27.9 52.0 16.8 
+
+✓ ✓ 86.9 82.5 80.6 71.3 65.9 58.2 46.2 36.7 
+
+GIF or FRA independently provides substantial gains ( e.g ., achieving 
+
+57 .5% and 44 .2% robust accuracy on Caltech256, respectively), com-bining them yields a profound syn-ergistic effect. We attribute this ef-ficacy to their complementary roles: GIF purifies the residual stream, while FRA stabilizes the output of the initial attention block. Combined via a residual connection, they jointly modulate all subsequent modules, thereby influencing the entire model. 14 S. Nie et al. 
+
+Table 7: Effect of number of training images.                               
+
+> Dataset 500 1000 2000 3000 5000 10000
+> Caltech256 76.8 80.4 82.7 82.6 82.0 83.5
+> Food101 58.6 65.2 70.2 70.6 69.8 70.8
+> SUN397 46.8 51.8 58.3 59.7 60.1 60.6
+> EuroSAT 29.4 33.5 37.3 36.1 35.5 35.0
+
+Table 8: Effect of training iterations.                                
+
+> Dataset 35810 15 20
+> Caltech256 74.7 78.3 79.1 82.7 89.4 89.5
+> Food101 57.9 61.7 63.7 70.2 63.9 62.7 SUN397 46.6 48.3 49.9 58.3 51.1 51.7 EuroSAT 29.4 31.9 32.1 37.3 33.4 32.4 Accuracy (%)
+> Alpha
+> Caltech256
+> Alpha
+> Food101
+> Accuracy (%)
+> Alpha
+> SUN397
+> Accuracy (%)
+> Alpha
+> EuroSAT
+> Accuracy (%)
+> Accuracy (%)
+> D0D0
+> Accuracy (%)
+> D0
+> Accuracy (%)
+> D0
+> Accuracy (%)
+
+Fig. 7: Effect of the scale coefficients ( α, β = max (1 − α, 0) ) and the cutoff frequency ( D0)
+
+Effect of Training Scale. We evaluate the impact of training set size and optimization iterations on R-Adapt +’s robustness. As shown in Tab. 7, performance improves rapidly before saturating at 2,000 samples. Notably, scaling the dataset from 2,000 to 10,000 images yields only a marginal 0.8% gain on Caltech256. Regarding optimization (Tab. 8), 10 iterations achieve a superior trade-off; deviating from this setting impairs performance due to either under-fitting or over-fitting. Overall, these findings highlight the exceptional data efficiency of R-Adapt +.
+
+Effect of Hyperparameters. We evaluate the sensitivity of R-Adapt to key hyperparameters: the scale coefficients ( α, β) and the GIF cutoff frequency ( D0). Since α and β control the integration of the robust anchor, we adopt the rule 
+
+β = max (1 − α, 0) . As shown in Fig. 7, there exists a clear optimal range for α, with R-Adapt + achieving peak robustness on Caltech256 at α ≈ 0.8. Deviating from this range degrades performance. Similarly, D0 determines the GIF’s spectral bandwidth. An excessively narrow filter ( D0 = 10 ) discards critical structural information, reducing clean accuracy to ∼70%. Moreover, a large cutoff ( D0 = 60 ) permits high-frequency adversarial noise to propagate, dropping robust accuracy to 68%. 
+
+## 6 Conclusion 
+
+In this work, we reveal a fundamental property of adversarially fine-tuned VLMs: a degree of depth-wise decoupling of robustness and clean accuracy. Guided by our insights, we propose R-Adapt, a lightweight framework that effectively reconciles the robustness-accuracy trade-off. It achieves state-of-the-art adversar-ial robustness across 18 diverse benchmarks with minimal impact on the clean capabilities of the original models. Crucially, the seamless and highly efficient extension of R-Adapt to broader LVLMs, such as LLaVA, demonstrates its pro-found applicability. We expect that our internal robustness findings and the versatile R-Adapt paradigms will serve as a stepping stone towards developing comprehensively safe and robust foundational multimodal AI systems. R-Adapt 15 
+
+## Appendix 
+
+Section A Additional Results on Progressive Replacement . . . . . . . . . . . . . . . . 15 
+
+Section B Extended Analysis on Attention Patterns . . . . . . . . . . . . . . . . . . . . . . 16 
+
+Section C Additional Results on Out-of-Distribution Datasets . . . . . . . . . . . . 18 
+
+Section D Additional Implementation Details . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 18 
+
+Section E Enhancing the Robustness of Qwen3-VL via R-Adapt + . . . . . . . . 19 
+
+## A Additional Results on Progressive Replacement 
+
+To comprehensively validate the generalizability of our observations in the main manuscript, we extend the Progressive Replacement Experiment to a broader range of visual domains. Specifically, since these datasets, like ImageNet, repre-sent fundamental general image classification tasks, we evaluate the cumulative module substitution on four additional standard benchmarks: Caltech101 [13], CIFAR100 [30], STL10 [5], and CIFAR10 [30]. The robustness trajectories against AutoAttack ( ϵ = 4 /255 , APGD) are detailed in Fig. 8 for FARE [51] and Fig. 9 for TeCoA [40]. Across all evaluated datasets and robust baselines, the empirical trends remain strictly consistent with our primary findings. The results demon-strate that adversarial robustness is concentrated within the initial processing stages. Specifically, the integration of the robust embedding layer ( Emb. ) and the first attention module ( B1-Attn ) accounts for the vast majority of the robustness gains. Furthermore, the clean accuracy initially declines as robustness sharply increases in the early layers, and subsequently levels off as the robustness gains plateau in later stages, illustrating the inherent robustness-accuracy trade-off. CIFAR100     
+
+> CIFAR10 STL10
+> Caltech101
+> Fig. 8: Progressive replacement results using FARE robust modules. Adver-sarial robustness against AutoAttack ( ϵ= 4 /255 , APGD) is plotted as standard CLIP modules are cumulatively replaced by FARE’s corresponding components across four datasets: Caltech101, CIFAR100, STL10, and CIFAR10. The results consistently vali-date that robustness is largely established within the initial stages (Emb. and B1-Attn). 16 S. Nie et al. CIFAR100
+> CIFAR10 STL10
+> Caltech101
+> Fig. 9: Progressive replacement results using TeCoA robust modules. Similar to Fig. 8, this figure illustrates the APGD robustness trajectory on the four additional datasets when progressively substituting standard CLIP modules with those from TeCoA. The saturation of robustness gains in shallow layers is consistently observed.
+
+## B Extended Analysis on Attention Patterns 
+
+In this section, we provide extended qualitative and quantitative analyses to support the observations discussed in Section 3 regarding the functional repurposing of the first attention block in adversarially fine-tuned models ( e.g ., TeCoA, FARE). 
+
+Extended Attention Visualizations. We first provide additional visualizations of the first-layer attention maps across diverse natural scenes in Fig. 13 and Fig. 14. Consistent with the findings in the main manuscript, standard CLIP meticulously outlines semantic object boundaries and fragile textures. In contrast, the adversarially fine-tuned model ( e.g ., FARE) consistently bypasses these semantic features, decisively anchoring its attention on non-semantic background regions (e.g ., bright spots or uniform blank areas). 
+
+Quantitative Validation of Input-Insensitivity. To rigorously quantify this phenomenon, we compute the cosine similarity between the first-layer attention outputs across 300 randomly sampled images from ImageNet, as detailed in Fig. 10. When comparing the outputs of two completely different random natural images (left matrix), standard CLIP yields a low similarity of 0.37 , reflecting its input-dependent feature extraction. Strikingly, adversarially fine-tuned mod-els exhibit near-perfect similarity ( e.g ., 0.98 for TeCoA and 0.985 for FARE). 
+
+This confirms that the first block of robust models has become fun-damentally input-insensitivity. Furthermore, when comparing the outputs of random natural images against a uniform white image (right matrix), the similarity remains exceptionally high for robust models ( 0.898 for TeCoA and 
+
+0.948 for FARE), whereas standard CLIP remains low ( 0.374 ). Interestingly, the cross-model similarities between TeCoA and FARE are also notably high (0.74 − 0.81 ). These results consistently indicate that substituting vulnerable low-level features with a stable, static “white-anchor” response is not an artifact of a specific defense, but a universal mechanism for adversarial resilience in VLMs. R-Adapt 17 (a) Natural Images vs Natural Images (b) Natural Images vs U niform White Images 
+
+Fig. 10: Quantitative analysis of input-insensitivity in the first attention block. Left: 
+
+Similarity computed between pairs of completely different random natural images. 
+
+Right: Similarity computed between random natural images and a uniform white image. The remarkably high similarity scores for TeCoA and FARE, in contrast to the standard CLIP, firmly demonstrate that adversarially fine-tuned models develop an input-insensitive attention pattern to filter adversarial noise. Layer-1        
+
+> Attention Heads
+> of FARE
+> (a) Shapley Value Analysis
+> of Adversarial Robustness
+> (b) Attention Maps of Different Layer-1 Attention Heads in Standard CLIP and FARE:
+> A Case Study on Robustness-Positive ( L1-H16 ) and Robustness-Negative ( L1-H11 ) Heads
+> CLIP L1-H16 FARE L1-H16 CLIP L1-H11 FARE L1-H11
+
+Fig. 11: Shapley value analysis of first-layer attention heads in the FARE model. (a) 
+
+Quantitative contribution of individual heads to adversarial robustness, evaluated on Caltech256 adversarial examples. (b) Attention map visualizations for the top positive (robustness-enhancing) and negative (robustness-detracting) heads. 
+
+Shapley Value Analysis of Attention Heads. To demystify how this ro-bustness is distributed within the multi-head self-attention (MHSA) mechanism, we conduct a Shapley value analysis on Caltech256 [19] adversarial examples to quantify the contribution of individual attention heads to overall robustness (Fig. 11 (a)). By visualizing the specific attention maps of these heads (Fig. 11 (b)), a clear pattern emerges: the “positive” heads, which exhibit the highest Shapley values and predominantly drive adversarial robustness, are exactly the ones heavily fixated on meaningless pure white regions. Conversely, the “negative” heads, which marginally detract from robustness, exhibit more diffuse, semantic-oriented patterns akin to standard CLIP. However, since these negative heads represent a small minority within the block, their impact is entirely overshadowed by the dominant positive heads. This head-level attribution provides causal evidence that actively suppressing semantic textures in favor of stable, non-semantic anchors is one of the primary driver of early-stage robustness. 18 S. Nie et al. 
+
+## C Additional Results on Out-of-Distribution Datasets 
+
+To further corroborate the overfitting phenomenon discussed in the main manuscript, we extend the Progressive Replacement Experiment to a broader suite of out-of-distribution (OOD) datasets. Specifically, we evaluate two adversarially fine-tuned models, TeCoA and FARE, on Flowers102 [44], Food101 [1], and StanfordCars [29]. Both robust models were originally fine-tuned on the ImageNet dataset. The ro-bustness and clean accuracy trajectories during the cumulative layer replacement are illustrated in Fig. 12. Consistent with our primary findings, the progressive substitution of intermediate and deep layers leads to a simultaneous and continuous degradation of both clean performance and adversarial robustness . This concurrent decline provides compelling evidence for the seman-tic overfitting inherent in standard Adversarial Fine-Tuning (AFT). Because the deeper layers are responsible for integrating complex semantic representations, AFT inevitably forces these layers to overfit the specific object semantics of the source training data (ImageNet). Consequently, transferring these deep layers to distinct OOD downstream tasks actively harms the model’s generalization capabilities, corroborating our conclusion that minimal intervention in the shallow layers is the optimal strategy for reconciling robustness and accuracy. 
+
+## D Additional Implementation Details 
+
+Hardware Configuration. To ensure consistency and facilitate a fair compari-son across all evaluations, all experiments, including the data-driven anchor opti-mization for R-Adapt +, were conducted on a unified hardware cluster equipped with 8 NVIDIA GeForce RTX 4090 GPUs. 
+
+Hyperparameter Configurations. As discussed in the main manuscript, our R-Adapt framework is designed to be generalizable across various robust baselines. We introduce scalar coefficients ( α, β) to balance the Fixed Robustness Anchor (FRA) and the original attention features, alongside a cutoff frequency ( D0)for the Gaussian Input Filter (GIF). The exact configurations are summarized in Tab. 9. Generally, we adopt a unified default configuration of α = 1 .2,
+
+β = 0 .0, and D0 = 40 across our model-guided variants (e.g., R-Adapt TeCoA and R-Adapt FARE ). This standard setting consistently yields substantial ro-bustness gains by amplifying the robust anchor while overriding fragile standard attention features, demonstrating the broad applicability of our approach. We deviate from these default settings only in specific scenarios to accommodate the intrinsic structural properties of certain anchor acquisition paradigms: 
+
+Table 9: The scale coefficients ( α, β) and the cutoff frequency ( D0) configurations across different R-Adapt variants. A unified default setting is applied generally, with specific adjustments made only for unique structural priors. R-Adapt CLIP R-Adapt TeCoA R-Adapt TGA R-Adapt FARE R-Adapt +                
+
+> α1.2 1.2 1.2 1.2 0.8
+> β-0.8 0.0 0.0 0.0 0.2
+> D040 40 30 40 40 R-Adapt 19
+
+– TGA Regularization Compensation: Unlike other baselines, the TGA method [75] inherently forces the model’s attention to mimic the original standard CLIP during fine-tuning. To compensate for this internal regular-ization, R-Adapt TGA simply employs a slightly more aggressive frequency filter ( D0 = 30 ) while maintaining the default α and β.
+
+– Data-Driven Anchor Prior (R-Adapt +): Because the anchor in R-Adapt + is directly optimized on adversarial data, it inherently possesses a highly potent robustness prior. To prevent over-regularization and achieve an optimal trade-off with clean accuracy, we gently relax the constraint on the original semantic features by adjusting to α = 0 .8 and β = 0 .2.
+
+– Training-Free Paradigm (R-Adapt CLIP ): As a purely training-free ap-proach devoid of external robustness priors, R-Adapt CLIP naturally requires a more forceful intervention. While keeping the default α = 1 .2, we assign a negative weight to the original attention ( β = −0.8) to actively inhibit the fragile, low-level visual dependencies present in the standard CLIP. 
+
+## E Enhancing the Robustness of Qwen3-VL via R-Adapt +
+
+To comprehensively validate the generalizability and architecture-agnostic nature of our proposed framework, we extend the evaluation of R-Adapt to the recently introduced Qwen3-VL. As summarized in Tab. 10, Qwen3-VL utilizes a funda-mentally distinct vision encoder architecture (ViT with DeepStack) compared to the CLIP-L/14@336 encoder employed by LLaVA. This structural variance serves as a rigorous testbed for demonstrating the broad applicability of R-Adapt.       
+
+> Table 10: Model details for LLaVA and Qwen3-VL.
+> Vision Encoder Huggingface ID LLaVA CLIP-L/14@336 llava-hf/llava-1.5-7b-hf
+> Qwen3-VL ViT with DeepStack Qwen/Qwen3-VL-8B-Instruct
+
+To instantiate R-Adapt on this novel architecture, we follow the data-driven optimization paradigm (R-Adapt +) detailed in the Method Section . Specifically, we first generate a lightweight dataset comprising merely 2k adversarial examples specifically targeting the Qwen3-VL vision encoder. To establish a stable structural prior, we initialize the Fixed Robustness Anchor (FRA) by feeding a uniform white image into the clean Qwen3-VL vision encoder and extracting the original attention response from its first Transformer block. Subsequently, the FRA is optimized exclusively on the 2k adversarial samples, with the Gaussian Input Filter (GIF) actively applied to the inputs during this phase, while the entirety of the model’s weights remains frozen. Ultimately, the defense is deployed by maintaining this joint application of the GIF and the optimized FRA within the vision encoder, robustifying the model without altering any foundational parameters. Following the identical experimental protocol established in the main manuscript, we assess the Visual Question Answering (VQA) and Captioning (CAP) capabilities 20 S. Nie et al. 
+
+Table 11: CAP and VQA tasks on Qwen3-VL. The “Setting” column denotes the training budget for R-Adapt +’s anchor.                           
+
+> Method Setting CAP VQA
+> Clean Rob. Clean Rob. No Defense —100.0 28.7 100.0 37.9 R-Adapt +
+> ϵ= 4 /255 100.0 76.7 100.0 73.8
+> ϵ= 8 /255 100.0 73.3 99.3 71.3
+> ϵ= 16 /255 100.0 75.3 98.3 72.4
+
+of Qwen3-VL against the potent V-Attack [43] ( ℓ∞, ϵ = 16 /255 , 300 steps) on 300 randomly sampled COCO images. The empirical outcomes are presented in Tab. 11. When exposed to adversarial perturbations without any defense mechanism, Qwen3-VL experiences a drastic performance collapse, with robust accuracy plum-meting to 28.7% and 37.9% for the CAP and VQA tasks, respectively. However, upon integrating R-Adapt +, the model’s resilience is substantially restored. Inter-estingly, unlike LLaVA, which required a higher training noise budget to maximize defense efficacy, Qwen3-VL demonstrates exceptional robustness even when the anchor is optimized with a relatively conservative perturbation budget ( ϵ = 4 /255 ). Under this setting, R-Adapt + achieves remarkable robust accuracies of 76.7% (CAP) and 73.8% (VQA), while perfectly preserving 100% clean performance. Consistent with our previous observations, a marginal trade-off emerges at higher training budgets ( e.g ., clean VQA accuracy slightly dips to 98.3% at ϵ = 16 /255 ). These results confirm that R-Adapt can be seamlessly deployed as a plug-and-play defense to promote comprehensive safety across various LVLMs. StanfordCars
+
+> Food101
+> Flowers102
+> StanfordCars
+> Food101
+> Flowers102Clean
+> Clean
+> Clean
+> Clean
+> Clean
+> Clean
+
+Fig. 12: Progressive replacement results on out-of-distribution datasets. R-Adapt 21 
+
+## References 
+
+1. Bossard, L., Guillaumin, M., Van Gool, L.: Food-101–mining discriminative com-ponents with random forests. In: European conference on computer vision. pp. 446–461. Springer (2014) 2. Carlini, N., Wagner, D.: Towards evaluating the robustness of neural networks. In: IEEE Symposium on Security and Privacy (S&P) (2017) 3. Chen, L., Chen, Y., Luo, Y., Dou, H., Zhong, X.: Attention-guided hierarchical defense for multimodal attacks in vision-language models. In: Proceedings of the Computer Vision and Pattern Recognition Conference. pp. 1607–1617 (2025) 4. Cimpoi, M., Maji, S., Kokkinos, I., Mohamed, S., Vedaldi, A.: Describing textures in the wild. In: Proceedings of the IEEE conference on computer vision and pattern recognition. pp. 3606–3613 (2014) 5. Coates, A., Ng, A., Lee, H.: An analysis of single-layer networks in unsupervised feature learning. In: Proceedings of the fourteenth international conference on artificial intelligence and statistics. pp. 215–223. JMLR Workshop and Conference Proceedings (2011) 6. Croce, F., Hein, M.: Reliable evaluation of adversarial robustness with an ensemble of diverse parameter-free attacks. In: International Conference on Machine Learning (ICML) (2020) 7. Croce, F., Schlarmann, C., Singh, N.D., Hein, M.: Adversarially robust clip models can induce better (robust) perceptual metrics. In: 2025 IEEE Conference on Secure and Trustworthy Machine Learning (SaTML). pp. 636–660. IEEE (2025) 8. Deng, J., Dong, W., Socher, R., Li, L.J., Li, K., Fei-Fei, L.: Imagenet: A large-scale hierarchical image database. In: 2009 IEEE conference on computer vision and pattern recognition. pp. 248–255. Ieee (2009) 9. Deng, Z., Zhang, L., Vodrahalli, K., Kawaguchi, K., Zou, J.Y.: Adversarial training helps transfer learning via better representations. Advances in Neural Information Processing Systems 34 , 25179–25191 (2021) 10. Dong, J., Koniusz, P., Feng, L., Zhang, Y., Zhu, H., Liu, W., Qu, X., Ong, Y.S.: Ro-bustifying zero-shot vision language models by subspaces alignment. In: Proceedings of the IEEE/CVF International Conference on Computer Vision. pp. 21037–21047 (2025) 11. Dong, J., Koniusz, P., Zhang, Y., Zhu, H., Liu, W., Qu, X., Ong, Y.S.: Improving zero-shot adversarial robustness in vision-language models by closed-form alignment of adversarial path simplices. In: Forty-second International Conference on Machine Learning (2025) 12. Fang, H., Kong, J., Yu, W., Chen, B., Li, J., Wu, H., Xia, S.T., Xu, K.: One perturbation is enough: On generating universal adversarial perturbations against vision-language pre-training models. In: Proceedings of the IEEE/CVF International Conference on Computer Vision. pp. 4090–4100 (2025) 13. Fei-Fei, L., Fergus, R., Perona, P.: Learning generative visual models from few training examples: An incremental bayesian approach tested on 101 object categories. In: 2004 conference on computer vision and pattern recognition workshop. pp. 178– 178. IEEE (2004) 14. Gandelsman, Y., Efros, A.A., Steinhardt, J.: Interpreting clip’s image representation via text-based decomposition. In: ICLR (2024) 15. Gao, S., Jia, X., Ren, X., Tsang, I., Guo, Q.: Boosting transferability in vision-language attacks via diversification along the intersection region of adversarial trajectory. In: European Conference on Computer Vision. pp. 442–460. Springer (2024) 22 S. Nie et al. 16. Gong, S., Dou, Q., Farnia, F.: Structured gradient-based interpretations via norm-regularized adversarial training. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. pp. 11009–11018 (2024) 17. Gong, S., Haoyu, L., Dou, Q., Farnia, F.: Boosting the visual interpretability of clip via adversarial fine-tuning. In: The Thirteenth International Conference on Learning Representations (2025) 18. Gretton, A., Fukumizu, K., Teo, C., Song, L., Schölkopf, B., Smola, A.: A kernel statistical test of independence. Advances in neural information processing systems 
+
+20 (2007) 19. Griffin, G., Holub, A., Perona, P., et al.: Caltech-256 object category dataset. Tech. rep., Technical Report 7694, California Institute of Technology Pasadena (2007) 20. Guo, Q., Pang, S., Jia, X., Liu, Y., Guo, Q.: Efficient generation of targeted and transferable adversarial examples for vision-language models via diffusion models. IEEE Transactions on Information Forensics and Security 20 , 1333–1348 (2024) 21. Helber, P., Bischke, B., Dengel, A., Borth, D.: Eurosat: A novel dataset and deep learning benchmark for land use and land cover classification. IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing 12 (7), 2217– 2226 (2019) 22. Hossain, M.Z., Imteaj, A.: Securing vision-language models with a robust encoder against jailbreak and adversarial attacks. In: 2024 IEEE International Conference on Big Data (BigData). pp. 6250–6259. IEEE (2024) 23. Hossain, M.Z., Imteaj, A.: Sim-clip: Unsupervised siamese adversarial fine-tuning for robust and semantically-rich vision-language models. arXiv preprint arXiv:2407.14971 (2024) 24. Huang, H., Erfani, S.M., Li, Y., Ma, X., Bailey, J.: X-transfer attacks: Towards super transferable adversarial attacks on CLIP. In: ICML. Proceedings of Machine Learning Research, vol. 267. PMLR (2025) 25. Jähne, B.: Digital image processing. Springer (2005) 26. Jeddi, A., Shafiee, M.J., Wong, A.: A simple fine-tuning is all you need: Towards robust deep learning via adversarial fine-tuning. arXiv preprint arXiv:2012.13628 (2020) 27. Kim, B., Seo, J., Jeon, T.: Bridging adversarial robustness and gradient inter-pretability. arXiv preprint arXiv:1903.11626 (2019) 28. Kornblith, S., Norouzi, M., Lee, H., Hinton, G.: Similarity of neural network representations revisited. In: International conference on machine learning. pp. 3519–3529. PMlR (2019) 29. Krause, J., Stark, M., Deng, J., Fei-Fei, L.: 3d object representations for fine-grained categorization. In: Proceedings of the IEEE international conference on computer vision workshops. pp. 554–561 (2013) 30. Krizhevsky, A., Hinton, G., et al.: Learning multiple layers of features from tiny images. Technical Report, University of Toronto (2009) 31. Li, L., Guan, H., Qiu, J., Spratling, M.: One prompt word is enough to boost adversarial robustness for pre-trained vision-language models. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. pp. 24408–24419 (2024) 32. Lin, T.Y., Maire, M., Belongie, S., Hays, J., Perona, P., Ramanan, D., Dollár, P., Zitnick, C.L.: Microsoft coco: Common objects in context. In: Computer Vision– ECCV 2014: 13th European Conference, Zurich, Switzerland, September 6-12, 2014, Proceedings, Part V 13. pp. 740–755. Springer (2014) R-Adapt 23 33. Liu, D., Yang, M., Qu, X., Zhou, P., Cheng, Y., Hu, W.: A survey of attacks on large vision–language models: Resources, advances, and future trends. IEEE Transactions on Neural Networks and Learning Systems (2025) 34. Liu, W., Zhu, F., Wei, L., Tian, Q.: C-clip: Multimodal continual learning for vision-language model. In: The Thirteenth International Conference on Learning Representations (2025) 35. Liu, Y., Ouyang, X., Cui, X.: Gleam: Enhanced transferable adversarial attacks for vision-language pre-training models via global-local transformations. In: Proceedings of the IEEE/CVF International Conference on Computer Vision. pp. 1665–1674 (2025) 36. Lu, D., Wang, Z., Wang, T., Guan, W., Gao, H., Zheng, F.: Set-level guidance attack: Boosting adversarial transferability of vision-language pre-training models. In: Proceedings of the IEEE/CVF International Conference on Computer Vision. pp. 102–111 (2023) 37. Ma, X., Gao, Y., Wang, Y., Wang, R., Wang, X., Sun, Y., Ding, Y., Xu, H., Chen, Y., Zhao, Y., et al.: Safety at scale: A comprehensive survey of large model and agent safety. Foundations and Trends in Privacy and Security 8(3-4), 1–240 (2026) 38. Madry, A., Makelov, A., Schmidt, L., Tsipras, D., Vladu, A.: Towards deep learning models resistant to adversarial attacks. arXiv preprint arXiv:1706.06083 (2017) 39. Maji, S., Rahtu, E., Kannala, J., Blaschko, M., Vedaldi, A.: Fine-grained visual classification of aircraft. arXiv preprint arXiv:1306.5151 (2013) 40. Mao, C., Geng, S., Yang, J., Wang, X., Vondrick, C.: Understanding zero-shot adversarial robustness for large-scale models. In: ICLR (2023) 41. Naseer, M.M., Ranasinghe, K., Khan, S.H., Hayat, M., Shahbaz Khan, F., Yang, M.H.: Intriguing properties of vision transformers. Advances in Neural Information Processing Systems 34 , 23296–23308 (2021) 42. Nie, S., Zhang, J., Wang, Z., Shan, S., Chen, X.: Contrastive spectral rectification: Test-time defense towards zero-shot adversarial robustness of clip. arXiv preprint arXiv:2601.19210 (2026) 43. Nie, S., Zhang, J., Yan, J., Shan, S., Chen, X.: V-attack: Targeting disentan-gled value features for controllable adversarial attacks on lvlms. arXiv preprint arXiv:2511.20223 (2025) 44. Nilsback, M.E., Zisserman, A.: Automated flower classification over a large number of classes. In: 2008 Sixth Indian conference on computer vision, graphics & image processing. pp. 722–729. IEEE (2008) 45. Parkhi, O.M., Vedaldi, A., Zisserman, A., Jawahar, C.: Cats and dogs. In: 2012 IEEE conference on computer vision and pattern recognition. pp. 3498–3505. IEEE (2012) 46. Pérez, J.C., Alfarra, M., Jeanneret, G., Rueda, L., Thabet, A., Ghanem, B., Arbeláez, P.: Enhancing adversarial robustness via test-time transformation ensembling. In: Proceedings of the IEEE/CVF International Conference on Computer Vision. pp. 81–91 (2021) 47. Qi, X., Huang, K., Panda, A., Wang, M., Mittal, P.: Visual adversarial examples jailbreak large language models. arXiv preprint arXiv:2306.13213 1(3), 4 (2023) 48. Radford, A., Kim, J.W., Hallacy, C., Ramesh, A., Goh, G., Agarwal, S., Sastry, G., Askell, A., Mishkin, P., Clark, J., et al.: Learning transferable visual models from natural language supervision. In: International conference on machine learning. pp. 8748–8763. PmLR (2021) 49. Raghu, M., Unterthiner, T., Kornblith, S., Zhang, C., Dosovitskiy, A.: Do vision transformers see like convolutional neural networks? Advances in neural information processing systems 34 , 12116–12128 (2021) 24 S. Nie et al. 50. Salman, H., Ilyas, A., Engstrom, L., Kapoor, A., Madry, A.: Do adversarially robust imagenet models transfer better? Advances in Neural Information Processing Systems 33 , 3533–3545 (2020) 51. Schlarmann, C., Singh, N.D., Croce, F., Hein, M.: Robust clip: Unsupervised adversarial fine-tuning of vision embeddings for robust large vision-language models. ICML (2024) 52. Sheng, L., Liang, J., Wang, Z., He, R.: R-tpt: Improving adversarial robustness of vision-language models through test-time prompt tuning. In: Proceedings of the Computer Vision and Pattern Recognition Conference. pp. 29958–29967 (2025) 53. Song, K., Lai, H., Pan, Y., Yin, J.: Mimicdiffusion: Purifying adversarial pertur-bation via mimicking clean diffusion model. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. pp. 24665–24674 (2024) 54. Sui, E., Wang, X., Yeung-Levy, S.: Just shift it: Test-time prototype shifting for zero-shot generalization with vision-language models. In: 2025 IEEE/CVF Winter Conference on Applications of Computer Vision (WACV). pp. 825–835. IEEE (2025) 55. Sui, Y., Huang, W., Yang, W., Zhao, C., Ren, J., Wang, J.: Robust clip-guided deep thinking: A two-stage optimization strategy for enhancing adversarial robustness and reliability in lvlms. In: ICASSP 2025-2025 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). pp. 1–5. IEEE (2025) 56. Tong, B., Lai, H., Pan, Y., Yin, J.: On the zero-shot adversarial robustness of vision-language models: A truly zero-shot and training-free approach. In: Proceedings of the Computer Vision and Pattern Recognition Conference. pp. 19921–19930 (2025) 57. Veeling, B.S., Linmans, J., Winkens, J., Cohen, T., Welling, M.: Rotation equivariant cnns for digital pathology. In: International Conference on Medical image computing and computer-assisted intervention. pp. 210–218. Springer (2018) 58. Wang, H., Dong, K., Zhu, Z., Qin, H., Liu, A., Fang, X., Wang, J., Liu, X.: Transferable multimodal attack on vision-language pre-training models. In: 2024 IEEE Symposium on Security and Privacy (SP). pp. 1722–1740. IEEE (2024) 59. Wang, R., Ma, X., Zhou, H., Ji, C., Ye, G., Jiang, Y.G.: White-box multimodal jailbreaks against large vision-language models. In: Proceedings of the 32nd ACM International Conference on Multimedia. pp. 6920–6928 (2024) 60. Wang, S., Zhang, J., Yuan, Z., Shan, S.: Pre-trained model guided fine-tuning for zero-shot adversarial robustness. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. pp. 24502–24511 (2024) 61. Wang, X., Chen, K., Zhang, J., Chen, J., Ma, X.: Tapt: Test-time adversarial prompt tuning for robust inference in vision-language models. In: Proceedings of the Computer Vision and Pattern Recognition Conference. pp. 19910–19920 (2025) 62. Wang, Y., Zhang, H., Pan, H., Zhou, Z., Wang, X., Guo, P., Xue, L., Hu, S., Li, M., Zhang, L.Y.: Advedm: Fine-grained adversarial attack against vlm-based embodied agents. arXiv preprint arXiv:2509.16645 (2025) 63. Wang, Z., Li, X., Zhu, H., Xie, C.: Revisiting adversarial training at scale. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recog-nition. pp. 24675–24685 (2024) 64. Wang, Z., Xie, C., Bartoldson, B., Kailkhura, B.: Double visual defense: Adversarial pre-training and instruction tuning for improving vision-language model robustness. arXiv preprint arXiv:2501.09446 (2025) 65. Wang, Z., Ding, N., Mahanti, A.: Learning robust vision-language models from nat-ural latent spaces. In: The Thirty-ninth Annual Conference on Neural Information Processing Systems (2025) 66. Wang, Z., Fredrikson, M., Datta, A.: Robust models are more interpretable because attributions look normal. arXiv preprint arXiv:2103.11257 (2021) R-Adapt 25 67. Williams, A.H.: Equivalence between representational similarity analysis, centered kernel alignment, and canonical correlations analysis. bioRxiv pp. 2024–10 (2024) 68. Wu, J., Huang, X., Chen, Y., Pang, S., Wang, K.: Scaling and taming adversarial training with synthetic data. In: Proceedings of the IEEE/CVF International Conference on Computer Vision. pp. 2951–2960 (2025) 69. Wu, Q., Guo, J., Wang, W., Wang, Y.: Robustness feature adapter for efficient adversarial training. arXiv preprint arXiv:2508.17680 (2025) 70. Xiao, J., Hays, J., Ehinger, K.A., Oliva, A., Torralba, A.: Sun database: Large-scale scene recognition from abbey to zoo. In: 2010 IEEE computer society conference on computer vision and pattern recognition. pp. 3485–3492. IEEE (2010) 71. Xing, S., Zhao, Z., Sebe, N.: Clip is strong enough to fight back: Test-time coun-terattacks towards zero-shot adversarial robustness of clip. In: Proceedings of the Computer Vision and Pattern Recognition Conference. pp. 15172–15182 (2025) 72. Yin, Z., Ye, M., Zhang, T., Du, T., Zhu, J., Liu, H., Chen, J., Wang, T., Ma, F.: Vlattack: Multimodal adversarial attacks on vision-language tasks via pre-trained models. Advances in Neural Information Processing Systems 36 , 52936–52956 (2023) 73. Ying, Z., Liu, A., Zhang, T., Yu, Z., Liang, S., Liu, X., Tao, D.: Jailbreak vision lan-guage models via bi-modal adversarial prompt. IEEE Transactions on Information Forensics and Security (2025) 74. Young, P., Lai, A., Hodosh, M., Hockenmaier, J.: From image descriptions to visual denotations: New similarity metrics for semantic inference over event descriptions. Transactions of the Association for Computational Linguistics 2, 67–78 (2014) 75. Yu, L., Zhang, H., Xu, C.: Text-guided attention is all you need for zero-shot robustness in vision-language models. Advances in Neural Information Processing Systems 37 , 96424–96448 (2024) 76. Zhai, K., Chen, S., Ma, X., Jiang, Y.G.: Fedapt: Federated adversarial prompt tuning for vision-language models. In: Proceedings of the 33rd ACM International Conference on Multimedia. pp. 4310–4318 (2025) 77. Zhang, H., Yu, Y., Jiao, J., Xing, E., El Ghaoui, L., Jordan, M.: Theoretically principled trade-off between robustness and accuracy. In: International conference on machine learning. pp. 7472–7482. PMLR (2019) 78. Zhang, J., Ma, X., Wang, X., Qiu, L., Wang, J., Jiang, Y.G., Sang, J.: Adversarial prompt tuning for vision-language models. In: European conference on computer vision. pp. 56–72. Springer (2024) 79. Zhang, J., Wang, X., Ma, X., Qiu, L., Jiang, Y.G., Sang, J.: Nap-tuning: Neural augmented prompt tuning for adversarially robust vision-language models. IEEE Transactions on Pattern Analysis and Machine Intelligence (2026) 80. Zhang, J., Ye, J., Ma, X., Li, Y., Yang, Y., Chen, Y., Sang, J., Yeung, D.Y.: Anyattack: Towards large-scale self-supervised adversarial attacks on vision-language models. In: Proceedings of the Computer Vision and Pattern Recognition Conference. pp. 19900–19909 (2025) 81. Zhang, J., Yi, Q., Sang, J.: Towards adversarial attack on vision-language pre-training models. In: Proceedings of the 30th ACM International Conference on Multimedia. pp. 5005–5013 (2022) 82. Zhang, M., Bi, K., Chen, W., Guo, J., Cheng, X.: Clipure: Purification in latent space via CLIP for adversarially robust zero-shot classification. In: ICLR (2025) 83. Zhang, P.F., Huang, Z., Bai, G.: Universal adversarial perturbations for vision-language pre-trained models. In: Proceedings of the 47th International ACM SIGIR Conference on Research and Development in Information Retrieval. pp. 862–871 (2024) 26 S. Nie et al. 84. Zhang, Y., Chen, Y., Chen, Z., Ruan, W., Huang, X., Khastgir, S., Zhao, X.: Adversarial training for probabilistic robustness. In: Proceedings of the IEEE/CVF International Conference on Computer Vision. pp. 1675–1685 (2025) 85. Zhou, K., Yang, J., Loy, C.C., Liu, Z.: Learning to prompt for vision-language models. International journal of computer vision 130 (9), 2337–2348 (2022) 86. Zhou, X., Yang, K., Miao, C., Hu, B., Xu, Z., Cui, S., Meng, C., Hong, D.: Parameter-free and accessible prompt learning to enhance adversarial robustness for pre-trained vision-language models. In: Proceedings of the 2025 Conference of the Nations of the Americas Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers). pp. 751–761 (2025) 87. Zhou, Y., Xia, X., Lin, Z., Han, B., Liu, T.: Few-shot adversarial prompt learning on vision-language models. Advances in Neural Information Processing Systems 37 ,3122–3156 (2024) 88. Zhou, Z., Hu, S., Li, M., Zhang, H., Zhang, Y., Jin, H.: Advclip: Downstream-agnostic adversarial examples in multimodal contrastive learning. In: Proceedings of the 31st ACM International Conference on Multimedia. pp. 6311–6320 (2023) 89. Zhu, X., Zhu, B., Wang, S., Zhao, K., Zhang, H.: Enhancing clip robustness via cross-modality alignment. The Thirty-ninth Annual Conference on Neural Information Processing Systems (2025) R-Adapt 27 
+
+Fig. 13: Comparison of first-layer attention maps: original input images, standard CLIP model attention maps, and adversarially fine-tuned CLIP (FARE) attention maps. 28 S. Nie et al. 
+
+Fig. 14: Comparison of first-layer attention maps: original input images, standard CLIP model attention maps, and adversarially fine-tuned CLIP (FARE) attention maps.

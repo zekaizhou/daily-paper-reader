@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.17761v1/fig-001.webp",
+      "caption": "Fig. 3: Representative cases from DFBench with the evidence patches selected by our method. The first row shows AI-edited subsets, while the second and third rows show AI-generated subsets. S1-S4 denote the top evidence patches sampled from distinct semantic clusters and ranked by the fused anomaly score. S1-S2 typically localize the dominant manipulated regions, while S3-S4 provide auxiliary evidence capturing subtle or secondary manipulation cues.",
+      "page": 5,
+      "index": 1,
+      "width": 1072,
+      "height": 371
+    },
+    {
+      "url": "assets/figures/arxiv/2603.17761v1/fig-002.webp",
+      "caption": "Fig. 2: Overview of SCEP for training-free IDD. (1) Dual-cue patch anomalies are scored in semantic space: frequency is measured by JSD between each patch’s DCT spectrum, while noise is quantified from residuals via the median and MAD. (2) Patch embeddings are clustered around the CLS anchor to select top-k evidence tokens, and grid-based NMS removes redundant ones. The resulting evidence pack conditions a frozen LVLM to predict Real or Fake.",
+      "page": 3,
+      "index": 2,
+      "width": 1072,
+      "height": 533
+    },
+    {
+      "url": "assets/figures/arxiv/2603.17761v1/fig-003.webp",
+      "caption": "TABLE I: Performance on DFBench across AI-generated subsets. The table compares multiple frozen LVLM backbones",
+      "page": 4,
+      "index": 3,
+      "width": 1076,
+      "height": 558
+    },
+    {
+      "url": "assets/figures/arxiv/2603.17761v1/fig-004.webp",
+      "caption": "Fig. 1: Comparison of LVLM inference paradigms for IDD. (A) Direct inference uses the full image. (B) VQAstyle inference formulates IDD. (C) Logits-based inference uses token probabilities. (D) A training-free, evidence-driven framework that selects compact evidence tokens with frequency/noise cues and grid-based NMS for LVLM prediction.",
+      "page": 1,
+      "index": 4,
+      "width": 524,
+      "height": 324
+    }
+  ]
+}

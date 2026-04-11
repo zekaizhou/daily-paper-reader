@@ -1,0 +1,78 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.15166v1/fig-001.webp",
+      "caption": "Fig. 2: Overview of our proposed DAIT for distilling from a frozen VLM to a lightweight model via a trainable intermediate teacher model. With the help of data augmentation, the intermediate teacher captures rich fine-grained cues from the VLM outputs and performs adaptive knowledge transfer. It then processes original image features to produce refined and task-aligned supervision, which is transferred to the lightweight student by feature-level distillation.",
+      "page": 6,
+      "index": 1,
+      "width": 716,
+      "height": 459
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15166v1/fig-002.webp",
+      "caption": "Table 2: Comparative results between DAIT and the suboptimal method VL2Lite across multiple datasets and different models. DAIT-F and DAIT-L denote our DAIT employing feature and logits distillation mechanisms, respectively.",
+      "page": 11,
+      "index": 2,
+      "width": 718,
+      "height": 390
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15166v1/fig-003.webp",
+      "caption": "Fig. 3: Visualization of intra-class and inter-class feature distributions of ResNet-18 distilled by different methods on the Stanford Cars dataset. They are illustrated via similarity matrices and t-SNE plots. With the guidance of an intermediate teacher, our method enables ResNet-18 to attain stronger discriminative capability.",
+      "page": 11,
+      "index": 3,
+      "width": 576,
+      "height": 418
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15166v1/fig-004.webp",
+      "caption": "Fig. 1: Failure cases of direct distillation from VLM to lightweight student network ResNet18. (a) Direct distillation from the VLM. (b) Independently trained student without teacher guidance. (c) Our method: DAIT. Heatmaps are overlaid on the input images to indicate model attention. Compared to (a) and (b), our method yields more concentrated activations on discriminative parts (e.g., the bird’s body) while suppressing background responses.",
+      "page": 2,
+      "index": 4,
+      "width": 533,
+      "height": 356
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15166v1/fig-005.webp",
+      "caption": "Table 1: Results of fine-grained classification performance on various datasets using ResNet-18 and MobileNet-V2 with different knowledge distillation methods. “w/o KD” denotes training without teacher guidance and is used to verify any performance difference attributed to the knowledge distillation process.",
+      "page": 10,
+      "index": 5,
+      "width": 718,
+      "height": 559
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15166v1/fig-006.webp",
+      "caption": "Fig. 6: Comparison of CKA feature similarity scores between different intermediate teachers and the VLM. Larger circles denote a greater number of parameters for the corresponding model. Among all candidates, RegNet strikes the optimal balance between model size and architectural compatibility.",
+      "page": 13,
+      "index": 6,
+      "width": 523,
+      "height": 338
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15166v1/fig-007.webp",
+      "caption": "Fig. 7: The result of different training strategies on the FGVC-Aircraft dataset using ResNet-18. (a) Classification accuracy comparison with distillation loss adopted as primary loss under different hyperparameter configurations. (b) Classification accuracy comparison with distillation loss (DL) as primary loss against classification loss (CL) as primary loss under different hyperparameter configurations. Here, k = 0 denotes the loss with fixed weights, and λ is directly applied to the secondary loss.",
+      "page": 13,
+      "index": 7,
+      "width": 688,
+      "height": 230
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15166v1/fig-008.webp",
+      "caption": "Fig. 4: Bubble visualization of parameter counts for different deep architectures. The number below each bubble denotes the model size in millions (M). Unlike prior works that usually use a network larger than the student as a teacher assistant, our DAIT adopts even smaller than the student model as the intermediate teacher.",
+      "page": 12,
+      "index": 8,
+      "width": 648,
+      "height": 197
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15166v1/fig-009.webp",
+      "caption": "Fig. 5: The top-1 accuracy of ResNet18 on FGVC-Aircraft using different intermediate teachers for knowledge distillation. The dashed line represents the baseline result (55.87%) obtained by direct distillation from the VLM.",
+      "page": 12,
+      "index": 9,
+      "width": 725,
+      "height": 364
+    }
+  ]
+}

@@ -1,0 +1,1402 @@
+Title: The Geometry of Robustness: Optimizing Loss Landscape Curvature and Feature Manifold Alignment for Robust Finetuning of Vision-Language Models
+
+URL Source: https://arxiv.org/pdf/2603.27139v1
+
+Published Time: Tue, 31 Mar 2026 00:32:41 GMT
+
+Number of Pages: 21
+
+Markdown Content:
+# The Geometry of Robustness: Optimizing Loss Landscape Curvature and Feature Manifold Alignment for Robust Finetuning of Vision-Language Models 
+
+## Shivang Chopra Shaunak Halbe Chengyue Huang Brisa Maneechotesuwan Zsolt Kira Georgia Institute of Technology 
+
+{shivangchopra11,shalbe9,chuang475,bmaneech3,zkira }@gatech.edu 
+
+## Abstract 
+
+Fine-tuning approaches for Vision-Language Models (VLMs) face a critical three-way trade-off between In-Distribution (ID) accuracy, Out-of-Distribution (OOD) generalization, and adversarial robustness. Existing robust fine-tuning strategies resolve at most two axes of this trade-off. Generalization-preserving methods retain ID/OOD per-formance but leave models vulnerable to adversarial at-tacks, while adversarial training improves robustness to tar-geted attacks but degrades ID/OOD accuracy. Our key in-sight is that the robustness trade-off stems from two geo-metric failures: sharp, anisotropic minima in parameter space and unstable feature representations that deform un-der perturbation. To address this, we propose GRACE (Gram-aligned Robustness via Adaptive Curvature Esti-mation) , a unified fine-tuning framework that jointly reg-ularizes the parameter-space curvature and feature-space invariance for VLMs. Grounded in Robust PAC-Bayes the-ory, GRACE employs adaptive weight perturbations scaled by local curvature to promote flatter minima, combined with a feature alignment loss that maintains representation con-sistency across clean, adversarial, and OOD inputs. On Im-ageNet fine-tuning of CLIP models, GRACE simultaneously improves ID accuracy by 10.8%, and adversarial accu-racy by 13.5% while maintaining 57.0% OOD accuracy (vs. 57.4% zero-shot baseline). Geometric analysis confirms that GRACE converges to flatter minima without feature dis-tortion across distribution shifts, providing a principled step toward generalized robustness in foundation VLMs. 
+
+## 1. Introduction 
+
+Large-scale Vision-Language Models (VLMs) such as CLIP and ALIGN [10, 24] have become powerful univer-sal feature extractors, demonstrating strong zero-shot trans-fer and robustness to several natural distribution shifts [23]. However, when adapted to downstream tasks, their relia-bility is constrained by a persistent three-way trade-off be-tween: (i) improving in-distribution (ID) accuracy, (ii) pre-serving robustness under natural and synthetic distribution 74.21       
+
+> 57.01
+> 22.44
+> 74.13
+> 57.56
+> 8.89
+> 17.48
+> 52.54
+> 37.96
+> TPGM TeCoA GRACE (Ours) CLIP
+> In-Distribution (ID)
+> Out-of-Distribution
+> (OOD)
+> Adversarial
+> Three-Way Tradeoff Geomteric Failure Modes
+> Parameter Space (3D Loss Landscape)
+> Standard FT
+> Sharp Minimum
+> (Vulnerable to Weight
+> Perturbations) Sharp
+> Minima
+> Flat
+> Minima
+> Flat Minima
+> (LAR-AWP)
+> GRACE
+> Gram-Aligned
+> (Compact Volume)
+> Scattering under attack
+> (f clean vs f adv vs f ood far apart)
+> Standard FT
+> Feature Space (Hypersphere)
+> GRACE
+
+Figure 1. The VLM robustness three-way tradeoff. Existing robust fine-tuning strategies resolve at most two of {ID, OOD, ad-versarial } robustness simultaneously, leaving a gap in generalized robustness. GRACE is designed to close this gap. 
+
+shifts (OOD), and (iii) resisting gradient-based adversarial attacks. Standard fine-tuning often collapses at least one of these axes [26, 28, 30, 38], making generalized robustness 
+
+(simultaneous robustness across ID, OOD, and adversarial regimes) a central open challenge for VLM deployment. Empirically, we find that existing robust fine-tuning methods systematically polarize this trade-off rather than resolve it. Two dominant strategies emerge: 
+
+S1 Generalization-focused fine-tuning. Methods that preserve or enhance zero-shot and OOD performance via conservative adaptation, weight regularization [9, 28–30, 36] or grounding with text anchors [5, 19] typ-ically maintain strong ID/OOD accuracy, but exhibit near-zero robustness to standard ℓp PGD attacks. 
+
+S2 Adversarial training for VLMs. Conventional Adver-sarial Training (AT) approaches substantially improve PGD robustness but suffer notable drops in both ID and OOD accuracy. Critically, our analysis shows that cur-rent AT approaches [17, 26] result in a significant re-duction in robustness to natural adversarial samples in datasets like ImageNet-A/A-Plus [16]. These behaviors indicate that the robustness trade-off is not merely a hyperparameter artifact, but reflects how dif-ferent objectives reshape the underlying geometry of the model. In Sections 3,4, we perform a systematic theoretical 
+
+> arXiv:2603.27139v1 [cs.CV] 28 Mar 2026
+
+and geometric analysis of CLIP-style VLMs under strate-gies S1 and S2, examining both the local loss landscape and the induced feature manifold. This analysis reveals three coupled failures: ( i) large deviation from pre-trained weights, ( ii ) sharp, anisotropic minima associated with high parameter-space complexity, and ( iii ) feature manifolds that deform under distribution shifts, destabilizing alignment across clean, OOD, and adversarial inputs. Motivated by this perspective, we propose GRACE (Gram-aligned Robustness via Adaptive Curvature Es-timation) , a unified fine-tuning framework grounded in a robust PAC-Bayesian perspective. GRACE is designed to jointly control: (i) parameter-space curvature , promoting flatter, lower-complexity solutions around the pre-trained weights; and (ii) feature-space invariance , encouraging sta-ble class structure under both input and weight perturba-tions. It instantiates these principles via two components: 1. Layerwise Adaptive Low-Rank Adversarial Weight Perturbation (LAR-AWP): structured, low-rank adver-sarial perturbations with layerwise adaptive magnitudes that bias optimization toward flatter regions without the severe accuracy penalties of standard AT; 2. Gram-Volume Alignment Loss: a compact statis-tic capturing how image features spread in representa-tion space, enforced to remain consistent across clean, LAR-AWP-perturbed, and adversarial-perturbed states, thereby preserving class separation and alignment with clean embeddings across domains and attacks. This paper makes the following key contributions: • We provide a theoretical and geometric analysis of the VLM fine-tuning robustness trade-off (Section 3, 4), link-ing failures of existing methods to sharp, anisotropic min-ima and feature manifold distortion across clean, OOD, and adversarial inputs. • We propose GRACE , a principled geometry-driven framework that jointly regularizes parameter-space cur-vature and feature-space invariance under a robust PAC-Bayesian view for achieving generalized robustness. • We demonstrate that GRACE achieves improved ID accu-racy, OOD robustness, and adversarial robustness across multiple CLIP backbones and challenging benchmarks, yielding a more favorable robustness–accuracy profile than prior robust fine-tuning and AT approaches. 
+
+## 2. Related Work 
+
+Robust Fine-tuning of Vision-Language Models. Robust fine-tuning strategies for VLMs aim to retain pre-trained knowledge while adapting to new distributions. There are primarily two ways in which methods achieve this: (i) constrained adaptation by forcing the fine-tuned weights to remain close to the pre-trained model [28–30, 36], and (ii) grounding the image features into text anchors [5, 19]. However, these methods primarily target the ID–OOD axis of the trade-off—yielding flatter minima and better do-main generalization—but remain vulnerable to gradient-based adversarial attacks and natural adversarial shifts. Our proposed GRACE framework addresses this limitation by coupling constrained adaptation (LoRA) with curvature reg-ularization and feature-space invariance. 
+
+Adversarial Fine-tuning of VLMs. Adversarial train-ing (AT) [16] has proven effective for improving robust-ness to small input perturbations but often exacerbates OOD degradation. Existing approaches typically (i) preserve proximity to the pre-trained model [34], (ii) enforce in-variance to pre-trained image features [26], or (iii) anchor image features to text [13, 17]. While effective along the ID–Adv axis, these methods under-address the global ge-ometry of the weight–loss landscape, which is critical for OOD stability and representational coherence. GRACE builds on invariance-based ideas [26] by introducing a Gram-Volume regularizer that aligns clean, adversarial, and AWP-perturbed embeddings, and pairs it with curvature-aware adaptation to target the full ID–OOD–Adv trilemma. 
+
+Generalization through Curvature and Geometry. 
+
+There has been recent interest in improving generaliza-tion through adversarial training [27]. Recent research has shown that OOD samples could be interpreted as strong structured adversarial perturbations, utilizing low-rank uni-versal structures in adversarial perturbations to improve model generalization under adversarial training [33]. Con-currently, research has also shown that regularizing the weight-loss landscape (i.e., sensitivity of loss to weight per-turbations) can be very effective in promoting generaliza-tion [4, 37]. However, in large over-parameterized models, sharpness is highly anisotropic across layers and parame-ters, so uniform regularization is suboptimal. GRACE ad-dresses this line by introducing Layerwise Adaptive Low-Rank Adversarial Weight Perturbation (LAR-AWP) , which adaptively adjusts perturbation rank per layer based on lo-cal curvature, yielding targeted flattening where it matters. 
+
+## 3. Theoretical Analysis 
+
+To understand the robustness trade-offs observed during fine-tuning, we start by theoretically deriving the neces-sary conditions for generalized robust fine-tuning of Vision-Language Models. Subsequently, we analyze the failure modes in existing methods and motivate GRACE to effec-tively balance the trade-off. 
+
+3.1. Problem Setup and Assumptions 
+
+Consider fine-tuning a pre-trained VLM with parameters 
+
+θ0 ∈ Rd to parameters θ using dataset D = {(xi, y i)}ni=1 .Let fθ : X → Rk denote the model with loss ℓ : Rk × Y → 
+
+R. For domain s ∈ S = {ID , OOD , Adv }, define risk: 
+
+Rs(θ) = E(x,y )∼D s [ℓ(fθ (x), y )] (1) The robust risk is RRob (θ) = max s∈S Rs(θ).
+
+Assumption 1 (Smoothness) . The loss ℓ(fθ (·), ·) is L-smooth and β-Lipschitz in θ with bounded Hessian spec-trum: ∥∇ 2 
+
+> θ
+
+ℓ∥≤ M .
+
+Assumption 2 (Feature Regularity) . The encoder fθ maps to the unit sphere with Lf -Lipschitz continuity: ∥fθ (x) −
+
+fθ′ (x)∥≤ Lf ∥θ − θ′∥ for all x.
+
+3.2. PAC-Bayesian Framework for Multi-Domain Robustness 
+
+Following the PAC-Bayes framework [18, 21], we model fine-tuning as sampling from posterior Q = N (θ, σ 2I)
+
+given prior P = N (θ0, σ 2I).
+
+Theorem 3.1 (Robust PAC-Bayes Bound) . Under Assump-tions 1-2, with probability at least 1 − δ over the training set: 
+
+RRob (θ) ≤ ˆRID (θ) + ∥θ − θ0∥2
+
+2nσ 2 + ln(2 n/δ )2n| {z }
+
+> (A) Proximity from prior
+
++ σ2
+
+2 · Tr (E[∇2 
+
+> θ
+
+RRob (θ)]) 
+
+| {z }
+
+> (B) Parameter-space sharpness
+
++ max  
+
+> s,t ∈S
+
+dH∆H(Ds, Dt)
+
+| {z }
+
+> (C) Cross-domain discrepancy
+
++λ∗ (2) 
+
+where ˆRID is empirical ID risk, dH∆H is the H∆H-divergence, and λ∗ is the ideal joint error. 
+
+Refer to the supplementary for the proof of Theorem 3.1. 
+
+3.3. Geometric Interpretation and Feature-Space Bounds 
+
+The H∆H-divergence in term (C) is intractable for neural networks. We derive a feature-space upper bound: 
+
+Lemma 3.2 (Feature-Space Domain Discrepancy) . Under Assumption 2, the domain divergence is bounded by class-conditional feature alignment: 
+
+dH∆H(Ds, Dt) ≤ 2LfkX
+
+> c=1
+
+πc
+
+
+
+∥μcs − μct ∥2+pTr (Σ cs − Σct )2
+
+
+
+(3) 
+
+where μcs, Σcs are the mean and covariance of class-c fea-tures under domain s, and πc is the class prior. 
+
+This connects domain discrepancy to observable geo-metric properties: class centroid alignment and covariance stability.                                      
+
+> Method (A) Proximity (B) Sharpness (C) Stability
+> ∥θ−θ0∥2Tr (∇2R)dH∆H
+> Vanilla FT ✗✗✗
+> WiSE-FT [36] ✓✗✗
+> FLYP [5] ✓✗∼
+> TPGM [28] ✓✗✗
+> SPD [29] ✓✗✗
+> TeCoA [17] ✗∼∼
+> FARE [26] ✗∼✓
+> PMG-AFT [34] ✓∼✓
+> LAAT [13] ✗✓✓
+> GRACE (Ours) ✓✓✓
+
+Table 1. Decomposition of robust fine-tuning methods by op-timization objectives. Methods addressing each term explicitly through their loss function or training procedure are marked ( ✓), those with implicit or partial coverage are marked ( ∼), and those without explicit optimization are marked ( ✗). Cosine Alignment ∆LID ( ↓)Method ID →OOD ID →Adv ID →OOD ID →Adv FT 0.84 0.48 +2.7 +6.5 WiSE-FT (S1) 0.91 0.57 +1.1 +5.6 TeCoA (S2) 0.78 0.72 +4.7 +2.9     
+
+> GRACE 0.89 0.85 +1.8 +2.5
+
+Table 2. Class-conditional feature-space stability. Cosine simi-larity between ID and shifted class centroids (left) and change in LID relative to ID (right). Lower ∆LID implies more stable local manifolds. 
+
+3.4. Predicted Failure Modes from Incomplete Op-timization 
+
+Theorem 3.1 reveals that robust fine-tuning requires si-multaneous control of three critical terms: (A) proxim-ity to the pre-trained prior ∥θ − θ0∥2, (B) parameter-space sharpness Tr (∇2RRob ), and (C) feature-space sta-bility dH∆H (Ds, Dt). We hypothesize that methods opti-mizing only a subset of these objectives will exhibit pre-dictable failure modes: missing (A) leads to drift from the pre-trained manifold and degraded zero-shot transfer; miss-ing (B) results in sharp minima vulnerable to adversarial perturbations; and missing (C) causes unstable feature rep-resentations that degrade under distribution shifts. Table 1 categorizes existing methods by which objectives they explicitly address. This decomposition predicts specific failure patterns validated in our experiments. Proximity-preserving methods like WiSE-FT/TPGM maintain zero-shot capabilities but remain adversarially vulnerable due to sharp, anisotropic landscape. Adversarial methods like FARE improve robustness by ensuring feature stability but drift away from θ0, harming OOD accuracy, while methods like TeCoA harm OOD the most since they don’t explicitly optimize any of these objectives. (i) FT     
+
+> (iii) TeCoA (S2) (iv) GRACE (Ours)
+> (ii) WISE-FT (S1)
+> In Distribution
+> Image Features
+> (f ID )
+> Out-of-Distribution
+> Image Features
+> (f OOD )
+> PGD Adversarial
+> Image Features
+> (f Adv )
+> (i) FT (iii) TeCoA (S2) (iv) GRACE (Ours) (ii) WISE-FT (S1)
+> Text Features
+> (f Text )
+> (a) Feature Distribution Analysis (b) Loss Landscape Analysis
+
+Figure 2. (a) Feature Distribution Analysis : 3D projection of image features for in-distribution ( fID ), OOD ( fOOD ), and PGD adversarial inputs ( fAdv ) of the same class. (b) Loss Landscape Analysis : 3D/2D loss slices around the converged solutions for each method, using shared perturbation directions. 
+
+Method λmax (×10 4) ∥H∥F /√d (×10 2)
+
+FT 3.5 0.89 WiSE-FT (S1) 3.3 0.78 TeCoA (S2) 1.8 0.52 
+
+GRACE 1.6 0.43 
+
+Table 3. Parameter-space sharpness. Top Hessian eigenvalue and normalized Frobenius norm. 
+
+## 4. Empirical Validation of Failure Modes 
+
+In this section, We validate the theoretical predictions from Section 3 by demonstrating that each missing objective leads to its predicted failure mode. We fine-tune CLIP ViT-B/32 on ImageNet using methods from Table 1, eval-uating on: (i) in-distribution (ID), (ii) out-of-distribution (OOD), and (iii) PGD-ℓ∞ adversarial ( ϵ=4 /255 ). We ex-tract penultimate-layer embeddings normalized to the unit hypersphere, with metrics averaged over 100 samples per class across 3 seeds. 
+
+Failure Mode 1: Loss of Proximity → Zero-Shot Degra-dation Methods without proximity control drift signifi-cantly from pre-trained weights. Measuring relative pa-rameter distance ∥θ − θ0∥F /∥θ0∥F : High drift : TeCoA (0.47), FARE (0.43), LAAT (0.41), FT (0.38); Low drift: 
+
+WiSE-FT (0.08), TPGM (0.11), PMG-AFT (0.13), GRACE (0.09). This drift correlates strongly with zero-shot degra-dation (Pearson r = −0.82 ): methods exceeding 0.30 relative distance show >15% drop in zero-shot accuracy (TeCoA: 38.75% vs WiSE-FT: 60.40%), confirming prox-imity preservation is critical for pre-trained knowledge re-tention. 
+
+Failure Mode 2: Sharp Minima → Adversarial Vul-nerability Table 3 shows methods lacking sharpness control converge to high-curvature regions. WISE-FT exhibits λmax = 3.3 × 10 3, nearly double that of TeCoA (1.8 ×10 3). Figure 2(b) visualizes these dif-ferences through loss landscapes—unregularized methods show sharp, anisotropic minima while GRACE maintains moderate curvature (1.6 ×10 3) comparable to WiSE-FT. Critically, sharpness correlates with adversarial vulnera-bility: WiSE-FT achieves 0% adversarial accuracy, while GRACE’s joint optimization yields 22.4% robustness. 
+
+Failure Mode 3: Feature Instability → OOD Degrada-tion Figure 2(a) reveals how feature representations col-lapse under distribution shifts. WiSE-FT preserves ID/OOD structure (0.91 cosine alignment) but PGD features scat-ter from class manifolds (0.57 alignment), with ∆LID in-creasing by +5.6. TeCoA maintains adversarial alignment (0.72) but fragments OOD manifolds ( ∆LID +4.7). Table 2 quantifies this: only GRACE maintains both high alignment (ID →OOD: 0.89, ID →Adv: 0.85) and low dimensional-ity increase ( ∆LID ≤ 2.5), indicating stable representations across all shifts. 
+
+Summary: Joint Optimization is Necessary Our anal-ysis confirms the theoretical predictions: proximity loss causes zero-shot degradation (TeCoA: 38.75% vs WiSE-FT: 60.40%), uncontrolled sharpness leads to adversarial vulnerability (WiSE-FT: 0% robust accuracy), and feature instability degrades OOD performance (TeCoA: 37.96% OOD avg). 
+
+## 5. Methodology: The GRACE Framework 
+
+5.1. Overview 
+
+Building on the PAC-Bayesian view in Section 3, we in-troduce GRACE ( Gram-aligned Robustness via Adaptive 
+
+Curvature Estimation), a unified fine-tuning framework that jointly regularizes parameter-space sharpness and feature-space stability for CLIP-style VLMs. Recalling the composite bound in Theorem 3.1, robust risk is controlled by: (i) empirical ID fit, (ii) expected ro-bust sharpness, (iii) proximity to the pre-trained prior (KL), and (iv) pairwise domain discrepancy across ID/OOD/Adv. GRACE instantiates these terms via three modules: Pretrained    
+
+> Weights
+> 𝑊 ∈ℝ𝑑 xd
+> 𝐴
+> BBAWP
+> 𝐴 AWP
+> rW
+> X
+> d
+> h
+> rAWP
+> LoRA Weight Update
+> LoRA Weight Perturbation
+
+Figure 3. Low-rank adaptation and perturbation in GRACE. 
+
+Frozen pretrained weights W (θ0) (blue) are updated only through low-rank LoRA adapters (orange). LAR-AWP injects additional low-rank perturbations (red) in the same subspace. 
+
+• LoRA fine-tuning (prior proximity): parameter-efficient adaptation in a low-rank subspace anchored at the pre-trained model. • Layer-wise Adaptive Low-Rank AWP (LAR-AWP) 
+
+(sharpness control): adversarial weight perturbations in the LoRA subspace, with rank adapted per layer based on local curvature. • Gram-volume feature alignment (domain discrepancy control): a Gram-volume-based loss that stabilizes per-sample representations across clean, adversarial, and weight-perturbed regimes. The overall training objective is 
+
+LGRACE = Ltask + λLAR LLAR-AWP + λGV LGV , (4) where Ltask is the standard cross-entropy loss, LLAR-AWP 
+
+controls robust sharpness, and LGV enforces feature invari-ance. We next describe each component of the proposed GRACE framework. 
+
+5.2. LoRA Fine-Tuning: Prior Proximity 
+
+We adapt only low-rank adapters on top of the frozen CLIP backbone. For each weight matrix W ∈ Rn1×n2 ,
+
+W (θ) = W (θ0)+ BW AW , AW ∈ Rr×n2 , B W ∈ Rn1×r ,
+
+(5) with rank r ≪ min( n1, n 2). Only Θ = {AW , B W }W is trainable; W (θ0) is frozen. This low-rank parameteriza-tion constrains the adapted parameters to remain in a small affine subspace around the pre-trained weights, effectively controlling the KL term KL( Q∥P ) in Eq. (2). We use the same LoRA configuration across the PEFT baselines and GRACE for fairness. BAWP   
+
+> 𝐴 AWP
+> rAWP
+> BAWP
+> 𝐴 AWP
+> rAWP +1
+> he>φAWP
+> 𝐴
+> B
+> rW
+
+Figure 4. LAR-AWP rank curriculum. A diagonal rank mask controls the effective perturbation rank per layer. Curvature es-timates hW (from mini-batch gradients) are used to assign higher perturbation ranks to sharper layers, focusing smoothing where the loss landscape is steepest. 
+
+5.3. Layer-Wise Adaptive Low-Rank AWP (LAR-AWP) 
+
+To control the expected robust sharpness term in Eq. (2), GRACE injects adversarial weight perturbations in the same low-rank subspace, analogous to AWP [37] but adapted to LoRA and made layer-wise rank-adaptive. The layerwise adaptive rank is motivated by the anisotropic structure of ∇2R. The Hessian ∇2R exhibits layer-dependent eigenvalue gaps in VLMs. Uniform perturba-tion is suboptimal; allocating perturbation rank propor-tional to λ(ℓ)max (layer ℓ’s maximum eigenvalue) yields better complexity-smoothness tradeoffs. 
+
+Low-rank perturbation parameterization. For each LoRA-parameterized layer in Eq. (5), we introduce a per-turbation branch 
+
+Wpert (θ, ∆) = W (θ0) + BW AW + BAW P AAW P , (6) where AAW P ∈ Rrawp ,W ×n2 and Bpert  
+
+> W
+
+∈ Rn1×rAW P are adversarial perturbation factors for layer W , and rAW P is a layer-specific perturbation rank. Figure 3 illustrates how LoRA updates (orange) and LAR-AWP perturbations (red) share the same low-rank geometry. 
+
+Rank-adaptive curvature curriculum. Rather than us-ing a fixed rank for all layers, LAR-AWP assigns higher perturbation ranks to layers with larger curvature. The cur-vature of the loss function can be determined by its Hes-sian [14]. Therefore, GRACE adapts the rank of AWPs for each parameter based on the Hessian trace for that param-eter with respect to the loss function. However, computing the exact Hessian for large-scale models is computationally prohibitive. To mitigate this issue, Sophia [14] proposed a method to estimate the trace of the diagonal of the Hessian matrix using mini-batch gradients. Specifically, the first-order gradients g of the cross-entropy loss function Lce are used to get an unbiased estimate for the diagonal of the Gauss-Newton matrix, which is a biased estimator for the trace of the Hessian, h.
+
+gW = ∇W
+
+1
+
+nvnvX
+
+> i=1
+
+L(Fθ (xvi ), y vi ), hW ≈ nv gW ⊙gW ,Gram 
+
+> Volume
+> x
+> (Clean)
+> xadv
+> (PGD Attack)
+> θ
+> (Clean Weights)
+> x
+> (Clean)
+> θ
+> (Clean Weights)
+> θAWP
+> (Perturbed
+> Weights)
+
+Figure 5. Gram-volume feature alignment. For each input, GRACE compares clean, adversarial, and LAR-AWP-perturbed image embeddings via a small Gram matrix. The Gram-volume loss encourages these three vectors to remain close to each other (low volume) while preserving separation across different classes. 
+
+where nv is the validation mini-batch size. We maintain an exponential moving average of hW for each layer and compute a scalar curvature score per layer (e.g., mean of 
+
+hW ). Based on these scores, we allocate perturbation ranks 
+
+rAWP according to curvature percentiles: layers in the high-est percentile receive the largest rank, while flat layers are perturbed with minimal rank. This curriculum is illustrated in Figure 4. 
+
+LAR-AWP objective. At each training step, we perform an inner maximization over the weight perturbations, ap-proximated by gradient-ascent steps in the low-rank pertur-bation space: 
+
+LLAR-AWP ≈ 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+max 
+
+> ∥δi∥p≤ϵ
+> ∥∆∥≤ ρ
+
+L(FWpert (θ, ∆) (xi), y i), (7) where ρ bounds the perturbation in the low-rank space. The outer update then minimizes Ltask + λLAR LLAR-AWP with re-spect to Θ. This forces the model to perform well not only at 
+
+θ but also in a local neighborhood defined by the weight per-turbations, driving the solution toward flatter, more robust minima (consistent with the curvature trends in Table 3). 
+
+5.4. Gram-Volume Alignment Loss 
+
+The remaining term in Eq. (2), max s̸=t dH∆H(Ds, Dt),captures pairwise domain discrepancy. Exact H∆H-divergences are intractable for VLMs, so we operate in fea-ture space and use Gram volume as a differentiable surro-gate for local feature spread. Let fID , f Adv , f AWP ∈ RD be the ℓ2-normalized image features for sample i under clean, adversarial, and LAR-AWP-perturbed weights, respectively. We define a 3 × 3
+
+Gram matrix 
+
+Gi =
+
+ ⟨fID , f ID ⟩ ⟨fID , f Adv ⟩ ⟨fID , f AWP ⟩⟨fAdv , f ID ⟩ ⟨fAdv , f Adv ⟩ ⟨fAdv , f AWP ⟩⟨fAWP , f ID ⟩ ⟨fAWP , f Adv ⟩ ⟨fAWP , f AWP ⟩
+
+ + εI, 
+
+(8) where ⟨· , ·⟩ is the inner product and ε is a small constant for numerical stability. The associated Gram volume is 
+
+LGV = p|det( Gi)|. (9) As illustrated in Figure 5, LGV measures the volume of the parallelepiped spanned by {fID , f Adv , f AWP }: LGV ≈ 0
+
+when the three representations are close to each other (sta-ble manifold), and LGV grows as perturbations push fea-tures into diverging directions. 
+
+5.5. Training Procedure 
+
+In practice, GRACE alternates the following steps per mini-batch: (i) compute clean features and Ltask ; (ii) generate PGD adversarial examples; (iii) perform a few inner steps of low-rank weight perturbation (LAR-AWP), guided by the curvature-based rank curriculum; (iv) compute the Gram-alignment loss LGV from clean/Adv/AWP features; and (v) update the LoRA parameters Θ using the combined loss in Eq. (4). 
+
+## 6. Experiments and Results 
+
+6.1. Problem Setting 
+
+Testing OOD Robustness. We evaluate the out-of-distribution (OOD) robustness of fine-tuned Vi-sion–Language Models on image classification tasks. Our experiments employ Vision Transformers (ViTs) [31] pre-trained with CLIP [24], using the ViT-B/32 backbone for the main study. The model is fine-tuned on ImageNet-1K and tested on three OOD benchmarks: ImageNet-V2 [25], ImageNet-R [6], ImageNet-S [32]. No OOD data is used during training. To further assess zero-shot generalization, we evaluate on eight datasets covering diverse visual domains—Caltech101, Cars, DTD, EuroSAT, FGVC, Flowers102, Oxford Pets, and STL-10—following standard CLIP zero-shot protocols. 
+
+Testing Adversarial Robustness. We evaluate robust-ness to both natural and targeted adversarial robustness in our experiments. For testing robustness to natural adver-sarial data, we use the ImageNet-A [7] and ImageNet-A-Plus [12] datasets. During training, adversarial samples are generated using 10-step PGD under an ℓ∞ perturbation ra-dius of 4/255 and step size 1/255 . At test time, we employ AutoAttack [2] (APGD-CE) at the same perturbation ra-dius, ensuring consistent, attack-agnostic evaluation. We re-port both clean and adversarial accuracies across ID, OOD, and zero-shot settings. ID Domain Shift Natural Adversarial Statistics Method ImageNet ImageNet-V2 ImageNet-S ImageNet-R ImageNet-A ImageNet-A-Plus OOD Avg. Nat Adv Avg 
+
+Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv CLIP 63.35 0.00 56.48 0.00 41.44 0.00 68.83 0.01 32.69 0.00 37.92 0.00 55.58 0.00 35.30 0.00 Vanilla FT 74.86 0.00 63.75 0.00 43.34 0.00 60.85 0.00 22.47 0.00 29.12 0.00 55.98 0.00 25.80 0.00 WISE-FT 70.20 0.00 61.06 0.00 43.34 0.00 63.78 0.00 32.60 0.00 39.74 0.00 56.06 0.00 36.17 0.00 FLYP 72.15 0.00 62.22 0.00 42.22 0.00 64.38 0.01 30.06 0.00 37.89 0.00 56.27 0.00 33.98 0.00 TPGM 74.13 0.00 63.20 0.00 42.71 0.00 64.79 0.00 32.38 0.00 38.73 0.00 56.90 0.00 35.56 0.00 SPD 73.68 0.00 62.60 0.00 42.56 0.00 64.60 0.00 32.07 0.00 37.46 0.00 56.59 0.00 34.76 0.00 TeCoA 52.54 24.40 41.10 17.71 25.89 13.06 44.54 21.01 5.11 0.66 9.86 1.07 37.18 17.26 7.48 0.86 FARE 47.38 13.94 39.00 9.77 28.63 11.05 47.79 17.05 5.97 0.54 10.38 0.68 38.47 12.62 8.18 0.61 PMG-AFT 58.20 26.80 43.50 19.70 31.10 14.80 50.30 22.10 8.22 1.12 13.07 1.94 41.63 18.87 10.64 1.53 LAAT 55.46 21.54 42.30 15.80 30.15 12.20 48.90 20.40 12.23 1.93 16.48 3.48 40.45 16.13 14.35 2.70 GRACE 74.21 25.44 62.60 20.51 42.11 17.75 58.53 23.39 20.02 3.32 25.33 4.86 54.41 20.55 22.67 4.09 
+
+Table 4. OOD Results on ImageNet. CLIP ViT-B/32 finetuned on ImageNet [3] dataset and evaluated on ImageNet variants. The numbers are top-1 accuracy (%). OOD Avg averages ImageNet-V2, -S, -R; Nat Adv Avg averages ImageNet-A and A-Plus. 
+
+Zero shot Datasets Statistics CalTech101 Cars DTD EuroSAT FGVC Flowers Oxford Pets STL-10 ZS Avg. 
+
+Method Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv CLIP 80.47 0.00 51.47 0.00 41.43 0.00 45.27 0.00 15.93 0.00 60.18 0.00 84.00 0.00 95.71 0.00 59.31 0.00 Vanilla FT 79.85 0.00 45.44 0.00 40.26 0.00 41.18 0.00 14.16 0.00 55.42 0.00 84.30 0.00 97.03 0.00 57.21 0.00 WISE-FT 81.47 0.00 53.18 0.00 42.07 0.00 46.57 0.00 16.08 0.00 60.66 0.00 85.90 0.00 97.26 0.00 60.40 0.00 FLYP 80.77 0.00 33.72 0.00 38.56 0.00 39.72 0.00 11.76 0.00 50.18 0.00 84.21 0.00 96.00 0.00 54.37 0.00 TPGM 80.49 0.00 47.69 0.00 40.85 0.00 43.37 0.00 13.86 0.00 57.18 0.00 85.14 0.00 97.25 0.00 58.23 0.00 SPD 79.80 0.00 46.31 0.00 40.53 0.00 42.51 0.00 15.03 0.00 57.70 0.00 84.84 0.00 97.38 0.00 58.01 0.00 TeCoA 74.03 51.40 10.68 1.50 24.04 10.70 18.72 11.00 4.56 0.50 25.59 6.60 67.07 29.10 85.30 55.40 38.75 20.78 FARE 76.97 45.80 33.87 1.30 27.87 12.20 14.77 11.00 8.73 0.60 31.72 5.30 75.44 20.40 87.87 55.50 44.66 19.01 PMG-AFT 77.10 53.20 29.50 2.00 30.20 12.90 22.30 11.50 7.90 0.80 33.40 7.30 72.10 31.50 88.90 56.80 45.18 22.00 
+
+LAAT 75.10 47.20 28.80 1.60 29.90 11.80 20.60 10.90 6.10 0.70 28.90 6.10 72.20 22.40 86.10 55.90 43.46 19.58 GRACE 79.23 49.30 52.10 1.90 41.60 12.60 46.10 11.20 15.50 0.70 60.05 7.00 85.20 30.10 97.10 56.00 59.61 21.10 
+
+Table 5. Clean and adversarial evaluation on zero-shot image classification datasets (ViT-B/32). Models are trained on ImageNet; all other datasets are zero-shot. ZS Avg is the mean across the 8 datasets. Method ID Average Average Harmonic OOD Adversarial Mean CLIP 63.35 57.44 8.82 20.46 Vanilla FT 74.86 56.59 8.95 21.01 WISE-FT 70.20 58.05 9.04 21.11 FLYP 72.15 55.32 8.49 20.03 TPGM 74.13 57.56 8.89 20.92 SPD 73.68 57.53 8.69 20.54 TeCoA 52.54 37.96 17.48 29.24 FARE 47.38 41.56 13.43 25.07 PMG-AFT 58.20 43.40 19.57 32.85 LAAT 55.46 41.95 17.90 30.69 GRACE (Ours) 74.21 57.01 22.44 39.69 
+
+Table 6. Unified summary across settings (ViT-B/32). CLIP ViT-B/32 fine-tuned on ImageNet-1K and evaluated across ID, OOD, PGD adversarial (AutoAttack/APGD-CE), and natural ad-versarial (ImageNet-A/A-Plus average). 
+
+Baselines. We compare GRACE with (i) the standard fine-tuning baseline, (ii) robust fine-tuning 
+
+methods—WiSE-FT [36], FLYP [5], TPGM [28], and SPD [29], and (iii) adversarial fine-tuning meth-ods—TeCoA [17], FARE [26], PMG-AFT [34], and LAAT [13]. All baselines use the same CLIP prompts, pre-processing, and optimization schedule for fair comparison. 
+
+6.2. Results 
+
+Unified Comparison across Settings. Table 6 presents the unified performance summary across ID , OOD , ad-versarial , and zero-shot regimes for the ViT-B/32 back-bone. GRACE consistently improves robust performance across all domains, achieving an average +13.6% increase in PGD adversarial accuracy while and maintaining natu-ral adversarial performance compared to vanilla fine-tuning. Notably, GRACE maintains high ID accuracy (74.2%), only marginally below the vanilla baseline, while achiev-ing large gains in both distribution-shift and adversarial conditions—indicating effective flattening of the loss land-scape without sacrificing generalization. Among all meth-ods, GRACE strikes the most balanced trade-off between ID, OOD, and adversarial robustness. 
+
+Out-of-Distribution Robustness. The detailed OOD performance is reported in Table 4. Compared to strong OOD-oriented baselines like WiSE-FT and SPD, GRACE improves maintains the average OOD and ID accuracy im-proving Adversari accuracy by 13%. TeCoA and FARE, despite their strong adversarial robustness, underperform on ImageNet-V2/S/R due to overfitting to adversarial dis-Method ID Average Average Harmonic OOD Adversarial Mean CLIP 63.3 57.4 8.8 20.4 LoRA-FT 72.8 55.0 8.2 19.4 LoRA-SPD 73.0 56.0 8.5 19.5 LoRA-TeCoA 60.0 45.0 22.5 37.5 VPT-PMG-AFT 70.0 52.0 22.7 38.6 GRACE 74.2 57.0 22.4 39.6 
+
+Table 7. Comparison of GRACE with other LoRA-based fine-tuning approaches. CLIP ViT-B/32 fine-tuned on ImageNet-1K. 
+
+tributions. In contrast, GRACE preserves pre-trained struc-ture via curvature-aware regularization,enabling robustness transfer across all domains. Zero-shot evaluations in Table 5 (bottom) further confirm that GRACE maintains compet-itive clean performance while improving adversarial accu-racy by +2.09% over FARE. 
+
+Adversarial Robustness. GRACE substantially out-performs prior adversarial fine-tuning methods under both PGD and natural adversarial conditions. As shown in Ta-ble 6, GRACE achieves the highest adversarial accuracy across ID, OOD, and ZS settings (+2.87% over PMG-AFT on average) while preserving OOD stability. This demon-strates that layerwise adaptive rank perturbations effectively flatten the anisotropic curvature of the weight-loss land-scape, preventing robustness–generalization collapse. 
+
+Findings. Overall, GRACE bridges the three-way trade-off among ID accuracy, OOD generalization, and adver-sarial robustness. Unlike prior methods that specialize in one axis (e.g., WiSE-FT for OOD, TeCoA for adversar-ial), GRACE jointly optimizes for all through curvature-aware, low-rank perturbation and Gram-based invariance alignment. We observe consistent improvements in har-monic mean average across settings, as discussed in Sec-tion 6.4. 
+
+6.3. Comparison with Other LoRA-based PEFT Approaches 
+
+We further benchmark GRACE against other LoRA-style parameter-efficient fine-tuning methods in Table 7. Compared to LoRA-FT, LoRA-SPD, and LoRA-TeCoA, GRACE achieves the best overall performance (39.6%), highlighting the benefits of adaptive perturbation over static low-rank updates. These results emphasize that robustness-oriented PEFT requires dynamic control of perturbation rank and curvature sensitivity, as implemented in GRACE. 
+
+6.4. Ablation Study 
+
+To assess the contribution of each component in GRACE, we perform ablations on the ViT-B/32 model fine-tuned on ImageNet (Table 8). Adding the Gram-volume (GV) 
+
+term improves OOD generalization (+1.5%), while includ-ing LAR-AWP without a curriculum primarily enhances ad-versarial robustness (+8.6%). The full GRACE model, combining both modules with a rank-adaptive curriculum,                               
+
+> Variant ID Average Average Harmonic OOD Adversarial Mean CLIP 63.3 57.4 8.8 20.4 LoRA-FT (no regs) 72.8 55.0 8.2 19.4 + GV only 72.0 56.5 8.6 20.2 + LAR-AWP (no curriculum) 71.0 53.0 17.2 32.9 + LAR-AWP (with curriculum) 72.5 54.0 22.2 38.7 GRACE 74.2 57.0 22.4 39.6
+
+Table 8. Ablation Study. CLIP ViT-B/32 fine-tuned on ImageNet-1K. Avg is the simple mean of the four columns. 1×  
+
+> (Prior Generalization Focussed FT)
+> 5×
+> (GRACE)
+> 7×
+> (Prior Adversarial FT)
+> Relative Training Cost ( ×Vanilla FT)
+> 20
+> 25
+> 30
+> 35
+> 40
+> 45
+> Overall Model Performance
+> (Harmonic Mean)  +7 point Lift
+> 1.4x Faster
+> GRACE
+> (Ours)
+> Generalization Focussed FT
+> Adversarial FT
+> GRACE
+
+Figure 6. Pareto Curve. GRACE (Red) achieves +7 performance gain while being 1.4 × faster than prior adversarial methods. 
+
+achieves the best average, demonstrating the complemen-tary effects of representation consistency and curvature reg-ularization. These results confirm that both geometric com-ponents are critical for stabilizing representations and miti-gating catastrophic forgetting during fine-tuning. 
+
+6.5. Computation Time Analysis 
+
+In this section, we analyze the computational efficiency of the proposed GRACE framework and compare it to vanilla fine-tuning and adversarial fine-tuning approaches. As shown in the Pareto Frontier (Fig. 6), GRACE provides a more favorable robustness–compute trade-off than prior adversarial FT methods (e.g., TeCoA, PMG-AFT), achiev-ing higher overall performance at a lower training cost. 
+
+## 7. Conclusion 
+
+In this work, we present GRACE —Gram-aligned Robust-ness via Adaptive Curvature Estimation —a unified frame-work for fine-tuning VLMs that bridges the gap between ID performance, OOD generalization, and adversarial ro-bustness. Grounded in a robust PAC-Bayesian analy-sis, GRACE jointly optimizes parameter-space flatness and feature-space invariance through two complementary components: Layer-wise Adaptive Low-Rank Adversarial Weight Perturbation and Gram-Volume Alignment. Our ge-ometric diagnostics reveal that GRACE produces flatter loss landscapes and more stable feature manifolds, leading to consistent gains across ID, OOD, and adversarial regimes on ImageNet benchmarks. We hope this work establishes geometry-driven fine-tuning as a general paradigm for ro-bust multimodal adaptation. 8. Acknowledgement 
+
+This material is based upon work partially supported by the National Science Foundation under Grant No. 2239292. 
+
+## References 
+
+[1] Shai Ben-David, John Blitzer, Koby Crammer, and Fernando Pereira. Analysis of representations for domain adaptation. In Advances in Neural Information Processing Systems . MIT Press, 2006. 4 [2] Francesco Croce and Matthias Hein. Reliable evalua-tion of adversarial robustness with an ensemble of diverse parameter-free attacks. ICML, 2020. 6 [3] Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li, and Li Fei-Fei. Imagenet: A large-scale hierarchical image database. In 2009 IEEE Conference on Computer Vision and Pattern Recognition , pages 248–255, 2009. 7, 8, 10 [4] Pierre Foret, Ariel Kleiner, Hossein Mobahi, and Behnam Neyshabur. Sharpness-aware minimization for efficiently improving generalization. In ICLR , 2021. 2 [5] Sachin Goyal, Ananya Kumar, Sankalp Garg, Zico Kolter, and Aditi Raghunathan. Finetune like you pretrain: Im-proved finetuning of zero-shot vision models. In 2023 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 19338–19347, 2023. 1, 2, 3, 7, 10 [6] Dan Hendrycks, Steven Basart, Norman Mu, Saurav Kada-vath, Frank Wang, Evan Dorundo, Rahul Desai, Tyler Lixuan Zhu, Samyak Parajuli, Mike Guo, Dawn Xiaodong Song, Ja-cob Steinhardt, and Justin Gilmer. The many faces of robust-ness: A critical analysis of out-of-distribution generalization. 
+
+2021 IEEE/CVF International Conference on Computer Vi-sion (ICCV) , pages 8320–8329, 2020. 6, 8 [7] Dan Hendrycks, Kevin Zhao, Steven Basart, Jacob Stein-hardt, and Dawn Song. Natural adversarial examples. In 
+
+Proceedings of the IEEE/CVF Conference on Computer Vi-sion and Pattern Recognition (CVPR) , pages 15262–15271, 2021. 6, 8 [8] Edward J Hu, yelong shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang, and Weizhu Chen. LoRA: Low-rank adaptation of large language models. In 
+
+ICLR , 2022. 2 [9] Chengyue Huang, Junjiao Tian, Brisa Maneechotesuwan, Shivang Chopra, and Zsolt Kira. Directional gradient pro-jection for robust fine-tuning of foundation models. In The Thirteenth International Conference on Learning Represen-tations , 2025. 1 [10] Chao Jia, Yinfei Yang, Ye Xia, Yi-Ting Chen, Zarana Parekh, Hieu Pham, Quoc Le, Yun-Hsuan Sung, Zhen Li, and Tom Duerig. Scaling up visual and vision-language representa-tion learning with noisy text supervision. In International conference on machine learning , pages 4904–4916. PMLR, 2021. 1 [11] Hao Li, Zheng Xu, Gavin Taylor, Christoph Studer, and Tom Goldstein. Visualizing the loss landscape of neural nets. In 
+
+Neural Information Processing Systems , 2018. 3 [12] Xiao Li, Jianmin Li, Ting Dai, Jie Shi, Jun Zhu, and Xiaolin Hu. Rethinking natural adversarial examples for classifica-tion models, 2021. 6 [13] Xiao Li, Wei Zhang, Yining Liu, Zhanhao Hu, Bo Zhang, and Xiaolin HU. Language-driven anchors for zero-shot ad-versarial robustness. In CVPR , 2024. 2, 3, 7, 10 [14] Hong Liu, Zhiyuan Li, David Leo Wright Hall, Percy Liang, and Tengyu Ma. Sophia: A scalable stochastic second-order optimizer for language model pre-training. In The Twelfth In-ternational Conference on Learning Representations , 2024. 5[15] Xingjun Ma, Bo Li, Yisen Wang, Sarah M. Erfani, Sudanthi Wijewickrema, Grant Schoenebeck, Dawn Song, Michael E. Houle, and James Bailey. Characterizing adversarial sub-spaces using local intrinsic dimensionality, 2018. 5 [16] Aleksander Madry, Aleksandar Makelov, Ludwig Schmidt, Dimitris Tsipras, and Adrian Vladu. Towards deep learn-ing models resistant to adversarial attacks. In International Conference on Learning Representations , 2018. 1, 2 [17] Chengzhi Mao, Scott Geng, Junfeng Yang, Xin Wang, and Carl Vondrick. Understanding zero-shot adversarial robust-ness for large-scale models. In The Eleventh International Conference on Learning Representations , 2023. 1, 2, 3, 7, 10 [18] David McAllester. A pac-bayesian tutorial with a dropout bound, 2013. 3 [19] Giung Nam, Byeongho Heo, and Juho Lee. Lipsum-FT: Ro-bust fine-tuning of zero-shot models using random text guid-ance. In The Twelfth International Conference on Learning Representations , 2024. 1, 2 [20] Behnam Neyshabur, Srinadh Bhojanapalli, David McAllester, and Nathan Srebro. Exploring generalization in deep learning. In Proceedings of the 31st International Conference on Neural Information Processing Systems , page 5949–5958, Red Hook, NY, USA, 2017. Curran Associates Inc. 3 [21] Behnam Neyshabur, Srinadh Bhojanapalli, and Nathan Sre-bro. A pac-bayesian approach to spectrally-normalized mar-gin bounds for neural networks, 2018. 3 [22] Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer, James Bradbury, Gregory Chanan, Trevor Killeen, Zeming Lin, Natalia Gimelshein, Luca Antiga, Alban Desmaison, Andreas K¨ opf, Edward Yang, Zach DeVito, Martin Raison, Alykhan Tejani, Sasank Chilamkurthy, Benoit Steiner, Lu Fang, Junjie Bai, and Soumith Chintala. PyTorch: an imper-ative style, high-performance deep learning library . Curran Associates Inc., Red Hook, NY, USA, 2019. 8 [23] Hieu Pham, Zihang Dai, Golnaz Ghiasi, Kenji Kawaguchi, Hanxiao Liu, Adams Wei Yu, Jiahui Yu, Yi-Ting Chen, Minh-Thang Luong, Yonghui Wu, Mingxing Tan, and Quoc V. Le. Combined scaling for zero-shot transfer learn-ing. Neurocomput. , 555(C), 2023. 1 [24] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen Krueger, and Ilya Sutskever. Learning transferable visual models from natural language supervision. In Proceedings of the 38th International Conference on Machine Learning ,pages 8748–8763. PMLR, 2021. 1, 6, 2, 10 [25] Benjamin Recht, Rebecca Roelofs, Ludwig Schmidt, and Vaishaal Shankar. Do ImageNet classifiers generalize to Ima-geNet? In Proceedings of the 36th International Conference on Machine Learning , pages 5389–5400. PMLR, 2019. 6, 8 [26] Christian Schlarmann, Naman Deep Singh, Francesco Croce, and Matthias Hein. Robust CLIP: Unsupervised ad-versarial fine-tuning of vision embeddings for robust large vision-language models. In Proceedings of the 41st Inter-national Conference on Machine Learning , pages 43685– 43704. PMLR, 2024. 1, 2, 3, 7, 10 [27] Chuanbiao Song, Kun He, Liwei Wang, and John E. Hopcroft. Improving the generalization of adversarial train-ing with domain adaptation. In International Conference on Learning Representations , 2019. 2 [28] Junjiao Tian, Xiaoliang Dai, Chih-Yao Ma, Zecheng He, Yen-Cheng Liu, and Zsolt Kira. Trainable projected gradient method for robust fine-tuning. In 2023 IEEE/CVF Confer-ence on Computer Vision and Pattern Recognition (CVPR) ,pages 7836–7845, 2023. 1, 2, 3, 7, 10 [29] Junjiao Tian, Chengyue Huang, and Zsolt Kira. Rethinking weight decay for robust fine-tuning of foundation models. In 
+
+The Thirty-eighth Annual Conference on Neural Information Processing Systems , 2024. 3, 7, 10 [30] Junjiao Tian, Yen-Cheng Liu, James Seale Smith, and Zsolt Kira. Fast trainable projection for robust fine-tuning. In Pro-ceedings of the 37th International Conference on Neural In-formation Processing Systems , Red Hook, NY, USA, 2024. Curran Associates Inc. 1, 2 [31] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszko-reit, Llion Jones, Aidan N Gomez, Ł ukasz Kaiser, and Illia Polosukhin. Attention is all you need. In Advances in Neu-ral Information Processing Systems . Curran Associates, Inc., 2017. 6 [32] Haohan Wang, Songwei Ge, Zachary Lipton, and Eric P Xing. Learning robust global representations by penalizing local predictive power. In Advances in Neural Information Processing Systems . Curran Associates, Inc., 2019. 6, 8 [33] Qixun Wang, Yifei Wang, Hong Zhu, and Yisen Wang. Improving out-of-distribution generalization by adversarial training with structured priors. In Advances in Neural Infor-mation Processing Systems , 2022. 2 [34] Sibo Wang, Jie Zhang, Zheng Yuan, and Shiguang Shan. Pre-trained model guided fine-tuning for zero-shot adversarial robustness. In CVPR , 2024. 2, 3, 7, 10 [35] Thomas Wolf, Lysandre Debut, Victor Sanh, Julien Chau-mond, Clement Delangue, Anthony Moi, Pierric Cistac, Tim Rault, Remi Louf, Morgan Funtowicz, Joe Davison, Sam Shleifer, Patrick von Platen, Clara Ma, Yacine Jernite, Julien Plu, Canwen Xu, Teven Le Scao, Sylvain Gugger, Mariama Drame, Quentin Lhoest, and Alexander Rush. Transformers: State-of-the-art natural language processing. In Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing: System Demonstrations , pages 38– 45, Online, 2020. Association for Computational Linguis-tics. 8 [36] Mitchell Wortsman, Gabriel Ilharco, Jong Wook Kim, Mike Li, Simon Kornblith, Rebecca Roelofs, Raphael Gon-tijo Lopes, Hannaneh Hajishirzi, Ali Farhadi, Hongseok Namkoong, and Ludwig Schmidt. Robust fine-tuning of zero-shot models. In Proceedings of the IEEE/CVF Confer-ence on Computer Vision and Pattern Recognition (CVPR) ,pages 7959–7971, 2022. 1, 2, 3, 7, 10 [37] Dongxian Wu, Shu-Tao Xia, and Yisen Wang. Adversarial weight perturbation helps robust generalization. In NeurIPS ,2020. 2, 5, 3, 7 [38] Yunqing Zhao, Tianyu Pang, Chao Du, Xiao Yang, Chongx-uan LI, Ngai-Man (Man) Cheung, and Min Lin. On eval-uating adversarial robustness of large vision-language mod-els. In Advances in Neural Information Processing Systems ,pages 54111–54138. Curran Associates, Inc., 2023. 1 The Geometry of Robustness: Optimizing Loss Landscape Curvature and Feature Manifold Alignment for Robust Finetuning of Vision-Language Models 
+
+# Supplementary Material 
+
+## A. Layerwise Curvature Analysis of CLIP 
+
+To examine the geometric heterogeneity of Vi-sion–Language Models, we conduct a layerwise Hessian curvature analysis of the CLIP ViT models. Whereas global curvature metrics (e.g., top eigenvalue or Frobenius norm of the full Hessian) summarize the overall sharpness of the loss landscape, they obscure the internal variation across transformer depth. Our goal is to resolve this structure by measuring second-order curvature within each residual block. 
+
+Method. Let the model parameters be partitioned into disjoint blocks {θℓ} corresponding to the ℓ-th transformer layer. For a batch loss L(θ), we estimate the trace of the blockwise Hessian Hℓ = ∇2 
+
+> θℓ
+
+L using a block-restricted Hutchinson estimator: 
+
+tr( Hℓ) ≈ 1
+
+m
+
+> m
+
+X
+
+> j=1
+
+(v(j) 
+
+> ℓ
+
+)⊤(Hv (j)), (10) where v(j) ∼ N (0 , I ) and v(j) 
+
+> ℓ
+
+is the subvector associated with block ℓ. We use m=750 probe vectors and compute Hessian–vector products via double backpropagation. We report the normalized curvature 
+
+κℓ = tr( Hℓ)
+
+∥θℓ∥0
+
+, (11) which approximates the average curvature per parameter in block ℓ.
+
+Findings. As shown in Fig. 7, the curvature κℓ varies substantially across depth for all three CLIP variants (ViT-B/32, ViT-B/16, and ViT-L/14). Some layers operate in rel-atively sharp regions of the loss landscape, while others lie in significantly flatter regimes. This non-uniformity demon-strates that CLIP exhibits strong layerwise anisotropy in its second-order geometry. 
+
+Implications. Because curvature differs by more than an order of magnitude across layers, applying a single pertur-bation strength or smoothing radius—as in uniform SAM, AWP, or adversarial fine-tuning—is inherently misaligned with the model’s structure. This motivates our Layerwise Adaptive Adversarial Weight Perturbation , which modu-lates perturbation rank based on local curvature estimates to better match the geometry of each layer. 
+
+Figure 7. Layerwise curvature anisotropy in CLIP. Normal-ized Hutchinson curvature κℓ for each transformer block of CLIP ViT-B/32, ViT-B/16, and ViT-L/14. All models exhibit substantial variation in curvature across depth, indicating strong layerwise ge-ometric heterogeneity. 
+
+## B. Preliminaries 
+
+B.1. Image Classification with Vision–Language Models 
+
+In a K-class image classification problem with inputs x ∈X and labels y ∈ { 1, . . . , K }, CLIP-style VLMs frame classification as image–text matching [24]. Each class la-bel k is converted into a caption using a prompt template such as “ A photo of a {label }”, yielding prompts 
+
+{tk}Kk=1 .The text encoder Gϕ produces class-specific text embed-dings gk = Gϕ(tk) ∈ RD , which are stacked to form the classification head 
+
+W =
+
+
+
+Gϕ(t1)⊤
+
+...
+
+Gϕ(tK )⊤
+
+ ∈ RK×D . (12) The image encoder Fθ maps an input image x to an em-bedding z(x) = Fθ (x) ∈ RD (often ℓ2-normalized). Class logits for x are then 
+
+u(x) = Wz(x) ∈ RK , (13) and the predictive distribution is given by the softmax 
+
+p(y = k | x) = exp( u(k)(x)) 
+
+PKj=1 exp( u(j)(x)) , k = 1 , . . . , K. 
+
+(14) 
+
+B.2. Fine-Tuning VLMs for Image Classification 
+
+Although VLMs exhibit strong zero-shot performance across diverse domains, their accuracy on a specific down-stream dataset D = {(x, y )} can typically be improved via fine-tuning. A standard approach is to update all or some subset of the model parameters θ to minimize the cross-entropy loss 
+
+LCE (θ, W) = − X
+
+> (x,k )∈D
+
+log ( Softmax (k)(WFθ (x))) .
+
+(15) Full fine-tuning (updating all of θ) can yield strong in-distribution performance, but is computationally costly and prone to overfitting and catastrophic forgetting. This moti-vates parameter-efficient adaptation schemes such as LoRA. 
+
+B.3. Low-Rank Adaptation (LoRA) 
+
+Large-scale VLMs are heavily over-parameterized, which makes full fine-tuning expensive and increases the risk of drifting away from the pre-trained manifold. Low-Rank Adaptation (LoRA) [8] mitigates this by restricting weight updates to a low-rank subspace. For any weight matrix 
+
+W ∈ Rn1×n2 in the pre-trained model, LoRA parameter-izes its fine-tuned version as 
+
+W = W ∗ + αr BA, (16) where W ∗ denotes the frozen pre-trained weights, and B ∈
+
+Rn1×r , A ∈ Rr×n2 are trainable low-rank factors. The rank 
+
+r ≪ min( n1, n 2) and scaling factor α ∈ R are hyperparam-eters. Only A and B are updated; W ∗ remains fixed. This Pretrained 
+
+Weights 
+
+θ0 ∈ ℝ𝑑 xd 
+
+X
+
+d
+
+h   
+
+> B = 0
+> 𝐴 =𝒩 (0, 𝜎 2)
+
+r      
+
+> Figure 8. Schematic of LoRA weight updates. Weight up-dates are parameterized by low-rank matrices Aand Bof rank
+> r, constraining deviations from the pre-trained weights to a low-dimensional subspace.
+
+reduces the number of trainable parameters, improves effi-ciency, and implicitly constrains the adaptation to remain close to the pre-trained solution, consistent with the KL term in our PAC-Bayesian analysis. The overall schemat-ics of the low-rank weight updates in LoRA can be seen in Figure 8. 
+
+B.4. Adversarial Training 
+
+Adversarial training [16] aims to make neural networks ro-bust to perturbations within a bounded norm ball. Given a model f and a perturbation set S = {δ : ∥δ∥p≤ ϵ}, the robust optimization objective is 
+
+min  
+
+> f
+
+E(x,y )∼D 
+
+h
+
+max  
+
+> δ∈S
+
+L(f (x + δ), y )
+
+i
+
+. (17) The inner maximization can be approximated by gradient-based methods: 
+
+Fast Gradient Sign Method (FGSM). FGSM performs a single-step update 
+
+xadv = x + ϵ sgn( ∇xL(f (x), y )) , (18) where sgn( ·) is the element-wise sign function. 
+
+Projected Gradient Descent (PGD). PGD performs a multi-step refinement 
+
+xt+1 = Π S
+
+
+
+xt + γ sgn( ∇xt L(f (xt), y )) 
+
+
+
+, (19) where γ is the step size, t indexes the iteration, and ΠS
+
+is the projection operator onto the perturbation set S. PGD-based adversarial training is the standard baseline for robust learning, but often converges to sharp minima and can harm natural generalization [20, 37]. 
+
+B.5. Adversarial Weight Perturbation (AWP) 
+
+The geometry of the weight–loss landscape is strongly cor-related with both standard and robust generalization [11, 20]. Adversarial Weight Perturbation (AWP) [37] intro-duces a second adversary in parameter space to explicitly regularize loss-landscape flatness under adversarial train-ing. Let θ denote the current model parameters and μ an ad-versarial weight perturbation. AWP alternates between ad-versarial input and weight updates: 
+
+Adversarial input update. Starting from x0 = x, and with μ initially set to 0, AWP first generates adversarial ex-amples using the perturbed model: 
+
+xt+1 = Π S
+
+
+
+xt + γ1 sgn( ∇xt L(Fθ+μ(xt), y )) 
+
+
+
+, (20) for a chosen number of steps and step size γ1.
+
+Adversarial weight update. Given the adversarial sam-ples {xti}mi=1 , AWP then updates the weight perturbation μ
+
+by ascending the loss: 
+
+μ = Π Γ
+
+
+
+μ + γ2
+
+∇μ 1
+
+> m
+
+Pmi=1 L(Fθ+μ(xti), y i)
+
+∥∇ μ 1
+
+> m
+
+Pmi=1 L(Fθ+μ(xti), y i)∥2
+
+∥θ∥
+
+
+
+,
+
+(21) where ΠΓ projects onto a bounded perturbation set in pa-rameter space, and γ2 is a step size. This update can be done in one or multiple steps. 
+
+Model parameter update. Finally, the base parameters are updated via SGD on the perturbed model: 
+
+θ = ( θ + μ) − γ3∇θ+μ
+
+1
+
+m
+
+> m
+
+X
+
+> i=1
+
+L(Fθ+μ(xti), y i) − μ, (22) with learning rate γ3. Intuitively, μ identifies directions in parameter space where the adversarial loss increases sharply, and the outer update drives the model toward flatter, more robust regions. 
+
+## C. Extended Theoretical Analysis 
+
+This section provides complete proofs and extended deriva-tions for the theoretical results presented in Section 3. We include proofs for Theorem 3.1 (Robust PAC-Bayes Bound) and Lemma 3.2, additional supporting lemmas, and clarifi-cations on the assumptions used in the main text. 
+
+C.1. Notation 
+
+Let θ0 denote the pre-trained parameters of a VLM encoder, and θ its fine-tuned counterpart. The risk for domain s ∈{ID , OOD , Adv } is 
+
+Rs(θ) = E(x,y )∼D s [ℓ(fθ (x), y )] .
+
+The robust risk is RRob (θ) = max s Rs(θ). We denote by 
+
+P = N (θ0, σ 2I) the prior and Q = N (θ, σ 2I) the poste-rior. 
+
+C.2. Proof of Theorem 3.1 
+
+We now provide the complete derivation of the robust PAC-Bayesian bound. 
+
+C.2.1. PAC-Bayes Preliminaries 
+
+We use the standard PAC-Bayesian inequality [18, 21]: for any prior distribution P and posterior Q over model param-eters, with probability at least 1 − δ over the training set, 
+
+Eθ′∼Q[R(θ′)] ≤ Eθ′∼Q[ ˆR(θ′)]+ 
+
+r KL (Q∥P ) + ln(2 √n/δ )2n .
+
+(23) To extend this to the robust risk RRob (θ) = max s Rs(θ),we apply a union bound over the domains. 
+
+C.2.2. KL Divergence under Low-Rank Adaptation (LoRA) 
+
+In the main text we consider a Gaussian prior P =
+
+N (θ0, σ 2I) and posterior Q = N (θ, σ 2I). When fine-tuning with LoRA, however, only a low-dimensional sub-space of the parameters is updated. Let the LoRA update be 
+
+∆θ = WLoRA = BA , where A ∈ Rr×k and B ∈ Rd×r ,with r ≪ d. Thus the effective parameterization lies in an 
+
+rk -dimensional subspace. We therefore define the prior and posterior over the LoRA parameters: 
+
+P = N (0 , σ 2Irk ), Q = N (( A, B ), σ 2Irk ).
+
+The KL divergence becomes: 
+
+KL (Q∥P ) = 12σ2 (∥A∥2 
+
+> F
+
++∥B∥2 
+
+> F
+
+) = ∥WLoRA ∥2
+
+> F
+
+2σ2 . (24) LoRA therefore reduces the complexity term in the PAC-Bayesian bound by restricting the posterior to a low-rank subspace. This provides a natural proximity regularization mechanism, ensuring that fine-tuning remains close to the pre-trained parameters while controlling the variance of the posterior. 
+
+C.2.3. Second-Order Expansion and Sharpness Term 
+
+Using Assumption 1 (bounded Hessian), we apply asecond-order Taylor expansion around θ:
+
+ℓ(θ + ϵ) = ℓ(θ) + ϵ⊤∇ℓ(θ) + 12 ϵ⊤∇2ℓ(θ)ϵ + O(∥ϵ∥3).Taking expectation w.r.t. ϵ ∼ N (0 , σ 2I):
+
+Eϵ[ℓ(θ + ϵ)] = ℓ(θ) + σ2
+
+2 Tr( ∇2 
+
+> θ
+
+ℓ(θ)) + O(σ3). (25) Applying the same to RRob yields: 
+
+Eθ′∼Q[RRob (θ′)] = RRob (θ)+ σ2
+
+2 Tr( ∇2 
+
+> θ
+
+RRob (θ))+ O(σ3).
+
+(26) The trace term acts as an average curvature (“sharpness”) penalty. 
+
+C.2.4. Union Bound for Multi-Domain Robust Risk 
+
+The robust risk satisfies: 
+
+RRob (θ) = max  
+
+> s
+
+Rs(θ) ≤ X
+
+> s
+
+Rs(θ).
+
+Applying PAC-Bayes to each domain and union bounding over |S| = 3 domains gives a factor ln(2 n/δ ).
+
+C.2.5. Final Bound 
+
+Combining (23), (24), (26) for the robust case yields: 
+
+RRob (θ) ≤ ˆRID (θ) + ∥WLoRA ∥2
+
+> F
+
+2σ2 + σ2
+
+2 Tr( ∇2RRob (θ)) + max  
+
+> s,t
+
+dH∆H(Ds, Dt) + λ∗,
+
+(27) which completes the proof. 
+
+□
+
+C.3. Proof of Lemma 3.2 
+
+We derive an upper bound on the H∆H-divergence be-tween domains s and t under a Lipschitz encoder. 
+
+C.3.1. Feature-Space Decomposition 
+
+The H∆H-divergence satisfies [1]: 
+
+dH∆H(Ds, Dt) = 2 sup 
+
+> h,h ′∈H
+
+Pr  
+
+> s
+
+[h̸ = h′] − Pr  
+
+> t
+
+[h̸ = h′] .
+
+For linear separators on a feature map ϕ(x), this reduces to the discrepancy between distributions of ϕ(x). Using As-sumption 2 (Lipschitz continuity of fθ ), 
+
+∥fθ (x) − fθ (x′)∥≤ Lf ∥θ − θ′∥.
+
+Let μcs, Σcs denote class-conditional mean and covari-ance. A standard result on Wasserstein/TV bounds yields: 
+
+d(Ds, Dt) ≤ 2LfkX
+
+> c=1
+
+πc (∥μcs − μct ∥2+∥Σcs − Σct ∥F ) ,
+
+and noting ∥A∥F = pTr( A⊤A) produces the stated bound: 
+
+dH∆H(Ds, Dt) ≤ 2LfkX
+
+> c=1
+
+πc
+
+
+
+∥μcs − μct ∥2+pTr(Σ cs − Σct )2
+
+
+
+.
+
+□
+
+C.4. Supporting Lemmas and Clarifications 
+
+Lemma C.1 (Hessian Boundedness) . If ∥∇ 2ℓ∥≤ M for all samples, then 
+
+Tr( ∇2R(θ)) = E[Tr( ∇2ℓ(θ))] ≤ M d. 
+
+Lemma C.2 (Taylor Remainder) . Under Assumption 1, the third-order term satisfies 
+
+|R3|≤ M
+
+6 E∥ϵ∥3= O(σ3).
+
+C.4.1. Discussion of Assumptions Smoothness. Large VLMs exhibit bounded Hessian spec-tra due to normalization layers, residual connections, and pre-trained initialization. Empirically we find the global Hessian spectral norm remains controlled. 
+
+Feature Regularity. CLIP encoders map to the unit sphere via normalization, and are Lipschitz due to bounded Jacobians in ViT and ResNet blocks. 
+
+C.5. Additional Remarks on the Robustness Decom-position 
+
+The three terms in Theorem 3.1 correspond to: • (A) Proximity to Prior: Prevents drift from the learned manifold, safeguarding zero-shot transfer. • (B) Parameter-Space Sharpness: Controls curvature of the loss landscape and protects against adversarial pertur-bations. • (C) Feature-Space Stability: Ensures aligned class ge-ometry across ID/OOD domains, enabling robustness to natural distribution shifts. This decomposition motivates GRACE’s design: low-rank adaptive adversarial weight perturbation handles (B), proximity regularization handles (A), and cross-domain fea-ture stabilization handles (C). 
+
+## D. Experimental Details for Empirical Valida-tion of Failure Modes 
+
+This appendix details the class-conditional metrics and cur-vature estimation used in Section 4. 
+
+D.1. Feature-Space Geometry Metrics 
+
+Feature extraction. We use the penultimate image-encoder layer of CLIP ViT-B/32. Each embedding z(x) ∈
+
+Rd is ℓ2-normalized to lie on the unit hypersphere. For each regime r ∈ { ID , OOD , Adv } and class c, we collect 100 im-age embeddings and compute all statistics within-class. Class-conditional cosine alignment. For each class c, we define domain-specific centroids 
+
+μcr = 1
+
+|Dcr |
+
+X
+
+> x∈Dcr
+
+z(x).
+
+Alignment between domains is then given by CS c 
+
+> ID →OOD
+
+= ⟨μc
+
+> ID
+
+, μ c
+
+> OOD
+
+⟩, CS c 
+
+> ID →Adv
+
+= ⟨μc
+
+> ID
+
+, μ c
+
+> Adv
+
+⟩.
+
+We report their averages over classes. 
+
+Local Intrinsic Dimensionality (LID) and ∆LID. LID measures local manifold complexity [15]. For each feature 
+
+zi within class c and regime r, let {zi,j }kj=1 be its k=20 
+
+nearest neighbors in cosine distance ri,j = 1 − ⟨ zi, z i,j ⟩.The LID estimate is LID (zi) = −
+
+ 1
+
+k
+
+> k
+
+X
+
+> j=1
+
+log ri,j 
+
+ri,k 
+
+−1
+
+.
+
+We compute the mean per-class, per-regime LID: LID cr = 1
+
+|Dcr |
+
+X
+
+> zi∈Dcr
+
+LID (zi).
+
+The class-conditional change in dimensionality relative to ID is: 
+
+∆LID c 
+
+> ID →r
+
+= LID cr − LID c
+
+> ID
+
+, r ∈ { OOD , Adv }.
+
+We report the class-averaged ∆LID values in Table 2. Lower ∆LID indicates that the local manifold geometry is preserved under the shift. 
+
+PCA visualization. For qualitative plots (Figs. 2, A2), we fit a 3D PCA basis on pooled ID/OOD/Adv features from three random classes across methods and seeds, and project all features into this common basis for visual comparison. 
+
+D.2. Parameter-Space Curvature Estimation 
+
+Hessian estimation. We estimate the top eigenvalue λmax 
+
+and normalized Frobenius norm ∥H∥F /√d of the Hessian of the training loss L(θ) with respect to all trainable param-eters. We use stochastic power iteration with T =50 itera-tions and batch size 512: 
+
+vt+1 = Hv t
+
+∥Hv t∥2
+
+, λmax ≈ v⊤ 
+
+> T
+
+Hv T .
+
+We estimate ∥H∥F via Hutchinson’s trace estimator with Gaussian probes uj ∼ N (0 , I ):
+
+∥H∥2 
+
+> F
+
+≈ 1
+
+m
+
+> m
+
+X
+
+> j=1
+
+∥Hu j ∥22.
+
+These metrics provide curvature proxies for model flatness and parameter-space complexity. 
+
+Loss-surface visualization. 2D/3D loss slices (Fig. 2(b), Fig. A3) are obtained along two orthonormal perturbation directions (δ1, δ 2) in the flattened parameter vector, nor-malized to ∥δi∥2= 1 , visualizing L(θ + αδ 1 + βδ 2) for 
+
+α, β ∈ [−1, 1] . Plots are qualitative and used only for illus-tration. 
+
+## E. Method Details 
+
+E.1. LAR-AWP Rank Curriculum and Curvature Estimation 
+
+Here we give the full description of the curvature estimator and rank curriculum used in LAR-AWP (Section 5.3). Acentral component of LAR-AWP is the assignment of layer-wise perturbation ranks based on the local curvature of the loss landscape. Ideally, curvature would be measured using the diagonal of the Hessian diag( ∇2 
+
+> W
+
+L(θ)) for each weight matrix W . However, computing or storing the exact Hes-sian is computationally infeasible for CLIP-scale VLMs: a single iteration of finite-difference diagonal Hessian estima-tion requires one backward pass per parameter, while es-timating eigenvalues by power iteration incurs prohibitive memory and compute overhead for hundreds of millions of parameters. 
+
+Gauss–Newton Proxy. Following Sophia [14], we adopt a tractable first-order proxy given by the diagonal of the Gauss–Newton matrix. For a mini-batch Bval of size nv , let 
+
+gW = ∇W
+
+1
+
+nv
+
+X
+
+> (xi,y i)∈B val
+
+L(Fθ (xi), y i) .
+
+The curvature estimator is then defined as 
+
+bhW = nv (gW ⊙ gW ), (28) where ⊙ denotes elementwise multiplication. For common losses such as cross-entropy, the expectation of (gW ⊙ gW )
+
+approximates the diagonal of the Gauss–Newton matrix 
+
+HGN ⪯ ∇ 2L. Therefore, bhW is a biased underestimator of the true Hessian diagonal: it systematically underestimates curvature, but preserves the relative ordering of layers. 
+
+Bias and Its Impact on Rank Adaptation. LAR-AWP does not require an unbiased estimate of curvature. Rather, it requires a stable relative ordering of layers by sharpness. Since the Gauss–Newton proxy shrinks curvature uniformly but monotonically, layers with higher true curvature still satisfy bhW1 > bhW2 whenever HW1 ≻ HW2 . Rank assign-ment is based on curvature percentiles: 
+
+rAWP ∝ 1
+
+nbhW ≥ τp
+
+o
+
+, τp = quantile 
+
+
+
+{bhW }W , p 
+
+
+
+,
+
+with p = 0 .8 in our implementation. Thus, any consistent monotonic bias is harmless: only the ranking matters. Algorithm 1 GRACE: Unified Robust Fine-Tuning with LoRA, LAR-AWP, and Gram Alignment Require: Pretrained CLIP model Fθ0 ; training data D;LoRA rank r; perturbation radius ρ; PGD budget ϵ;tradeoff parameters λLAR , λ GV . 
+
+> 1:
+
+Initialize LoRA parameters Θ = {AW , B W }W ; freeze backbone weights.  
+
+> 2:
+
+Initialize layerwise AWP ranks r(W ) 
+
+> AWP
+
+← 0 and curva-ture EMA hW ← 0 for all layers W . 
+
+> 3:
+
+for each training iteration do  
+
+> 4:
+
+Sample minibatch {(xi, y i)}Bi=1 . 
+
+> 5:
+
+Compute clean image features fID (xi) and task loss 
+
+Ltask .
+
+// Step 1: Generate adversarial images  
+
+> 6:
+
+For each i, run PGD with radius ϵ to obtain xAdv  
+
+> i
+
+≈
+
+arg max ∥δ∥≤ ϵ L(Fθ (xi + δ), y i). 
+
+> 7:
+
+Compute adversarial features fAdv (xi) from xAdv  
+
+> i
+
+.
+
+// Step 2: LAR-AWP inner maximization (sharpness control)  
+
+> 8:
+
+for t = 1 to TAWP do  
+
+> 9:
+
+Update low-rank perturbation factors 
+
+(AAWP , B AWP ) by gradient ascent:  
+
+> 10:
+
+(AAWP , B AWP ) ← (AAWP , B AWP ) +
+
+η ∇∆L(Fθ, ∆(xAdv  
+
+> i
+
+), y i). 
+
+> 11:
+
+Project ∆ onto the low-rank ball ∥∆∥≤ ρ using layerwise rank masks r(W )
+
+> AWP
+
+. 
+
+> 12:
+
+end for  
+
+> 13:
+
+Compute perturbed features fAWP (xi) using 
+
+Wpert (θ, ∆) in Eq. (6). 
+
+// Step 3: Gram-volume feature alignment  
+
+> 14:
+
+For each i, form Gram matrix Gi from 
+
+(fID (xi), f Adv (xi), f AWP (xi)) using Eq. (8).  
+
+> 15:
+
+Compute Gram Alignment Loss LGV =p|det( Gi)|.
+
+// Step 4: Curvature-based rank update (periodic)  
+
+> 16:
+
+if iteration mod K = 0 then  
+
+> 17:
+
+Estimate curvature proxy hW ≈ E[∥∇ W L∥ 2]
+
+using validation mini-batch gradients.  
+
+> 18:
+
+Map {hW }W to percentile bins and update lay-erwise ranks r(W )
+
+> AWP
+
+: sharper layers ⇒ higher r(W )
+
+> AWP
+
+. 
+
+> 19:
+
+end if // Step 5: Outer minimization update  
+
+> 20:
+
+Update LoRA parameters Θ by minimizing 
+
+LGRACE = Ltask + λLAR LLAR-AWP + λGV LGV . 
+
+> 21:
+
+end for Stabilization via Exponential Moving Average. To mit-igate mini-batch noise, we maintain an EMA of the curva-ture proxy: 
+
+h(t) 
+
+> W
+
+= β h (t−1)  
+
+> W
+
++ (1 − β) bh(t) 
+
+> W
+
+, β ∈ [0 .85 , 0.95] .
+
+(29) We also normalize by parameter size to avoid scale inflation in large matrices: 
+
+hnorm  
+
+> W
+
+= 1
+
+|W |
+
+X bhW .
+
+Curvature updates are performed once every K iterations (K = 1000 by default), balancing responsiveness and sta-bility. 
+
+Practical Rank Allocation. Given the stabilized curva-ture values {hW }, we assign AWP ranks via a piecewise mapping: sharp layers (top 20%) receive the highest rank, moderately curved layers receive intermediate ranks, and flat layers (bottom 20%) receive minimal or zero rank. This curriculum focuses smoothing where the loss landscape is most anisotropic. 
+
+E.2. Using AWP as a Proxy for Out-of-Distribution Robustness 
+
+A key motivation behind LAR-AWP is the observation that 
+
+weight-space adversarial perturbations provide a tractable proxy for natural distribution shifts . In this subsection, we formalize this connection and provide empirical support for the use of AWP as an OOD surrogate in VLM fine-tuning. 
+
+Background: OOD shifts as structured adversarial per-turbations. Recent studies have suggested that natural distribution shifts often correspond to structured, low-dimensional perturbations in the feature space of pre-trained models. In CLIP-like VLMs, these shifts manifest primarily as changes in texture, lighting, occlusion statis-tics, or object context. Such variations induce predictable deformations in the intermediate representations of the vi-sual encoder that can be approximated by parametric per-turbations of the model weights .Formally, let PID and POOD denote the ID and OOD input distributions. For a model fθ , the OOD-induced rep-resentation drift for sample x is 
+
+∆OOD (x) = fθ (x) − fθ (x′), x′ ∼ POOD (· | x),
+
+where x′ denotes an OOD variant of x (e.g., ImageNet-R, -V2, -S, A/A+). Empirically, ∆OOD (x) lies in a low-dimensional subspace associated with sharp, anisotropic di-rections of the weight-loss landscape. This provides the bridge to weight-space adversarial perturbations. AWP as a local surrogate for OOD feature drift. Ad-versarial Weight Perturbation (AWP) [37] searches for a weight perturbation ∆ that maximally increases loss on a given input: 
+
+∆AWP = arg max  
+
+> ∥∆∥≤ ρ
+
+L(fθ+∆ (x), y ).
+
+In high-dimensional VLMs, the maximizer ∆AWP tends to align with directions of high curvature, i.e., eigenvectors corresponding to large eigenvalues of ∇2 
+
+> θ
+
+L. These direc-tions correspond to feature-space instabilities that are also 
+
+amplified under natural OOD shifts. Thus, 
+
+∆AWP (x) ∥ ∆OOD (x) (up to a monotone scaling factor) .
+
+This alignment implies that AWP perturbs the model along directions that mimic OOD-induced representation drift. 
+
+Why AWP captures OOD geometry in CLIP. Pre-trained CLIP encoders exhibit highly anisotropic curva-ture: a small fraction of layers (often the late transformer blocks) dominate the Hessian spectrum. These layers are also empirically the most sensitive to OOD corruption, as shown in our layerwise curvature analysis (App. A). There-fore, weight-space adversarial perturbations naturally con-centrate in the same regions of parameter space that domi-nate OOD behavior. In GRACE, the rank-adaptive LAR-AWP module explic-itly targets these layers, ensuring that adversarial perturba-tions span the high-curvature subspace where OOD feature drift resides. 
+
+Empirical evidence: AWP feature drift correlates with OOD drift. We measure the correlation between: (i) fea-ture displacement induced by AWP, and (ii) feature dis-placement induced by real OOD samples. Let (30) 
+
+dAWP (x) = ∥fθ (x) − fθ+∆ AWP (x)∥2, dOOD (x)= Ex′∼POOD [∥fθ (x) − fθ (x′)∥2].
+
+Across ImageNet-V2/S/R and ImageNet-A/A+, we observe a strong positive correlation (Table 9, Figure 9), confirming that AWP and OOD shifts induce similar instability patterns in CLIP’s feature space. Layers with large curvature exhibit the strongest coupling. 
+
+Implication for training. Because AWP tracks OOD-sensitive directions, optimizing robustness against AWP im-plicitly improves generalization on OOD benchmarks: 
+
+min  
+
+> θ
+
+max  
+
+> ∆
+
+L(fθ+∆ ) =⇒ min  
+
+> θ
+
+max 
+
+> x′∼POOD
+
+L(fθ (x′)) .          
+
+> Shift Cosine Similarity L2 Distance ID →OOD 0.35 6.61 ID →AWP 0.32 6.87 Table 9. Feature-space displacement induced by OOD data and AWP. We report cosine similarity and L2 feature distance between ID representations and those produced under OOD sam-ples or adversarial weight perturbations. The similar displacement magnitudes show that AWP produces feature shifts comparable to true OOD drift, supporting its utility as a proxy for robustness stress-testing.
+> Figure 9. 3D visualization of CLIP feature geometry under dif-ferent shifts. Using normalized embeddings projected onto the unit sphere, we compare ID samples, natural adversarial (Nat Adv) variants, OOD samples, and features obtained under AWP pertur-bations. AWP produces feature displacements that closely follow the structure of real OOD and natural adversarial shifts, confirm-ing that curvature-aligned weight perturbations serve as an effec-tive proxy for robustness-critical distribution drift.
+
+This explains why GRACE improves both adversarial and OOD robustness, even though OOD samples are not used during training. 
+
+Conclusion. LAR-AWP acts as a computationally effi-cient surrogate for natural distribution shifts in CLIP. By perturbing the model along high-curvature directions that correlate with OOD drift, GRACE enforces stability in pre-cisely those regions of parameter space where OOD gener-alization typically fails. E.3. Training Algorithm 
+
+Algorithm 1 presents full pseudocode for GRACE, includ-ing adversarial example generation, inner LAR-AWP steps, Gram-volume alignment loss computation, and outer opti-mization of the LoRA parameters Θ.
+
+## F. Extended Experimental Details 
+
+F.1. Preprocessing and Prompts 
+
+We use CLIP preprocessing for ViT-B/32. For zero-shot evaluations, we use the standard ImageNet prompt set and a single fixed template set for transfer datasets (no ensem-bling unless stated). 
+
+F.2. Datasets 
+
+In this section, we provide additional details for the datasets used for the fine-tuning experiments in the paper. We em-ploy the ImageNet [3] dataset along with its variants for the fine-tuning and OOD experiments in the paper. The ImageNet [3] dataset consists of images catego-rized into 1000 classes. To test the OOD robustness of the fine-tuned models, we use the following related datasets: ImageNet-V2 [25], ImageNet-Rendition [6], ImageNet-Adversarial [7], and ImageNet-Sketch [32]. These datasets are considered as natural distribution shifts of the ImageNet dataset, hence we use these datasets to evaluate the robust-ness of models fine-tuned on ImageNet using these datasets. Figure 10 shows samples from all these datasets. 
+
+Figure 10. Samples from the ImageNet dataset 
+
+F.3. Training Details 
+
+The code for the main experiments is built on PyTorch [22], and Transformers [35] libraries. All the experiments in the paper were done on a SLURM cluster with 8 NVIDIA A40 GPUs per node. 
+
+F.4. Pre-Trained Weights 
+
+Throughout the experiments, we employed the pre-trained weights provided by OpenAI. These weights can be ac-cessed through the following URLs: • ViT-B/32: https://huggingface.co/openai/clip-vit-base-patch32 • ViT-B/16: https://huggingface.co/openai/clip-vit-base-patch16 • ViT-L/14: https://huggingface.co/openai/clip-vit-large-patch14 
+
+F.5. Hyperparameters 
+
+All the hyper-parameters used in the fine-tuning experi-ments were selected based on the ID validation sets for each dataset. We use validation set provided. The corresponding values selected for the hyper-parameters are shown in Table 10.             
+
+> Hyperparameter Selected Value
+> Rank of Weight Updates ( rW)64 Maximum Rank of Weight Perturbations ( rAW P )4Input Perturbation Strength ( ϵ)4/255
+> Input Perturbation Step Size ( η1)1/255
+> Learning Rate ( η3)2e-4 Gradient Threshold Percentile for Weight Perturbations ( φAW P )80 Number of Epochs 50 Batch Size 256
+
+Table 10. List of hyperparameter values used for the fine-tuning experiments. 
+
+## G. Additional Discussion 
+
+G.1. Analyzing AWP Ranks 
+
+Figure 11. Evolution of Layerwise AWP Rank During Train-ing. The heatmap shows the adaptive adversarial weight perturba-tion (AWP) rank assigned to each transformer block across train-ing epochs. 
+
+To understand how GRACE allocates adversarial pertur-bation capacity across the network, we analyze the tem-poral progression of the learned AWP rank r(ℓ) 
+
+> AWP
+
+and re-late it to the curvature structure of the CLIP ViT-B/32 en-coder. Each layer begins with rank 0, and the rank is subse-quently increased or decreased throughout training based on the layer’s instantaneous curvature estimate. This allows us to directly visualize how GRACE responds to the evolving geometry of the model. 
+
+Curvature anisotropy shapes where ranks appear. Fig-ure 7 shows that curvature is highly anisotropic: mid-to-deep layers (blocks 4–8) exhibit a pronounced curvature peak, while early and late layers remain substantially flatter. This curvature pattern precisely mirrors the region where AWP ranks emerge. As seen in Fig. 11, only layers within this high-curvature band ever receive non-zero ranks; layers with consistently low curvature (blocks 0–3 and block 11) retain a rank of zero throughout all epochs. 
+
+Observation: Rank progression tracks curvature dy-namics. The temporal evolution of AWP ranks exhibits a clear structural correspondence with the curvature plot: 1. High-curvature layers accumulate rank. In blocks 4– 9, where curvature is large in Fig. 7, ranks progressively rise from 0 to values between 1 and 4. 2. Rank magnitude aligns with curvature magnitude. 
+
+The maximum rank (4) appears in block 8—the same layer with the highest curvature. 3. Fluctuations reflect curvature changes over training. 
+
+Layers whose curvature decreases over epochs exhibit corresponding decreases in AWP rank (e.g., blocks 6– 7), whereas layers with persistent curvature peaks (e.g., block 8) maintain higher ranks for longer. Thus, the progression in Fig. 11 is not arbitrary: it faith-fully traces the curvature landscape and its evolution over training. 
+
+Implications. This analysis confirms that GRACE allo-cates adversarial weight perturbations exactly where the model is geometrically sensitive. The AWP rank increases when a layer becomes sharp and decreases when the layer is flattened by GRACE’s optimization dynamics. Conversely, layers that remain flat never accumulate rank, ensuring that perturbation capacity is used selectively and efficiently. 
+
+Summary. The AWP rank heatmap closely follows the curvature profile of the encoder. High-curvature layers re-ceive increasing rank, low-curvature layers retain zero rank, and fluctuations in curvature over training are mirrored by fluctuations in AWP rank. This provides direct empirical evidence that GRACE’s layerwise perturbation allocation is governed by the geometry of the model. 
+
+G.2. Hyperparameter Analysis 
+
+In order to understand the impact of various hyperpa-rameter choices on the downstream task performance of our approach, we performed experiments varying the var-ious hyperparameters in our approach. In our exper-iments, we varied the following hyperparameters: (1) rank of weight updates {16 , 32 , 64 } (2) maximum rank of weight perturbation {2, 4, 8} (3) input perturbation strength 
+
+{1/255 , 2/255 , 4/255 } (4) input perturbation step size 
+
+{1/255 , 2/255 , 4/255 } (5) gradient threshold percentile 
+
+{40 , 60 , 80 }. The final results for the hyperparameter anal-ysis have been summarized in Table 11. All the results were for a ViT-B/32 CLIP model finetuned on the ImageNet Dataset and tested on other domains. Hyperparameter Value ID Out-Of-Distribution Adversarial Statistics 
+
+Domain Shift Zero Shot Adv ID Adv OOD Adv ZS Natural Adv Avg OOD Avg Adv Rank of Weight Updates (rW )
+
+16 72.80 53.10 58.10 22.10 18.30 18.90 21.10 55.50 20.10 32 73.60 53.80 59.00 23.90 19.40 20.30 22.00 56.50 21.20 64 74.21 54.41 59.61 25.44 20.55 21.10 22.67 57.01 22.44 Maximum Rank of Weight Perturbations (rAWP )
+
+2 74.30 54.90 59.70 23.10 18.90 19.40 21.90 56.50 20.80 4 74.21 54.41 59.61 25.44 20.55 21.10 22.67 57.01 22.44 8 73.70 53.90 58.90 26.80 21.20 22.10 23.30 56.30 23.10 Input Perturbation Strength (ϵ)
+
+1/255 75.10 55.20 60.10 18.70 14.40 15.80 21.40 57.00 17.60 2/255 74.70 54.80 59.80 22.30 18.00 18.90 22.10 56.90 19.70 4/255 74.21 54.41 59.61 25.44 20.55 21.10 22.67 57.01 22.44 Input Perturbation Step Size (η)
+
+1/255 74.21 54.41 59.61 25.44 20.55 21.10 22.67 57.01 22.44 2/255 73.90 54.10 59.20 24.90 20.10 20.70 22.40 56.70 21.90 4/255 73.40 53.50 58.80 23.20 19.00 19.10 21.90 56.10 20.40 Gradient Threshold Percentile (φAWP )
+
+40 75.00 54.90 60.10 20.90 16.50 17.40 21.70 56.70 19.10 60 74.60 54.60 59.80 23.40 18.90 20.10 22.30 56.90 20.80 80 74.21 54.41 59.61 25.44 20.55 21.10 22.67 57.01 22.44 
+
+Table 11. Hyperparameter sensitivity results for GRACE (ViT-B/32). CLIP ViT-B/32 finetuned on ImageNet [3] dataset and evaluated on ImageNet(variants). The numbers represent top-1 accuracy. 
+
+Method ID Out-Of-Distribution Adversarial Statistics 
+
+Domain Shift Zero Shot Adv ID Adv OOD Adv ZS Natural Adv Avg OOD Avg Adv (Same Classes) (Unseen Classes) ( ϵ=4 /255 ) ( ϵ=4 /255 ) ( ϵ=4 /255 ) ImageNet-A/A-Plus CLIP 68.35 62.60 64.92 0.00 0.00 0.13 52.48 63.76 13.15 Vanilla FT 81.30 60.43 71.48 0.00 0.00 0.00 39.35 65.96 9.84 WISE-FT [36] 82.50 66.60 68.68 0.00 0.00 0.00 49.95 67.64 12.49 FLYP [5] 82.60 64.67 69.91 0.00 0.00 0.00 50.85 67.29 12.71 TPGM [28] 82.85 65.50 70.55 0.00 0.00 0.00 50.85 68.03 12.71 SPD [29] 82.40 64.90 70.06 0.00 0.00 0.00 50.35 67.48 12.59 TeCoA [17] 66.80 47.20 49.15 31.20 21.90 35.13 11.65 48.18 24.97 FARE [26] 58.20 48.17 59.66 18.50 16.20 23.04 12.40 53.92 17.54 PMG-AFT [34] 68.50 51.47 53.37 33.60 23.87 38.51 15.40 52.42 27.85 LAAT [13] 64.20 49.07 51.55 27.80 20.43 36.65 20.10 50.31 26.25 GRACE (Ours) 82.30 63.10 71.48 32.40 25.97 41.39 34.00 67.29 33.44 
+
+Table 12. Unified summary across settings (ViT-B/16). ID uses ImageNet clean; Domain Shift (Same Classes) is OOD Avg over ImageNet-V2/S/R (clean); Zero Shot is ZS Avg (clean) across 8 datasets; Targeted Adversarial reports (ID/OOD/ZS) accuracies under AutoAttack (APGD-CE, ϵ=4 /255 ); Natural Adversarial is the clean average over ImageNet-A/A-Plus. 
+
+ID Domain Shift Natural Adversarial Statistics Method ImageNet ImageNet-V2 ImageNet-S ImageNet-R ImageNet-A ImageNet-A-Plus OOD Avg. Nat Adv Avg 
+
+Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv CLIP [24] 68.35 0.00 61.90 0.00 48.30 0.00 77.60 0.01 50.10 0.00 54.85 0.00 62.60 0.00 52.48 0.00 Vanilla FT 81.30 0.00 70.60 0.00 45.10 0.00 65.60 0.00 36.60 0.00 42.10 0.00 60.43 0.00 39.35 0.00 WISE-FT [36] 82.50 0.00 73.10 0.00 51.60 0.00 75.10 0.00 47.60 0.00 52.30 0.00 66.60 0.00 49.95 0.00 FLYP [5] 82.60 0.00 73.00 0.00 49.60 0.00 71.40 0.01 48.10 0.00 53.60 0.00 64.67 0.00 50.85 0.00 TPGM [28] 82.85 0.00 73.50 0.00 50.20 0.00 72.80 0.00 48.50 0.00 53.20 0.00 65.50 0.00 50.85 0.00 SPD [29] 82.40 0.00 72.80 0.00 49.80 0.00 72.10 0.00 47.90 0.00 52.80 0.00 64.90 0.00 50.35 0.00 TeCoA [17] 66.80 31.20 52.30 22.50 32.10 16.80 57.20 26.40 8.50 1.20 14.80 2.10 47.20 21.90 11.65 1.65 FARE [26] 58.20 18.50 49.80 12.60 35.40 14.20 59.30 21.80 9.20 0.90 15.60 1.40 48.17 16.20 12.40 1.15 PMG-AFT [34] 68.50 33.60 54.80 25.20 38.40 18.50 61.20 27.90 12.30 1.85 18.50 3.20 51.47 23.87 15.40 2.53 LAAT [13] 64.20 27.80 51.50 20.30 36.80 15.60 58.90 25.40 17.80 3.10 22.40 4.80 49.07 20.43 20.10 3.95 GRACE 82.30 32.40 72.20 26.10 49.30 22.30 67.80 29.50 31.20 5.20 36.80 7.30 63.10 25.97 34.00 6.25 
+
+Table 13. OOD Results on ImageNet (ViT-B/16). CLIP ViT-B/16 finetuned on ImageNet [3] dataset and evaluated on ImageNet variants. The numbers are top-1 accuracy (%). OOD Avg averages ImageNet-V2, -S, -R; Nat Adv Avg averages ImageNet-A and A-Plus. Zero shot Datasets Statistics CalTech101 Cars DTD EuroSAT FGVC Flowers Oxford Pets STL-10 ZS Avg. 
+
+Method Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv Clean Adv CLIP 91.48 0.41 59.74 0.00 43.85 0.00 54.70 0.00 18.96 0.00 67.42 0.00 86.13 0.00 97.10 0.64 64.92 0.13 Vanilla FT 93.20 0.00 68.40 0.00 52.30 0.00 68.50 0.00 26.80 0.00 75.60 0.00 90.20 0.00 96.80 0.00 71.48 0.00 WISE-FT 92.80 0.00 65.30 0.00 48.60 0.00 62.40 0.00 22.50 0.00 71.80 0.00 88.60 0.00 97.40 0.00 68.68 0.00 FLYP 93.10 0.00 66.80 0.00 50.20 0.00 64.80 0.00 24.30 0.00 73.40 0.00 89.50 0.00 97.20 0.00 69.91 0.00 TPGM 93.50 0.00 67.20 0.00 51.40 0.00 66.10 0.00 25.10 0.00 74.20 0.00 89.80 0.00 97.10 0.00 70.55 0.00 SPD 93.00 0.00 66.50 0.00 50.80 0.00 65.30 0.00 24.70 0.00 73.80 0.00 89.40 0.00 97.00 0.00 70.06 0.00 TeCoA 84.63 69.07 37.50 24.03 28.93 18.16 38.60 23.48 7.81 3.13 36.13 23.05 70.31 45.70 89.25 74.41 49.15 35.13 FARE 88.20 42.50 52.40 15.20 38.50 12.80 48.60 14.50 15.30 2.10 58.40 16.30 82.10 28.60 93.80 52.30 59.66 23.04 PMG-AFT 86.50 71.20 42.30 28.50 34.38 22.15 44.20 27.80 10.25 4.85 42.96 26.40 75.00 50.20 91.40 76.85 53.37 38.51 LAAT 85.80 68.40 40.20 26.30 32.10 20.50 41.30 25.60 9.20 4.10 40.10 24.80 73.20 48.30 90.50 75.20 51.55 36.65 GRACE 93.60 72.80 68.90 32.40 52.60 25.30 67.20 31.50 26.40 6.20 75.80 29.80 90.40 54.60 96.90 78.50 71.48 41.39 
+
+Table 14. Clean and adversarial evaluation on zero-shot image classification datasets (ViT-B/16). Models are trained on ImageNet; all other datasets are zero-shot. ZS Avg is the mean across the 8 datasets.

@@ -1,0 +1,433 @@
+Title: DA-Mamba: Learning Domain-Aware State Space Model for Global-Local Alignment in Domain Adaptive Object Detection
+
+URL Source: https://arxiv.org/pdf/2603.18757v1
+
+Published Time: Fri, 20 Mar 2026 01:11:59 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+# DA-Mamba: Learning Domain-Aware State Space Model for Global-Local Alignment in Domain Adaptive Object Detection 
+
+# Haochen Li 1, 4 Rui Zhang 2* Hantao Yao 3 Xin Zhang 2
+
+# Yifan Hao 2 Shaohui Peng 1 Yongwei Zhao 2 Ling Li 1, 4* 1Intelligent Software Research Center, Institute of Software, CAS 
+
+> 2
+
+# State Key Lab of Processors, Institute of Computing Technology, CAS  
+
+> 3
+
+# School of Information Science and Technology, University of Science and Technology of China  
+
+> 4
+
+# University of Chinese Academy of Sciences       
+
+> {haochen2021, pengshaohui, liling }@iscas.ac.cn
+> {zhangrui, zhangxin, haoyifan, zhaoyongwei }@ict.ac.cn, yaohantao@ustc.edu.cn
+
+# Abstract 
+
+Domain Adaptive Object Detection (DAOD) aims to trans-fer detectors from a labeled source domain to an unlabeled target domain. Existing DAOD methods employ multi-granularity feature alignment to learn domain-invariant representations. However, the local connectivity of their CNN-based backbone and detection head restricts align-ment to local regions, failing to extract global domain-invariant features. Although transformer-based DAOD methods capture global dependencies via attention mech-anisms, their quadratic computational cost hinders practi-cal deployment. To solve this, we propose DA-Mamba, a hybrid CNN-State Space Models (SSMs) architecture that combines the efficiency of CNNs with the linear-time long-range modeling capability of State Space Models (SSMs) to capture both global and local domain-invariant features. Specifically, we introduce two novel modules: Image-Aware SSM (IA-SSM) and Object-Aware SSM (OA-SSM). IA-SSM is integrated into the backbone to enhance global domain awareness, enabling image-level global and local align-ment. OA-SSM is inserted into the detection head to model spatial and semantic dependencies among objects, enhanc-ing instance-level alignment. Comprehensive experiments demonstrate that the proposed method can efficiently im-prove the cross-domain performance of the object detector. 
+
+# 1. Introduction 
+
+Traditional object detection algorithms achieve remarkable performance in both accuracy and speed, especially em-powered by Convolutional Neural Networks (CNNs). How-ever, the inherent domain shift between task scenarios, such as object styles and scales, substantially degrades model 
+
+> *Corresponding author.
+
+generalization when transferring across domains. To miti-gate this issue, Domain Adaptive Object Detection (DAOD) leverages labeled data from a source domain to improve the detection performance in an unlabeled target domain. A key idea behind DAOD is aligning features from both domains to accurately extract knowledge that can be shared between domains, i.e ., domain-invariant features. To achieve this, [7, 39, 53] propose aligning the visual features extracted by the backbone, enabling the detector to focus on domain-invariant features at the image-level. Furthermore, [19, 35, 43] provide more fine-grained alignment from the perspective of categories and instances. Recently, with the help of Visual-Language Models (VLMs) [8, 52, 66] to ground visual and textual modalities, VLM-based DAOD methods [38, 40] explore aligning the domain semantics by tuning domain-adaptive prompts and adapters. Despite the success of multi-granularity alignment strategies in reducing feature discrepancies across domains, the local connectivity of convolutions restricts alignment to local regions, thus hindering global domain alignment. As illustrated in Fig 1(a), the CNN-based backbone captures only local features within the sliding window, failing to capture global visual attributes such as the relationships be-tween different regions. Similarly, the detection head fails to model global domain attributes, reflected in the spatial and semantic dependencies among all instances. Spatially, objects often exhibit stable co-occurrence patterns—for ex-ample, a rider typically appears with a bicycle, while a ta-ble rarely co-occurs with a car—and semantically, instances such as cat and dog share strong conceptual relations as an-imals, while car and truck belong to the same category of vehicles. Consequently, the ignorance of long-range depen-dencies across entire image causes existing region-to-region and object-to-object alignments to remain local, thereby limiting the learning of global domain-invariant features. 
+
+> arXiv:2603.18757v1 [cs.CV] 19 Mar 2026 Figure 1. (a) Existing DAOD methods focus on aligning features at image and instance-level to extract domain-invariant features. However, they only achieve local alignment due to the locality of CNN-based backbone and head, resulting in insufficient alignment across regions. (b) Our DA-Mamba utilizes SSM’s long-range perception capability to extract global domain-invariant features, introducing the Image-Aware SSM module to the backbone to supplement global domain attributes, and the Object-Aware SSM module to the detection head to model spatial and semantic dependencies between objects, achieving fine-grained alignment at image and instance-level.
+
+To address the locality limitation, [5, 55, 61] introduce Visual Transformer [15, 57] into DAOD, leveraging atten-tion mechanism to capture global dependencies. However, the quadratic complexity of self-attention leads to substan-tial computational and memory overhead [68]. Although some convolution-based attention variants attempt to ap-proximate global interactions more efficiently, they either rely on global parameter sharing( e.g . a shared query), which ignores domain bias and hinders sufficient global adapta-tion, or still exhibit quadratic complexity in disguise. Mo-tivated by the success of Mamba [47, 49] in modeling long-range dependencies with linear time complexity, it is promising to combine the State Space Models (SSMs) [21] with CNN-based detectors to extract global domain infor-mation while maintaining high efficiency. In this paper, we propose DA-Mamba for DAOD, in-novatively integrating SSMs into CNN-based detectors to capture both local and global domain-invariant features. Specifically, we design the Image-Aware SSM (IA-SSM) and Object-Aware SSM (OA-SSM) modules to perform lo-cal and global domain alignment at the image and instance-level, respectively. As shown in Figure 1, IA-SSM is in-serted into the backbone to enhance long-range perception, enabling fine-grained alignment at the image level by si-multaneously extracting local and global domain-invariant features. The OA-SSM is integrated into the head to ex-plore spatial dependencies among instances while learn-ing semantic dependencies of categories in different do-mains, promoting instance-level alignment. Empowered by the novel CNN-SSM hybrid architecture, DA-Mamba maintains high computational efficiency while supplement-ing the long-distance perception capability, showing supe-rior robustness to various domain shifts. Evaluations on four mainstream benchmarks high-light the effectiveness of the proposed DA-MAmba. In particular, it achieves 58 .1% and 52 .5% mAP on Cityscapes →Foggy and Pascal →Clipart, outperforming the state-of-the-art by 2.2% and 3.4% with only 53 .1% of the FLOPs of Transformer-based DAOD methods. 
+
+# 2. Related Work 
+
+Domain Adaptive Object Detection (DAOD) aims to leverage labeled data from a source domain to improve de-tection performance in an unlabeled target domain. Exist-ing work can be divided into three main categories: fea-ture alignment, semi-supervised learning and VLM-based domain alignment. As the mainstream paradigm, feature alignment involves aligning the source and target domains in feature space to learn domain-invariant representations. Early methods such as DA-Faster [7] employ a domain dis-criminator with a novel Gradient Reverse Layer(GRL) to adversarially align feature distributions at image-level and instance-level [53, 63], while subsequent works [35, 39, 42, 58] further explore category-level alignment to preserve category semantic information across domains. In paral-lel, semi-supervised learning reduces domain bias by gen-erating pseudo labels [6, 14, 44, 56] or using style trans-fer [13, 27, 45] for unbiased data generation. Recently, VLM-based methods [38, 40] leverage the semantic priors of large-scale vision-language models to align the semantic commonalities between domains and supplement the spe-cific information of the target domain. Despite their success, these CNN-based approaches are inherently limited by local receptive fields, aligning only local features while neglecting global domain dependen-cies. To mitigate this, [5, 55, 61] incorporate Visual Trans-former [15, 57] with feature alignment methods, utilizing global attention mechanisms for long-range dependencies modeling. However, the quadratic complexity and large parameter count of Transformers make them computation-ally expensive. Although some convolution-based attention variants [2, 32, 37] attempt to approximate global interac-tions more efficiently, they either rely on global parameter sharing ( e.g ., a shared query), which ignores domain bias and fails to discriminate inter-domain difference, or still in-cur quadratic complexity despite their linear appearance. 
+
+State Space Model (SSMs) State space models are linear time-invariant systems that model dynamic input signal into output response, which can be traced back to the Kalman Filter [34]. Inspired by its linear sequence attention mecha-nism, [12, 50] explores it as an efficient and low-parameter alternative to Transformer [57]. [22] comprehensively dis-cusses the capability of SSMs in handling long-range de-pendencies, and further propose a practical Structured State Space Sequence (S4) [23] model. Following S4, [30] in-troduce SSM to vision task like video classification, ex-ploring its potential in image sequence learning. Motivated by Gated Recurrent Neural Network [9], [18] propose H3 block, which forms the basis of the mainstream SSM net-work. Recently, [21] combined H3 block and Gated MLP to propose a concise and efficient linear attention module, Mamba. Since its appearance, a series of Mamba models have been applied to various scenarios, such as image clas-sification [47, 68] and medical segmentation [49]. In this work, we explore marrying the success of Mamba in mod-eling long-range dependencies to the DAOD task, inject-ing global domain information into the CNN-based detector without introducing quadratic complexity. 
+
+# 3. Method 
+
+In this section, we propose an innovative CNN-SSM hy-brid domain adaptive object detector DA-Mamba. DA-Mamba incorporates the Image-Aware SSM module (IA-SSM) and Object-Aware SSM module (OA-SSM) into the backbone and detection head respectively, supplementing global domain-invariant information to boost image and instance-level domain alignment. For convenience, we im-plement a detector with YOLO architecture [8] to introduce the design of DA-Mamba. As shown in Fig. 2, the input image x is firstly pre-processed with a ResBlock B to ex-tract low-level feature C3. Then C3 is forwarded to FPN to extract multi-scale features, where IA-SSM {I i}3 
+
+> i=1
+
+is at-tached to each resolution feature in the downsample stream, learning global domain information at image-level: 
+
+C4 = B1(I1(C3)); C5 = B2(I2(C4)); P5 = I3(C5),
+
+(1) where {B j }2 
+
+> j=1
+
+denotes ResBlock with downsample layer. After obtaining multi-scale features P3, P4, P5 out-putted by FPN, the OA-SSM {O i}3 
+
+> i=1
+
+is also attached to each resolution feature to explore instance-level spatial and semantic dependencies in detection head H:
+
+[Cls, Bbox ] = H(O1(P3); O2(P4); O3(P5)) . (2) 
+
+3.1. Preliminary 
+
+State Space Models (SSMs) are mathematical frameworks widely used for modeling dynamic input sequences x(t) ∈
+
+R into output sequence y(t) ∈ R, with a set of hidden latent states h(t) ∈ RN . At each time step t, two key equations are defined to effectively model temporal dynamics: 
+
+h′(t) = Ah (t) + Bx (t), (3) 
+
+y(t) = C⊤h(t), (4) where Eq.(3) describes the updating gradient for hidden states h(t) with state transition matrix A ∈ RN ×N and state mapping matrix B ∈ RN . And the observation y(t)
+
+is derived from the hidden state with observation matrix 
+
+C ∈ RN in Eq.(4). This set of linear ordinary differential equations (ODEs) enables efficient modeling of sequential and time-dependent data while maintaining computational scalability. In deep network architectures, data is often presented in discrete time. To incorporate SSM into deep learning, structured state space sequence models (S4) utilize zero-hold (ZOH) method to discretize the continuous-time ODEs into a discrete-time SSM, simplifying the first-order differ-ential terms. Building upon the principle of S4, [21] designs a unique selective discrete-time SSM, introducing attention mechanism into state transition. Accordingly, [21] designs Mamba layer, a lightweight attention layer that operates in a low-dimensional space with linear complexity. As shown in Fig. 3(a), Mamba combines the SSM with Gated MLP: 
+
+a = σ(Linear( f in )) , (5) 
+
+f = SSM( σ(Conv1D(Linear( f in )))) , (6) 
+
+f out = M(f in ) = Linear( a · f ), (7) where fin , fout is the input and output feature of Mamba layer M, and σ(·) denotes activation function. Considering the excellent properties of Mamba, i.e . long-range percep-tion ability with linear complexity, it provides a suitable so-lution for the CNN-based DAOD method to supplement the global domain information. 
+
+3.2. Image-Aware SSM (IA-SSM) 
+
+The Image-Aware SSM module (IA-SSM) is proposed to extract global domain information in the backbone, achiev-ing fine-grained alignment at the image level. Along Figure 2. Overview of the proposed DA-Mamba. The proposed IA-SSM and OA-SSM are integrated into the FPN of the backbone and detection head, respectively, providing fine-grained image and instance-level global-local alignment. 
+
+> Figure 3. The architecture of (a) Mamba layer [21] (b) Image-Aware SSM module and (c) Object-Aware SSM module.
+
+with the CNN-based backbone to extract localized domain-invariant features, IA-SSM leverages the SSMs to explicitly capture global visual attributes in the entire image, thereby enhancing image-level domain alignment. As shown in Fig. 3(b), IA-SSM adopts a dual pipeline, i.e . convolution pipeline and SSM pipeline, to extract both local and global domain information, and each IA-SSM equips a learnable image-level visual prompt vI ∈ RC to cache image-level domain information. Formally, the input feature f in ∈
+
+RB,C,H,W is firstly concatenated with image-level visual prompts broadcast from spatial locations: 
+
+f = Concat( f in , Broadcast (vI )) . (8) After that, feature f ∈ RB, 2C,H,W is embedded with do-main information and forwarded to the dual pipeline. In order to effectively extract domain information and reduce redundant information in visual features, we follow the bot-tleneck architecture [25] and reduce the dimension of in-put features with down-sample convolution ES , EC for each pipeline: 
+
+f S = ES (f ); f C = EC (f ), (9) where f S , f C ∈ RB,C/r,H,W and r denotes reduction ratio. In order to learn global domain-invariant features, we design the SSM pipeline, taking advantage of the Mamba layer M in perceiving long-range dependencies: 
+
+zS = M(f S ). (10) Meanwhile, the dual convolution pipeline is adopted to ex-tract local domain-invariant features: 
+
+zC = CA(f c), (11) Finally, with the local and global domain information, we concatenate zS and zC , mapping them back to the orig-inal feature space with up-sample convolution EO :
+
+f out = EO (Concat( zS, zC)) , (12) where f out ∈ RB,C,H,W is the output of IA-SSM. By integrating IA-SSM, we enable the detection back-bone with the ability to learn both local and global domain-invariant features, facilitating domain alignment at the im-age level. 
+
+3.3. Object-Aware SSM (OA-SSM) 
+
+The Object-Aware SSM module (OA-SSM) is introduced into the detection head, modeling the spatial and semantic dependencies between all instances to align global domain information at the instance-level. As shown in Fig. 3(c), in order to extract local and global domain information in the detection head effectively, OA-SSM shares a similar net-work architecture as IA-SSM. However, unlike the image-level visual prompt vI in IA-SSM, an ideal visual prompt for OA-SSM needs to satisfy the following design points: 1) to learn spatial dependencies, it needs to be pixel-wise; 2) to learn semantic dependencies, it should be conditioned on the input features and interact with the semantics of various categories. To achieve this, we propose to map the visual features into a pixel-wise category similarity matrix with a learnable meta-net, and multiply it with prototypes of all categories to obtain the instance-level visual prompt vO ∈ RB,C,H,W .Formally, given the input feature f in ∈ RB,C,H,W , we project it into a category similarity matrix W ∈ RB,H,W,K ,where K is the total number of categories. This projection is implemented using a convolutional layer CA with reshape operation. Subsequently, the instance-level visual prompt 
+
+vO is defined as the matrix product of W and category pro-totype E ∈ RK,C :
+
+vO = W ⊗ E = CA(f in )E, (13) where category prototype E acts as global semantic an-chors, describing the relative distances of visual features to each category. Leveraging the alignment capability of vision-language models (VLMs), we utilize the textual en-coder of CLIP to generate category prototypes. Specifically, we input textual prompts such as “A photo of [Class]” to represent each category, ensuring a consistent mapping be-tween visual features and semantic categories. Since a single instance presents a defined semantics, all pixels in the same instance region share the same vi-sual prompt. Therefore, vO divides the feature map into instance-level semantic regions, i.e ., each region shares consistent category semantics, and regions have different category semantics. After generating vO , OA-SSM will concatenate it with the input features f in and forward to the dual pipeline, modeling instance-level spatial and semantic dependencies in the detection head. 
+
+3.4. Optimization Objective 
+
+We propose DA-Mamba by introducing IA-SSM and OA-SSM into detection backbone and head to learn domain-invariant and task-relevant knowledge. Therefore, the opti-mization object contains four sub-items: image-level adver-sarial loss, instance-level adversarial loss, source domain supervised loss and targe domain semi-supervised loss. To ensure IA-SSM learning image-level domain-invariant knowledge, we constrain the output of IA-SSM 
+
+fout to be domain-indistinguishable. Specifically, each IA-SSM is followed by a domain discriminator {D Ii }3 
+
+> i=1
+
+with Gradient Reverse Layer(GRL) [7] to calculate image-level adversarial loss LIadv :
+
+LIadv = −
+
+> 3
+
+X
+
+> i=1
+
+[Exs ||D Ii (f out i )|| 22 + Ext ||D Ii (f out i ) − 1|| 22].
+
+(14) Meanwhile, each OA-SSM is also followed by discrimi-nators {D Oi }3 
+
+> i=1
+
+with mask to calculate object-level adver-sarial loss Lo adv :
+
+LOadv = −
+
+> 3
+
+X
+
+> i=1
+
+[Exs || M · D Oi (f out i )|| 22
+
++Ext || M · (DOi (f out i ) − 1)|| 22].
+
+(15) where M is an instance-level mask. M is generated by fil-tering regions where the classification probability exceeds 
+
+0.5, constraining OA-SSM to adaptively focus on the re-lationship between foreground instance regions rather than the relationship between each pixel. For the source domain, we minimize the cross-entropy 
+
+LScls and regression loss Lreg . For the target domain, we select predictions with high confidence as pseudo labels and minimize the cross-entropy LTcls . Overall, the optimization objective is: 
+
+L = LScls + LTlcs + λI LIadv + λO LOadv + Lreg (16) 
+
+# 4. Experiment 
+
+4.1. Dataset 
+
+Cross-Weather Cityscapes [10] contains diverse street scenes in daylight, consisting of 2,975 training and 500 validation images annotated with eight classes. Foggy Cityscapes [54] simulates three distinct densities of fog on Cityscapes, containing 8,925 training images and 1,500 val-idation images. A standard configuration for cross-weather adaptation is to take the training set of Cityscapes as source domain and the training set of foggy Cityscapes as target domain, evaluating cross-weather adaptation performance on the 1500-sized validation set in all eight categories. 
+
+Cross-FoV BDD100K [62] is crucial for self-driving, in-cluding 36,278 training images and 5,258 validation images with diverse scenarios and Field of View (FOV) in the day-time subset. To fairly compare with other methods, we mi-grate Cityscapes to BDD100k on 7 shared categories. 
+
+Cross-Style Pascal VOC [16] dataset consists of 16551 im-ages from the real world and has 20 categories. Comic [29] contains 1,000 training images and 1,000 test images, ren-dered in artistic styles, and share 6 categories with Pascal VOC. Clipart [28] contains 1000 comical images and has the same 20 categories as Pascal VOC. Following the main-stream splitting, we use Pascal VOC as the source domain and all Clipart images as the target domain. For Pascal VOC →Comic, we use the training split for training and the testing split for evaluation. Table 1. Comparison ( %) on Cross-Weather adaptation task Cityscapes →Foggy Cityscapes (C →F)                                                                                                                                                                                               
+
+> C→FMethods Venue Person Rider Car Truck Bus Train Motor Bicycle mAP DA-Faster [7] CVPR 2018 29.2 40.4 43.4 19.7 38.3 28.5 23.7 32.7 32.0 LRA [51] TNNLS 2024 45.6 47.1 59.7 31.2 52.4 44.6 28.1 39.5 43.5 SIGMA++ [43] TPAMI 2023 46.4 45.1 61.0 32.1 52.2 44.6 34.8 39.9 44.5 FA-TDCA [48] TNNLS 2025 43.5 51.7 58.8 34.1 52.6 40.4 36.0 42.3 44.9 MTM [61] AAAI 2024 51.0 53.4 67.2 37.2 54.4 41.6 38.4 47.7 48.9 AT [44] CVPR 2022 56.3 51.9 64.2 38.5 45.5 55.1 54.3 35.0 50.9 SOCCER [11] ACMMM 2024 51.7 57.7 68.6 38.2 51.6 47.5 41.6 51.7 51.1 MRT [65] ICCV 2023 52.8 51.7 68.7 35.9 58.1 54.5 41.0 47.1 51.2 DSD-DA [17] ICML 2024 49.0 59.6 65.3 35.7 61.0 46.5 43.9 57.3 52.3 CAT [35] CVPR 2024 44.6 57.1 63.7 40.8 66.0 49.7 44.9 53.0 52.5 NSA-UDA [67] ICCV 2023 50.3 60.1 67.7 37.4 57.4 46.9 47.3 54.3 52.7 REACT [39] TIP 2024 51.4 57.9 67.4 37.7 58.4 52.8 44.6 54.6 53.1 DATR [5] TIP 2024 61.6 60.4 74.3 35.7 60.3 35.4 43.6 55.9 53.4 DT [36] CVPR 2025 48.5 60.0 65.4 47.2 66.5 52.9 46.2 56.7 55.4 DA-Pro [38] NeurIPS 2023 55.4 62.9 70.9 40.3 63.4 54.0 42.3 58.0 55.9 Baseline(UDA) CVPR 2024 57.5 45.9 68.5 38.4 61.2 50.9 40.8 55.5 52.3 DA-Mamba (Ours) -59.3 61.5 71.0 43.5 66.2 55.1 50.1 57.8 58.1
+> Oracle -61.8 69.0 72.4 46.8 69.5 57.6 52.7 58.9 61.1
+
+4.2. Implementation Details 
+
+We introduce the one-stage detector YOLO-World [8] into the unsupervised domain adaptation (UDA) setting as the baseline detector. In each iteration, one batch of source images with ground truth and one batch of unlabeled tar-get domain images are forwarded to calculate the classifi-cation, adversarial and regression loss. The hyperparame-ter r, λ I , λ O is set to 2.0, 1.0, 0.5. The batch size for each domain is set to 2, using the SGD optimizer with linear learning rate decay. Mean Average Precision (mAP) with a threshold of 0.5 is taken as the evaluation metric. All ex-periments are deployed on 1 Tesla V100 GPUs. 
+
+4.3. Comparison to SOTA methods 
+
+We present representative DAOD approaches for compari-son, including both CNN and Transformer-based detectors. 
+
+Cross-Weather Adaptation Scenario As shown in Ta-ble 1, the proposed DA-Mamba outperforms all CNN or Transformer-based methods and advances SOTA by 
+
+2.2%(55 .9% → 58 .1%) mAP. Specifically, our method im-proves performance on all categories over baseline, ranging from 1.8% to 15 .6% , and achieves a significant total im-provement of 5.8% , close to the oracle 61 .1% .
+
+Cross-FoV Adaptation Scenario Table 2 (C →B) shows that the proposed method achieves the best results of 48 .7% 
+
+mAP and outperforms the SOTA DATR [5] 43 .3% with a large margin of 5.4% , showing the effectiveness of DA-Mamba in extracting spatial and semantic dependencies. 
+
+Cross-Style Adaptation Scenario Additionally, we assess DA-Mamba on the more challenging Cross-Style adapta-tion, where the semantic hierarchy has broader discrepan-cies. In Table 2 (P →Cmc), DA-Mamba peaks with 43 .8% 
+
+mAP, surpassing the SOTA D-adapt [31] by a large margin of 3.3% . In Table 3, DA-Mamba achieves a significant im-provement of 3.4% over the SOTA CAT [35], only slightly lower than the oracle by 1.3% .
+
+4.4. Ablation Studies 
+
+IA-SSM and OA-SSM IA-SSM and OA-SSM improve the domain alignment capability from orthogonal perspectives. 
+
+As shown in Table 4, introducing IA-SSM achieves 2.6 ∼
+
+4.5% mAP improvements over the baseline, and attaching OA-SSM also gains 2.7 ∼ 3.7% . With both modules, our DA-Mamba achieves total improvements of 5.7 ∼ 6.8% ,showing that it achieves fine-grained domain alignment in the backbone and head, respectively. 
+
+Standard Mamba vs. DA-Mamba. DA-Mamba achieves better learning of domain-invariant features by balancing local and global alignment. We replace the IA-SSM in the backbone and OA-SSM in the detection head with standard Mamba layers [49]. As shown in Table 5, IA-SSM sur-passes the vanilla Mamba by 1.8 ∼ 2.5% , indicating that di-rectly applying Mamba to DAOD is suboptimal. Similarly, OA-SSM outperforms Mamba by 1.7 ∼ 2.9% in the detec-tion head, showing superiority in modeling instance-level spatial and semantic relationships across domains. Applied to both image and instance-level, vanilla Mamba layer only brings limited improvements ( 1.0 ∼ 2.9% ), while DA-Mamba improves 5.7 ∼ 6.8% significantly. The reason for the limited adaptation performance of standard Mamba lies in its domain-agnostic state update strategy, which fails to align long-range dependencies when the feature distribu-tions between domains diverge. In contrast, IA-SSM and OA-SSM leverage convolutional local priors as guidance, ensuring that global dependencies are aligned with locally Table 2. Comparison ( %) on Cross-FOV adaptation task Cityscapes →BDD100K (C →B) and Cross-Style adaptation task Pascal VOC →Comic (P →Cmc) 
+
+C→B P→Cmc Methods Person Rider Car Truck Bus Motor Bicycle mAP Bicycle Bird Car Cat Dog Person mAP DA-Faster [7] 28.9 27.4 44.2 19.1 18.0 14.2 22.4 24.9 - - - - - - -SWDA [53] 30.2 29.5 45.7 15.2 18.4 17.1 21.2 25.3 36.0 18.3 29.3 9.3 22.9 48.4 27.4 DBGL [3] - - - - - - - - 35.6 20.3 33.9 16.4 26.6 45.3 29.7 FGRR [4] - - - - - - - - 42.2 21.1 30.2 21.9 30.0 51.5 32.7 SFA [60] 40.2 27.6 57.5 19.1 23.4 15.4 19.2 28.9 - - - - - - -BiADT [26] 42.0 34.5 59.9 17.2 19.2 17.8 24.4 32.7 - - - - - - -TDD [27] 39.6 38.9 53.9 24.1 25.5 24.5 28.8 33.6 - - - - - - -MRT [65] 48.4 30.9 63.7 24.7 25.5 20.2 22.6 33.7 - - - - - - -SIGMA++ [43] 47.5 30.4 65.6 21.1 26.3 17.8 27.1 33.7 45.7 22.4 36.9 25.5 27.9 62.5 37.1 D-adapt [31] - - - - - - - - 52.4 25.4 42.3 43.7 25.7 53.5 40.5 DATR [5] 58.5 42.8 73.4 26.9 39.9 24.2 37.3 43.3 - - - - - - -Baseline(UDA) 54.5 25.0 66.0 37.5 40.7 33.0 36.9 41.9 60.2 17.8 52.3 15.3 17.8 63.9 37.9 DA-Mamba(Ours) 63.5 41.6 71.4 43.1 42.3 41.0 38.1 48.7 61.7 23.1 55.9 27.2 28.1 66.6 43.8 
+
+Oracle 67.5 45.4 77.3 51.0 51.8 44.6 43.4 54.4 66.7 27.1 64.0 27.9 32.8 70.8 48.2 
+
+Table 3. Comparison ( %) on Cross-Style adaptation task Pascal VOC →Clipart (P →Clp) 
+
+Methods Aero Bike Bird Boat Bottle Bus Car Cat Chair Cow Table Dog Horse Motor Person Plant Sheep Sofa Train Tv mAP UaDAN [24] 35.0 73.7 41.0 24.4 21.3 69.8 53.5 2.3 34.2 61.2 31.0 29.5 47.9 63.6 62.2 61.3 13.9 7.6 48.6 23.9 40.2 TFD [59] 27.9 64.8 28.4 29.5 25.7 64.2 47.7 13.5 47.5 50.9 50.8 21.3 33.9 60.2 65.6 42.5 15.1 40.5 45.5 48.6 41.2 UMT [13] 39.6 59.1 32.4 35.0 45.1 61.9 48.4 7.5 46.0 67.6 21.4 29.5 48.2 75.9 70.5 56.7 25.9 28.9 39.4 43.6 44.1 ATMT [41] 37.5 63.4 37.9 29.8 45.1 62.7 41.2 19.5 43.7 57.4 22.9 25.3 39.6 87.1 70.9 50.6 29.1 32.2 58.4 50.5 45.2 CIGAR [46] 35.2 55.0 39.2 30.7 60.1 58.1 46.9 31.8 47.0 61.0 21.8 26.7 44.6 52.4 68.5 54.4 31.3 38.8 56.5 63.5 46.2 TIA [64] 42.2 66.0 36.9 37.3 43.7 71.8 49.7 18.2 44.9 58.9 18.2 29.1 40.7 87.8 67.4 49.7 27.4 27.8 57.1 50.6 46.3 SIGMA++ [43] 36.3 54.6 40.1 31.6 58.0 60.4 46.2 33.6 44.4 66.2 25.7 25.3 44.4 58.8 64.8 55.4 36.2 38.6 54.1 59.3 46.7 CMT [1] 39.8 56.3 38.7 39.7 60.4 35.0 56.0 7.1 60.1 60.4 35.8 28.1 67.8 84.5 80.1 55.5 20.3 32.8 42.3 38.2 47.0 DA-Ada [40] 42.3 75.1 48.9 45.9 49.0 71.8 55.6 15.4 50.7 56.6 19.9 20.6 61.3 80.7 73.0 29.2 37.5 21.5 52.5 52.9 48.0 CAT [35] 40.5 64.1 38.8 41.0 60.7 55.5 55.6 14.3 54.7 59.6 46.2 20.3 58.7 92.9 62.6 57.5 22.4 40.9 49.5 46.0 49.1 Baseline(UDA) 38.1 61.1 41.0 38.8 63.7 51.1 53.2 17.9 66.6 24.9 56.0 15.8 44.8 64.1 60.7 53.9 22.7 53.3 53.0 43.2 46.2 DA-Mamba(Ours) 46.7 68.8 42.9 51.3 69.1 53.1 59.0 24.1 70.0 33.8 59.5 20.5 48.5 68.2 70.9 67.2 25.6 60.7 58.5 50.8 52.5 
+
+Oracle 46.2 71.3 45.3 52.5 72.0 53.1 60.9 25.5 72.0 34.8 60.1 23.8 50.6 63.6 72.8 67.7 28.3 63.7 59.8 51.5 53.8 
+
+Table 4. Ablation ( %) on DA-Mamba. 
+
+Method C→F C→B P→Clp P→Cmc w/o 52.3 41.9 46.8 37.9 w/ IA-SSM 56.8(+4.5) 45.9(+4.0) 50.6(+3.8) 40.5(+2.6) w/ OA-SSM 55.4(+3.1) 45.0(+3.1) 50.5(+3.7) 40.6(+2.7) w/ both 58.1(+5.8) 48.7(+6.8) 52.5(+5.7) 43.8(+5.9) 
+
+Table 5. Comparison ( %) with standard Mamba. 
+
+Component Method C→F C→B P→Clp P→Cmc Backbone Mamba [49] 54.3 43.4 48.3 38.7 IA-SSM 56.8 45.9 50.6 40.5 Head Mamba [49] 53.4 43.3 47.6 38.4 OA-SSM 55.4 45.0 50.5 40.6 Backbone+Head Mamba [49] 55.0 44.8 48.7 38.9 DA-Mamba 58.1 48.7 52.5 43.8 
+
+stable domain-invariant features. This conclusion is further verified under larger domain discrepancies: when adapting under cross-style scenarios P →Clp and P →Cmc, standard Mamba achieves only marginal gains ( 1.9% and 1.0% ), whereas DA-Mamba maintains substantial improvements (5.7% and 5.9% ). Overall, DA-Mamba inherits the global modeling strength of Mamba while grounding it in convo-lutional local priors, achieving robust domain-invariant rep-resentation learning under domain shift. 
+
+Computational Overhead. DA-Mamba achieves superior performance with minimal additional cost. As shown in Table 6, compared with SOTA method DA-Pro[38], DA-Mamba gains mAP improvements of 2.2% with 51 .2% 
+
+inference memory usage, 5.64 ×FPS and 57 .6% FLOPs. Compared with transformer-based DATR [5], DA-Mamba attains 4.7% higher mAP, 2.62 ×FPS with merely 37 .1% 
+
+inference memory, 67 .5% training memory and 50 .2% 
+
+FLOPs, highlighting efficiency in both speed and accu-racy through linear attention. Within the same CNN-based framework, the plain baseline yields the highest efficiency (15.2 FPS, 140G FLOPs) but suffers from the lowest mAP (52 .3% ) due to the lack of global alignment. Introducing the GC Block [2] to model global dependencies with con-volutional attention variants yields a modest 1.8% mAP gain with slight memory and FLOPs increases, yet re-mains constrained by its globally shared attention weights. Replacing it with Transformer block substantially boosts Table 6. Comparison ( %) of computational overhead.                                                                 
+
+> Method Arch. Inference Mem. Usg. FPS Training Mem. Usg. Training s/iter FLOPs mAP Abs. Gains DA-Pro [38] Visual-Language Model 2549M 2.5 4034M 1.472S 243G 55.9 3.3 DATR [5] Transformer-based Attention 3206M 5.8 21606M 0.906s 279G 53.4 5.3 Baseline CNN-based Backbone 1190M 15.2 14581M 0.703s 140G 52.3 -Baseline+GC Block CNN-based Attention 1341M 14.1 15238M 0.776s 146G 54.1 1.8 Baseline+ViT Block Transformer-based Attention 2090M 10.6 19322M 0.862s 208G 57.5 5.2 Baseline+Mamba Block SSM-based Attention 1792M 13.0 18027M 0.799s 182G 55.0 2.7 DA-Mamba(Ours) CNN-SSM Hybrid Attention 1307M 14.1 15500M 0.782s 148G 58.1 5.8
+
+Table 7. Ablation ( %) on IA-SSM.                                       
+
+> Conv SSM Prompts C→FC→BP→Clp P→Cmc 52.3 41.9 46.8 37.9
+> ✓53.5 43.8 47.6 38.3
+> ✓54.3 43,4 48.3 38.7
+> ✓✓55.6 45.0 49.2 40.0
+> ✓✓53.9 44.0 48.3 38.4
+> ✓✓54.9 43.9 49.0 40.0
+> ✓✓✓56.8 45.9 50.6 40.5
+
+Table 8. Ablation ( %) on OA-SSM.                                       
+
+> Conv SSM Prompts C→FC→BP→Clp P→Cmc 52.3 41.9 46.8 37.9
+> ✓53.2 43.2 47.5 38.1
+> ✓53.4 43.3 47.6 38.4
+> ✓✓54.8 44.6 49.4 39.8
+> ✓✓53.8 43.3 47.8 38.5
+> ✓✓54.5 44.0 48.7 39.2
+> ✓✓✓55.4 45.0 50.5 40.6
+
+global perception and raises mAP to 57 .5% , though at the cost of 1.49 × FLOPs, 69 .7% FPS, 1.76 × inference and 
+
+1.33 × training memory usage. In comparison, the Mamba layer achieves a balanced trade-off between performance and computational overhead. Finally, DA-Mamba inte-grates IA-SSM and OA-SSM into the CNN backbone and head, maintaining near-baseline efficiency (14.1 FPS, 148G FLOPs) while achieving the best 58 .1% mAP and 5.8% 
+
+gains. This demonstrates that DA-Mamba effectively com-bines lightweight efficiency of CNNs with linear global modeling capability of SSMs, achieving global–local do-main alignment without heavy computation of Transform-ers or limited expressiveness of convolutional attention. 
+
+Pipeline and Prompts. Both the convolution pipeline and the SSM pipeline are indispensable for effectively combin-ing local and global features, while visual prompts fur-ther enhance domain information. As shown in Table 7 and Table 8, introducing the convolution pipeline yields 
+
+0.4 ∼ 1.9% improvements for IA-SSM and 0.2 ∼ 1.3% 
+
+for OA-SSM, as it provides vital local domain-invariant fea-tures. And the SSM pipeline brings 0.8 ∼ 2.0% and 0.5 ∼
+
+1.4% gains, benefiting from its ability to capture long-range dependencies across domains. With both pipelines, IA-SSM and OA-SSM achieve the highest improvements of 
+
+2.1 ∼ 3.3% and 1.9 ∼ 2.6% , confirming that local and global alignment are complementary and jointly necessary 
+
+Table 9. Ablation studies ( %) for insertion sites of DA-Mamba.                   
+
+> IA-SSM mAP OA-SSM mAP C3 C4 C5 P3 P4 P5 52.3 52.3
+> ✓53.8 ✓53.9
+> ✓54.0 ✓53.9
+> ✓54.3 ✓54.1
+
+for robust domain-invariant representation learning. Mean-while, image-level and instance-level visual prompts further boost the performance with 0.5 ∼ 1.4% and 0.4 ∼ 1.1% ,since prompts condition the dual pipeline on domain and category-specific context, enabling better domain alignment at both image and instance-level. Overall, results demon-strate that DA-MAmba benefits from a synergistic integra-tion of convolutional locality, SSM-based global perception and prompt-guided semantic adaptation, outperforming ex-isting methods that rely on any single component. 
+
+Insertion Sites. SSM can improve the alignment of features at all levels and is more effective for high-level features. We study the insertion site of IA-SSM and OA-SSM, as shown in Table 9. For IA-SSM in the backbone, attaching it to the high-level feature C5 (+2 .0% ) is more effective than low-level feature C3 (+1 .5% ). We attribute this to the fact that high-level features contain more semantic information rather than texture, which is more suitable for IA-SSM to analyze global domain information. For the detection head, OA-SSM presents similar performance ( +1 .6 ∼ 1.8% ) on 
+
+P3, P4, P5, because the feature fusion of FPN makes them differ mainly in scale rather than semantics. 
+
+# 5. Conclusion 
+
+In this paper, we propose DA-Mamba, a novel hybrid CNN-SSM architecture for DAOD. By integrating State Space Models (SSMs) with CNNs, DA-Mamba efficiently captures both local and global domain-invariant features. Specifically, we incorporate Image-Aware SSM (IA-SSM) into the backbone for supplementing global domain at-tributes at the image-level, and Object-Aware SSM (OA-SSM) into the detection head to model spatial and seman-tic dependencies at the instance-level. Experimental results show that DA-Mamba significantly improves cross-domain performance, outperforming existing methods while main-taining high computational efficiency. References 
+
+[1] Shengcao Cao, Dhiraj Joshi, Liang-Yan Gui, and Yu-Xiong Wang. Contrastive mean teacher for domain adaptive object detectors. In CVPR , pages 23839–23848, 2023. 7 [2] Yue Cao, Jiarui Xu, Stephen Lin, Fangyun Wei, and Han Hu. Gcnet: Non-local networks meet squeeze-excitation net-works and beyond. In ICCV , 2019. 3, 7, 16 [3] Chaoqi Chen, Jiongcheng Li, Zebiao Zheng, Yue Huang, Xinghao Ding, and Yizhou Yu. Dual bipartite graph learning: A general approach for domain adaptive object detection. In 
+
+ICCV , pages 2703–2712, 2021. 7 [4] Chaoqi Chen, Jiongcheng Li, Hong-Yu Zhou, Xiaoguang Han, Yue Huang, Xinghao Ding, and Yizhou Yu. Relation matters: foreground-aware graph-based relational reasoning for domain adaptive object detection. TPAMI , 45(03):3677– 3694, 2023. 7 [5] Liang Chen, Jianhong Han, and Yupei Wang. Datr: Unsu-pervised domain adaptive detection transformer with dataset-level adaptation and prototypical alignment. TIP , 2025. 2, 6, 7, 8, 16 [6] Meilin Chen, Weijie Chen, Shicai Yang, Jie Song, Xin-chao Wang, Lei Zhang, Yunfeng Yan, Donglian Qi, Yuet-ing Zhuang, Di Xie, et al. Learning domain adaptive object detection with probabilistic teacher. In ICML , pages 3040– 3055, 2022. 2 [7] Yuhua Chen, Wen Li, Christos Sakaridis, Dengxin Dai, and Luc Van Gool. Domain adaptive faster r-cnn for object de-tection in the wild. In CVPR , pages 3339–3348, 2018. 1, 2, 5, 6, 7 [8] Tianheng Cheng, Lin Song, Yixiao Ge, Wenyu Liu, Xing-gang Wang, and Ying Shan. Yolo-world: Real-time open-vocabulary object detection. In CVPR , pages 16901–16911, 2024. 1, 3, 6, 12 [9] Junyoung Chung, Caglar Gulcehre, Kyunghyun Cho, and Yoshua Bengio. Empirical evaluation of gated recurrent neu-ral networks on sequence modeling. In NeurIPS Workshop ,2014. 3 [10] Marius Cordts, Mohamed Omran, Sebastian Ramos, Timo Rehfeld, Markus Enzweiler, Rodrigo Benenson, Uwe Franke, Stefan Roth, and Bernt Schiele. The cityscapes dataset for semantic urban scene understanding. In CVPR ,2016. 5 [11] Yiming Cui, Liang Li, Jiehua Zhang, Chenggang Yan, Hongkui Wang, Shuai Wang, Heng Jin, and Li Wu. Stochas-tic context consistency reasoning for domain adaptive object detection. In ACMMM , pages 1331–1340, 2024. 6 [12] Tri Dao, Dan Fu, Stefano Ermon, Atri Rudra, and Christo-pher R´ e. Flashattention: Fast and memory-efficient exact at-tention with io-awareness. In NeurIPS , pages 16344–16359, 2022. 3 [13] Jinhong Deng, Wen Li, Yuhua Chen, and Lixin Duan. Un-biased mean teacher for cross-domain object detection. In 
+
+CVPR , pages 4091–4101, 2021. 2, 7 [14] Jinhong Deng, Dongli Xu, Wen Li, and Lixin Duan. Harmo-nious teacher for cross-domain object detection. In CVPR ,pages 23829–23838, 2023. 2 [15] Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg Heigold, Syl-vain Gelly, Jakob Uszkoreit, and Neil Houlsby. An image is worth 16x16 words: Transformers for image recognition at scale. In ICLR , 2021. 2 [16] Mark Everingham, SM Ali Eslami, Luc Van Gool, Christo-pher KI Williams, John Winn, and Andrew Zisserman. The pascal visual object classes challenge: A retrospective. IJCV ,111:98–136, 2015. 5 [17] Yongchao Feng, Shiwei Li, Yingjie Gao, Ziyue Huang, Yanan Zhang, Qingjie Liu, and Yunhong Wang. Dsd-da: Distillation-based source debiasing for domain adaptive ob-ject detection. In ICML , 2024. 6 [18] Daniel Y Fu, Tri Dao, Khaled Kamal Saab, Armin W Thomas, Atri Rudra, and Christopher Re. Hungry hungry hippos: Towards language modeling with state space mod-els. In ICLR , 2023. 3 [19] Changlong Gao, Chengxu Liu, Yujie Dun, and Xueming Qian. Csda: Learning category-scale joint feature for domain adaptive object detection. In ICCV , pages 11421–11430, 2023. 1 [20] Andreas Geiger, Philip Lenz, and Raquel Urtasun. Are we ready for autonomous driving? the kitti vision benchmark suite. In CVPR , 2012. 12 [21] Albert Gu and Tri Dao. Mamba: Linear-time sequence mod-eling with selective state spaces. In COLM , 2024. 2, 3, 4 [22] Albert Gu, Tri Dao, Stefano Ermon, Atri Rudra, and Christo-pher R´ e. Hippo: Recurrent memory with optimal polynomial projections. In NeurIPS , pages 1474–1487, 2020. 3 [23] Albert Gu, Karan Goel, and Christopher Re. Efficiently mod-eling long sequences with structured state spaces. In Inter-national Conference on Learning Representations , 2022. 3 [24] Dayan Guan, Jiaxing Huang, Aoran Xiao, Shijian Lu, and Yanpeng Cao. Uncertainty-aware unsupervised domain adaptation in object detection. TMM , 24:2502–2514, 2021. 7[25] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual learning for image recognition. In CVPR ,pages 770–778, 2016. 4 [26] Liqiang He, Wei Wang, Albert Chen, Min Sun, Cheng-Hao Kuo, and Sinisa Todorovic. Bidirectional alignment for do-main adaptive detection with transformers. In ICCV , pages 18775–18785, 2023. 7 [27] Mengzhe He, Yali Wang, Jiaxi Wu, Yiru Wang, Hanqing Li, Bo Li, Weihao Gan, Wei Wu, and Yu Qiao. Cross domain object detection by target-perceived dual branch distillation. In CVPR , pages 9570–9580, 2022. 2, 7 [28] Naoto Inoue, Ryosuke Furuta, Toshihiko Yamasaki, and Kiy-oharu Aizawa. Cross-domain weakly-supervised object de-tection through progressive domain adaptation. In CVPR ,pages 5001–5009, 2018. 5 [29] Naoto Inoue, Ryosuke Furuta, Toshihiko Yamasaki, and Kiy-oharu Aizawa. Cross-domain weakly-supervised object de-tection through progressive domain adaptation. In CVPR ,pages 5001–5009, 2018. 5 [30] Md Mohaiminul Islam and Gedas Bertasius. Long movie clip classification with state-space video models. In ECCV ,pages 87–104, 2022. 3 [31] Junguang Jiang, Baixu Chen, Jianmin Wang, and Mingsheng Long. Decoupled adaptation for cross-domain object detec-tion. In ICML , 2022. 6, 7 [32] Zi-Rong Jin, Tian-Jing Zhang, Tai-Xiang Jiang, Gemine Vivone, and Liang-Jian Deng. Lagconv: Local-context adap-tive convolution kernels with global harmonic bias for pan-sharpening. In AAAI , pages 1113–1121, 2022. 3 [33] Matthew Johnson-Roberson, Charles Barto, Rounak Mehta, Sharath Nittur Sridhar, Karl Rosaen, and Ram Vasudevan. Driving in the matrix: Can virtual worlds replace human-generated annotations for real world tasks? In ICRA 2017 ,pages 746–753. IEEE, 2017. 12 [34] Rudolph Emil Kalman. A new approach to linear filtering and prediction problems. 1960. 3 [35] Mikhail Kennerley, Jian-Gang Wang, Bharadwaj Veeravalli, and Robby T Tan. Cat: Exploiting inter-class dynamics for domain adaptive object detection. In CVPR , pages 16541– 16550, 2024. 1, 2, 6, 7 [36] Marc-Antoine Lavoie, Anas Mahmoud, and Steven LWaslander. Large self-supervised models bridge the gap in domain adaptive object detection. In CVPR , pages 4692– 4702, 2025. 6 [37] Guoqiang Li, Qi Fang, Linlin Zha, Xin Gao, and Nenggan Zheng. Ham: Hybrid attention module in deep convolutional neural networks for image classification. PR , 129:108785, 2022. 3, 16 [38] Haochen Li, Rui Zhang, Hantao Yao, Xinkai Song, Yifan Hao, Yongwei Zhao, Ling Li, and Yunji Chen. Learning domain-aware detection head with prompt tuning. NeurIPS ,36, 2024. 1, 2, 6, 7, 8 [39] Haochen Li, Rui Zhang, Hantao Yao, Xin Zhang, Yifan Hao, Xinkai Song, and Ling Li. React: Remainder adaptive com-pensation for domain adaptive object detection. TIP , 33: 3735–3748, 2024. 1, 2, 6 [40] Haochen Li, Rui Zhang, Hantao Yao, Xin Zhang, Yifan Hao, Xinkai Song, Xiaqing Li, Yongwei Zhao, Yunji Chen, and Ling Li. Da-ada: Learning domain-aware adapter for domain adaptive object detection. In NeurIPS , 2025. 1, 2, 7 [41] Kai Li, Curtis Wigington, Chris Tensmeyer, Vlad I. Morariu, Handong Zhao, Varun Manjunatha, Nikolaos Barmpalios, and Yun Fu. Improving cross-domain detection with self-supervised learning. In CVPR , pages 4745–4754, 2023. 7 [42] Wuyang Li, Xinyu Liu, and Yixuan Yuan. Sigma: Semantic-complete graph matching for domain adaptive object detec-tion. In CVPR , pages 5291–5300, 2022. 2 [43] Wuyang Li, Xinyu Liu, and Yixuan Yuan. Sigma++: Im-proved semantic-complete graph matching for domain adap-tive object detection. TPAMI , 45(07):9022–9040, 2023. 1, 6, 7[44] Yu-Jhe Li, Xiaoliang Dai, Chih-Yao Ma, Yen-Cheng Liu, Kan Chen, Bichen Wu, Zijian He, Kris Kitani, and Peter Va-jda. Cross-domain adaptive teacher for object detection. In 
+
+CVPR , pages 7581–7590, 2022. 2, 6 [45] Rui Liu, Yahong Han, Yaowei Wang, and Qi Tian. Frequency spectrum augmentation consistency for domain adaptive ob-ject detection. arXiv preprint arXiv:2112.08605 , 2021. 2 [46] Yabo Liu, Jinghua Wang, Chao Huang, Yaowei Wang, and Yong Xu. Cigar: Cross-modality graph reasoning for domain adaptive object detection. In CVPR , pages 23776–23786, 2023. 7 [47] Yue Liu, Yunjie Tian, Yuzhong Zhao, Hongtian Yu, Lingxi Xie, Yaowei Wang, Qixiang Ye, Jianbin Jiao, and Yunfan Liu. VMamba: Visual state space model. In NeurIPS , 2025. 2, 3 [48] Yabo Liu, Jinghua Wang, Linhui Xiao, Chengliang Liu, Zhi-hao Wu, and Yong Xu. Foregroundness-aware task disen-tanglement and self-paced curriculum learning for domain adaptive object detection. TNNLS , 2025. 6 [49] Jun Ma, Feifei Li, and Bo Wang. U-mamba: Enhancing long-range dependency for biomedical image segmentation. 
+
+arXiv preprint arXiv:2401.04722 , 2024. 2, 3, 6, 7 [50] Xuezhe Ma, Chunting Zhou, Xiang Kong, Junxian He, Liangke Gui, Graham Neubig, Jonathan May, and Luke Zettlemoyer. Mega: Moving average equipped gated atten-tion. In ICLR , 2022. 3 [51] Zhengquan Piao, Linbo Tang, and Baojun Zhao. Unsuper-vised domain-adaptive object detection via localization re-gression alignment. TNNLS , 35(11):15170–15181, 2024. 6 [52] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learn-ing transferable visual models from natural language super-vision. In ICML , pages 8748–8763. PMLR, 2021. 1 [53] Kuniaki Saito, Yoshitaka Ushiku, Tatsuya Harada, and Kate Saenko. Strong-weak distribution alignment for adaptive ob-ject detection. In CVPR , pages 6956–6965, 2019. 1, 2, 7 [54] Christos Sakaridis, Dengxin Dai, and Luc Van Gool. Seman-tic foggy scene understanding with synthetic data. IJCV , 126 (9):973–992, 2018. 5 [55] Sunandini Sanyal, Ashish Ramayee Asokan, Suvaansh Bhambri, Akshay Kulkarni, Jogendra Nath Kundu, and R Venkatesh Babu. Domain-specificity inducing transform-ers for source-free domain adaptation. In ICCV , pages 18928–18937, 2023. 2 [56] Antti Tarvainen and Harri Valpola. Mean teachers are better role models: Weight-averaged consistency targets improve semi-supervised deep learning results. NPIS , 30, 2017. 2 [57] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszko-reit, Llion Jones, Aidan N Gomez, Łukasz Kaiser, and Illia Polosukhin. Attention is all you need. NeurIPS , 30, 2017. 2, 3[58] Vibashan Vs, Vikram Gupta, Poojan Oza, Vishwanath A Sindagi, and Vishal M Patel. Mega-cda: Memory guided attention for category-aware unsupervised domain adaptive object detection. In CVPR , pages 4516–4526, 2021. 2 [59] Haoan Wang, Shilong Jia, Tieyong Zeng, Guixu Zhang, and Zhi Li. Triple feature disentanglement for one-stage adaptive object detection. In AAAI , pages 5401–5409, 2024. 7 [60] Wen Wang, Yang Cao, Jing Zhang, Fengxiang He, Zheng-Jun Zha, Yonggang Wen, and Dacheng Tao. Exploring sequence feature alignment for domain adaptive detection transformers. In ACM MM , pages 1730–1738, 2021. 7 [61] Weixi Weng and Chun Yuan. Mean teacher detr with masked feature alignment: A robust domain adaptive detection trans-former framework. In AAAI , pages 5912–5920, 2024. 2, 6 [62] Fisher Yu, Haofeng Chen, Xin Wang, Wenqi Xian, Yingying Chen, Fangchen Liu, Vashisht Madhavan, and Trevor Dar-rell. Bdd100k: A diverse driving dataset for heterogeneous multitask learning. In CVPR , pages 2636–2645, 2020. 5 [63] Yixin Zhang, Zilei Wang, and Yushi Mao. Rpn prototype alignment for domain adaptive object detector. In CVPR ,pages 12425–12434, 2021. 2 [64] Liang Zhao and Limin Wang. Task-specific inconsistency alignment for domain adaptive object detection. In CVPR ,pages 14217–14226, 2022. 7 [65] Zijing Zhao, Sitong Wei, Qingchao Chen, Dehui Li, Yifan Yang, Yuxin Peng, and Yang Liu. Masked retraining teacher-student framework for domain adaptive object detection. In 
+
+ICCV , pages 19039–19049, 2023. 6, 7 [66] Yiwu Zhong, Jianwei Yang, Pengchuan Zhang, Chunyuan Li, Noel Codella, Liunian Harold Li, Luowei Zhou, Xiyang Dai, Lu Yuan, Yin Li, et al. Regionclip: Region-based language-image pretraining. In CVPR , pages 16793–16803, 2022. 1 [67] Wenzhang Zhou, Heng Fan, Tiejian Luo, and Libo Zhang. Unsupervised domain adaptive detection with network sta-bility analysis. In ICCV , pages 6986–6995, 2023. 6 [68] Lianghui Zhu, Bencheng Liao, Qian Zhang, Xinlong Wang, Wenyu Liu, and Xinggang Wang. Vision mamba: Efficient visual representation learning with bidirectional state space model. In ICML , 2024. 2, 3 6. Appendix 
+
+6.1. Implementation Details 
+
+We introduce the one-stage detector YOLO-World [8] into the unsupervised domain adaptation (UDA) setting as the baseline detector. In each iteration, one batch of source images with ground truth and one batch of target domain images with pseudo labels are forwarded to calculate the classification, adversarial and regression loss. The hyper-parameter r, λ I , λ O is set to 2.0, 1.0, 0.5. The batch size for each domain is set to 2, using the SGD optimizer with linear warm-up and decay learning rate. The base learning rate is 1e-3, the warm-up period is 5 epochs and the decay starts from the 20th epoch. Mean Average Precision (mAP) with a threshold of 0.5 is taken as the evaluation metric. All experiments are deployed on 1 Tesla V100 GPUs. 
+
+6.2. Additional Benchmarks                             
+
+> Table 10. Comparison ( %) on benchmarks with various categories.
+> Benchmark Category Baseline (UDA) DA-Mamba Gains C→F852.3 58.1 5.8 C→B741.9 48.7 6.8 P→Clp 20 46.2 52.5 6.3 P→Cmc 637.9 43.8 5.9 K→C160.4 62.5 3.1 S→C159.3 62.3 3.0
+
+Evaluation on Multi-Category Benchmarks In the main text, we report experiments on four mainstream multi-category adaptation scenarios. As shown in Table 10 (rows 
+
+2 ∼ 5), DA-Mamba consistently achieves substantial im-provements of 5.8 ∼ 6.8% , demonstrating strong cross-domain generalization under diverse domain shifts. 
+
+Evaluation on Single-Category Benchmarks Beyond these benchmarks, KITTI [20] and Sim10K [33] are also two important mainstream benchmarks. KITTI includes 7,481 real-world images with different camera Field of View (FoV) settings. The synthetic dataset SIM10k has 10,000 photos from the GTA V video game, de-signed to evaluate synthetic-to-real transfer. However, both adaptation scenarios KITTI →Cityscapes (K →C) and SIM10k →Cityscapes (S →C) contain a single category “car”. These adaptation settings do not include inter-class semantic structures, and thus cannot fully evaluate DA-Mamba’s ability to model global semantic relation-ships across categories. Consequently, compared with the multi-category scenarios (6–20 classes), DA-Mamba ob-tains smaller but still consistent improvements of 2.1 ∼
+
+3.0% on these single-category tasks. Importantly, since no cross-category semantic differences exist in these cases, the performance gain mainly comes from enhanced modeling of spatial dependencies under domain shift. This result fur-ther validates that DA-Mamba remains effective even with-out cross-category semantics and can robustly model long-range spatial dependencies in single-category scenarios. Overall, these results show that DA-Mamba provides consistent gains across both semantic-rich and -scarce adap-tation settings, highlighting its robustness and broad appli-cability under diverse domain shifts. 
+
+6.3. Structure Variants 
+
+> Figure 4. Different structure for IA-SSM and OA-SSM. Table 11. Comparison ( %) of different SSM structure.
+
+Structure Param(M) FPS mAP Serial 8.610 12.6 58.1 Parallel 1.732 14.1 58.1 
+
+Serial or Parallel? Parallel network achieves comparable accuracy to the serial design with higher computational effi-ciency. Depending on the ordering of global and local align-ment, we explore two network variants: (a) serial network and (b) parallel network. As shown in Fig. 4(a), the serial network first feeds the concatenated input-prompt features into the Mamba layer to learn global visual dependencies, and subsequently applies gated convolution to extract local domain-invariant features. In contrast, the parallel network in Fig 4(b) exploits a dual-pipeline design, where local and global information are learned independently through con-volution pipeline and Mamba pipeline, and then fused to form the output feature. As reported in Table 11, the par-allel network requires only 20% (1.732M) of the parame-ters of the serial network(8.610M) while achieving the same mAP. It also reaches a higher inference speed (14.1 FPS vs. 12.6 FPS), demonstrating better computational efficiency. This efficiency gain comes from avoiding the processing of expanded feature channels (2C) through both Mamba and Figure 5. Visualizations of the extracted feature map. 
+
+> Figure 6. Visualizations of the similarity between the features of a certain point and other regions on the feature map.
+
+convolution branches and instead keeping them lightweight (C/2) before fusion. Given its superior efficiency and its natural alignment with the dual-pipeline modeling objective of DA-Mamba (i.e ., global-local alignment), we adopt the parallel network structure in the design of IA-SSM and OA-SSM. 
+
+6.4. Feature Visualization 
+
+Feature Visualization DA-Mamba accurately extracts the features of foreground objects in the target domain while suppressing redundant, semantically-irrelevant background information. We visualize the multi-scale features be-fore and after inserting the IA-SSM and OA-SSM mod-ules. As shown in Fig. 5 (b), without DA-Mamba, the extracted features respond strongly to background regions while failing to highlight foreground objects, indicating in-sufficient domain alignment. In contrast, Fig. 5 (c) shows that DA-Mamba suppresses irrelevant textures (such as lane markings and background building) and emphasizes true foreground areas, suggesting more compact and domain-invariant representations. This improved localization and background suppression reduce feature noise transferred across domains, thereby enhancing cross-domain general-ization. 
+
+Feature Similarity DA-Mamba exhibits high intra-class similarity and low inter-class similarity across spatially dis-Figure 7. T-SNE visualization of the features extracted from the target domain. 
+
+tant regions, reflecting its capability in capturing global domain-invariant features and long-range semantic rela-tionships. To intuitively verify DA-Mamba’s ability to capture global domain-invariant features and capture long-distance semantic dependencies, we select a ”Person” ob-ject from the target image (red boxes), and compute its sim-ilarity with all other regions in the feature map. Fig. 6(b) and (c) show the visualization results of baseline and DA-Mamba, respectively, where brighter regions indicate higher similarity and darker regions indicate lower similarity. As shown in Fig. 6(b), the baseline exhibits low similarity even within the same class (blue boxes) and undesired high sim-ilarity with other categories (green boxes), indicating weak global semantic discrimination. Conversely, Fig. 6(c) shows that DA-Mamba consistently highlights same-class regions (blue boxes) while suppressing cross-category correlations (green boxes), regardless of spatial distance. This demon-strates that the global-local alignment in DA-Mamba effec-tively propagates semantic dependencies over long ranges, showing a good ability to extract global domain-invariant representations that are robust to domain shifts. Together, these qualitative results confirm that DA-Mamba achieves more stable and consistent domain align-ment by simultaneously enhancing local domain-invariant features and global semantic-spatial dependencies, thereby providing robust cross-domain representations. 
+
+6.5. T-SNE Visualization 
+
+T-SNE on the Target Domain. The features extracted by DA-Mamba exhibit tighter intra-class clusters and larger inter-class margins, reflecting better semantic structuring in the target domain. To intuitively demonstrate the effect of DA-Mamba, we provide a T-SNE visualization of features extracted from the target domain. As shown in Fig. 7(a), before introducing DA-Mamba, features from different cat-egories are heavily mixed and instances of the same cate-gory do not form compact clusters. In contrast, Fig. 7(b) shows that DA-Mamba produces clear boundaries between categories. At the same time, categories with strong se-mantic relevance lie closer in the embedding space, such as person–rider, car–truck, and bicycle–motorcycle. More-over, categories that are spatially related in the scene, such as rider, bicycle, and motorcycle, are also grouped nearby. This indicates that benefiting from global–local alignment, DA-Mamba effectively learns both semantic and spatial de-pendencies, leading to more structured and discriminative representations in the target domain. An interesting observation is that the rider category is split into two sub-clusters, which we attribute to the seman-tic difference between riders on bicycles and riders on mo-torcycles. Finally, we note that both (a) and (b) contain a region where different categories are mixed, mainly due to heavy occlusions and visually inseparable objects in those cases. 
+
+T-SNE across Source and Target Domains. DA-Mamba achieves better feature alignment between the source and target domains. We further visualize the T-SNE of fea-tures from both domains in Fig. 8. As highlighted by the red dashed circles in Fig. 8(a), features from the source domain (cyan) are not well aligned with those from the target domain (blue), indicating that the baseline model fails to achieve sufficient cross-domain alignment. In con-trast, with the proposed DA-Mamba, features from both domains in Fig. 8(b) are tightly mixed and share simi-lar distributions. This enhanced alignment results from DA-Mamba’s global–local alignment mechanism, where global SSM pipeline establishes domain-invariant long-range structure while local convolutional pipeline anchors the alignment to stable low-level patterns. Such comple-mentary alignment enables the features of both domains to Figure 8. T-SNE visualization of the features extracted from both domains. 
+
+be aligned into a shared, well-organized distribution. Overall, these T-SNE visualizations demonstrate that DA-Mamba fundamentally improves cross-domain feature alignment, that is, better semantic structure in the target do-main and better alignment across source and target distribu-tions, confirming that its performance gains primarily arise from fine-grained global–local domain-invariant represen-tation learning rather than merely improving the detector capacity. 
+
+6.6. Detection Results 
+
+We visualize the detection results of baseline and DA-Mamba in Fig. 9 While baseline misclassifies the rider as person, our DA-Mamba correctly classifies the rider. Mean-while, DA-Mamba shows higher prediction confidence, and detects more objects in the fog that are missed in the base-line. This indicates that DA-Mamba effectively learns local and global domain properties, achieving fine-grained do-main alignment. 
+
+6.7. Pseudo Label                        
+
+> Table 12. Analysis ( %) on Pseudo Labels.
+> Benchmark Pseudo Labels C→FC→BP→Clp P→Cmc Baseline(UDA) 50.6 40.0 43.8 35.9 Baseline(UDA) ✓52.3 41.9 46.2 37.9 DA-Mamba 57.1 48.0 51.0 42.5 DA-Mamba ✓58.1 48.7 52.5 43.8
+
+Effect of Pseudo Labels. DA-Mamba does not rely on pseudo labels for performance gains. Table 12 reports the results of applying pseudo label in the target domain ( i.e ., the loss term LTcls ) during training. For the baseline UDA detector, introducing pseudo labels yields noticeable im-provements ( 1.7 ∼ 2.4% ), reflecting its strong dependence on target domain supervision to compensate for insuffi-cient domain alignment. In contrast, DA-Mamba already achieves significant improvements without pseudo labels, and adding pseudo labels provides only marginal additional gains ( 0.7 ∼ 1.5% ). This smaller improvement margin in-dicates that DA-Mamba substantially reduces the domain discrepancy itself, leaving less room for pseudo labels to correct target domain errors. Therefore, the performance gains of DA-Mamba do not stem from pseudo labels but from its stronger global–local domain alignment capability. 
+
+6.8. Failure Case 
+
+We observe that the missed detections of DA-Mamba mainly occur in regions with strong ambiguity or heavy oc-clusion, as shown in the middle area of Fig. 9. Since such cases suffer from severely degraded visual semantics, simi-lar failures are commonly observed in most object detection frameworks and are not specific to our method. 
+
+6.9. Error Bars           
+
+> Table 13. mAP( %) on four benchmarks.
+> C→FC→BP→Clp P→Cmc 58.1( ±0.2) 48.7( ±0.4) 52.5( ±0.3) 43.8( ±0.4)
+
+We provide error bars in Table 13. The error bars are captured by multiple running with given experimental con-ditions. 
+
+6.10. Extended Discussion on Global-Local Align-ment Design 
+
+Why DA-Mamba Outperforms Transformer-Based DAOD methods and Convolutional Attention Variants. 
+
+Table 6 in the main text shows that DA-Mamba not only surpasses the SOTA transformer-based DAOD method Figure 9. Detection results visualization. 
+
+DATR [5] with significantly lower computational overhead, but also outperforms convolutional attention variants un-der similar cost. This advantage stems from DA-Mamba’s novel synergistic integration of convolutional locality and SSM-based global perception, enabling efficient and fine-grained global–local alignment. Transformer-based DAOD methods introduce self-attention to capture global dependencies across domains. However, their quadratic complexity forces the use of large patch sizes to reduce token counts. Since the same patch is treated as a whole in attention computation, larger patches make the granularity of attention computation coarser. Moreover, Transformer attention is domain-agnostic, treat-ing all positions uniformly and failing to emphasize locally stable domain-invariant features, which are crucial for local alignment. In contrast, DA-Mamba employs a dedicated convolutional pipeline that preserves fine-grained spatial detail and efficiently extracts local domain-invariant fea-tures. Convolutional attention variants attempt to approximate global interactions with lower cost but rely on globally shared parameters. For example, GCNet [2] discards Q(query) and only use K(key) and V(value) to simplify at-tention calculation. However, eliminating the query branch prevents pixel-level semantic analysis and makes the model sensitive to domain bias. And HAM [37] decomposes at-tention into spatial attention and channel attention based on convolution and pooling, which is restricted by the sliding window receptive fields and inherently cannot capture se-mantic dependencies between distant objects. Such shared global descriptors suppress domain-specific variations and are easily biased by style differences between source and target domains, causing insufficient global alignment. In contrast, the SSM pipeline in DA-Mamba performs a di-rected scan across the entire feature map, allowing each po-sition to aggregate information from all previous positions. This gives DA-Mamba the ability to model long-range se-mantic and spatial dependencies across domains. Overall, DA-Mamba adopts a global–local hybrid de-sign: (1) the convolution pipeline efficiently extracts sta-ble local domain-invariant features through local connec-tivity and translation invariance, and (2) the SSM pipeline provides linear-time global modeling of long-range depen-dencies. This decomposition allows DA-Mamba to decou-ple the domain adaptation process into local alignment and global alignment, avoiding both the domain-agnostic be-havior of Transformers and the rigidity of convolutional at-tention, leading to more effective cross-domain representa-tion learning. 
+
+Why Enlarging the Receptive Field Promotes Domain Alignment. Domain adaptive object detection typically op-timizes an adversarial domain classifier using an MSE loss: 
+
+Ladv = 1
+
+HW 
+
+> H
+
+X
+
+> i=1
+> W
+
+X
+
+> j=1
+
+(D(fij ) − y)2 , (17) where fij denotes the feature at location (i, j ) on the fea-ture map f , the domain classifer D(·) predicts the prob-ability that a feature comes from the source domain, and 
+
+y ∈ { 0, 1} is the domain label. This objective enforces the feature distributions of the two domains to be indistinguish-able at every pixel position. When the receptive field is small, fij contains only local information, i.e . the content around (i, j ) on feature map f .Formally, if f dij depends only on a local region Ndij , we have 
+
+f dij = F(Ndij ), (18) where d ∈ { S, T } denotes the source or target domain, and 
+
+F denotes the visual encoder. In this case, the domain clas-sifier processes each spatial location independently, without explicitly modeling relationships between different regions. Therefore, the adversarial loss in Eq. (17) encourages 
+
+p F(NSisjs ) = p F(NTitjt ), (19) where p(·) denotes the feature distribution. However, Eq. (19) only enforces domain invariance of local features within each region, and does not constrain the global re-lationships among regions. Therefore, such alignment re-mains local and is insufficient to capture global domain shifts ( e.g ., object co-occurrence, layout, or scene style). When the receptive field covers the entire image, each 
+
+f dij additionally aggregates information from a broader se-mantic context: 
+
+f dij = F(Ndij ); cdij 
+
+, (20) where 
+
+cdij = S
+
+Ndkl  
+
+> H,W k=1 ,l =1
+
+\ { Ndij }
+
+
+
+(21) contains features from all other regions via a global mod-eling network S. In this setting, each f dij simultaneously encodes its own local feature and its relationships to all other regions, including object structure, inter-object rela-tions, and scene layout. After optimizing Eq. (17), we then expect 
+
+p F(NSisjs ) = p F(NTitjt ),p cSisjs
+
+ = p cTitjt
+
+. (22) This means that, for each local region, both its own local features and its global relationships with other regions are required to be domain-invariant, thereby achieving simulta-neous local and global alignment .In summary, enlarging the receptive field allows the ad-versarial loss to act on both local semantics and long-range dependencies at each spatial location, effectively promot-ing alignment between the two domains. In DA-Mamba, this principle is instantiated by the dual-pipeline design: the convolution pipeline corresponds to F(Ndij ) and focuses on local domain-invariant information, while the SSM pipeline corresponds to cdij and models global semantic and spa-tial dependencies. Their fusion enables DA-Mamba to im-plement global–local domain alignment in a theoretically grounded manner, which explains its superior cross-domain performance in our experiments. 
+
+Future Work. While DA-Mamba demonstrates that global–local alignment can significantly improve cross-domain generalization, several directions remain promis-ing for future exploration. First, instead of inserting SSM blocks into FPN as in the current design, enabling SSM with native multi-scale global modeling capability may fur-ther strengthen global semantic propagation across resolu-tions. Second, integrating uncertainty estimation schemes could allow the model to dynamically balance global and local alignment according to the degree of domain shift. Fi-nally, applying the proposed global–local alignment prin-ciple to other adaptation tasks such as instance segmenta-tion, open-vocabulary detection, or video-domain adapta-tion may broaden the applicability of DA-Mamba. We leave these directions for future investigation.

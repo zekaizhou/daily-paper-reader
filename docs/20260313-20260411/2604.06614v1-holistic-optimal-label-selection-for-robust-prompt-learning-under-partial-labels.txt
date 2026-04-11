@@ -1,0 +1,711 @@
+Title: Holistic Optimal Label Selection for Robust Prompt Learning under Partial Labels
+
+URL Source: https://arxiv.org/pdf/2604.06614v1
+
+Published Time: Thu, 09 Apr 2026 00:32:52 GMT
+
+Number of Pages: 31
+
+Markdown Content:
+# Holistic Optimal Label Selection for Robust Prompt Learning under Partial Labels 
+
+Yaqi Zhao, Haoliang Sun, Yating Wang, Yongshun Gong, and Yilong Yin 
+
+Shandong University, Jinan, China 
+
+Abstract. Prompt learning has gained significant attention as a parameter-efficient approach for adapting large pre-trained vision-language models to downstream tasks. However, when only partial labels are available, its performance is often limited by label ambiguity and insufficient supervi-sory information. To address this issue, we propose Holistic Optimal La-bel Selection (HopS ), leveraging the generalization ability of pre-trained feature encoders through two complementary strategies. First, we design a local density-based filter that selects the top frequent labels from the nearest neighbors’ candidate sets and uses the softmax scores to identify the most plausible label, capturing structural regularities in the feature space. Second, we introduce a global selection objective based on optimal transport that maps the uniform sampling distribution to the candidate label distributions across a batch. By minimizing the expected trans-port cost, it can determine the most likely label assignments. These two strategies work together to provide robust label selection from both lo-cal and global perspectives. Extensive experiments on eight benchmark datasets show that HopS consistently improves performance under par-tial supervision and outperforms all baselines. Those results highlight the merit of holistic label selection and offer a practical solution for prompt learning in weakly supervised settings. 
+
+Keywords: Partial label learning · Prompt learning · Optimal transport 
+
+## 1 Introduction 
+
+Large pre-trained vision-language models (VLMs), such as CLIP [26], have demon-strated remarkable capabilities across a wide range of downstream tasks [8, 19, 27, 29]. Among various fine-tuning paradigms [18], prompt tuning has emerged as an efficient alternative to full model fine-tuning, offering the advantage of adapting large models with minimal additional parameters [50]. By optimizing a small set of learnable prompts while keeping the backbone frozen, prompt learning preserves the generalization strength of the pre-trained model and re-duces training costs—making it particularly attractive in resource-constrained or few-shot learning scenarios [47]. The effectiveness of prompt learning can be significantly compromised in weakly supervised settings [48], particularly those involving partial labels [20], where only a subset of candidate labels is provided per instance without explicit  
+
+> arXiv:2604.06614v1 [cs.CV] 8 Apr 2026 2Y. Zhao et al.
+
+ground-truth annotations. This setting is common in real-world applications such as webly supervised learning [25], human-in-the-loop labeling [39], and open-world recognition [38]. The main challenge in such scenarios lies in the label ambiguity, which hampers supervision and often degenerate the generalization performance of learning algorithms, especially for prompt learning with few-shot instances [51]. To address the challenges of partial label learning (PLL), state-of-the-art methods typically select a plausible label from the candidate set using repre-sentations learned through contrastive learning (e.g., PICO [33]). However, such approaches are not directly applicable to pre-trained models, as fine-tuning their vision encoders may compromise their zero-shot capabilities [15]. This presents a fundamental challenge in filling the gap between reliable label selection with frozen vision encoders and effective prompt learning with label disambiguation .To overcome this limitation, we propose a holistic label selection strategy that fully leverages the representational generalization of pre-trained encoders for robust prompt learning. Specifically, HopS includes two complementary se-lection mechanisms. The first is a Local Density-based Filter (LDF), which estimates label frequency within a k-nearest neighbor ( k-NN) structure in the image feature space and selects the most frequent labels in the neighborhood for a subset, capturing local semantic regularities in a non-parametric manner. LDF effectively exploits the zero-shot capabilities of the encoder and avoids overfitting to noisy labels during the early training stages. Among the subset, the most plausible label is then identified based on the softmax scores. The second is a Global Optimal Transport Planner (GOP). It maps a uniform global prior—representing the overall underlying distribution—to the candidate label distributions across a mini-batch. By minimizing the expected transport cost, GOP encourages globally optimal label assignments. The resulting trans-port plan explicitly characterizes how each instance contributes to the class-wise probability mass in the label distribution, thereby providing a principled and interpretable foundation for identifying and selecting the most relevant label. By integrating both local and global perspectives, our framework enables more accurate and stable label selection, mitigating the impact of label ambi-guity. We evaluate our method across a variety of vision-language benchmarks under partial supervision and demonstrate consistent improvements over strong baselines. Our key contributions are as follows: 
+
+– We provide a comprehensive investigation into leveraging the representa-tional generalization of pre-trained VLMs for prompt learning in the partial supervision setting. 
+
+– We propose a novel holistic label selection framework that combines a local density-based filter with a global optimal transport planner. 
+
+– We empirically validate the effectiveness of our approach, achieving state-of-the-art performance on multiple benchmarks. HopS 3
+
+## 2 Related Work 
+
+2.1 Partial Label Learning 
+
+PLL [1, 3, 13, 46] assumes that each training instance is associated with a can-didate label set, within which only one label is correct but not explicitly spec-ified. To address the ambiguity introduced by these noisy candidates, subse-quent research has proposed various strategies, including consistency regulariza-tion [7,21,40] and contrastive learning [33]. These methods aim to leverage partial supervision to learn more discriminative representations and improve generaliza-tion. Expanding on this direction, [12] introduced a dissimilarity propagation-guided label shrinkage method to refine candidate label sets by eliminating ir-relevant labels, thereby enhancing supervision quality. Meanwhile, works such as [44, 45] have begun to explore the more challenging instance-dependent PLL setting, where candidate label sets are generated based on the characteristics of each instance. More recently, [42] and [31] have continued to leverage can-didate labels to learn robust representations. Additionally, [20] highlighted the critical role of feature representations and label denoising in effective PLL. A related work, SoLar [34], addresses partial label learning under class imbalance by employing OT to align the estimated long-tailed class prior with a uniform distribution. In contrast, our method leverages OT to align the overall underly-ing label distribution with the candidate label distributions. Furthermore, unlike conventional PLL approaches, our work explores prompt learning for pre-trained VLMs, which leverage powerful vision encoders with strong zero-shot capabili-ties, rather than training encoders from scratch. 
+
+2.2 Prompt Learning 
+
+Prompt learning has emerged as a parameter-efficient paradigm for adapting large-scale pre-trained models to downstream tasks [9]. Rather than fine-tuning the entire model, it introduces auxiliary input prompts—either manually crafted templates or learnable continuous embeddings—to guide model predictions. In the vision-language domain, CoOp [50] first demonstrated that learnable context vectors could serve as effective prompts for adapting CLIP-like models, high-lighting their strong transferability. Since then, several studies have enhanced the robustness of prompt learning through strategies such as aligning sample representations in multimodal contexts [32, 41], employing mixture-of-expert prompts [35], and utilizing unsupervised prompt distillation [14,17]. In addition, prompt learning has achieved significant improvements on various downstream tasks, including text-to-image generation [30] and open-vocabulary semantic seg-mentation [16]. While these advances have shown promise in fully supervised settings, their effectiveness under partial supervision remains unexplored. To address this gap, we extend robust prompt tuning to the PLL scenario, aiming to bridge weak supervision with prompt-based adaptation in pre-trained VLMs. 4 Y. Zhao et al. 
+
+## 3 Preliminary 
+
+3.1 Candidate Label Sets in PLL 
+
+We define the training dataset as  D = {(xi, S i)}ni=1 , where  xi ∈ X  is an input instance and  Si ⊆ { 1, 2, . . . , C } is the candidate label set for a C-category clas-sification task. Here, all elements {si1, . . . , s il . . . , s iL } in Si contain one ground-truth label and the rest  L − 1 elements are the confused labels, involving false positive labels for the current instance. Different levels of label confusion is cor-responding to the number of confused labels in each candidate set. 
+
+3.2 Prompt Optimization with The Candidate Set 
+
+Prompt optimization (PO) in CLIP replaces manual prompt engineering by learning continuous context vectors in an end-to-end manner, while keeping the pre-trained model parameters frozen to fully leverage the knowledge en-coded within them. Let V , T and t denote the vision encoder, text encoder, and learnable prompt parameters, respectively. p(sij | xi; t) denotes the predicted probability of the j-th label within the candidate set Si, computed via the cosine similarity between the visual and textual embeddings. These embeddings are derived from the visual encoder V, and the text encoder T with the input of the prompt vector t and the class name embedding vj . For PO under partial-label supervision, the standard cross-entropy loss is computed over the candidate label set Si as follows: 
+
+LCE (xi, S i; t) = 
+
+> C
+
+X
+
+> j=1
+
+−si,j log ( p(sij | xi; t)) 
+
+s.t. X
+
+> j∈Si
+
+si,j = 1 , and si,j = 0 for j / ∈ Si.
+
+(1) The prediction probability of the input xi is given by: 
+
+p(sij | xi; t) = exp (cos ( V (xi), T (t, vj ))) 
+
+PCq=1 exp (cos ( V (xi), T (t, vq ))) . (2) Despite the expressive power of PO, the inherent label ambiguity within each candidate set Si creates a fundamental gap between partial label learning and fully supervised learning. This introduces two core challenges: (1) effectively disambiguating the candidate labels, and (2) accurately identifying the ground-truth label for each instance. 
+
+## 4 Methodology 
+
+To identify the ground-truth label and guide the model in learning effective prompt vectors, we propose a holistic optimal label selection strategy for prompt HopS 5
+
+learning in VLMs. HopS integrates both local and global perspectives through two elaborated components: a local density-based filter, which selects the “local-consensus” candidate, and a global optimal transport planner, which identifies the “global-harmony” candidate. These components work in concert to robust and complementary label guidance for effective prompt optimization under par-tial supervision. 
+
+4.1 Local Density-Based Filter 
+
+The local density of an instance in the image feature space reflects the intrinsic semantic regularities associated with its candidate labels. To leverage this den-sity information for label selection, we identify the k-nearest neighbors of each instance (xi, S i) in the image feature space, denoted as {(xj , ˆSj )}kj=1 . Specifi-cally, we build an affinity matrix A by computing the cosine similarity between image features of all instances, where the features are extracted using the frozen vision encoder of CLIP. Based on A, we retrieve the top-k most similar examples for each instance, thereby capturing local semantic structure. Once the k-nearest neighbors are selected, we then construct a multiset-union candidate set for each instance as: 
+
+Ni =
+
+
+
+> k
+
+]
+
+> j=1
+
+ˆSj
+
+ ] Si, (3) where ⊎ denotes multiset union, preserving label multiplicities. It is worth noting that, since the affinity matrix is pre-computed prior to training, the retrieval step for each instance reduces to a neighbor search with time complexity O(n · log k).Given the small number n of training samples in prompt learning, the retrieval cost is negligible. Next, we compute the frequency of each category c in Ni. Let f (c) denote the relative frequency of element c in the multiset Ni, defined as: 
+
+f (c) = |{ l | sjl = c}| |N i| , (4) where |{ l | sjl = c}| counts the number of times element c appears in Ni, and 
+
+|N i| is the total number of elements in the multiset, including duplicates. To enforce label consistency and suppress unreliable candidates, we retain categories whose frequency exceeds a predefined threshold τ ∈ [0 , 1] , thereby forming a consensus-aware mask set for each instance as: 
+
+Mi = {c ∈ N i | f (c) ≥ τ }. (5) The refined candidate set is then obtained by intersecting the mask set Mi with the original candidate set Si, i.e., Mi ∩ Si, ensuring that only labels supported by both the instance and its neighbors are retained. To prevent degenerate cases where all candidate labels are eliminated, we revert to the original candidate set 
+
+Si if the refined set becomes empty. 6 Y. Zhao et al.      
+
+> Fig. 1: Illustration of the transport cost matrix and the resulting transport plan be-tween the uniform source instance distribution (Source) and the target candi-date label distribution (Target).
+
+Finally, the most plausible candidate label ylocal is selected as the one with the highest prediction probability in the refined candidate set, as determined by Eq. (2). 
+
+4.2 Global Optimal Transport Planner 
+
+To complement the local selection, we introduce a globally consistent label selec-tion mechanism via optimal transport (OT). This formulation matches instances with their candidate labels in a way that aligns with both a uniform prior over instances and the empirical label distribution within the batch, selecting for each instance the label that receives the highest transport mass. As shown in Fig. 1, the matrix on the left illustrates the candidate label sets for four instances in a seven-class classification task, with lighter colors indicating lower transport costs and, consequently, higher label credibility. The right matrix shows the resulting optimal transport plan under the given cost constraints. Here, darker colors in-dicate greater transported mass, reflecting the planner’s preference for allocating probability mass to more credible classes. The transport process strictly adheres to the marginal constraints, ensuring the consistency of source and target dis-tributions before and after transport. 
+
+Discrete Transport Formulation. Given a batch of  B samples, we define a uniform source distribution over instences, where r ∈ ∆B is a B-dimensional probability simplex. A candidate-aware marginal distribution is estimated based on candidate frequencies, denoting as c ∈ ∆C . The element in r and c are computed as: 
+
+ri = 1
+
+B , cl = 1
+
+B
+
+> B
+
+X
+
+> i=1
+
+sil 
+
+|Si| . (6) The transport cost matrix  Mcost ∈ RB×C in OT is constructed from the sim-ilarity between visual and textual representations. Specifically, given an instance 
+
+xi, the cost of assigning it to class j is defined as: 
+
+Mcost [i, j ] = 
+
+(1 − exp(cos( V (xi),T (t,vj )))      
+
+> PCq=1 exp(cos( V(xi),T (t,vq)))
+
+, if j ∈ S i
+
+∞, otherwise.  (7) HopS 7
+
+This cost formulation encourages semantic alignment between image-label pairs, while discouraging assignments to non-candidate classes by assigning them infinite cost. The optimal transport plan P is aims to move probability mass from a uni-form distribution over instances to a candidate-aware label distribution with minimal total cost. To ensure differentiability and enable efficient computation, we incorporate an entropy regularization term H(P) = − PBi=1 
+
+PCj=1 Pij log Pij 
+
+following [4]. The resulting optimal transport objective is formulated as: 
+
+min 
+
+> P∈RB×C
+> +
+
+⟨P, Mcost ⟩ − εH (P)
+
+s.t. P1 C = r, P⊤1B = c, P ij = 0 if sij = 0 .
+
+(8) Here, ε is a hyper-parameter controlling the strength of the entropy regulariza-tion, and 1C and 1B denote all-one vectors of length C and B, respectively. 
+
+Approximation Scheme. To efficiently solve the entropy-regularized optimal transport problem described in Eq. (8) and compute the transport plan, we adopt the well-known Sinkhorn-Knopp algorithm, an efficient iterative method. 
+
+Pot = diag (α) · exp 
+
+
+
+− Mcost 
+
+ε
+
+
+
+· diag (β), (9) The iterative steps are given as follows: 
+
+α ← r ⊘ (Mβ), β ← c ⊘ (M⊤α). (10) where  α and  β are scaling vectors,  ⊘ denotes element-wise division,  r and  c are the source and target marginal distributions defined above, and  M is the Gibbs kernel [4] derived from the cost matrix. After computing the optimal transport plan  Pot ∈ RB×C , which encodes the soft assignment between instances and candidate labels, we can select the best "global-harmony" label yglobal with the largest transport mass. Compared with "local-consensus" candidate, this strategy ensures that the selected label not only respects the candidate constraint but also reflects the global semantic alignment established via the transport plan, thereby promoting consistency across the entire training set. 
+
+4.3 Learning Objective and Procedure The Objective Function. After select the two most plausible labels ylocal and 
+
+yglobal , we conduct prompt optimization and jointly optimize the cross-entropy loss. Given an input image  x, the overall loss is defined as: 
+
+arg min  
+
+> t
+
+LCE (p(y | x; t), y local ) + λLCE (p(y | x; t), y global ), (11) where  λ is the weighting coefficient for the two loss components, the prediction probability p(y | x; t) for each category is computed by Eq. (2). 8 Y. Zhao et al. 
+
+Algorithm 1 The Holistic Optimal Selection 
+
+Input : Training dataset  D = {(xi, S i)}ni=1 , pre-trained encoders V and T
+
+Parameter : k, τ, ε, λ 
+
+Output : The prompt vector t
+
+1: Extract and store all image features Rvis ← V (X).2: Calculate A between Rvis by cosine similarity. 3: for batch = 1 , 2, . . . do 
+
+4: // LDF 
+
+5: Choose k neighbors to compute Ni corresponding to each instance by Eq. (3). 6: Calculate the frequency f (·) by Eq. (4). 7: Construct the consensus-aware mask set and refined candidate set by Eq. (5). 8: Identify Y local with the highest prediction probability in the refined candidate set. 9: // GOP 
+
+10: Initialize the distribution of r and c by Eq. (6). 11: Calculate the cost matrix Mcost with T (t, v j ) and Rvis [instance indexes ] by Eq. (7). 12: for iter = 1 , 2, . . . do 
+
+13: // Sinkhorn-Knopp Algorithm 
+
+14: Approximate transport plan by Eq. (9). 15: end for 
+
+16: Gain the Y global with the largest transport mass. 17: Update t with Eq. (11). 18: end for 
+
+Training Procedure. As illustrated in Algorithm 1, the HopS performs both LDF and GOP selection to iteratively refine predictions under partial supervi-sion, resulting in a more robust and discriminative prompt. The computational overhead is negligible (see Tab. 4). 
+
+## 5 Experiments 
+
+We conduct experiments on eight datasets, comparing our approach with eight representative loss functions, zero-shot learning, and 16-shot fully supervised prompt tuning using CoOp. All methods are evaluated under varying degrees of label ambiguity. Our method consistently outperforms all baselines, highlighting its effectiveness in prompt learning with partial labels. Extensive experiments and analyses further demonstrate the complementarity of the two label selection strategies. 
+
+5.1 Experimental Settings 
+
+Basic settings are outlined. Additional details (e.g., hyperparameters) are in the Appendix Sec. A. 
+
+Dataset . We adopt eight datasets: Caltech [5], DTD [2], EuroSAT [11], FGV-CAircraft [22], Food [23], Flowers [23], OxfordPets [24], and UCF [28]. These HopS 9
+
+datasets encompass a wide spectrum of visual recognition tasks, especially for challenging fine-grained classification. 
+
+Confusion Types . We manually corrupt the datasets into partially labeled versions using two strategies: random-uniform ( rand ) and instance-dependent (insd ). (1) In the rand setting, confusing labels are randomly selected into the candidate set with equal probability for each instance. (2) The insd setting de-pends on instance-level information. Following [44], we adopt a prototype-based label confusion strategy, which uses pre-trained image encoders to identify the top-(L−1)  most similar classes—excluding the ground-truth label—as candidate labels. We employ three visual backbones (i.e., ResNet-18/50 [10] trained on Im-ageNet and CLIP-ResNet50 [26]) to simulate annotators with varying levels of domain expertise. 
+
+Confusion Levels . The confusion rate, defined as the ratio of the number of confused labels to  L, serves as an indicator of the difficulty in identifying the ground-truth label within the candidate set. The insd -confusion and rand -confusion levels of the candidate labels are controlled by the size of the candidate label set  L, selected from  {2, 3, 4, 5, 8, 9, 10 }, with the corresponding confusion rates γc being  {0.50 , 0.67 , 0.75 , 0.80 , 0.88 , 0.89 , 0.90 }.
+
+Prompt Types . The design of prompts can be categorized into two forms, consistent with CoOp: unified prompt ( uni ) and classified prompts ( cls ). The 
+
+uni prompt shares a common set of context vectors across all classes, making it suitable for general classification tasks. In contrast, cls assigns an independent set of context vectors to each class. 
+
+Baselines . We compare HopS with five state-of-the-art partial-label learning losses: CC [7], RC [7], LWC [37], MSE [6], and EXP [6]. Furthermore, we include three well-known robust learning losses, MAE [36], SCE [36], and GCE [49], as well as three recent partial-label learning methods, Papi [42], CroSel [31], and SoLar [34], representing recent advances in the field. All hyperparameters for these methods are carefully tuned following the settings reported in their original publications. The detailed configurations of all compared methods are provided in Appendix Tab. 6. 
+
+The Learning Framework . To ensure a fair comparison, we adopt the most influential context optimization method, CoOp, and conduct experiments in both 
+
+uni and cls prompts types. All results are reported as the average over three runs using three different random seeds. 
+
+5.2 Comparison Results 
+
+Rand -Confusion Type. We evaluate all methods under two prompt settings: 
+
+uni -prompt and cls -prompts. As shown in Fig. 2, HopS achieves SOTA per-formance across datasets under varying levels of label confusion. It is worth highlighting that, on Caltech, Flowers, and UCF, HopS achieves performance comparable to fully supervised 16-shot CoOp and significantly outperforms the zero-shot capability of CLIP across all datasets. Moreover, HopS maintains con-sistently high performance even under a severe label confusion rate of 0.9. This 10 Y. Zhao et al.       
+
+> Fig. 2: HopS achieves the best testing accuracy under uni -prompt (top) and cls -prompts (bottom) across five rand confusion rates.
+> Fig. 3: HopS achieves the best averaged testing accuracy across three confusion rates (left). The guiding effect of LDF on GOP (right).
+
+highlights the effectiveness of our holistic label selection strategy in reducing la-bel ambiguity and providing reliable supervision. The detailed numerical results can be found in Appendix Tabs . 7 and 8. 
+
+Insd -Confusion Type. Since partial-label losses perform well under the rand 
+
+confusion setting, we further compare HopS against them under instance-dependent partial labels, which more closely resemble real-world scenarios where label noise depends on feature-level similarities. As shown in Fig. 3 (left), HopS consistently outperforms other methods under the uni -prompt setting when averaging results over ResNet-18, ResNet-50, and CLIP-ResNet50 simulating backbones. Notably, our method retains a substantial advantage even as the confusion rate rises to 0.8. This demonstrates the robustness of HopS in more challenging and realis-tic conditions. In particular, this performance gain holds across settings where candidate labels are derived from annotators with varying levels of domain ex-pertise (i.e., simulated through different backbone encoders that reflect distinct data conditions), indicating that HopS is resilient to the type and quality of label noise. This robustness stems from the complementary nature of LDF and HopS 11            
+
+> Fig. 4: Overlap of labels identified by LDF and GOP in HopS with the GT Ton the Food ( γc= 0 .67 ).
+> Fig. 5: The performance remains stable across a wide range of λon eight datasets (directions), and λ=1 works well.
+
+GOP components in HopS. These results indicate that HopS is effective not only in synthetic settings but also in real-world scenarios with instance-dependent ambiguity, such as crowd-sourced labels or low-resource domains. The detailed per-configuration results are reported in Appendix Tabs 9 and 10. 
+
+5.3 Further Analysis Complement Effect of LDF and GOP. To assess the interaction between the LDF and GOP modules, we compare their individual performance and that of the holistic model, HopS, in identifying the ground-truth (GT) label .The training accuracy of LDF, GOP, and HopS over 200 epochs, evaluated un-der the uni -prompt on the Food dataset at confusion rates of 0.67 and 0.80, is illustrated in Fig. 3 (right), emphasizing LDF’s role in accelerating early op-timization by guiding the global module. The four curves compare LDF and GOP used stand-alone versus used as components within HopS. The symbol ∩
+
+denotes the proportion of predicted labels from the LDF or GOP that are consis-tent with the GT label, where T denotes the GT label. Using modules as HopS components yields faster convergence and a higher, more stable plateau, and this advantage becomes increasingly pronounced as the γc intensifies. Additional results are provided in Appendix Figs. 9-16. Furthermore, Fig. 4 shows that the proportion of correct labels jointly iden-tified by both modules (i.e., the brown region) steadily increases, indicating a strong complementary effect. We also examine the relative contributions of the two pseudo-label sources by varying the loss weighting coefficient λ ∈ { 0.5, 1.0, 2.0}.As shown in Fig. 5, achieving a balanced combination of local and global sig-nals leads to consistent improvements in performance across different confu-sions. In contrast, placing excessive weight on either signal—whether local or global—results in performance degradation. This finding underscores the criti-cal importance of maintaining an effective synergy between the two sources of information. The specific results are provided in Tab. 11 in the Appendix .
+
+Effect of Batch Size. We investigate the effect of varying batch sizes, B, within the set {16 , 32 , 64 , 128 , 256 } for GOP, on the performance of HopS, focusing on the testing accuracy under varying levels of label confusion: 0.50, 0.75, 0.80, 0.88, and 0.90. As illustrated in Fig. 6, the results compare the performance of 
+
+uni -prompt and cls -prompts across different confusion rates. For the 47-class 12 Y. Zhao et al.                       
+
+> Fig. 6: Bclose to Cis recommended.
+> Table 1: Testing accuracy (%) of strategies.
+> γcCoOp Nei (Hard) Con Gra Soft 0.50 84.70 86.71 86.20 83.40 86.70 0.67 80.00 85.60 84.30 83.10 86.00
+> 0.80 74.60 84.10 83.80 78.40 84.80
+
+small-scale dataset DTD and the 100-class large-scale dataset Caltech, the accu-racy trends with respect to B remain consistent across different confusion levels. Moreover, the most significant fluctuations in accuracy are observed when the batch size is approximately equal to the number of classes. Based on this ob-servation, we recommend choosing a batch size close to the number of classes. 
+
+Results for other datasets are provided in the Appendix Fig. 17 and Tab. 12. 
+
+Effect of LDF. We compare three candidate-searching strategies for label re-finement in partial-label learning: (1) Neighbor-based refinement (Nei), which se-lects pseudo-labels based on feature similarity to nearest neighbors; (2) Confidence-based refinement (Con), which chooses the most confident prediction; and (3) Graph-based propagation (Gra), which propagates labels through a constructed similarity graph, enabling global label consistency by considering relationships between all samples in the dataset and effectively transferring labels across con-nected nodes. As shown in Tab. 1, the simplest strategy—neighbor-based refine-ment—yields the best performance, suggesting that in weakly supervised few-shot settings, leveraging local structural similarity can outperform more complex propagation methods. One possible reason for this observation is that neighbor-based methods are inherently more robust to noisy predictions. By grounding pseudo-label selection in local feature consistency, these methods can better cap-ture semantic regularities in the data. In contrast, graph-based methods might cause noise accumulation, especially in low-data regimes, where the constructed graph may not accurately reflect the underlying label manifold. Additionally, we evaluate two label update strategies: Hard-KNN, which uses majority voting, and Soft-KNN, which uses similarity-weighted voting. Although Soft-KNN slightly outperforms Hard-KNN in some cases, the gains are marginal, indicating that the simple hard voting mechanism is sufficient and more compu-tationally efficient. 
+
+Effect of GOP. The GOP module assumes that the candidate label distribution closely resembles the ground-truth label distribution. To assess this consistency, we use cosine similarity, which captures the directional alignment between two distributions and reflects their structural similarity regardless of scale. This met-ric provides a reliable measure of how well the candidate labels approximate the true semantic distribution. As shown in Fig. 7, the cosine similarity approaches 1 on EuroSAT under four different confusion rates, indicating a strong alignment between the distributions. We opt not to use Kullback–Leibler (KL) divergence due to the prevalence of zero values in the ground-truth distributions, which makes KL computation unstable and ill-defined. HopS 13 
+
+Fig. 7: High cosine similarity between can-didate and ground-truth label distribu-tions across batches. 
+
+Fig. 8: Testing accuracy under the uni -prompt across two noisy conditions with different confusion rates. 
+
+Table 2: HopS achieves the best testing accuracy (%) under two confusion types.                                       
+
+> γc
+> Caltech Flowers HopS CroSel Papi HopS CroSel Papi HopS CroSel Papi HopS CroSel Papi 0.67 89.0 84.0 55.9 50.3 39.0 42.0 92.9 92.1 78.7 82.0 78.0 67.0 0.75 89.0 82.7 51.8 45.3 25.2 23.5 92.9 90.5 70.4 74.0 62.0 58.7 0.80 89.5 73.9 52.2 38.9 11.8 13.4 93.2 89.0 57.8 65.0 50.2 49.8
+
+Comparison with Full-Data PLL Methods. We conducted a systematic comparison with two recently proposed partial-label learning methods, Papi [42] and CroSel [31]. Unlike the 16-shot setting used in previous experiments, Papi and CroSel were trained on the entire datasets to fully exploit their optimal per-formance, while HopS was still trained under the 16-shot few-shot setting. The experiments were conducted on two challenging datasets, Caltech and Flowers, both characterized by a large number of categories, with Flowers being more fine-grained and exhibiting higher intra-class similarity. As shown in Tab. 2, the left and right sub-columns for each dataset correspond to rand and insd , re-spectively. HopS’s strong performance across both datasets and three confusion rates, demonstrating its robustness in handling both diverse and fine-grained cat-egories. Due to space limitations, we report only the results with the ResNet-50 backbone; results for other backbones are provided in Appendix Tab. 13. 
+
+Settings with Missing Ground-Truth. To gain deeper insights into the ro-bustness of HopS, we evaluate it under more challenging settings where the ground-truth label may be absent from the candidate set, i.e., the noisy partial label learning scenario [43]. We conduct 16-shot experiments on two types of label confusion, rand and insd , as previously described, with each candidate set 
+
+S containing three labels. The missing rates of ground-truth labels are 12.5% (2 out of 16 shots) for rand and 25% (4 out of 16 shots) for insd .As shown in Fig. 8, under the insd setting, HopS consistently uncovers mean-ingful correlations within the candidate label sets, leading to significantly better performance than other methods. This suggests that HopS is particularly well-suited for real-world scenarios where label noise in SS is instance-dependent. In contrast, under the rand setting where such dependencies are absent, HopS per-forms slightly worse than the SOTA robust loss. Nevertheless, its performance 14 Y. Zhao et al. 
+
+Table 3: Testing accuracy (%) under under long-tailed partial-label settings with different confusion types. Dataset Method γc = 0 .67 γc = 0 .75                                                                
+
+> insd einsd srand erand sinsd einsd srand erand s
+> Caltech SoLar 9.2 7.9 16.1 22.6 6.4 4.4 18.5 19.4 HopS u46.4 50.7 71.7 71.2 35.6 42.0 67.6 67.4 HopS c50.9 52.8 74.6 71.4 42.4 45.9 72.6 70.7 Flowers SoLar 11.1 14.0 18.1 20.8 9.1 10.6 17.3 20.7 HopS u48.3 51.4 65.4 61.1 39.8 43.8 61.9 53.9 HopS c54.4 53.1 69.9 66.1 46.8 47.5 69.9 59.7
+
+Table 4: Compari-son of epoch time. Method Time (s) EXP 0.12 MSE 0.11 GCE 0.11 LWC 0.11 MAE 0.12 SCE 0.11 HopS 0.12 
+
+can be improved by integrating robust loss functions (e.g., the SCE loss). Fig-ure 8 (left) illustrates that HopS, when combined with the SCE loss, achieves the best performance under the rand setting, highlighting its flexibility and com-patibility with other robust learning techniques. Detailed values corresponding to Fig. 8 can be found in Appendix Tabs. 14 and 15. 
+
+Challenging Settings with Long-tail Distribution. To further evaluate robustness under distribution shift, we compare HopS with SoLar [34] on two representative datasets under two long-tailed patterns: exponentially decayed class-frequency distribution ( e) and two-level distribution ( s). As summarized in Table 3, SoLar suffers a significant performance drop in the data-limited few-shot setting, as it relies on learning sufficiently strong representations. In contrast, HopS consistently outperforms SoLar across all long-tailed configurations, re-gardless of whether uni-prompts (HopS u) or cls-prompts (HopS c) are used. 
+
+Running Time of Methods. We measured the training time computational cost of each method, reported as the average time per epoch (in seconds), as shown in Tab. 4. Notably, although HopS introduces both a local module and a global module to enhance label identification, the additional computational overhead remains negligible due to the relatively small dataset size. As a result, HopS achieves superior performance without incurring a significant increase in training cost. Additional results are provided in Tab. 16 of Appendix .
+
+## 6 Conclusion 
+
+In this work, we propose a holistic label selection framework for prompt learn-ing under partial-label supervision, which improves robustness by combining a local density-based filter with a global optimal transport planner. By lever-aging the generalization ability of frozen pre-trained vision-language encoders, HopS enables effective label disambiguation. Extensive experiments on eight datasets demonstrate consistent and significant improvements over strong base-lines, highlighting its practicality and generalizability under weak supervision. HopS 15 
+
+## References 
+
+1. Chen, Y., Patel, V., Chellappa, R., Phillips, P.: Ambiguously labeled learning us-ing dictionaries. IEEE Transactions on Information Forensics and Security 9(12), 2076–2088 (2014) 3 2. Cimpoi, M., Maji, S., Kokkinos, I., Mohamed, S., Vedaldi, A.: Describing textures in the wild. In: Computer Vision and Pattern Recognition (2014) 8 3. Cour, T., Sapp, B., Taskar, B.: Learning from partial labels. Machine Learning Research 12 , 1501–1536 (2011) 3 4. Cuturi, M.: Sinkhorn distances: Lightspeed computation of optimal transport. Ad-vances in Neural Information Processing Systems 26 (2013) 7 5. Fei-Fei, L., Fergus, R., Perona, P.: Learning generative visual models from few training examples: An incremental bayesian approach tested on 101 object cate-gories. In: Computer Vision and Pattern Recognition Workshop (2004) 8 6. Feng, L., Kaneko, T., Han, B., Niu, G., An, B., Sugiyama, M.: Learning with multiple complementary labels. In: International Conference on Machine Learning (2020) 9 7. Feng, L., Lv, J., Han, B., Xu, M., Niu, G., Geng, X., An, B., Sugiyama, M.: Prov-ably consistent partial-label learning. Advances in Neural Information Processing Systems 33 , 10948–10960 (2020) 3, 9 8. Frans, K., Soros, L., Witkowski, O.: Clipdraw: Exploring text-to-drawing synthe-sis through language-image encoders. Advances in Neural Information Processing Systems 35 , 5207–5218 (2022) 1 9. Guo, Y., Li, S., Liu, Z., Zhang, T., Chen, C.: A parameter-efficient and fine-grained prompt learning for vision-language models. In: Association for Computational Linguistics. pp. 31346–31359 (2025) 3 10. He, K., Zhang, X., Ren, S., Sun, J.: Deep residual learning for image recognition. In: Computer Vision and Pattern Recognition (2016) 9 11. Helber, P., Bischke, B., Dengel, A., Borth, D.: Eurosat: A novel dataset and deep learning benchmark for land use and land cover classification. IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing pp. 2217–2226 (2019) 8 12. Jia, Y., Yang, F., Dong, Y.: Partial label learning with dissimilarity propagation guided candidate label shrinkage. Advances in Neural Information Processing Sys-tems (2023) 3 13. Jin, R., Ghahramani, Z.: Learning with multiple labels. Advances in Neural Infor-mation Processing Systems 15 (2002) 3 14. Jin, X., Zhang, H., Wu, Z., et al.: Unsupervised prompt learning for vision-language models. In: Computer Vision and Pattern Recognition (2022) 3 15. Kumar, A., Raghunathan, A., Jones, R., Ma, T., Liang, P.: Fine-tuning can dis-tort pretrained features and underperform out-of-distribution. In: International Conference on Learning Representations (2022) 2 16. Li, J., Lu, Y., Xie, Y., Qu, Y.: Relationship prompt learning is enough for open-vocabulary semantic segmentation. Advances in Neural Information Processing Systems (2024) 3 17. Li, Z., Li, X., Fu, X., Zhang, X., Wang, W., Chen, S., Yang, J.: Promptkd: Unsu-pervised prompt distillation for vision-language models. In: Computer Vision and Pattern Recognition (2024) 3 18. Liu, P., Yuan, W., Fu, J., Jiang, Z., Hayashi, H., Neubig, G.: Pre-train, prompt, and predict: A systematic survey of prompting methods in natural language processing. ACM Computing Surveys 55 (9), 1–35 (2023) 1 16 Y. Zhao et al. 19. Luo, Z., Zhao, P., Xu, C., Geng, X., Shen, T., Tao, C., Ma, J., Lin, Q., Jiang, D.: Lexlip: Lexicon-bottlenecked language-image pre-training for large-scale image-text sparse retrieval. In: International Conference on Computer Vision. pp. 11206– 11217 (2023) 1 20. Lv, J., Liu, Y., Xia, S., Xu, N., Xu, M., Niu, G., Zhang, M., Sugiyama, M., Geng, X.: What makes partial-label learning algorithms effective? Advances in Neural Information Processing Systems (2024) 1, 3 21. Lv, J., Xu, M., Feng, L., Niu, G., Geng, X., Sugiyama, M.: Progressive identification of true labels for partial-label learning. In: International Conference on Machine Learning (2020) 3 22. Maji, S., Rahtu, E., Kannala, J., Blaschko, M., Vedaldi, A.: Fine-grained visual classification of aircraft. arXiv preprint arXiv:1306.5151 (2013) 8 23. Nilsback, M., Zisserman, A.: Automated flower classification over a large number of classes. In: Computer Vision, Graphics and Image Processing (2008) 8 24. Parkhi, O., Vedaldi, A., Zisserman, A., Jawahar, C.: Cats and dogs. In: Computer Vision and Pattern Recognition (2012) 8 25. Qin, Y., Chen, X., Shen, Y., Fu, C., Gu, Y., Li, K., Sun, X., Ji, R.: Capro: Webly supervised learning with cross-modality aligned prototypes. Advances in Neural Information Processing Systems (2023) 2 26. Radford, A., Kim, J., Hallacy, C., Ramesh, A., Goh, G., Agarwal, S., Sastry, G., Askell, A., Mishkin, P., Clark, J., et al.: Learning transferable visual models from natural language supervision. In: International Conference on Machine Learning (2021) 1, 9 27. Rombach, R., Blattmann, A., Lorenz, D., Esser, P., Ommer, B.: High-resolution image synthesis with latent diffusion models. In: International Conference on Com-puter Vision. pp. 10684–10695 (2022) 1 28. Soomro, K., Zamir, A., Shah, M.: Ucf101: A dataset of 101 human actions classes from videos in the wild. arXiv preprint arXiv:1212.0402 (2012) 8 29. Sun, Z., Fang, Y., Wu, T., Zhang, P., Zang, Y., Kong, S., Xiong, Y., Lin, D., Wang, J.: Alpha-clip: A clip model focusing on wherever you want. In: International Conference on Computer Vision. pp. 13019–13029 (2024) 1 30. Teo, C., Abdollahzadeh, M., Ma, X., Cheung, N.: Fairqueue: Rethinking prompt learning for fair text-to-image generation. Advances in Neural Information Pro-cessing Systems (2024) 3 31. Tian, S., Wei, H., Wang, Y., Feng, L.: Crosel: Cross selection of confident pseudo labels for partial-label learning. In: Computer Vision and Pattern Recognition (2024) 3, 9, 13 32. Tsimpoukelli, M., Menick, J., Cabi, S., Eslami, S., Vinyals, O., Hill, F.: Multimodal few-shot learning with frozen language models. Advances in Neural Information Processing Systems 34 , 200–212 (2021) 3 33. Wang, H., Xiao, R., Li, Y., Feng, L., Niu, G., Chen, G., Zhao, J.: Pico: Contrastive label disambiguation for partial label learning. In: International Conference on Learning Representations (2022) 2, 3 34. Wang, H., Xia, M., Li, Y., Mao, Y., Feng, L., Chen, G., Zhao, J.: Solar: Sinkhorn label refinery for imbalanced partial-label learning. Advances in Neural Information Processing Systems 35 , 8104–8117 (2022) 3, 9, 14 35. Wang, R., An, S., Cheng, M., Zhou, T., Hwang, S., Hsieh, C.: One prompt is not enough: Automated construction of a mixture-of-expert prompts. In: International Conference on Machine Learning (2024) 3 HopS 17 36. Wang, Y., Liu, W., Ma, X., Bailey, J., Zha, H., Song, L.: Symmetric cross entropy for robust learning with noisy labels. In: International Conference on Computer Vision (2019) 9 37. Wen, H., Cui, J., Hang, H., Liu, J., Wang, Y., Lin, Z.: Leveraged weighted loss for partial label learning. In: International Conference on Machine Learning (2021) 9 38. Wen, S., Brbic, M.: Cross-domain open-world discovery. In: International Confer-ence on Machine Learning (2024) 2 39. Werner, T., Burchert, J., Stubbemann, M., Schmidt-Thieme, L.: A cross-domain benchmark for active learning. Advances in Neural Information Processing Systems (2024) 2 40. Wu, D., Wang, D., Zhang, M.: Revisiting consistency regularization for deep partial label learning. In: International Conference on Machine Learning (2022) 3 41. Wu, M., Cai, X., Ji, J., Li, J., Huang, O., Luo, G., Fei, H., Jiang, G., Sun, X., Ji, R.: Controlmllm: Training-free visual prompt learning for multimodal large language models. Advances in Neural Information Processing Systems (2024) 3 42. Xia, S., Lv, J., Xu, N., Niu, G., Geng, X.: Towards effective visual representations for partial-label learning. In: Computer Vision and Pattern Recognition (2023) 3, 9, 13 43. Xu, M., Lian, Z., Feng, L., Liu, B., Tao, J.: Alim: adjusting label importance mech-anism for noisy partial label learning. Advances in Neural Information Processing Systems 36 , 38668–38684 (2023) 13 44. Xu, N., Qiao, C., Geng, X., Zhang, M.: Instance-dependent partial label learning. Advances in Neural Information Processing Systems 34 , 27119–27130 (2021) 3, 9 45. Yang, F., Cheng, J., Liu, H., Dong, Y., Jia, Y., Hou, J.: Mixed blessing: Class-wise embedding guided instance-dependent partial label learning. arXiv preprint arXiv:2406.10502 (2024) 3 46. Yu, F., Zhang, M.: Maximum margin partial label learning. In: Asian Conference on Machine Learning (2016) 3 47. Zeng, F., Cheng, Z., Zhu, F., Wei, H., Zhang, X.: Local-prompt: Extensible local prompts for few-shot out-of-distribution detection. In: International Conference on Learning Representations (2025) 1 48. Zhang, F., Jiang, W., Shu, J., Zheng, F., Wei, H., et al.: On the noise robustness of in-context learning for text generation. Advances in Neural Information Processing Systems (2024) 1 49. Zhang, Z., Sabuncu, M.: Generalized cross entropy loss for training deep neural networks with noisy labels. Advances in Neural Information Processing Systems (2018) 9 50. Zhou, K., Yang, J., Loy, C., Liu, Z.: Learning to prompt for vision-language models. In: International Journal of Computer Vision. pp. 2337–2348 (2022) 1, 3 51. Zhou, Y., Xia, X., Lin, Z., Han, B., Liu, T.: Few-shot adversarial prompt learning on vision-language models. Advances in Neural Information Processing Systems 
+
+37 , 3122–3156 (2024) 2 18 Y. Zhao et al. 
+
+## A Experimental Settings 
+
+A.1 Confusion Types. 
+
+To simulate realistic partial label learning scenarios, we assign each training instance a candidate label set consisting of the ground-truth label and  L-1 con-fusing labels, thereby introducing controlled ambiguity. The confusion rates γc,defined as the ratio of the number of confused labels to  L, serves as an indicator of the difficulty in identifying the ground-truth label within the candidate set. 1)Generation of rand -confusion, randomly samples  L-1 incorrect labels for each in-stance. To promote diversity, previously used confusing labels for the same class are avoided when possible. If the number of available incorrect labels is insuf-ficient, sampling with replacement is applied. 2) Generation of insd -confusion, intentional selects confusion labels based on visual similarity. Specifically, image features are first extracted using a pre-trained model, and a prototype vector is computed for each class. For each instance, the cosine similarity between its feature representation and all class prototypes is calculated. Then, the top-( L-1) most similar labels—excluding the ground-truth—are selected, contributing to more challenging and informative candidate label sets with visually similar confusing labels. 
+
+A.2 Implementation Details. 
+
+A 16-shot training set is randomly sampled from each dataset in a class-balanced manner, with a fixed random seed to ensure experimental reproducibil-ity. The original test set is used for evaluation. Model training is conducted using the SGD optimizer with a learning rate of 0.002 for a maximum of 200 epochs . A cosine annealing schedule is applied to the learning rate, with a con-stant warm-up set to 1e-5 for the first epoch . The batch size is 32 , and the training objective is the standard cross-entropy loss. The model adopts ResNet-50 as the backbone, configured with random initialization, 16 context tokens ,and the end token position for classification. In terms of module-specific hyper-parameters, the confidence threshold  τ = 0.4 and the number of nearest neighbors  k = 20 are used in the LDF module. For the GOP module, the 
+
+cost matrix in the Sinkhorn algorithm is scaled by an entropy regulariza-tion coefficient  ε = 0.05 , and the number of Sinkhorn iterations is set to 
+
+50 . The weighting coefficient for the two loss components is set to  λ = 1.0 .Regarding computational resources, all experiments are conducted on a Linux-based system equipped with eight NVIDIA RTX 4090 GPUs, with each model requiring approximately 18–30 minutes for training and peaking at 6696 MiB of memory usage. The software environment includes Python 3.8, PyTorch 1.13.1, and CUDA 12.0, along with essential libraries such as NumPy 1.21.6, Pandas 1.3.5, scikit-learn 1.0.2, and torchvision 0.14.1. 
+
+Dataset. We adopt eight datasets to comprehensively evaluate our method. Caltech and EuroSAT are general classification datasets covering diverse object HopS 19 
+
+and scene categories. In contrast, DTD, FGVCAircraft, Food, Flowers, Oxford-Pets, and UCF focus on fine-grained classification, emphasizing subtle differences within textures, aircraft models, food dishes, flower species, pet breeds, and hu-man actions respectively. Table 5 presents the original performance across eight datasets, evaluated using two models: the zero-shot CLIP model with hand-crafted prompts ( 0-clip h), which requires no training, and the 16-shot CoOp model with learnable prompts trained on precise labels. The learnable prompts in the 16-shot CoOp model are further divided into two variants: unified prompt (uni ), which use a shared context vector across all classes ( 16-coop u), and classi-fied prompts ( cls ), which assign distinct context vectors to each class ( 16-coop c). All results are reproduced by ourselves to ensure a consistent comparison.                                                 
+
+> Table 5: Testing accuracy (%) of models under the uni -prompt and cls -prompts. Dataset Class Hand-crafted prompt 0-clip h16-coop u16-coop c
+> EuroSAT 10 a centered satellite photo of [class] 37.6 82.9 83.3 OxfordPets 37 a photo of a [class], a type of pet. 85.7 86.5 78.9 DTD 47 [class] texture. 42.3 62.2 62.4 Caltech 100 a photo of a [class]. 86.3 92.0 90.4 FGVCAircraft 100 a photo of a [class], a type of aircraft. 17.0 31.8 37.7 Food 101 a photo of a [class], a type of food. 77.4 74.5 70.4 UCF 101 a photo of a person doing [class]. 61.8 74.8 74.9 Flowers 102 a photo of a [class], a type of flower. 66.1 95.2 95.1
+
+Baselines. We compare HopS with eight state-of-the-art loss functions from partial-label learning and robust learning. All hyperparameters for these meth-ods are carefully tuned according to the settings reported in their original pub-lications, and the configurations of all methods are detailed in Table 6. In addition, we compare HopS with three recent PLL methods, CroSel, PaPi, and SoLar, each of which adopts a different strategy for handling label ambigu-ity. CroSel utilizes cross-entropy loss to train the label selection process, while incorporating consistency regularization (with data augmentation and MixUp) to reduce selection noise. PaPi combines a prototypical alignment loss (based on KL divergence) with cross-entropy loss to optimize class representations and improve ambiguity handling. SoLar is a long-tailed partial-label learning method that improves robustness under class imbalance by leveraging image representa-tion optimization and label-distribution refinement. 
+
+## B Comparison Results 
+
+B.1 Rand -Confusion Labels. 
+
+All methods are evaluated under two prompt types: the ( uni ) prompt and the (cls ) prompts. The corresponding results are summarized in Tables 7 and 8, where all values are reported as percentages (the percent sign is omitted). The best performance is highlighted in bold , and the second-best is underlined. 20 Y. Zhao et al. 
+
+> Table 6:  Partial label learning losses and robust learning losses Method  Loss formula  Description RC  LRC  = − 1
+> B
+> BX
+> i=1
+> CX
+> j=1
+> log( pij  ) · yij  Risk-consistent PLL method that assumes the candidate label set is uniformly sampled from the true label. CC  LCC  = − 1
+> B
+> BX
+> i=1
+> log
+> CX
+> j=1
+> pij  · yij
+> !
+> Classifier-consistent PLL method under the same assumption as RC. EXP  LEXP  = 1
+> B
+> BX
+> i=1
+> exp  −
+> CX
+> j=1
+> pij  · yij
+> !
+> PLL method that adopts the exponential loss as a risk estimator. GCE  LGCE  = 1
+> B
+> BX
+> i=1
+> CX
+> j=1
+> (1  − pij  ) · yij  Robust loss generalizing cross-entropy and mean absolute error to improve tolerance to label noise. LWC  LLWC  = − X
+> i,j
+> yij  · log( pij  ) − 1
+> C
+> X
+> i,j
+> (1  − yij  ) · log(1  − pij  ) PLL method that considers trade-off between losses on candidate and non-candidate label sets. MAE  LMAE  = 1
+> B
+> BX
+> i=1
+> CX
+> j=1
+> |pij  − yij  | Robust loss treating all classes equally by minimizing absolute error. MSE  LMSE  = 1
+> B
+> BX
+> i=1
+> CX
+> j=1
+> (pij  − yij  )2 PLL method that estimates risk via mean squared error between predictions and candidate labels. SCE
+> LSCE  = α · −  X
+> j
+> yij  · log( pij  )
+> | {z  }
+> Cross Entropy
+> +β · −  X
+> j
+> pij  · log( yij  )
+> | {z  }
+> Reverse CE
+> Symmetric loss combining cross-entropy and reverse cross-entropy to enhance robustness. ( α = 0 .1, β = 1 .0)HopS(ours)
+> LHopS  = − X
+> j
+> yij  · log( pLDF
+> ij  )
+> | {z  }
+> LDF Cross Entropy
+> +λ · −  X
+> j
+> yij  · log( pGOP
+> ij  )
+> | {z  }
+> GOP Cross Entropy
+> Composite loss jointly optimizing cross-entropy from local density filtering and global optimal planning. ( λ = 1 .0)
+
+HopS 21 
+
+Table 7: Testing accuracy (%) under uni -prompt across five rand confusion rates. Dataset  γc RC CC EXP GCE LWC MAE MSE SCE HopS Caltech 0.50 82.0 88.2 59.6 36.8 80.9 32.8 86.1 89.0 89.4 
+
+0.75 78.7 87.4 42.7 24.8 76.8 56.0 75.7 89.0 89.0 
+
+0.80 75.6 89.1 55.0 33.4 77.4 29.3 86.9 86.5 89.5 
+
+0.88 66.0 88.6 37.0 15.2 72.1 20.4 83.0 76.6 89.5 
+
+0.90 65.8 87.1 44.5 18.0 70.3 23.0 80.0 76.2 89.5 
+
+DTD 0.50 46.7 62.0 37.5 31.7 45.3 30.3 60.3 60.4 62.1 
+
+0.75 37.1 59.9 42.1 27.7 37.1 26.5 54.4 58.2 59.8 0.80 33.8 57.1 37.4 31.0 35.2 19.9 53.6 58.4 59.0 
+
+0.88 32.7 55.8 27.5 17.1 28.6 22.4 48.0 53.4 55.8 
+
+0.90 22.9 48.3 26.0 23.8 24.2 17.6 44.9 50.9 55.6 
+
+EuroSAT 0.50 63.5 81.4 77.6 60.0 64.1 71.5 78.0 81.8 83.6 
+
+0.75 60.2 81.1 69.5 54.4 55.3 50.2 75.5 80.7 81.3 
+
+0.80 45.3 72.0 71.2 59.4 41.6 54.5 60.2 72.2 74.8 
+
+0.88 46.6 65.7 56.3 37.2 38.1 53.8 52.0 66.8 66.9 
+
+0.90 29.1 44.3 42.9 27.4 31.0 18.9 39.0 51.7 53.9 
+
+Food 0.50 54.2 67.8 24.8 18.5 51.9 23.2 43.8 65.9 68.4 
+
+0.75 46.3 68.0 22.8 28.9 45.2 20.3 48.6 63.8 69.0 
+
+0.80 42.3 65.3 22.2 19.8 41.9 23.0 55.6 52.8 68.2 
+
+0.88 33.3 64.4 19.9 21.3 32.2 11.1 44.2 38.9 66.0 
+
+0.90 31.3 62.3 20.9 13.1 27.6 16.7 49.1 30.8 65.0 
+
+Flowers 0.50 78.0 93.5 46.0 32.8 80.8 20.0 78.2 92.3 93.5 
+
+0.75 74.1 91.7 42.0 29.5 76.5 23.8 80.8 79.3 92.9 
+
+0.80 70.6 92.7 45.0 19.3 70.8 23.7 75.4 79.3 93.2 
+
+0.88 62.0 91.9 40.1 20.6 60.7 36.7 73.0 67.3 92.9 
+
+0.90 56.9 91.8 34.3 10.2 53.6 33.7 78.7 73.9 92.5 
+
+UCF 0.50 56.9 72.7 28.0 26.1 53.4 18.8 61.6 70.7 71.9 0.75 52.8 72.1 24.1 11.9 56.7 21.3 56.6 64.2 72.9 
+
+0.80 50.3 71.3 37.1 17.2 51.6 20.4 58.8 69.1 71.7 
+
+0.88 46.2 70.6 31.4 12.7 39.2 12.0 61.1 51.1 71.2 
+
+0.90 31.9 68.2 36.5 17.0 39.1 12.5 53.6 52.4 69.2 
+
+FGVCAircraft 0.50 19.5 27.3 9.5 6.8 22.7 12.0 18.3 25.0 26.8 0.75 17.0 25.5 8.3 6.3 17.7 5.2 19.4 18.5 24.6 0.80 15.4 24.7 11.2 6.2 14.3 5.4 19.4 17.6 23.8 0.88 11.2 20.4 10.7 5.0 11.4 4.4 16.8 13.0 20.2 0.90 11.4 20.4 10.9 4.1 10.0 7.4 14.6 10.6 19.3 OxfordPets 0.50 58.9 82.5 52.3 38.0 60.6 14.7 82.0 84.0 83.5 0.75 49.4 83.0 46.9 31.0 49.4 46.6 76.2 82.6 83.8 
+
+0.80 42.4 80.2 49.3 22.7 40.9 26.3 72.5 80.9 82.6 
+
+0.88 34.8 73.9 23.7 39.1 31.3 38.1 74.2 76.8 79.9 
+
+0.90 22.0 74.2 40.7 12.3 21.9 18.3 45.0 66.6 80.5 22 Y. Zhao et al. 
+
+Table 8: Testing accuracy (%) under cls -prompts across five rand confusion rates. Dataset  γc RC CC EXP GCE LWC MAE MSE SCE HopS Caltech 0.50 89.2 90.5 60.9 60.0 88.7 46.4 85.9 89.5 90.9 
+
+0.75 87.6 85.8 61.3 55.2 87.6 57.1 79.5 87.3 90.4 
+
+0.80 87.2 83.9 66.5 44.5 87.5 60.4 84.7 88.0 90.8 
+
+0.88 85.0 74.5 59.7 48.4 85.0 56.9 76.7 88.0 90.5 
+
+0.90 83.3 74.3 61.3 56.1 83.2 60.5 74.8 87.5 89.7 
+
+DTD 0.50 62.2 62.6 52.2 44.6 62.0 44.3 59.2 61.7 61.9 0.75 55.4 60.9 37.7 33.0 55.9 38.6 52.0 58.1 61.8 
+
+0.80 53.2 54.6 48.7 43.4 53.4 36.8 48.5 56.7 60.9 
+
+0.88 46.5 55.4 39.1 29.4 46.5 35.6 41.9 52.2 57.2 
+
+0.90 36.3 45.3 32.9 33.3 36.3 28.7 32.9 49.3 53.4 
+
+EuroSAT 0.50 76.2 83.9 83.8 72.6 76.4 76.2 79.4 84.5 84.9 
+
+0.75 76.2 81.4 69.8 75.3 75.0 60.3 62.2 82.5 82.2 0.80 63.2 76.6 73.9 68.1 63.2 67.3 49.9 74.0 80.6 
+
+0.88 51.0 71.6 62.8 49.5 54.0 52.9 43.5 61.4 74.7 
+
+0.90 35.3 46.4 46.4 27.5 37.9 35.4 33.5 44.4 54.2 
+
+Food 0.50 66.9 68.6 33.7 31.4 66.5 34.7 63.5 68.7 68.8 
+
+0.75 60.9 62.9 33.5 27.5 61.2 26.8 58.0 66.4 69.0 
+
+0.80 59.2 57.2 38.8 24.7 59.4 28.8 58.9 66.1 68.4 
+
+0.88 54.2 57.2 34.0 27.7 54.4 25.0 49.7 65.0 68.1 
+
+0.90 49.0 52.6 30.8 24.1 48.7 24.0 48.4 63.8 67.1 
+
+Flowers 0.50 87.8 89.9 39.0 37.3 87.9 28.3 87.7 95.5 95.7 
+
+0.75 84.8 89.2 36.7 29.2 84.6 31.1 78.9 95.0 95.7 
+
+0.80 84.7 85.2 34.3 30.6 85.0 32.7 78.3 95.0 95.7 
+
+0.88 80.8 76.7 38.7 28.6 81.1 35.1 70.6 94.6 95.3 
+
+0.90 76.3 78.5 40.1 26.0 76.0 25.7 76.6 94.2 95.0 
+
+UCF 0.50 70.5 71.4 39.3 34.3 70.3 37.7 69.9 71.3 74.2 
+
+0.75 70.3 68.8 42.3 31.2 65.2 33.0 58.3 69.0 73.1 
+
+0.80 65.3 63.3 37.9 37.2 65.6 34.9 59.3 68.5 73.8 
+
+0.88 49.0 59.0 39.3 34.6 61.8 32.5 60.7 68.0 72.3 
+
+0.90 59.3 59.6 34.7 24.3 59.2 32.5 54.3 66.8 70.4 
+
+FGVCAircraft 0.50 28.4 29.6 17.2 14.7 28.4 12.5 27.4 34.9 35.8 
+
+0.75 24.3 26.6 13.5 14.3 24.2 14.7 25.4 32.1 32.9 
+
+0.80 23.7 25.1 13.7 11.5 23.2 11.6 24.5 32.2 32.6 
+
+0.88 19.1 21.4 13.5 8.3 19.6 13.5 21.7 28.8 28.7 0.90 17.6 22.2 13.8 10.5 17.8 11.5 21.4 28.1 26.6 OxfordPets 0.50 87.8 81.0 57.3 45.8 71.0 45.1 71.7 77.5 81.1 0.75 84.8 80.3 54.0 41.7 62.0 37.9 64.4 73.9 80.5 0.80 84.7 73.9 44.5 38.9 56.9 29.5 63.4 71.8 79.2 0.88 80.8 67.2 41.0 34.6 44.4 25.5 47.6 67.2 71.9 0.90 76.3 52.2 39.9 30.2 38.9 34.2 40.9 63.8 70.2 HopS 23 
+
+B.2 Insd -Confusion Type. 
+
+Since partial-label losses perform well under the rand confusion setting, we fur-ther compare HopS against them under instance-dependent partial labels. The 
+
+Insd candidate sets, constructed based on visual similarity, are derived from fea-tures extracted by pre-trained backbones, including ResNet-18 (R18), ResNet-50 (R50), and CLIP-ResNet50 (CLIP). As shown in Tables 9 and 10, HopS consis-tently demonstrates significant advantages. 
+
+Table 9: Testing accuracy (%) under uni -prompt across two insd confusion rates. Dataset Insd γc=0.67 γc=0.75 CC CE EXP GCE LWC HopS CC CE EXP GCE LWC HopS Caltech CLIP 57.7 49.2 24.9 13.3 49.5 57.6 41.2 46.8 20.4 9.5 52.3 49.0 R18 41.0 54.7 29.2 12.8 54.3 64.1 46.2 45.5 17.1 5.6 44.7 58.2 
+
+R50 28.4 42.2 12.3 8.6 49.5 50.3 31.2 35.9 18.7 9.2 38.7 45.3 
+
+DTD CLIP 39.4 40.4 24.7 25.2 44.7 47.8 28.7 35.5 20.6 12.8 41.6 41.4 R18 47.3 42.8 19.7 20.0 46.4 48.8 33.7 40.7 12.7 20.8 40.7 47.3 
+
+R50 37.1 42.1 19.1 17.7 44.3 51.7 31.5 37.1 17.3 23.6 40.3 46.2 
+
+EuroSAT CLIP 32.8 37.6 33.6 24.0 36.7 57.5 15.5 21.0 15.3 11.5 27.5 45.8 
+
+R18 34.4 35.3 29.3 35.0 37.3 48.5 23.4 30.1 15.1 17.3 33.5 49.8 
+
+R50 37.2 35.8 32.0 20.0 39.6 52.7 22.0 31.7 27.4 16.4 37.0 37.3 
+
+FGVCAircraft CLIP 15.7 12.2 8.3 6.2 12.5 17.9 14.9 11.2 9.3 7.1 12.7 14.0 R18 14.6 10.0 7.8 5.0 9.5 13.9 13.1 8.3 5.4 6.3 8.9 13.1 R50 13.7 10.4 7.5 5.1 10.3 14.3 12.8 8.9 4.9 5.0 9.4 12.6 Food CLIP 40.2 45.0 23.2 18.8 47.1 54.7 35.8 39.2 15.3 13.5 46.4 48.9 
+
+R18 54.4 53.4 17.0 18.2 48.5 59.7 47.9 44.1 13.6 12.3 45.0 59.4 
+
+R50 53.8 47.1 16.1 12.3 50.6 62.5 43.6 35.6 16.7 13.3 46.0 57.0 
+
+Flowers CLIP 64.6 32.6 18.4 20.4 48.4 73.9 41.8 40.5 22.0 11.4 37.2 64.8 
+
+R18 68.5 29.6 21.4 19.6 42.5 82.5 47.5 29.7 20.8 14.5 35.9 75.1 
+
+R50 72.9 44.9 22.3 11.6 37.7 82.0 53.3 21.0 17.8 20.0 36.1 74.0 
+
+OxfordPets CLIP 47.4 40.8 23.0 23.2 47.3 58.5 33.3 37.8 16.5 22.6 41.3 50.3 
+
+R18 49.6 41.3 32.8 18.7 48.5 59.1 42.5 44.3 26.3 12.7 46.1 55.6 
+
+R50 44.1 36.7 25.3 28.0 41.0 53.3 33.8 35.9 18.5 19.2 38.2 51.8 
+
+UCF CLIP 41.2 36.8 17.6 14.3 36.4 49.3 35.0 29.1 14.4 12.9 34.6 38.4 
+
+R18 52.4 41.2 15.4 15.0 49.0 60.9 43.2 32.9 22.2 13.1 40.3 53.5 
+
+R50 48.7 39.4 9.1 14.5 44.1 59.7 40.8 30.1 12.8 9.0 36.0 49.1 
+
+Table 10: Testing accuracy (%) under uni -prompt with insd confusion rates γc=0.80. Dataset Insd CC CE EXP GCE LWC HopS Dataset CC CE EXP GCE LWC HopS Caltech CLIP 46.2 41.7 4.2 19.6 39.4 45.0 Flowers 40.6 31.9 15.4 13.6 38.6 59.2 
+
+R18 25.4 28.1 6.1 0.5 33.9 49.5 36.0 23.7 15.8 8.8 28.5 69.9 
+
+R50 23.4 37.0 25.4 10.0 31.6 38.9 45.4 26.5 11.5 12.1 32.1 65.0 
+
+DTD CLIP 25.7 30.9 19.4 7.6 38.1 37.4 OxfordPets 36.1 42.3 22.0 17.3 44.7 48.8 
+
+R18 32.2 31.2 19.1 16.6 37.8 43.1 35.3 47.5 27.0 16.0 47.0 55.6 
+
+R50 25.8 32.0 16.7 15.1 34.5 42.5 29.9 44.6 28.8 18.3 45.0 51.5 
+
+Food CLIP 33.7 27.2 14.5 15.8 37.8 49.0 
+
+EuroSAT 15.8 38.9 11.8 11.4 32.5 43.5 
+
+R18 39.0 41.2 15.4 13.2 42.1 56.5 14.8 41.0 12.0 18.9 28.9 40.0 
+
+R50 42.3 43.6 13.2 13.7 44.0 53.7 16.0 44.4 18.5 9.3 27.0 44.9 
+
+UCF CLIP 27.7 21.9 14.6 10.9 31.3 33.7 
+
+FGVCAircraft 11.7 11.4 8.2 6.7 11.5 13.0 
+
+R18 31.8 32.4 11.6 11.5 37.7 53.2 11.7 8.2 6.3 4.4 8.2 13.7 
+
+R50 27.8 31.3 12.5 7.6 29.2 43.0 11.5 10.0 5.2 2.3 9.5 13.3 24 Y. Zhao et al. 
+
+## C Further Analysis 
+
+C.1 Mutual Complementation. 
+
+To evaluate the interaction between the LDF and GOP modules, we compare their individual performance with their performance within the overall HopS model in terms of identifying the ground-truth labels T, considering both the training and testing phases. Training . Figures 9 – 16 illustrates the identifying accuracy of LDF, GOP, and HopS over the epochs, highlighting the role of LDF in accelerating early-stage optimization by guiding the global module. Moreover, the proportion of correctly identified labels by each module within HopS ulti-mately surpasses their standalone performance. Testing . Table 11 demonstrates that a weighting coefficient of λ = 1 .0 achieves a proper balance between local and global signals, thereby consistently improving performance. Conversely, un-der high confusion, overemphasizing either component results in performance degradation, highlighting the necessity of their complementary interaction.    
+
+> Fig. 9: Identifying accuracy of LDF, GOP, and HopS on the Caltech.
+> Fig. 10: Identifying accuracy of LDF, GOP, and HopSon the DTD.
+> Fig. 11: Identifying accuracy of LDF, GOP, and HopS on the EuroSAT.
+
+HopS 25 
+
+Fig. 12: Identifying accuracy of LDF, GOP, and HopS on the Food. 
+
+Fig. 13: Identifying accuracy of LDF, GOP, and HopS on the FGVCAircraft. 
+
+Fig. 14: Identifying accuracy of LDF, GOP, and HopS on the Flowers. 
+
+Fig. 15: Identifying accuracy of LDF, GOP, and HopS on the OxfordPets. 
+
+Fig. 16: Identifying accuracy of LDF, GOP, and HopS on the UCF. 26 Y. Zhao et al. 
+
+Table 11: Testing phases: (a) module validity, (b)  λ sensitivity. (a) Testing accuracy (%) under the  uni (left) and  cls (right). Dataset  γc HopS GOP LDF  HopS GOP LDF Caltech 0.67  88.6  89.7  88.8  90.7  90.5  88.9 0.80  89.0  88.8  88.0  90.3  91.0  88.8 0.89  88.7  56.9  86.9  90.2  90.8  88.5 DTD 0.67  59.1  60.0  59.5  61.7  59.8  58.0 0.80  59.0  56.3  55.2  58.9  58.5  55.2 0.89  60.0  56.3  54.5  58.3  58.8  56.8 EuroSAT 0.67  77.2  78.5  74.0  78.9  80.8  76.5 0.80  75.3  74.9  54.1  79.0  75.7  66.8 0.89  44.1  33.5  18.6  52.9  42.5  28.3 FGVCAircraft 0.67  23.7  19.9  27.0  34.9  33.8  29.8 0.80  22.2  11.1  21.4  32.1  31.1  25.9 0.89  18.3  3.0  17.5  28.3  24.3  23.6 Food 0.67  67.5  61.6  66.3  68.8  68.9  65.8 0.80  66.4  53.3  67.0  68.4  68.7  62.9 0.89  63.9  13.4  62.4  66.6  67.5  63.3 Flowers 0.67  92.5  91.2  92.6  95.3  95.5  94.8 0.80  92.4  85.4  92.3  95.1  95.1  93.9 0.89  93.2  29.5  91.5  95.3  95.0  93.8 OxfordPets 0.67  83.2  83.5  81.8  79.8  80.4  79.7 0.80  81.6  81.0  81.6  78.1  79.1  76.2 0.89  76.6  81.7  71.1  68.4  77.7  62.7 UCF 0.67  70.3  69.8  71.7  72.8  72.4  70.2 0.80  69.9  67.4  68.0  72.3  71.5  69.4 0.89  69.0  11.8  67.5  71.0  71.1  70.0 (b) Testing accuracy (%) across a wide range of  λ.Dataset  λ 0.50  0.75  0.80  0.88  0.90 Caltech 1.0  89.6  90.1  89.5  90.3 89.8  
+
+> 2.0  89.2  90.7 89.8  88.8  89.4 0.5  89.4  89.5  89.2  88.8  88.2 DTD 1.0  63.2  59.3  60.2  58.2  56.3
+> 2.0  62.9  60.3  58.9  58.4  54.1 0.5  62.2  58.3  57.9  56.9  53.7 EuroSAT 1.0  82.7  80.2  74.5 69.6 34.6
+> 2.0  82.5  81.9  73.3  55.5  34.4 0.5  82.2  80.8  70.8  46.3  31.5 FGVCAircraft 1.0  27.4  22.9  21.4  20.2  15.2 2.0  25.4  23.3  21.5  19.2  14.0 0.5  27.4  24.2 26.1  19.7  17.9
+> Food 1.0  69.6  68.3  66.6  65.2  63.7 2.0  69.9  65.5  63.9  66.8 67.2
+> 0.5  68.4  69.2 68.9  64.1  64.1 Flowers 1.0  93.2 93.5  91.8  92.9  92.4 2.0  90.1  92.3  93.5  89.2  93.5
+> 0.5  90.8  92.5  87.9  91.8  92.6 OxfordPets 1.0  83.4  82.7  83.7  79.7  80.0 2.0  83.5  79.9  84.6 81.6 81.3
+> 0.5  82.8  83.3  84.0  76.0  76.2 UCF 1.0  71.1  71.5  71.5 69.3  67.4 2.0  71.4 71.9  67.8  67.9  69.0
+> 0.5  71.0  71.9  69.6  67.3  69.0 HopS 27
+
+C.2 Effect of Batch Size. 
+
+We investigate the effect of varying batch sizes  B ∈ { 16 , 32 , 64 , 128 , 256 } on the performance of HopS, focusing on the testing accuracy under varying levels of label confusion  γc ∈ {0.5, 0.75 , 0.80 , 0.88 , 0.90 }. As shown in Figure 17 and Ta-ble 12, the results compare the performance under uni -prompt and cls -prompts.          
+
+> Fig. 17: Testing accuracy of the HopS across different Bunder five confusion rates. 28 Y. Zhao et al.
+> Table 12: Testing accuracy (%) of HopS under uni (left) and cls (right) prompts.
+
+Dataset  γc 16 32 64 128 256 16 32 64 128 256 Caltech 0.50 89.8 89.4 89.4 87.5 84.7 90.2 90.9 90.7 90.8 90.7 0.75 88.9 89.0 88.7 87.7 85.3 89.6 90.1 90.6 91.0 90.8 0.80 88.6 89.2 89.6 86.6 84.6 90.0 90.6 90.6 90.8 90.9 0.88 88.7 89.2 88.1 88.0 85.7 89.6 90.0 90.3 90.2 90.2 0.90 89.3 89.2 89.0 86.7 85.5 89.2 89.7 90.0 90.4 90.5 EuroSAT 0.50 61.2 61.0 60.5 60.9 58.0 61.2 61.1 61.6 61.4 61.8 0.75 60.4 58.9 58.9 58.9 57.3 58.9 60.7 59.7 59.3 59.3 0.80 57.6 58.0 58.4 57.1 54.9 58.3 59.0 57.9 58.1 58.6 0.88 55.9 55.8 56.8 56.3 54.1 55.8 56.4 56.7 56.9 57.1 0.90 52.4 53.3 52.9 54.0 54.1 51.0 51.8 52.3 52.1 53.1 UCF 0.50 83.6 82.1 81.0 78.5 79.8 83.8 83.6 83.8 84.2 84.4 0.75 79.0 80.4 77.2 75.3 75.7 80.2 80.5 81.0 80.5 81.3 0.80 77.2 76.2 71.5 71.4 74.5 78.0 78.3 78.0 77.5 78.1 0.88 52.7 61.9 47.7 33.1 51.7 66.2 64.0 66.4 53.1 38.1 0.90 45.2 46.2 26.5 23.6 28.7 41.8 42.3 44.5 28.9 33.3 Flowers 0.50 26.5 26.2 25.8 18.8 12.0 35.2 35.4 34.9 34.9 34.8 0.75 24.6 23.3 22.3 17.4 10.7 32.4 32.5 32.9 32.8 32.3 0.80 23.4 22.6 22.5 16.8 8.6 31.7 32.2 31.9 31.9 31.8 0.88 18.5 19.1 17.6 14.4 9.9 29.0 28.4 29.0 29.1 27.9 0.90 17.8 18.1 16.7 15.4 8.9 26.6 26.4 25.8 26.7 26.3 Food 0.50 67.5 66.8 65.4 63.8 49.3 68.1 68.6 69.2 68.9 69.1 0.75 67.0 67.1 66.6 62.8 48.4 67.9 68.2 68.6 68.9 68.7 0.80 66.2 67.6 66.4 52.8 56.0 67.6 68.3 68.9 68.8 68.8 0.88 65.7 65.2 65.0 61.7 56.9 66.4 67.6 68.0 67.9 67.8 0.90 63.0 63.2 62.6 58.6 52.0 66.1 66.6 67.2 67.6 67.1 OxfordPets 0.50 93.1 92.9 92.7 89.7 70.0 95.6 95.6 95.7 95.5 95.5 0.75 92.6 92.5 92.4 90.2 77.0 95.4 95.5 95.7 95.4 95.4 0.80 92.9 91.1 92.4 88.4 53.3 95.1 95.3 95.4 95.4 95.1 0.88 92.9 91.8 92.3 87.7 68.1 94.9 95.1 95.4 95.3 95.2 0.90 91.1 92.2 89.1 89.4 72.8 94.7 94.8 95.1 94.8 94.8 DTD 0.50 82.9 82.9 81.5 80.3 80.4 80.5 81.0 80.2 80.8 81.3 0.75 83.0 82.6 81.4 82.0 74.1 79.4 79.5 80.1 80.7 80.8 0.80 82.3 82.2 82.5 81.9 81.1 77.9 78.3 79.3 79.5 79.4 0.88 74.7 78.3 79.6 79.4 76.4 70.2 71.7 72.3 73.2 73.8 0.90 76.3 77.5 76.5 77.8 76.8 68.5 69.2 70.6 72.3 72.9 FGVCAircraft 0.50 70.9 70.9 71.4 67.6 63.0 72.4 73.3 73.3 73.4 73.2 0.75 70.6 71.9 71.2 66.2 63.7 72.8 72.7 72.3 73.3 72.8 0.80 71.0 70.4 69.1 67.2 62.1 71.8 72.3 72.4 72.1 72.3 0.88 70.9 70.3 69.5 65.9 64.7 71.3 71.9 72.0 71.7 72.7 0.90 69.0 68.8 68.5 66.0 64.0 70.0 70.3 70.8 71.4 70.5 HopS 29 
+
+C.3 Comparison with Full-Data PLL Methods. 
+
+We conducted a systematic comparison with two recently proposed partial-label learning methods, Papi and CroSel. Unlike the 16-shot setting used in previous experiments, Papi and CroSel were trained on the entire datasets to fully ex-ploit their optimal performance, while HopS was still trained under the 16-shot few-shot setting. The experiments were performed on two challenging datasets, Caltech and Oxford Flowers, both characterized by a large number of categories and high intra-class similarity. The results are shown in Table 13.                                                          
+
+> Table 13: Testing accuracy (%) of HopS under uni -prompt across three backbones. Dataset Method CLIP R18 R50 0.67 0.75 0.80 0.67 0.75 0.80 0.67 0.75 0.80 Caltech HopS 57.6 49.0 45.0 64.1 58.2 49.5 50.3 45.3 38.9
+> CroSel 60.4 43.7 32.2 42.8 33.3 18.8 39.0 25.2 11.8 Papi 59.7 49.2 40.5 44.3 35.2 15.8 42.0 23.5 13.4 Flowers HopS 73.9 64.8 59.2 82.5 75.1 69.9 82.0 74.0 65.0
+> CroSel 40.4 27.4 11.5 75.0 56.4 45.1 78.0 62.0 50.2 Papi 35.7 13.7 5.8 67.9 56.1 47.0 67.0 58.7 49.8
+
+C.4 Settings with Missing Ground-Truth. 
+
+We conduct 16-shot experiments on two types of label confusion, rand and insd ,as previously described, with each candidate set  S containing three labels. The missing rates of ground-truth labels are 12.5% (2 out of 16 shots) for rand and 25% (4 out of 16 shots) for insd . As shown in Table 14, under the insd setting, HopS consistently uncovers meaningful correlations within the candidate label sets, leading to significantly better performance than other methods. This sug-gests that HopS is particularly well-suited for real-world scenarios where label noise in SS is instance-dependent. In contrast, under the rand setting where such dependencies are absent, HopS performs slightly worse than the SOTA robust loss. Nevertheless, its performance can be improved by integrating robust loss functions (e.g., the SCE loss). As illustrated in Table 15, HopS combined with the SCE loss achieves the best performance under the rand setting, demonstrating its flexibility and compatibility with other robust learning techniques.                                                                           
+
+> Table 14: Testing accuracy under the uni -prompt with 25.0% missing rate ( insd ). Dataset RC CC EXP LWC MAE MSE GCE SCE HopS HopS+SCE Caltech 0.37 0.35 0.16 0.27 0.12 0.27 0.06 0.33 0.37 0.31 DTD 0.37 0.35 0.19 0.40 0.22 0.31 0.13 0.39 0.41 0.32 Flowers 0.29 0.45 0.17 0.35 0.13 0.35 0.14 0.51 0.57 0.34 UCF 0.31 0.41 0.11 0.31 0.11 0.28 0.14 0.45 0.46 0.30 30 Y. Zhao et al.
+> Table 15: Testing accuracy under the uni -prompt with 12.5% missing rate ( rand ). Dataset RC CC EXP LWC MAE MSE GCE SCE HopS HopS+SCE Caltech 0.76 0.84 0.34 0.84 0.38 0.20 0.26 0.86 0.84 0.87
+> DTD 0.52 0.51 0.19 0.53 0.23 0.19 0.15 0.54 0.53 0.55
+> Flowers 0.53 0.87 0.18 0.73 0.18 0.13 0.15 0.87 0.88 0.89
+> UCF 0.50 0.63 0.18 0.57 0.14 0.08 0.10 0.64 0.64 0.64
+
+C.5 Running Time of Methods. 
+
+We measured the computational cost of each method during training, including the average epoch time (in seconds) and the total training time (in minutes), as shown in Table 16. Notably, although HopS introduces both a local module (LDF) and a global module (GOP) to enhance label identification, the additional computational overhead remains negligible due to the relatively small dataset size. As a result, HopS achieves superior performance without incurring a sig-nificant increase in training cost.               
+
+> Table 16: Training efficiency comparison of different methods on Caltech. Metric RC CC EXP GCE LWC MAE MSE SCE HopS Average Epoch Time (s) 0.11 0.09 0.12 0.11 0.11 0.12 0.11 0.11 0.12 Total Time (min) 19.01 14.19 20.75 18.79 18.45 20.09 18.67 18.65 19.85
+
+C.6 Memory usage of large datasets. 
+
+As shown in Table 17, we compare the memory usage (in MiB) of HopS and Coop at different batch sizes on ImageNet, clearly showing that the memory cost of HopS is only slightly higher than that of Coop. HopS does not require an 
+
+N 2 dense affinity matrix. Instead, the kNN graph is computed sparsely for each batch, and the features come from a frozen encoder, allowing us to compute the kNN graph offline. Thus, HopS remains efficient and scalable even on non-few-shot PLL datasets, due to the sparse computation in its LDF module.  
+
+> Table 17: Memory usage comparison at different batch sizes on ImageNet
+
+Method 16 32 64 128 256 512 1024 2048 Coop 18130 18102 18170 18312 19998 22178 19098 19564 HopS 18582 18582 18622 18764 20456 23312 19576 20430 
+
+△ + 452 + 480 + 452 + 452 + 458 + 1134 + 478 + 866 HopS 31 
+
+C.7 Sensitivity to  k and  τ .
+
+We evaluate the sensitivity of LDF by sweeping k ∈ { 10 , 20 , 40 } (with τ = 0 .4)and τ ∈ { 0.4, 0.5, 0.6} (with  k = 20 ) on coarse/fine-grained datasets (Cal-tech/Flowers), under rand and insd confusion types, using both uni -prompt (left) and cls -prompts (right). As shown in Table 18, performance varies smoothly with  k and  τ , with no significant re-tuning needed from Caltech to Flowers.      
+
+> Table 18: Sensitivity of LDF to kand τ.
+
+Dataset Type k=10 k=20 k=40  τ =0.5  τ =0.6 k=10 k=20 k=40  τ =0.5  τ =0.6 Caltech CLIP 48.9 49.0 45.6 56.3 53.1 52.4 60.0 48.8 56.8 54.0 R18 45.3 58.2 47.9 51.4 49.9 54.5 59.4 53.1 65.0 62.4 R50 41.7 45.3 40.0 47.3 48.8 59.9 53.3 49.3 50.1 54.1 Rand 89.4 89.0 88.4 89.4 89.0 90.0 90.4 90.1 90.1 90.0 Flowers CLIP 63.1 64.8 60.6 65.8 66.0 72.4 68.8 61.8 69.6 68.8 R18 73.4 75.1 74.0 78.1 76.2 83.8 80.4 74.6 80.0 79.9 R50 76.2 74.0 80.1 73.5 74.4 80.5 78.2 81.0 78.1 77.9 Rand 91.8 92.9 92.5 91.9 92.0 95.5 95.7 95.5 95.6 95.6 
+
+C.8 Settings of 4/8-Shot. 
+
+As clarified in Figure 18, we additionally conducted 4-shot and 8-shot experi-ments to evaluate HopS under more limited supervision. The results show that HopS consistently outperforms the baselines across all eight datasets, further demonstrating its effectiveness in low-shot partial-label learning scenarios.

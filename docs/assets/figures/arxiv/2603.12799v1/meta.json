@@ -1,0 +1,118 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.12799v1/fig-001.webp",
+      "caption": "Table 1: Zero-shot Clean Accuracy and Adversarial Robustness (%) across 16 widely-used datasets. The best and second-best results in each column are highlighted in bold and underlined, respectively. R-AdaptM assumes access to a robust model M and uses it only to extract a robustness anchor; inference uses a frozen standard CLIP with GIF and FRA.",
+      "page": 11,
+      "index": 1,
+      "width": 714,
+      "height": 556
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12799v1/fig-002.webp",
+      "caption": "Fig. 8: Progressive replacement results using FARE robust modules. Adversarial robustness against AutoAttack (ϵ = 4/255, APGD) is plotted as standard CLIP modules are cumulatively replaced by FARE’s corresponding components across four datasets: Caltech101, CIFAR100, STL10, and CIFAR10. The results consistently validate that robustness is largely established within the initial stages (Emb. and B1-Attn).",
+      "page": 15,
+      "index": 2,
+      "width": 652,
+      "height": 309
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12799v1/fig-003.webp",
+      "caption": "Fig. 7: Effect of the scale coefficients (α, β = max(1−α, 0)) and the cutoff frequency (D0)",
+      "page": 14,
+      "index": 3,
+      "width": 702,
+      "height": 389
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12799v1/fig-004.webp",
+      "caption": "Table 9: The scale coefficients (α, β) and the cutoff frequency (D0) configurations across different R-Adapt variants. A unified default setting is applied generally, with specific adjustments made only for unique structural priors.",
+      "page": 18,
+      "index": 4,
+      "width": 729,
+      "height": 398
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12799v1/fig-005.webp",
+      "caption": "Fig. 14: Comparison of first-layer attention maps: original input images, standard CLIP model attention maps, and adversarially fine-tuned CLIP (FARE) attention maps.",
+      "page": 28,
+      "index": 5,
+      "width": 688,
+      "height": 1029
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12799v1/fig-006.webp",
+      "caption": "Table 10: Model details for LLaVA and Qwen3-VL.",
+      "page": 19,
+      "index": 6,
+      "width": 729,
+      "height": 441
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12799v1/fig-007.webp",
+      "caption": "Fig. 11: Shapley value analysis of first-layer attention heads in the FARE model. (a) Quantitative contribution of individual heads to adversarial robustness, evaluated on Caltech256 adversarial examples. (b) Attention map visualizations for the top positive (robustness-enhancing) and negative (robustness-detracting) heads.",
+      "page": 17,
+      "index": 7,
+      "width": 723,
+      "height": 266
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12799v1/fig-008.webp",
+      "caption": "Fig. 10: Quantitative analysis of input-insensitivity in the first attention block. Left: Similarity computed between pairs of completely different random natural images. Right: Similarity computed between random natural images and a uniform white image. The remarkably high similarity scores for TeCoA and FARE, in contrast to the standard CLIP, firmly demonstrate that adversarially fine-tuned models develop an",
+      "page": 17,
+      "index": 8,
+      "width": 652,
+      "height": 267
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12799v1/fig-009.webp",
+      "caption": "Table 2: Zero-shot classification performance (%) averaged across 16 datasets under different attack types (PGD [38], C&W [2], and AutoAttack [6]: APGD-CE) and noise budgets. The last row (∆) denotes the performance gain of R-Adapt+ over FARE.",
+      "page": 12,
+      "index": 9,
+      "width": 694,
+      "height": 287
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12799v1/fig-010.webp",
+      "caption": "Fig. 13: Comparison of first-layer attention maps: original input images, standard CLIP model attention maps, and adversarially fine-tuned CLIP (FARE) attention maps.",
+      "page": 27,
+      "index": 10,
+      "width": 688,
+      "height": 1029
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12799v1/fig-011.webp",
+      "caption": "Fig. 5: Illustration of three Robustness Anchor acquisition paradigms. (a) Training-Free: direct extraction from the standard CLIP model using a uniform white input; (b) Model-Guided: extraction from an adversarially fine-tuned model M; (c) Data-Driven (R-Adapt+): optimization of the anchor using a limited amount of adversarial data.",
+      "page": 9,
+      "index": 11,
+      "width": 610,
+      "height": 202
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12799v1/fig-012.webp",
+      "caption": "Fig. 12: Progressive replacement results on out-of-distribution datasets.",
+      "page": 20,
+      "index": 12,
+      "width": 725,
+      "height": 450
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12799v1/fig-013.webp",
+      "caption": "Fig. 2: Layer-wise Analysis. (a) CKA analysis reveals a clear representational gap at the initial stage, indicating a fundamental functional shift within the shallow layers. (b) Progressive replacement demonstrates an early saturation of adversarial robustness, emphasizing the critical roles of the Embedding layer (denoted as Emb.) and the first Attention block (denoted as B1-Attn) in driving the model’s overall robustness.",
+      "page": 5,
+      "index": 13,
+      "width": 648,
+      "height": 213
+    },
+    {
+      "url": "assets/figures/arxiv/2603.12799v1/fig-014.webp",
+      "caption": "Fig. 9: Progressive replacement results using TeCoA robust modules. Similar to Fig. 8, this figure illustrates the APGD robustness trajectory on the four additional datasets when progressively substituting standard CLIP modules with those from TeCoA. The saturation of robustness gains in shallow layers is consistently observed.",
+      "page": 16,
+      "index": 14,
+      "width": 652,
+      "height": 308
+    }
+  ]
+}

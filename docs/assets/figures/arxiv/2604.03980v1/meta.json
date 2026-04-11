@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.03980v1/fig-001.webp",
+      "caption": "Fig. 1. Illustration of first-order and anchored feature spaces. Under domain shift (e.g., photo vs. sketch), first-order conditioning may produce separated representations for the same semantic concept, whereas Gram-based anchoring introduces a second-order cue that brings them closer in the feature space.",
+      "page": 1,
+      "index": 1,
+      "width": 516,
+      "height": 399
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03980v1/fig-002.webp",
+      "caption": "TABLE 2 Base-to-novel generalization results on 11 datasets. We particularly emphasize the Average results, as they offer a more comprehensive indicator of the balance between base-class fitting and novel-class generalization across diverse benchmarks. In particular, GAPL establishes a new state of the art in average HM, mainly driven by its improved performance on novel classes without sacrificing strong base-class accuracy. The best results are highlighted in bold.",
+      "page": 6,
+      "index": 2,
+      "width": 1080,
+      "height": 761
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03980v1/fig-003.webp",
+      "caption": "Fig. 2. Overview of the proposed Gram-Anchored Prompt Learning (GAPL) framework. Learnable prompt tokens are inserted into the text encoder, and only the input-layer prompts are shown for clarity. GAPL contains three branches: (1) a Global Invariant Stream that aligns the prompted text feature with the global visual feature from the CLS token; (2) a Gram-Anchored Stream (purple), the core component of our method, which extracts a Gram-based second-order cue from patch tokens and uses a Gram-based Style Modulator to generate a Style Text Anchor; and (3) a ContextualAnchored Stream (green), which uses learnable local signals to produce Contextual Text Anchors for fine-grained alignment. The three streams are optimized jointly for robust prompt adaptation across domains.",
+      "page": 3,
+      "index": 3,
+      "width": 1020,
+      "height": 455
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03980v1/fig-004.webp",
+      "caption": "Fig. 3. Detailed architecture of the Gram-based Style Modulator and the Contextual Modulator. Left: the Gram-based Style Modulator receives a Gram-based second-order cue derived from patch tokens, keeps their diagonal Gram features as a compact image-level descriptor, and converts them into a gating vector for modulating the prompted text feature. Right: the Contextual Modulator uses the prompted text feature as a query to interact with learnable local signals, producing contextual text anchors for fine-grained alignment.",
+      "page": 4,
+      "index": 4,
+      "width": 968,
+      "height": 504
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03980v1/fig-005.webp",
+      "caption": "TABLE 1 Domain Generalization. GAPL is trained on ImageNet (16 shots) and directly evaluated on the target datasets. The best results are highlighted in bold.",
+      "page": 5,
+      "index": 5,
+      "width": 760,
+      "height": 280
+    }
+  ]
+}

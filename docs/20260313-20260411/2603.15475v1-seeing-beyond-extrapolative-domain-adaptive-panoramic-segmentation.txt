@@ -1,0 +1,633 @@
+Title: Seeing Beyond: Extrapolative Domain Adaptive Panoramic Segmentation
+
+URL Source: https://arxiv.org/pdf/2603.15475v1
+
+Published Time: Tue, 17 Mar 2026 05:24:03 GMT
+
+Number of Pages: 19
+
+Markdown Content:
+# Seeing Beyond: Extrapolative Domain Adaptive Panoramic Segmentation 
+
+## Yuanfan Zheng 1 Kunyu Peng 2,3 Xu Zheng 4 Kailun Yang 1,*
+
+> 1
+
+Hunan University 2Karlsruhe Institute of Technology 3INSAIT, Sofia University “St. Kliment Ohridski” 4HKUST(GZ) 
+
+## Abstract 
+
+Cross-domain panoramic semantic segmentation has at-tracted growing interest as it enables comprehensive 360 ◦
+
+scene understanding for real-world applications. However, it remains particularly challenging due to severe geomet-ric Field of View (FoV) distortions and inconsistent open-set semantics across domains. In this work, we formu-late an open-set domain adaptation setting, and propose 
+
+Extrapolative Domain Adaptive Panoramic Segmentation (EDA -PS eg) framework that trains on local perspective views and tests on full 360 ◦ panoramic images, explicitly tackling both geometric FoV shifts across domains and se-mantic uncertainty arising from previously unseen classes. To this end, we propose the Euler-Margin Attention (EMA), which introduces an angular margin to enhance viewpoint-invariant semantic representation, while performing ampli-tude and phase modulation to improve generalization to-ward unseen classes. Additionally, we design the Graph Matching Adapter (GMA), which builds high-order graph relations to align shared semantics across FoV shifts while effectively separating novel categories through structural adaptation. Extensive experiments on four benchmark datasets under camera-shift, weather-condition, and open-set scenarios demonstrate that EDA -PS eg achieves state-of-the-art performance, robust generalization to diverse viewing geometries, and resilience under varying environ-mental conditions. The code is available at https:// github.com/zyfone/EDA-PSeg .
+
+## 1. Introduction 
+
+Panoramic vision [1, 31] provides an omnidirectional perspective with a 360° Field of View (FoV), enabling occlusion-aware and seamless scene perception [4, 5, 32]. Cross-domain Panoramic Segmentation (CPS) [37, 60, 69] addresses the domain shift induced by FoV differences be-tween conventional pinhole and panoramic images. In the Unsupervised Domain Adaptation (UDA) setting [50], CPS models are trained on labeled pinhole images (source do-main) and adapted to unlabeled 360° panoramic images  
+
+> *Corresponding author (e-mail: kailun.yang@hnu.edu.cn ).
+
+Figure 1. Extrapolative Domain Adaptation (EDA) extends be-yond the training FoV and known semantic categories, facilitating the transfer of knowledge from pinhole supervision to unlabeled 360° perception. It addresses both cross-view geometric distor-tions and the semantic extrapolation to unknown categories. 
+
+(target domain). By alleviating annotation costs and over-coming the limited FoV of pinhole cameras, CPS facilitates robust wide-angle semantic scene understanding for appli-cations in autonomous driving [37, 55] and robotics [2, 51]. Most existing CPS methods [62, 69, 72] operate un-der a closed-set assumption, where all test instances be-long to the same classes observed during training. Under this setting, these methods generally adopt two comple-mentary strategies to handle domain shifts across camera views. The first strategy focuses on FoV alignment [68, 69], aiming to reduce distortions introduced by variations in camera FoV. Representative approaches address this issue through geometric projection adaptation [68] or sliding-window patch processing [62, 69, 72]. The second strategy focuses on semantic alignment between the source and tar-get views [61, 72], adapting the category prototype features to match the category distribution in closed-set scenarios. Current CPS methods perform well in controlled envi-ronments but often struggle in open-world scenarios [9, 10]. This limitation is particularly critical in autonomous driv-ing, where vehicles frequently encounter unseen objects outside their field of view, posing significant safety risks. While Open Set Domain Adaptation (OSDA) [13, 15] offers potential solutions, existing approaches such as BUS [9] and UniMAP [10] rely on constructing category proto-
+
+> arXiv:2603.15475v1 [cs.CV] 16 Mar 2026
+
+types for pixel-level mapping or prototype weight scaling. Panoramic images suffer from style inconsistencies and ge-ometric distortions [68], making them ill-suited for exist-ing pinhole-domain Open-Set UDA methods designed for pixel-level domain alignment. The challenge is further am-plified under diverse weather conditions [35, 57, 65], where adapting from one or multiple weather conditions to diverse adverse weather scenarios disrupts cross-domain alignment. In this paper, we formulate an open-set cross-domain panoramic semantic segmentation, which aims to enable models to generalize to unseen categories while adapt-ing to diverse FoV scenes under varying weather condi-tions. To the best of our knowledge, this is the first study to address this challenging yet practical problem, which is crucial for achieving comprehensive and reliable scene understanding in unconstrained real-world environments. To this end, we propose Extrapolative Domain Adaptive 
+
+Panoramic Segmentation ( EDA -PS eg) as shown in Fig. 1. This novel framework emphasizes extrapolating knowledge learned from conventional pinhole-view images to omnidi-rectional 360° panoramic scenes, thereby facilitating both cross-view generalization and open-set domain adaptation. Specifically, EDA -PS eg consists of two core compo-nents, the Graph Matching Adapter (GMA) and Euler-Margin Attention (EMA). GMA samples and synthesizes graph nodes to model high-order class relations, overcom-ing the limitations of pixel-level prototype representations and performing open-set graph matching with regulariza-tion to separate known and unknown classes. Euler-Margin Attention (EMA) employs an Euler formula-based trans-formation to project features into an angle-aware embed-ding space. It achieves amplitude and phase modulation through learnable parameters, enabling adaptive adjustment of the amplitude distribution and phase scaling accord-ing to the semantic angle for cross-view generalization. The framework is evaluated under diverse domain shifts, including camera and weather conditions. We conduct extensive experiments on four benchmarks, covering five datasets, which encompass Camera Shift and Weather Shift .Our method consistently outperforms existing approaches, achieving the improvement of 3.39% mIoU in Cityscapes 
+
+→ DensePASS benchmark. Furthermore, we systematically evaluate and benchmark existing CPS methods alongside OSDA methods under the EDA -PS eg setting. These results not only verify the effectiveness of our approach in cross-view generalization but also demonstrate its superior gen-eralization across open-set and adverse weather conditions. Our main contributions are summarized as follows: • This paper formulates a practical cross-view setting for Open-Set UDA panoramic semantic segmentation and proposes Extrapolative Domain Adaptive Panoramic Segmentation (EDA-PSeg) , a framework that simulta-neously mitigates FoV-induced geometric distortions and enables semantic extrapolation to unseen viewpoints. • We propose a Graph Matching Adapter (GMA) mod-ule that models high-order semantics for aligning known classes while effectively distinguishing novel categories. • We further propose the Euler-Margin Attention (EMA) module, which enhances semantic angle and improves cross-view generalization to FoV shifts and novel classes. • Extensive experiments on multiple benchmarks, includ-ing Cityscapes, ACDC, DensePASS, GTA, and SynPASS, demonstrate that ours achieves state-of-the-art perfor-mance under diverse domain shifts, establishing an effec-tive baseline for Open-Set UDA panoramic segmentation. 
+
+## 2. Related Work 
+
+Cross-Domain Panoramic Segmentation (CPS). Existing CPS methods [37, 60, 69] adopt UDA settings to bridge the domain gap between synthetic or real pinhole im-ages and 360° panoramic images. Most approaches focus on geometric field-of-view alignment and semantic proto-type alignment. For distortion mitigation, CFA [68] in-troduces distortion-aware attention to capture pixel distri-bution discrepancies, while DPPASS [69] employs cross-domain and intra-projection training with tangent projec-tions. Trans4PASS [61] further addresses geometric dis-tortions through deformable patch embeddings and MLP-based adaptation. In terms of semantic alignment, Om-niSAM [72] leverages SAM [26] for prototype alignment, and GoodSAM [62] incorporates SAM boundary priors within a knowledge distillation framework. Additional studies [63, 69, 72] enhance semantic consistency via mu-tual prototypical adaptation and pseudo-label refinement. The broader frameworks [22, 31, 54, 56] extend these ideas to foundation models and representation learning [23, 24, 61, 70], with OPS [67] providing further complementary advances. In the context of adaptation to the source-free domain, where source data is unavailable, recent meth-ods [4, 5, 62, 63, 71] emphasize self-training strategies and integration with SAM [26]. In this paper, we propose EDA-PSeg, the first framework designed for Open-Set UDA CPS. 
+
+Positional Encoding for Self-Attention. Positional encod-ing [7] is a fundamental component of self-attention, al-lowing the model to capture semantic structures in both natural language processing [25, 64] and computer vi-sion [11, 17]. Depending on how positional information is represented, existing schemes can be broadly categorized as absolute [49] or relative [41]. Absolute positional encoders assign unique position-dependent representations using si-nusoidal or learned embeddings, while relative encoders model only positional offsets between query and key to-kens to achieve translation invariance. CFA [68], for exam-ple, introduces a distortion-aware attention mechanism for the CPS task that leverages absolute positional encoding. Meanwhile, recent large language models, such as LLaMA, Figure 2. Illustration of the proposed EDA -PS eg, which tackles cross-view and semantic extrapolation. The framework incorporates two key components: the Graph Matching Adapter (GMA), which constructs a high-order graph to align domain shared class graph nodes, and the Euler-Margin Attention (EMA), which models features with the Euler formula to enhance angle invariance under unseen viewpoints. 
+
+adopt Rotary Positional Embeddings (RoPE) [46], which integrate both absolute and relative positional information. Building on this idea, EulerFormer [47] unifies semantic and positional representations in Euler space. In this work, we propose Euler-Margin Attention, a module for seman-tic extrapolation that robustly generalizes across cross-view geometric distortions via angle-margin projection and am-plitude and phase modulation in complex vector space. 
+
+Cross-domain Graph Matching. Graph matching es-tablishes topological correspondences among features by jointly optimizing node and edge affinities, thus enabling structured reasoning over relational dependencies. Recent advances in graph-based methods have substantially im-proved segmentation [8, 33] through enhanced semantic alignment and boundary-aware feature interactions. More-over, the cross-domain graph matching method has shown remarkable effectiveness across diverse tasks, including cross-domain named entity recognition [66], medical im-age analysis [16, 36], and object detection [6, 28, 29, 34]. Despite significant progress under the closed-set setting, existing cross-domain graph matching methods remain in their infancy in the open-set scenario. In this paper, we effectively remodel the closed-set graph matching to sup-port open-set graph matching. This enables handling of unknown-class nodes, bridging the gap for graph matching. 
+
+## 3. Method 
+
+3.1. Overview 
+
+The architecture of the proposed EDA -PS eg is illustrated in Fig. 2, highlighting its main components and processing pipeline. We consider a labeled source domain with pinhole images Ds = {(xis, yis)}B
+
+> i=1
+
+, and an unlabeled target do-main with panoramic images Dt = {xit}B
+
+> i=1
+
+. Following the architectural overview, we define the label spaces for both domains. The source label space Ys contains the known classes, while the target label space is defined as Yt =
+
+Ys ∪ Y u, where Yu denotes additional unknown classes. Random cropping is applied to source and mixed samples for label and pseudo-label supervision, while source-only and target-only crops are used for graph sampling. The cropped images are then fed into an encoder-decoder net-work, followed by the proposed Euler-Margin Attention (EMA). EMA constructs an Euler–Margin projection to em-bed features into a bounded angular space, mitigating cross-view geometric distortions while preserving the panoramic semantic structure. Moreover, EMA performs amplitude and phase modulation to enhance feature separability be-tween known and unknown classes. The features are passed to the Graph Matching Adapter (GMA), which performs graph matching to geometrically decouple known classes while pushing unknown classes apart, thereby facilitating semantic extrapolation to unseen categories. 
+
+3.2. Graph Matching Adapter (GMA) 
+
+Given source Ds and target Dt domains, the encoder-decoder network extracts node features Vs,t ∈ RB×N ×d,where N = H × W and d is the feature channel dimension. The s, t subscripts are omitted unless explicitly specified. 
+
+Node Sampling. We perform local node sampling guided by confidence, entropy, and prototype distance to select nodes representing local semantics, and subsequently ag-gregate them into class-wise global prototypes to form ro-bust global semantic representations. Given the node fea-tures V from the encoder and decoder (flattened), we first apply the classifier head to obtain the predictions per-pixel. For each pixel, we compute a confidence score pi and an uncertainty measure H(pi). For any base class index b, we define the positive set S(b)pos = {Vi | pi > τ p ∧H (pi) < τ e}
+
+and the negative set S(b)neg = {Vi | pi ≤ τp ∧ H (pi) < τ e},where τp and τe denote confidence and entropy thresholds, respectively, determined using percentile strategies with 0.5. We aggregate prototypes as G(b) = ω(b) + σ, where 
+
+σ is Gaussian noise, and ω(b) is the mean of the same label feature. To refine node selection, we retain the K nearest nodes to the prototype, defined as ˆS(b)pos ,neg = {Vi | di ≤
+
+d(K), d i = ∥Vi − ω(b)∥} , where di denotes the distance of the i-th node to the current prototype mean ω(b). For the novel class index n, nodes are sampled based on simi-lar confidence but distinct entropy values, specifically those satisfying H(pi) < τ m for the positive and H(pi) > τ m
+
+for negative samples, where τm is the median entropy of the distribution H(p). This procedure yields the sets ˆS(n)pos ,neg 
+
+and their corresponding prototypes G(n). Finally, by con-catenating the base and novel class nodes along with their corresponding prototypes, we obtain the set Sε as follows: 
+
+Sε =
+
+nˆS(b)pos ,neg , G(b), ˆS(n)pos ,neg , G(n)o
+
+, (1) 
+
+where S(b),(n)pos ,neg represents pixel-level nodes capturing class diversity, and G(b),(n) denotes the node means represent-ing the global class distribution in the batch data. We per-form both local and global class sampling to facilitate graph matching for dense prediction, while avoiding excessive nodes that could lead to computational redundancy. We then update the global memory bank M using the candi-date node samples Sε via exponential moving average with parameter α, where this process maintains a stable represen-tation by weighting the new mean sample vector Vi and the existing memory, as M ← (1 − α) M + α 1
+
+> |Sc|
+
+P 
+
+> i∈Sc
+
+Vi,applied independently for each class-specific set Sc.
+
+Graph Generation. The Graph Generation module first identifies shared categories between the source and tar-get domains, fills in missing categories using memory banks M, and then builds node and graph affinities via self-attention [49]. Given a candidate node set Sε,missing-class nodes are completed using statistics from both source and target domains. A global memory bank 
+
+M serves as a proxy, and supplementary nodes are gen-erated as Vc = Mc + N (μ, σ ), where N (μ, σ ) is a Gaussian with mean μ from the current-domain mem-ory and standard deviation σ from the counterpart do-main. The generated nodes Vc are appended to Sε, which is then updated via multi-head self-attention as Sε ←
+
+Softmax (SεWq (SεWk)⊤
+
+q 1 
+
+> dk
+
+)( SεWv ) + Sε to integrate global dependencies within and across domains. The re-sulting node set Sε, together with edge affinity ξ =
+
+Fdrop Softmax [SεWq (SεWk)⊤], form the semantic entities and topological structure of the graph, respectively. 
+
+Graph Matching and Regularization. This section com-prises three loss components. The open-set graph match-ing loss aligns classes shared across domains, the graph edge affinity loss preserves structural consistency, and the unknown regularization loss encourages separation of un-known classes. From the candidate node set Sε, we extract the source and target nodes, Vs and Vt, respectively. Based on these nodes, we compute a node matching matrix A =Sinkhorn(InstNorm( ϕ(Vs, Vt))) , where ϕ(·, ·) is a learn-able affinity function, InstNorm( ·) normalizes the affini-ties, and Sinkhorn enforces approximate doubly stochastic-ity. Then, we construct the matching labels based on the source domain labels and the target domain pseudo labels. Specifically, we define the open-set matching label while ig-noring the unknown class as M = ( HsH⊤ 
+
+> t
+
+) ⊙ (( Hseunk =0)( Hteunk = 0) ⊤), where Hs and Ht denote the one-hot matrices of the source and target domain node set, eunk is the unit vector corresponding to the unknown class, and ⊙
+
+represents element-wise multiplication. The graph match-ing loss for the node set Sε is defined as follows: 
+
+ℓgraph = 1
+
+|Sε|
+
+X
+
+> (i,j )∈Sε
+
+(Aij − M)2
+
+| {z }
+
+> Graph Matching Loss
+
++ 1
+
+|A| ξsA − A ξt 1
+
+| {z }
+
+> Graph Edge Loss
+
++ β
+
+|K t| |U t| ˜VKt 
+
+> t
+
+( ˜VUt 
+
+> t
+
+)⊤ 2 
+
+> F
+
++ β
+
+|K s| |U s| ˜VKs 
+
+> s
+
+( ˜VUs 
+
+> s
+
+)⊤ 2
+
+> F
+
+| {z }
+
+> Unknown-aware Regularization Loss
+
+,
+
+(2) 
+
+where Ks,t and Us,t denote the known and unknown node sets, ξ represents the edge affinities, ˜V denotes the unit-normalized node, β is the corresponding weight, and ∥ · ∥ 1
+
+and ∥ · ∥ F denote the ℓ1 and Frobenius norms, respectively. 
+
+3.3. Euler-Margin Attention (EMA) 
+
+We propose Euler-Margin Attention (EMA) for semantic extrapolation between base and novel classes under unseen viewpoints. EMA projects channel features into a complex Figure 3. (a) EulerFormer [47] fails to build a semantic angle con-straint, limiting generalization to unseen views. (b) Our method employs Euler-Margin Projection to constrain the angle within the interval, and utilizes Amplitude and Phase Modulation to adjust the class distribution for known and unknown class separation. 
+
+vector space through an angular-margin transformation to alleviate field-of-view distortions and jointly modulates am-plitude and phase distributions to enhance class separability. 
+
+Standard Euler Formula. We first revisit the Euler for-mula and define the relevant terms for feature representa-tion following existing works [46, 47]. Let a feature tensor be V ∈ RB×N ×d, represented in rectangular form as r+is,where r = V::2 denotes the real components corresponding to even channels and s = V1::2 denotes the imaginary com-ponents corresponding to odd channels. The transformation based on Euler’s formula is then applied as follows: 
+
+r + is = Λ eiθ , Λ = pr2 + s2, θ = atan2( s, r), (3) where Λ denotes the magnitude, θ is the phase angle, and 
+
+atan2( ·, ·) is the arctangent function. As shown in Fig. 3(a), Existing methods struggle to generalize across views and in open-world scenarios because the angular distribution of the same class shifts across views, and the angles of known and unknown classes overlap. To address these issues, we propose the Euler-Margin Attention (EMA) module, as il-lustrated in Fig. 3(b). EMA constrains the angle within a limited range, ensuring intra-class compactness to reduce geometric FoV distortions. Moreover, it introduces learn-able parameters to adjust the amplitude (class importance) and phase (class direction) distributions, thereby improving open-set generalization in unseen viewpoints. 
+
+Euler-Margin Projection. Given an input feature tensor 
+
+V ∈ RB×N ×d, we first apply a channel-wise reorder-ing operator π(·), which sorts channels by values in de-scending order as follows π(V) = [ V1, V2, . . . , Vd], s.t. 
+
+Vi+1 < Vi. The function π(·) represents a mapping through the soft permutation matrix, which ensures the backpropagation of the gradient. The reordered channels are then partitioned into real and imaginary components as follows Re( V) := π(V)::2 and Im( V) := π(V)1::2 .The Euler-Margin Projection is defined as follows F(V) =    
+
+> Figure 4. Feature distributions of the car category visualized via t-SNE across multiple datasets, illustrating the effects of Cam-era Types (Pinhole, Panoramic, Real, and Synthetic) and varying
+> Weather Conditions (Fog, Rain, Cloudy, Sunny, Night, and Snow).
+
+F ([ π(V)::2 , π (V)1::2 ]) = Λ · eiθ , where Λ and θ de-note the amplitude and phase of the complex feature. The channel reorder constrains the angle θ within the complex vector space, thus mitigating the cross-viewpoint discrep-ancy. Subsequently, we introduce learnable weights to per-form amplitude and phase modulation, thereby adjusting the known class distribution and improving class separation. 
+
+Amplitude and Phase Modulation. We transform the fea-tures V into a complex vector space, resulting in query Vq
+
+and key embeddings Vk. The resulting self-attention dot product is then expressed via the Euler formula as follows: 
+
+V⊤ 
+
+> q
+
+Vk = (Λ q ⊙ Λk)⊤Re exp  i(θq − θk) , (4) where Λ and θ represent the amplitude and phase. Then we introduce learnable scaling and bias factors to modulate both the amplitude and phase components. The resulting modulated attention score, denoted as EEuler , is as follows:                   
+
+> EEuler =
+> 
+> e2δ1(Λ q⊙Λk)
+> ⊤
+> |{z }
+> Amplitude Modulation
+> Re
+> exp
+> i·[δ2·(θq−θk) + b]
+> |{z }
+> Phase Modulation
+> ,
+> (5)
+
+where δ1 is a learnable exponential weight used to scale the amplitude as exp(2 δ1), and δ2 is a learnable scale for the semantic angle (θq −θk), and b is the bias for the phase. The amplitude characterizes the importance of a feature, while the phase determines its semantic direction. The learnable factors in Eq. (5) are optimized for open-set generalization. 
+
+3.4. Model Optimization 
+
+The training objective of our method is defined as follows: 
+
+Ltotal = ℓseg + ℓmixup + γ · ℓgraph , (6) where ℓseg is the supervised loss on the source domain, 
+
+ℓmixup is the pseudo-label loss for mixup training between source and target domains, and ℓgraph denotes the loss of the proposed GMA module, with γ serving as the weight. Table 1. Comparisons under Camera Shift {Pin2Pan, Real2Real } for Cityscapes → DensePASS ( C2D ) open-set domain adaptation in outdoor scenarios. * indicates an experiment based on DAFormer [18].                                                                                                                                                 
+
+> Method Road S.walk Build. Wall Fence Tr.light Veget. Terrain Sky Car Bus M.cycle Bicycle Common Private H-Score
+> OSBP* [44] 39.29 24.94 84.90 34.11 40.23 27.70 78.34 16.00 26.52 53.05 21.89 51.76 34.34 41.00 7.01 11.97 UAN* [58] 46.78 26.59 82.61 36.57 43.02 18.97 79.09 21.09 43.51 65.06 13.30 48.97 20.31 41.99 0.93 1.81 UniOT*[21] 63.59 31.37 86.79 42.35 38.04 18.90 79.82 37.86 81.45 68.89 37.91 59.10 31.67 52.13 0.00 0.00 DAFormer [18] 65.37 34.95 85.75 35.89 37.61 30.46 79.16 36.36 84.46 69.77 31.61 62.26 37.07 53.13 0.00 0.00 MIC [20] 51.04 15.66 84.28 36.06 35.34 30.55 76.44 19.56 73.52 72.81 28.31 55.48 29.70 46.83 0.00 0.00 HRDA [19] 68.84 34.89 85.71 38.39 39.64 28.12 79.58 38.74 90.78 68.23 29.37 59.62 32.53 53.42 0.00 0.00 BUS (SAM) [9] 60.63 28.46 82.04 29.68 32.47 26.11 77.73 24.96 94.46 68.02 39.87 43.37 35.38 49.47 3.10 5.84 Ours (SAM) 74.86 34.20 85.90 40.40 43.52 31.04 79.87 41.27 94.84 78.85 32.83 63.92 37.06 56.81 18.86 28.32
+
+Table 2. Comparisons under Camera Shift {Syn2Real, Pan2Pan } for SynPASS → DensePASS ( S2D ) open-set domain adaptation in outdoor scenarios. * indicates an experiment based on DAFormer [18].                                                                                                                                                 
+
+> Method Road S.walk Build. Wall Fence Pole Tr.light Tr.sign Veget. Terrain Sky Person Car Common Private H-Score
+> OSBP* [44] 34.68 0.20 23.01 3.17 2.37 0.74 0.00 0.27 25.58 4.69 56.97 0.17 3.91 11.98 5.77 7.79 UAN* [58] 51.01 2.22 33.48 1.52 7.33 7.73 0.00 0.59 29.75 12.07 58.77 10.0 6.72 17.01 0.83 1.59 UniOT*[21] 47.14 2.73 32.15 1.64 5.12 7.93 0.00 0.20 27.71 1.01 50.80 21.97 2.24 15.44 0.00 0.00 DAFormer [18] 52.20 4.44 34.42 3.24 10.16 5.80 0.00 0.12 56.07 6.33 63.67 37.26 2.31 21.23 0.00 0.00 MIC [20] 48.23 3.6 46.16 0.04 10.52 4.77 0.00 0.20 25.68 3.52 65.18 3.27 2.83 16.46 0.00 0.00 HRDA [19] 53.18 7.29 36.77 3.04 9.35 5.09 0.00 0.09 46.23 5.41 61.59 17.58 3.09 19.13 0.00 0.00 BUS (SAM) [9] 42.27 4.27 12.06 0.05 8.40 10.07 0.00 0.00 0.79 1.68 80.69 0.58 0.22 12.39 1.73 3.04 Ours (SAM) 70.19 35.28 58.34 8.02 0.68 20.7 0.00 0.57 75.39 30.67 92.27 45.86 17.95 35.07 7.48 12.33
+
+## 4. Experiments 
+
+4.1. Benchmark Setup 
+
+Datasets. We conduct comprehensive experiments on mul-tiple datasets to evaluate the proposed method under both geometric and semantic domain shifts. DensePASS [37] is a real-world panoramic dataset covering diverse city scenes collected with panoramic sensors. It provides 2,000 
+
+unlabeled images for transfer optimization and 100 la-beled images for evaluation. SynPASS [61] is a synthetic panoramic dataset rendered under various weather condi-tions, including Cloudy , Foggy , Rainy , Sunny , and Night ,containing 9,080 panoramic images in total. For pinhole-domain studies, we adopt three widely used benchmarks. 
+
+Cityscapes [12] is a real-world dataset with 2,975 train-ing and 500 validation images annotated with 19 seman-tic categories. GTA5 [42] is a large-scale synthetic dataset consisting of 24 ,966 images generated from the GTA-V game engine, providing pixel-level labels consistent with Cityscapes. ACDC [45] is a real-world data set that empha-sizes adverse weather ( Foggy , Night , Rainy , and Snowy ), including 1,600 training and 406 validation images. 
+
+Benchmark Settings. Our domain adaptation evaluation encompasses two complementary scenarios. Camera Shift addresses transfer between pinhole and panoramic images (Pin ↔ Pan) and between synthetic and real domains (Syn → Real). Weather Shift investigates adaptation across six diverse conditions: Fog, Rain, Cloudy, Sunny, Night, and Snow. Furthermore, we assess each setting in an open-set configuration where the common class ratio controls the semantic overlap ( e.g. , C2D : 68 .4% , S2D : 48 .1% ,G2S : 48 .1% , S2A : 48 .1% ). As shown in Fig. 4, we ana-lyze the domain gap among the datasets. Real datasets like Cityscapes [12] and DensePASS [37] exhibit higher vari-ance than synthetic datasets (GTA [42], SynPASS [61]), while the adverse weather dataset ACDC [45] has weaker class representation compared to the real datasets. The sup-plementary material provides complete details of the bench-mark protocols, dataset splits, and category settings. 
+
+Evaluation Metrics. We adopt the mean Intersection-over-Union (mIoU) to evaluate segmentation quality for both base and novel classes for Common and Private. In addi-tion, we adopt the H-Score between the mIoU of the base classes and the IoU of novel classes, following the common open-set evaluation practice. This metric jointly reflects the performance on both shared and novel semantic spaces. 
+
+Implementation Details. Our implementation follows the standard configuration of DAFormer [18]. We employ MiT-B5 [52] as the backbone, initialized with ImageNet-1K pre-trained weights. All models are trained for 40 k iterations using 512 ×512 random crops on both the source (pinhole) and target (panoramic) domains. During testing, panoramic images are evaluated at their original resolution. To improve pseudo-label quality in the target domain, we utilize Mo-bileSAM [59] for mask refinement, following the same re-finement strategy as in the prior Open-Set UDA method [9]. Table 3. Comparisons under different Camera Shift (Pin2Pan,Syn2Syn ) and Weather Shift {Sunny }→{ Sunny, Cloudy, Fog, Rain, Night }
+
+for GTA → SynPASS (G2S ) open-set domain adaptation in outdoor scenarios. * indicates an experiment based on DAFormer [18].                                                                                                                                                 
+
+> Method Road S.walk Build. Wall Fence Pole Tr.light Tr.sign Veget. Terrain Sky Person Car Common Private H-Score
+> OSBP* [44] 75.30 35.06 40.29 0.00 11.27 15.14 8.60 21.40 43.69 47.07 57.05 32.83 43.37 33.16 0.00 0.00 UAN* [58] 67.23 26.45 31.54 0.06 6.25 19.58 20.71 18.37 44.69 39.72 27.94 22.41 25.22 26.94 0.73 1.42 UniOT*[21] 88.10 57.96 56.18 0.07 14.98 19.95 18.89 14.41 42.46 47.94 87.44 16.95 61.36 40.52 0.00 0.00 DAFormer [18] 95.69 51.33 58.01 0.02 9.67 22.30 8.77 14.88 53.18 43.83 88.08 32.80 64.98 41.81 0.00 0.00 MIC [20] 97.38 59.72 53.17 0.52 11.56 20.57 24.20 19.46 56.61 44.62 84.15 28.69 64.90 43.51 0.00 0.00 HRDA [19] 91.13 54.68 49.92 0.24 10.33 20.03 20.70 13.25 41.23 37.74 80.60 29.12 67.33 39.72 0.00 0.00 BUS (SAM) [9] 95.72 0.30 74.25 0.98 0.14 20.37 21.78 9.65 54.91 44.92 96.27 28.08 72.51 39.99 7.97 13.29 Ours (SAM) 94.50 50.42 73.20 0.98 20.97 15.86 12.07 17.11 54.33 46.84 96.14 27.75 74.32 44.96 10.20 16.63
+
+Table 4. Comparisons under Camera Shift (Syn2Real, Pan2Pin ) and Weather Shift {Fog, Rain, Night, Sunny, Cloudy }→ { Fog, Rain, Night, Sunny, Snow } for SynPASS →ACDC ( S2A ) open-set domain adaptation in outdoor scenarios. * indicates DAFormer-based results [18].                                                                                                                                                 
+
+> Method Road S.walk Build. Wall Fence Pole Tr.light Tr.sign Veget. Terrain Sky Person Car Common Private H-Score
+> OSBP* [44] 52.79 0.89 6.72 0.80 0.41 0.04 0.00 0.00 32.79 0.00 73.7 0.21 0.14 12.96 5.02 7.24 UAN* [58] 67.50 7.27 26.60 0.97 1.26 14.20 0.00 0.00 50.96 13.10 67.25 0.23 0.34 19.21 0.13 0.26 UniOT*[21] 57.98 2.00 20.36 0.03 2.09 4.51 0.00 0.00 59.15 0.51 87.66 8.53 4.52 19.03 0.00 0.00 MIC [20] 62.32 10.60 60.77 0.00 1.17 3.18 0.00 0.00 60.02 4.71 80.46 26.67 11.82 24.75 0.00 0.00 DAFormer [18] 66.49 6.90 30.34 0.07 3.12 1.96 0.00 0.00 75.47 19.46 93.97 33.34 0.01 25.47 0.00 0.00 HRDA [19] 66.40 8.37 31.28 2.05 1.66 5.77 0.00 0.00 57.23 19.00 75.79 37.27 14.81 24.59 0.00 0.00 BUS (SAM) [9] 71.86 10.95 16.77 0.00 0.03 0.03 0.00 0.00 17.25 9.54 82.61 0.00 0.00 16.08 3.70 6.01 Ours (SAM) 52.53 9.24 54.58 10.4 0.28 24.39 0.00 0.00 52.65 18.95 83.16 32.05 54.04 30.17 9.18 14.08
+
+4.2. Performance Analysis across Benchmarks 
+
+C2D. As shown in Tab. 1, we report the performance re-sults for the Cityscapes →DensePASS under the Camera Shift setting. The results indicate that our proposed method achieves higher mIoU on both common and private cate-gories, suggesting that the proposed method can distinguish between known and unknown categories. Additionally, the observed improvements in the H-score imply an enhanced capability to identify private categories. These results also suggest that, when transferring from pinhole to panoramic images, the GMA module better captures inter-category re-lationships while remaining robust to geometric distortions. 
+
+S2D. As shown in Tab. 2, the open-set performance on SynPASS →DensePASS under Camera Shift reflects the challenging nature of synthetic-to-real transfer. Our method consistently outperforms existing approaches on important object categories such as Person and Car, clearly demon-strating that variations and distortions inherent in different panoramic datasets can significantly degrade the quality of object class representations. The proposed GMA and EMA modules are specifically designed to address these distor-tions and are shown to mitigate their negative impact. Com-pared to the existing SAM-based method (BUS), our pro-posed method demonstrates significant advantages in both mIoU results of both common and private categories. 
+
+G2S. As shown in Tab. 3, the open-set adaptation results for GTA →SynPASS under Camera Shift and Weather Shift 
+
+highlight the difficulty of transferring from synthetic pin-hole to panoramic real-world domains. Our method outper-forms the second-best approach by 3.15% in mIoU, demon-strating that the proposed EMA and GMA modules mitigate image distortions within the same simulation scenario and adverse weather conditions. Our method performs compa-rably to existing open-set methods for the Wall class. 
+
+S2A. As shown in Tab. 4, the open-set adaptation results for SynPASS →ACDC under the combined Camera Shift 
+
+and Weather Shift settings demonstrate model performance in diverse conditions, encompassing both adverse and clear scenes. Despite variations in weather and viewing angles, our method consistently and significantly outperforms ex-isting approaches, particularly in recognizing unknown cat-egories. Specifically, it achieves a 4.16% mIoU improve-ment on private and a 6.84% H-Score increase over the OSBP method, indicating that the proposed module gen-eralizes robustly under diverse weather conditions and FoV distortions. Moreover, in the Pole category, our method de-livers markedly superior results compared to existing open-set and closed-set methods overall and consistently. 
+
+4.3. Ablation Study 
+
+Module Ablation. As shown in Tab. 5, we conduct an ab-lation study to evaluate the contributions of the GMA and EMA modules in our framework. Exp. ①, the baseline with-out either module, achieves the lowest performance, indi-cating the necessity of both components. Introducing GMA alone (Exp. ②) improves both common and private feature Figure 5. T-SNE visualization of source and target domains in  
+
+> EDA-PS eg. (a) The prototype exhibits a relatively mixed un-known class. (b) Ours is the relatively separable unknown class.
+
+representations, demonstrating its effectiveness in aligning shared semantics under FoV shifts. Similarly, incorporat-ing EMA alone (Exp. ③) enhances viewpoint-invariant rep-resentation, boosting overall segmentation performance. 
+
+Ablation analysis of GMA. As shown in Tab. 6, we ab-late the GMA loss components of unknown-class learning, graph matching, and affinity, defined in Eq. (2). Remov-ing the graph matching term notably degrades performance, confirming its importance, while the unknown-class compo-nent further improves the private class mIoU and H-Score. 
+
+Sensitivity of GMA. As shown in Tab. 7, we analyze the sensitivity of the loss weight γ. The results indicate that 
+
+γ = 1 .0 favors the private class mIoU and improves the H-score but negatively impacts the performance on common classes mIoU, whereas γ = 0 .05 has the opposite effect. To achieve a balanced trade-off, we set γ = 0 .1 in Eq. (6). 
+
+Effectiveness of EMA. As shown in Tab. 8, we evaluate the effectiveness of the EMA module against the attention in panoramic segmentation [61] and Eulerformer [47]. Our method consistently outperforms these baselines in both common and private class mIoU, with a particularly large improvement in H-Score, demonstrating its superior ability in novel class discovery and closed-set class classification. 
+
+Domain Alignment Analysis. As illustrated in Fig. 5, we visualize the prototypes and GMA features using T-SNE [39]. For each class, features are randomly sampled, where circles represent the source domain and triangles denote the target domain. The accompanying histograms clearly show the sample frequency across bin intervals, with distinct colors corresponding to different categories. Com-pared with prototype class alignment, GMA consistently exhibits a more distinct separation of unknown classes. 
+
+## 5. Conclusion 
+
+In this work, we investigate a novel and challenging task setting and propose the Extrapolative Domain Adaptive 
+
+Panoramic Segmentation ( EDA -PS eg). EDA -PS eg aims   
+
+> Table 5. Ablation study of the components in our framework.
+
+Cityscapes → DensePASS ( C2D )
+
+Exp. GMA EMA Common Private H-Score 
+
+① - - 52.56 8.57 14.74 
+
+② ✓ 55.15 14.67 23.18 
+
+③ ✓ 56.12 13.00 21.11 
+
+④ ✓ ✓ 56.81 18.86 28.32                          
+
+> Table 6. Ablation analysis of the GMA module.
+> Cityscapes →DensePASS ( C2D )
+> Exp. Method Common Private H-Score
+> ①GMA w/o Unknown 54.72 7.78 13.62
+> ②GMA w/o Matching 52.75 4.76 8.73
+> ③GMA w/o Affinity 54.06 11.59 19.09
+> ④GMA (Full) 55.15 14.67 23.18
+> Table 7. Sensitivity of the GMA module loss to the factor γ.
+
+Cityscapes → DensePASS ( C2D )
+
+Exp. Weight γ Common Private H-Score 
+
+① - 52.56 8.57 14.74 
+
+② 1.00 47.16 15.45 23.28 
+
+③ 0.10 55.15 14.67 23.18 
+
+④ 0.05 54.57 7.90 13.80 
+
+⑤ 0.01 51.72 4.59 8.43                            
+
+> Table 8. Effectiveness analysis of the EMA module, added at the same position as in the baseline with the same layers.
+> Cityscapes →DensePASS ( C2D )
+> Exp. Method Common Private H-Score
+> ①Baseline 52.56 8.57 14.74
+> ②Self-Attention [49] 55.45 10.95 18.28
+> ③Eulerformer [47] 55.09 7.20 12.74
+> ④Deformable MLP [61] 55.89 7.68 13.51
+> ⑤Euler-Margin (Ours) 56.12 13.0 21.11
+
+to enable local-crop transfer learning from limited pin-hole viewpoints to full 360 ◦ panoramic scenes while si-multaneously discovering novel classes. To address the challenges of unseen-viewpoint open-set class learning and field-of-view distribution discrepancies, we introduce two key components, Euler-Margin Attention (EMA) and the Graph Matching Adapter (GMA). Extensive experiments on the Camera Shift and Weather Shift benchmarks demon-strate that our approach achieves state-of-the-art perfor-mance across diverse resolutions and viewing geometries. 
+
+Limitations. Random cropping introduces sampling sen-sitivity, occasionally leading to slight training instability. Graph matching increases both model parameters and com-putational cost, while the Euler-Margin Attention mecha-nism adds further architectural complexity. Future work will explore strategies to improve efficiency and stability. Acknowledgment 
+
+This work was supported in part by the National Natural Science Foundation of China (Grant No. 62473139), in part by the Hunan Provincial Research and Development Project (Grant No. 2025QK3019), in part by the State Key Laboratory of Autonomous Intelligent Unmanned Systems (the opening project number ZZKF2025-2-10), and in part by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) - SFB 1574 - 471687386. This research was partially funded by the Ministry of Education and Science of Bulgaria (support for INSAIT, part of the Bulgarian National Roadmap for Research Infrastructure). 
+
+## References 
+
+[1] Hao Ai, Zidong Cao, and Lin Wang. A survey of represen-tation learning, optimization strategies, and applications for omnidirectional vision. International Journal of Computer Vision , 2025. 1 [2] Alberto Bacchin, Leonardo Barcellona, Sepideh Sham-sizadeh, Emilio Olivastri, Alberto Pretto, and Emanuele Menegatti. PanNote: an automatic tool for panoramic im-age annotation of people’s positions. In ICRA , 2024. 1 [3] Holger Caesar, Jasper Uijlings, and Vittorio Ferrari. COCO-Stuff: Thing and stuff classes in context. In CVPR , 2018. 17 [4] Yihong Cao, Jiaming Zhang, Hao Shi, Kunyu Peng, Yuhongxuan Zhang, Hui Zhang, Rainer Stiefelhagen, and Kailun Yang. Occlusion-aware seamless segmentation. In 
+
+ECCV , 2024. 1, 2 [5] Yihong Cao, Jiaming Zhang, Xu Zheng, Hao Shi, Kunyu Peng, Hang Liu, Kailun Yang, and Hui Zhang. Unlocking constraints: Source-free occlusion-aware seamless segmen-tation. In ICCV , 2025. 1, 2 [6] Chaoqi Chen, Jiongcheng Li, Hong-Yu Zhou, Xiaoguang Han, Yue Huang, Xinghao Ding, and Yizhou Yu. Relation matters: Foreground-aware graph-based relational reasoning for domain adaptive object detection. IEEE Transactions on Pattern Analysis and Machine Intelligence , 2023. 3 [7] Pu-Chin Chen, Henry Tsai, Srinadh Bhojanapalli, Hyung Won Chung, Yin-Wen Chang, and Chun-Sung Ferng. A simple and effective positional encoding for transformers. In EMNLP , 2021. 2 [8] Wenting Chen, Jie Liu, Tianming Liu, and Yixuan Yuan. Bi-VLGM: Bi-level class-severity-aware vision-language graph matching for text guided medical image segmentation. Inter-national Journal of Computer Vision , 2025. 3 [9] Seun-An Choe, Ah-Hyung Shin, Keon-Hee Park, Jinwoo Choi, and Gyeong-Moon Park. Open-set domain adaptation for semantic segmentation. In CVPR , 2024. 1, 6, 7, 15, 16, 17 [10] Seun-An Choe, Keon-Hee Park, Jinwoo Choi, and Gyeong-Moon Park. Universal domain adaptation for semantic seg-mentation. In CVPR , 2025. 1 [11] Jean-Baptiste Cordonnier, Andreas Loukas, and Martin Jaggi. On the relationship between self-attention and con-volutional layers. arXiv preprint arXiv:1911.03584 , 2019. 2[12] Marius Cordts, Mohamed Omran, Sebastian Ramos, Timo Rehfeld, Markus Enzweiler, Rodrigo Benenson, Uwe Franke, Stefan Roth, and Bernt Schiele. The cityscapes dataset for semantic urban scene understanding. In CVPR ,2016. 6, 17 [13] Zhen Fang, Jie Lu, Feng Liu, Junyu Xuan, and Guangquan Zhang. Open set domain adaptation: Theoretical bound and algorithm. IEEE Transactions on Neural Networks and Learning Systems , 2021. 1, 14, 17 [14] Yaroslav Ganin and Victor Lempitsky. Unsupervised domain adaptation by backpropagation. In ICML , 2015. 14 [15] Chuanxing Geng, Sheng-jun Huang, and Songcan Chen. Re-cent advances in open set recognition: A survey. IEEE Trans-actions on Pattern Analysis and Machine Intelligence , 2021. 1[16] Zhibin He, Wuyang Li, Tianming Liu, Xiang Li, Junwei Han, Tuo Zhang, and Yixuan Yuan. GAGM: Geometry-aware graph matching framework for weakly supervised gy-ral hinge correspondence. Medical Image Analysis , 2025. 3[17] Byeongho Heo, Song Park, Dongyoon Han, and Sangdoo Yun. Rotary position embedding for vision transformer. In 
+
+ECCV , 2024. 2 [18] Lukas Hoyer, Dengxin Dai, and Luc Van Gool. DAFormer: Improving network architectures and training strategies for domain-adaptive semantic segmentation. In CVPR , 2022. 6, 7, 13, 15, 16, 17 [19] Lukas Hoyer, Dengxin Dai, and Luc Van Gool. HRDA: Context-aware high-resolution domain-adaptive semantic segmentation. In ECCV , 2022. 6, 7, 15, 16 [20] Lukas Hoyer, Dengxin Dai, Haoran Wang, and Luc Van Gool. MIC: Masked image consistency for context-enhanced domain adaptation. In CVPR , 2023. 6, 7, 15, 16 [21] JoonHo Jang, Byeonghu Na, Dong Hyeok Shin, Mingi Ji, Kyungwoo Song, and Il-Chul Moon. Unknown-aware do-main adversarial learning for open-set domain adaptation. In 
+
+NeurIPS , 2022. 6, 7, 15, 16, 17 [22] Alexander Jaus, Kailun Yang, and Rainer Stiefelhagen. Panoramic panoptic segmentation: Insights into surround-ing parsing for mobile agents via unsupervised contrastive learning. IEEE Transactions on Intelligent Transportation Systems , 2023. 2 [23] Jing Jiang, Sicheng Zhao, Jiankun Zhu, Wenbo Tang, Zhaopan Xu, Jidong Yang, Guoping Liu, Tengfei Xing, Pengfei Xu, and Hongxun Yao. Multi-source domain adapta-tion for panoramic semantic segmentation. Information Fu-sion , 2025. 2 [24] Jing Jiang, Jiankun Zhu, Zhaopan Xu, Xi Chen, Sicheng Zhao, and Hongxun Yao. Gaussian constrained diffeomor-phic deformation network for panoramic semantic segmen-tation. In ICASSP , 2025. 2 [25] Guolin Ke, Di He, and Tie-Yan Liu. Rethinking posi-tional encoding in language pre-training. arXiv preprint arXiv:2006.15595 , 2020. 2 [26] Alexander Kirillov, Eric Mintun, Nikhila Ravi, Hanzi Mao, Chlo´ e Rolland, Laura Gustafson, Tete Xiao, Spencer White-head, Alexander C. Berg, Wan-Yen Lo, Piotr Doll´ ar, and Ross B. Girshick. Segment anything. In ICCV , 2023. 2, 13 [27] Jingjing Li, Zhiqi Yu, Zhekai Du, Lei Zhu, and Heng Tao Shen. A comprehensive survey on source-free domain adap-tation. IEEE Transactions on Pattern Analysis and Machine Intelligence , 2024. 18 [28] Wuyang Li, Xinyu Liu, and Yixuan Yuan. SCAN++: En-hanced semantic conditioned adaptation for domain adaptive object detection. IEEE Transactions on Multimedia , 2023. 3 [29] Wuyang Li, Xinyu Liu, and Yixuan Yuan. SIGMA++: Im-proved semantic-complete graph matching for domain adap-tive object detection. IEEE Transactions on Pattern Analysis and Machine Intelligence , 2023. 3 [30] Jian Liang, Ran He, and Tieniu Tan. A comprehensive sur-vey on test-time adaptation under distribution shifts. Inter-national Journal of Computer Vision , 2025. 18 [31] Xin Lin, Xian Ge, Dizhe Zhang, Zhaoliang Wan, Xianshun Wang, Xiangtai Li, Wenjie Jiang, Bo Du, Dacheng Tao, Ming-Hsuan Yang, and Lu Qi. One flight over the gap: A survey from perspective to panoramic vision. arXiv preprint arXiv:2509.04444 , 2025. 1, 2 [32] Longliang Liu, Miaojie Feng, Junda Cheng, Jijun Xiang, Xuan Zhu, and Xin Yang. PriOr-Flow: Enhancing primi-tive panoramic optical flow with orthogonal view. In ICCV ,2025. 1 [33] Yifan Liu, Wuyang Li, Jie Liu, Hui Chen, and Yixuan Yuan. GRAB-Net: Graph-based boundary-aware network for med-ical point cloud segmentation. IEEE Transactions on Medi-cal Imaging , 2023. 3 [34] Yabo Liu, Jinghua Wang, Chao Huang, Yaowei Wang, and Yong Xu. CIGAR: Cross-modality graph reasoning for do-main adaptive object detection. In CVPR , 2023. 3 [35] Ziwei Liu, Zhongqi Miao, Xingang Pan, Xiaohang Zhan, Dahua Lin, Stella X. Yu, and Boqing Gong. Open compound domain adaptation. In CVPR , 2020. 2, 14 [36] Xingguo Lv, Xingbo Dong, Liwen Wang, Jiewen Yang, Lei Zhao, Bin Pu, Zhe Jin, and Xuejun Li. Test-time domain generalization via universe learning: A multi-graph match-ing approach for medical image segmentation. In CVPR ,2025. 3 [37] Chaoxiang Ma, Jiaming Zhang, Kailun Yang, Alina Roit-berg, and Rainer Stiefelhagen. DensePASS: Dense panoramic semantic segmentation via unsupervised domain adaptation with attention-augmented context exchange. In 
+
+ITSC , 2021. 1, 2, 6, 17 [38] Shijie Ma, Fei Zhu, Xu-Yao Zhang, and Cheng-Lin Liu. Pro-toGCD: Unified and unbiased prototype learning for general-ized category discovery. IEEE Transactions on Pattern Anal-ysis and Machine Intelligence , 2025. 18 [39] Laurens van der Maaten and Geoffrey Hinton. Visualizing data using t-SNE. Journal of Machine Learning Research ,2008. 8 [40] Sarthak Maharana, Baoming Zhang, Leonid Karlinsky, Rogerio Feris, and Yunhui Guo. BATCLIP: Bimodal online test-time adaptation for CLIP. In ICCV , 2025. 18 [41] Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang, Michael Matena, Yanqi Zhou, Wei Li, and Peter J. Liu. Exploring the limits of transfer learning with a unified text-to-text transformer. Journal of Machine Learn-ing Research , 2020. 2 [42] Stephan R. Richter, Vibhav Vineet, Stefan Roth, and Vladlen Koltun. Playing for data: Ground truth from computer games. In ECCV , 2016. 6 [43] Luigi Riz, Cristiano Saltori, Yiming Wang, Elisa Ricci, and Fabio Poiesi. Novel class discovery meets foundation mod-els for 3D semantic segmentation. International Journal of Computer Vision , 2025. 18 [44] Kuniaki Saito, Shohei Yamamoto, Yoshitaka Ushiku, and Tatsuya Harada. Open set domain adaptation by backpropa-gation. In ECCV , 2018. 6, 7, 15, 16 [45] Christos Sakaridis, Dengxin Dai, and Luc Van Gool. ACDC: The adverse conditions dataset with correspondences for se-mantic driving scene understanding. In ICCV , 2021. 6 [46] Jianlin Su, Murtadha Ahmed, Yu Lu, Shengfeng Pan, Wen Bo, and Yunfeng Liu. RoFormer: Enhanced transformer with rotary position embedding. Neurocomputing , 2024. 3, 5 [47] Zhen Tian, Wayne Xin Zhao, Changwang Zhang, Xin Zhao, Zhongrui Ma, and Ji-Rong Wen. EulerFormer: Sequential user behavior modeling with complex vector attention. In 
+
+SIGIR , 2024. 3, 5, 8 [48] Wilhelm Tranheden, Viktor Olsson, Juliano Pinto, and Lennart Svensson. DACS: Domain adaptation via cross-domain mixed sampling. In WACV , 2021. 13, 15 [49] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszko-reit, Llion Jones, Aidan N. Gomez, Lukasz Kaiser, and Illia Polosukhin. Attention is all you need. In NeurIPS , 2017. 2, 4, 8 [50] Garrett Wilson and Diane J. Cook. A survey of unsupervised deep domain adaptation. ACM Transactions on Intelligent Systems and Technology , 2020. 1 [51] Sheng Wu, Fei Teng, Hao Shi, Qi Jiang, Kai Luo, Kai-wei Wang, and Kailun Yang. QuaDreamer: Controllable panoramic video generation for quadruped robots. In CoRL ,2025. 1 [52] Enze Xie, Wenhai Wang, Zhiding Yu, Anima Anandkumar, Jos´ e M. ´ Alvarez, and Ping Luo. SegFormer: Simple and efficient design for semantic segmentation with transformers. In NeurIPS , 2021. 6, 13 [53] Gezheng Xu, Li Yi, Pengcheng Xu, Jiaqi Li, Ruizhi Pu, Changjian Shui, Charles Ling, A. Ian McLeod, and Boyu Wang. Unraveling the mysteries of label noise in source-free domain adaptation: Theory and practice. IEEE Transactions on Pattern Analysis and Machine Intelligence , 2025. 18 [54] Jiayue Xu, Chao Xu, Jianping Zhao, Cheng Han, and Hua Li. Mamba4PASS: Vision mamba for panoramic semantic segmentation. Displays , 2025. 2 [55] Kailun Yang, Jiaming Zhang, Simon Reiß, Xinxin Hu, and Rainer Stiefelhagen. Capturing omni-range context for om-nidirectional segmentation. In CVPR , 2021. 1 [56] Kailun Yang, Xinxin Hu, Yicheng Fang, Kaiwei Wang, and Rainer Stiefelhagen. Omnisupervised omnidirectional semantic segmentation. IEEE Transactions on Intelligent Transportation Systems , 2022. 2 [57] Kai Yao, Zhaorui Tan, Zixian Su, Xi Yang, Jie Sun, and Kaizhu Huang. SCMix: Stochastic compound mixing for open compound domain adaptation in semantic segmenta-tion. IEEE Transactions on Neural Networks and Learning Systems , 2025. 2 [58] Kaichao You, Mingsheng Long, Zhangjie Cao, Jianmin Wang, and Michael I. Jordan. Universal domain adaptation. In CVPR , 2019. 6, 7, 15, 16 [59] Chaoning Zhang, Dongshen Han, Yu Qiao, Jung Uk Kim, Sung-Ho Bae, Seungkyu Lee, and Choong Seon Hong. Faster segment anything: Towards lightweight SAM for mo-bile applications. arXiv preprint arXiv:2306.14289 , 2023. 6, 13, 15 [60] Jiaming Zhang, Kailun Yang, Chaoxiang Ma, Simon Reiß, Kunyu Peng, and Rainer Stiefelhagen. Bending reality: Distortion-aware transformers for adapting to panoramic se-mantic segmentation. In CVPR , 2022. 1, 2 [61] Jiaming Zhang, Kailun Yang, Hao Shi, Simon Reiß, Kunyu Peng, Chaoxiang Ma, Haodong Fu, Philip H. S. Torr, Kaiwei Wang, and Rainer Stiefelhagen. Behind every domain there is a shift: Adapting distortion-aware vision transformers for panoramic semantic segmentation. IEEE Transactions on Pattern Analysis and Machine Intelligence , 2024. 1, 2, 6, 8, 15, 16 [62] Weiming Zhang, Yexin Liu, Xu Zheng, and Lin Wang. GoodSAM: Bridging domain and capacity gaps via seg-ment anything model for distortion-aware panoramic seman-tic segmentation. In CVPR , 2024. 1, 2 [63] Weiming Zhang, Yexin Liu, Xu Zheng, and Lin Wang. GoodSAM++: Bridging domain and capacity gaps via seg-ment anything model for panoramic semantic segmentation. 
+
+arXiv preprint arXiv:2408.09115 , 2024. 2 [64] Wayne Xin Zhao, Kun Zhou, Junyi Li, Tianyi Tang, Xiaolei Wang, Yupeng Hou, Yingqian Min, Beichen Zhang, Junjie Zhang, Zican Dong, Yifan Du, Chen Yang, Yushuo Chen, Zhipeng Chen, Jinhao Jiang, Ruiyang Ren, Yifan Li, Xinyu Tang, Zikang Liu, Peiyu Liu, Jian-Yun Nie, and Ji-Rong Wen. A survey of large language models. arXiv preprint arXiv:2303.18223 , 2023. 2 [65] Yuyang Zhao, Zhun Zhong, Zhiming Luo, Gim Hee Lee, and Nicu Sebe. Source-free open compound domain adaptation in semantic segmentation. IEEE Transactions on Circuits and Systems for Video Technology , 2022. 2 [66] Junhao Zheng, Haibin Chen, and Qianli Ma. Cross-domain named entity recognition via graph matching. In ACL (Find-ings) , 2022. 3 [67] Junwei Zheng, Ruiping Liu, Yufan Chen, Kunyu Peng, Chengzhi Wu, Kailun Yang, Jiaming Zhang, and Rainer Stiefelhagen. Open panoramic segmentation. In ECCV ,2024. 2 [68] Xu Zheng, Tianbo Pan, Yunhao Luo, and Lin Wang. Look at the neighbor: Distortion-aware unsupervised domain adap-tation for panoramic semantic segmentation. In ICCV , 2023. 1, 2 [69] Xu Zheng, Jinjing Zhu, Yexin Liu, Zidong Cao, Chong Fu, and Lin Wang. Both style and distortion matter: Dual-path unsupervised domain adaptation for panoramic seman-tic segmentation. In CVPR , 2023. 1, 2 [70] Xu Zheng, Pengyuan Zhou, Athanasios V. Vasilakos, and Lin Wang. Semantics, distortion, and style matter: Towards source-free UDA for panoramic segmentation. In CVPR ,2024. 2, 14 [71] Xu Zheng, Peng Yuan Zhou, Athanasios V. Vasilakos, and Lin Wang. 360SFUDA++: Towards source-free UDA for panoramic segmentation by learning reliable category proto-types. IEEE Transactions on Pattern Analysis and Machine Intelligence , 2025. 2 [72] Ding Zhong, Xu Zheng, Chenfei Liao, Yuanhuiyi Lyu, Jialei Chen, Shengyang Wu, Linfeng Zhang, and Xuming Hu. Om-niSAM: Omnidirectional segment anything model for UDA in panoramic semantic segmentation. In ICCV , 2025. 1, 2 [73] Fei Zhu, Shijie Ma, Zhen Cheng, Xu-Yao Zhang, Zhaox-iang Zhang, and Cheng-Lin Liu. Open-world machine learning: A review and new outlooks. arXiv preprint arXiv:2403.01759 , 2024. 18 In this supplementary material, we provide three sections to complement the main manuscript. Section A offers a de-tailed description of the proposed task setting and compares it with related settings. Section B presents additional ex-periments to demonstrate the effectiveness of the proposed module and includes an analysis of its sensitivity coeffi-cients. Section C discusses the limitations of our method and provides an outlook on the societal implications. 
+
+## Sec. A: Clarification and Discussion 
+
+• Task Clarification • Benchmark Setup • Implementation Details 
+
+## Sec. B: Quantitative Comparison 
+
+• Further Analysis • Sensitivity Analysis • Model Efficiency • Visualization Analysis 
+
+## Sec. C: Limitations and Outlook 
+
+• Societal Implications • Future Research Directions • Limitations and Potential Solutions 
+
+## Sec. A: Clarification and Discussion 
+
+A.1. Task Clarification 
+
+Clarification of the setting. As illustrated in Fig. 6, the fig-ure depicts the conceptual differences among three domain adaptation settings: Closed-Set Domain Adaptation, Open-Set Domain Adaptation, and Panoramic Open-Set Domain Adaptation. (a) Closed-Set Domain Adaptation : The source domain and the target domain share an identical set of classes (for example, cats and dogs). The objective is to reduce the domain discrepancy under the assumption that all labels are fully shared. (b) Open-Set Domain Adapta-tion : The target domain contains additional unknown cate-gories that do not appear in the source domain. The goal is to properly align the shared classes while identifying and fil-tering out target samples belonging to unknown categories. (c) Panoramic Open-Set Domain Adaptation (PODA) :This setting extends the open-set scenario to a cross-modal context, where the source domain provides pinhole images and the target domain provides panoramic images. The tar-get domain has known and unknown classes, causing chal-lenges due to camera and semantic differences. 
+
+Clarification of the domain shift. From Table 9, it is clear that conventional Unsupervised Domain Adaptation (UDA) methods are unable to handle open-set categories or adapt to diverse weather conditions. While Panoramic UDA extends standard UDA by explicitly modeling variations in the field of view (FoV), it still cannot handle unknown categories or environmental shifts. Open-Set Domain Adaptation fo-cuses exclusively on unseen classes, and Open Compound Domain Adaptation aims to handle domain shifts caused by varying weather conditions. However, both neglect the FoV discrepancies inherent to panoramic imagery. In con-trast, the proposed PODA framework simultaneously ad-dresses open-set recognition, weather-related domain shifts, and FoV variations. By jointly modeling these three criti-cal factors, PODA achieves superior generalization and ro-bustness, enabling more reliable cross-domain perception in complex real-world driving scenarios. 
+
+A.2. Technical Clarifications A.3. Benchmark Setup 
+
+Dataset and class configuration. To evaluate open-set cross-domain semantic segmentation in a controlled yet diverse manner, we construct a benchmark spanning real-to-real, synthetic-to-real, and synthetic-to-synthetic transfers. For source and target domains, we con-duct the domain-shared (base) and domain-specific (private) classes, where the latter appear only in one domain and thus represent unforeseen categories encoun-tered during deployment. Weather conditions follow the same convention, capturing whether environmen-tal factors are shared or exclusive to a single domain. The benchmark includes four representative transfers as CityScapes →DensePASS, SynPASS →DensePASS, GTA →SynPASS, and SynPASS →ACDC, covering vary-ing degrees of semantic and environmental mismatch. In the real-to-real case, both domains share sunny scenes but include human and vehicle categories that remain private. Synthetic-to-real transfers introduce additional private traffic participants while maintaining shared weather. Synthetic-to-synthetic transfer expands this gap further by adding private meteorological conditions such as cloud, fog, and rain, along with fine-grained static and dynamic categories exclusive to the target. The adverse weather scenario emphasizes extreme condition shifts, where fog and rain remain shared while cloud, sunny, night, and snow are domain-specific. Together, these configurations simultaneously expose category- and weather-level dis-crepancies, forming a unified and reproducible benchmark for assessing robustness under open-set domain shifts. 
+
+Input resolution configuration. For all four open-set benchmark settings, the source and target datasets exhibit diverse image resolutions, reflecting their original col-lection protocols. To ensure consistency during training, all images are cropped to a unified size of 512 ×512 .Specifically, CityScapes images are originally 1024 ×512 
+
+while DensePASS images are 2048 ×400 , SynPASS images are 2048 ×1024 , GTA images are 1280 ×720 , and ACDC images are 960 ×540 . This unified crop strategy balances Closed  Set  Domain Adaptation  Open Set Domain Adaptation 
+
+> 360°
+
+Pinhole  Image  Pinhole  Image  Pinhole  Image  Panoramic  Image 
+
+Source Domain  Target Domain 
+
+(a)  (b) 
+
+Panoramic  Open Set Domain Adaptation 
+
+Source Domain  Target Domain 360° 92° 
+
+Unknown  Unknown 
+
+Unknown 
+
+Unknown Figure 6. Conceptual comparison of the domain adaptation setting. 
+
+the varying aspect ratios and resolutions across datasets, providing the input size for network training while pre-serving sufficient spatial context for semantic segmentation. 
+
+A.4. Implementation Details 
+
+We present the details in Tab. 12, including the pipeline, the auxiliary network, and the training configuration. 
+
+Pipeline. Our proposed framework, EDA-PSeg , follows a two-branch pipeline designed for open-set unsupervised domain adaptive semantic segmentation. It consists of a 
+
+source-domain supervised branch and a target-domain self-training branch , both of which are processed under a uni-fied data augmentation and preprocessing scheme. For the 
+
+source domain , each image and its annotation are loaded and resized before being cropped to a fixed resolution of 
+
+512 ×512 . Standard data augmentations, such as random horizontal flipping, are applied to enhance robustness. All images are normalized using ImageNet statistics ( mean =[123 .675 , 116 .28 , 103 .53] , std = [58 .395 , 57 .12 , 57 .375] )and padded to maintain consistent tensor sizes. For the tar-get domain , a similar preprocessing strategy is adopted, but with adaptive scale resizing and random cropping to accom-modate scale variation and perspective distortion common in real-world scenes. Both source and target domains share identical normalization and padding configurations to en-sure consistent feature distribution across domains. During training, the model alternately samples mini-batches from both domains following the DACS [48] (Domain Adaptive Cross-domain Self-training) strategy. The source-domain batches provide supervised signals, while the target-domain batches are assigned pseudo-labels that are progressively refined using our auxiliary MobileSAM module (described below). At inference time, each test image undergoes deter-ministic evaluation using a single-scale forward pass with resizing and normalization. Multi-scale and flip testing are disabled for computational consistency. This unified pipeline ensures stable and reproducible adaptation perfor-mance while preserving domain-level consistency. 
+
+Auxiliary Network. Following existing open-set domain adaptation approaches, we adopt MobileSAM [59] as an auxiliary network to refine pseudo-labels during training. MobileSAM is a lightweight and parameter-efficient variant of the Segment Anything Model (SAM) [26]. It is employed solely to distinguish foreground and background regions, improving the reliability of pseudo-labels in the target do-main. Specifically, for each target image, MobileSAM gen-erates segmentation masks corresponding to potential fore-ground classes. Class frequencies are then computed from these masks, and the dominant category is selected as the valid pseudo-label class. 
+
+Training Configuration. We adopt DAFormer [18] as the baseline architecture for UDA semantic segmentation. The model employs a MiT-B5 [52] backbone combined with a DAFormerHead decoder variant, modified to predict 14 
+
+semantic categories ( 13 closed-set classes plus one open-set/unknown class). Training follows the DACS [48] self-training framework with pseudo-labeling and feature con-sistency losses. The temporal ensembling coefficient is set to α = 0 .999 to stabilize the teacher-student updates. The feature distance loss is disabled, enabling adaptation to rely primarily on pseudo-label-based consistency rather than ImageNet feature alignment. Pseudo-label generation ignores the top 15 and bottom 120 pixels of the image to re-duce label noise near image borders. A rare-class sampling mechanism is incorporated to alleviate class imbalance, us-ing min pixels = 3000 and class temp = 0 .01 to prioritize under-represented categories during source sam-pling. The model is optimized using the AdamW optimizer with a base learning rate of 6×10 −5, while the learning rate of the decoder head is multiplied by 10 . A linear warm-up followed by polynomial decay is applied for stable conver-gence. Training runs for 40 , 000 iterations, and evaluation is performed every 4, 000 iterations. Performance is eval-uated using both the H-score and mIoU , which together measure segmentation quality and open-set recognition ac-curacy. The checkpoint achieving the highest mIoU on the Table 9. Comparison of domain adaptation settings with the domain shift. 
+
+Domain Adaptation Setting Label Shift Weather Shift FoV Shift 
+
+Unsupervised Domain Adaptation [14] ✗ ✗ N/A Panoramic Domain Adaptation [70] ✗ ✗ ✓
+
+Open-Set Domain Adaptation [13] ✓ ✗ N/A Open Compound Domain Adaptation [35] ✗ ✓ N/A Panoramic Open-Set Domain Adaptation (Ours) ✓ ✓ ✓
+
+> Table 10. Base and private classes used in the PAN2PAN, SYN2SYN, and SYN2REAL experiments. Shared classes (green) are common to both the source and target domains, while private classes (red) appear only in either the source or the target domain. Weather conditions follow the same convention: green indicates shared conditions across both domains, and red indicates conditions specific to a single domain.
+
+Setting Classes (Base / Private) Weather Open-Set CityScapes → DensePASS 
+
+‘road’, ‘sidewalk’, ‘building’, ‘wall’, ‘fence’, ‘traffic light’, ‘vegetation’, ‘terrain’, ‘sky’, ‘car’, ‘bus’, ‘motorcycle’, ‘bicycle’. CityScapes/DensePASS: ‘pole’, ‘traffic sign’, ‘person’, ‘rider’, ‘truck’, ‘train’. Sunny →Sunny 
+
+Open-Set SynPASS → DensePASS 
+
+‘road’, ‘sidewalk’, ‘building’, ‘wall’, ‘fence’, ‘pole’, ‘traffic light’, ‘traffic sign’, ‘vegetation’, ‘terrain’, ‘sky’, ‘person’, ‘car’. SynPASS: ‘other’, ‘ground’, ‘bridge’, ‘railtrack’, ‘groundrail’, ‘static’, ‘dynamic’, ‘water’. DensePASS: ‘bus’, ‘truck’, ‘train’, ‘motorcycle’, ‘bicycle’, ‘rider’. Sunny →Sunny 
+
+Open-Set GTA → SynPASS 
+
+‘road’, ‘sidewalk’, ‘building’, ‘wall’, ‘fence’, ‘pole’, ‘traffic light’, ‘traffic sign’, ‘vegetation’, ‘terrain’, ‘sky’, ‘person’, ‘car’. GTA: ‘rider’, ‘truck’, ‘bus’, ‘train’, ‘motorcycle’, ‘bicycle’. SynPASS: ‘other’, ‘ground’, ‘bridge’, ‘railtrack’, ‘groundrail’, ‘static’, ‘dynamic’, ‘water’. Sunny →Sunny, Cloud, Fog, Rain, Night 
+
+Open-Set SynPASS → ACDC 
+
+‘road’, ‘sidewalk’, ‘building’, ‘wall’, ‘fence’, ‘pole’, ‘traffic light’, ‘traffic sign’, ‘vegetation’, ‘terrain’, ‘sky’, ‘person’, ‘car’. SynPASS: ‘other’, ‘ground’, ‘bridge’, ‘railtrack’, ‘groundrail’, ‘static’, ‘dynamic’, ‘water’. ACDC: ‘rider’, ‘truck’, ‘bus’, ‘train’, ‘motorcycle’, ‘bicycle’. Fog, Rain, Night, Sunny, Cloud →Fog, Rain, Night, Sunny, Snow   
+
+> Table 11. Image resolutions for different datasets involved in the four open-set settings. Crop size is unified to 512 ×512 for training.
+
+Setting Source Image Size (W ×H) Target Image Size (W ×H) Crop Size (W ×H) 
+
+Open-Set CityScapes → DensePASS CityScapes: 1024 ×512 DensePASS: 2048 ×400 512 ×512 
+
+Open-Set SynPASS → DensePASS SynPASS: 2048 × 1024 DensePASS: 2048 ×400 512 ×512 
+
+Open-Set GTA → SynPASS GTA: 1280 ×720 SynPASS: 2048 ×1024 512 ×512 
+
+Open-Set SynPASS → ACDC SynPASS: 2048 ×1024 ACDC: 960 ×540 512 ×512 Table 12. Key Settings of the Proposed EDA-PSeg Framework                          
+
+> Component Setting
+> Framework Two-branch open-set UDA: source-supervised + target self-training. Backbone DAFormer with MiT-B5 encoder and Graph decoder. Auxiliary Net MobileSAM for pseudo-mask refinement. Input Size 512 ×512 (crop, resize, flip, normalize). Normalization ImageNet mean=[123.7,116.3,103.5], std=[58.4,57.1,57.4]. Pseudo-labels Refined by MobileSAM [59]. Teacher Update EMA with α= 0 .999 .Optimizer AdamW, LR= 6×10 −5(decoder ×10 ). Schedule Warmup + polynomial decay, 40k iterations. Sampling DACS [48] with rare-class focus ( min pixels=3000 ). Evaluation H-score & mIoU.
+
+validation set is selected as the best. All experiments are performed on a single-GPU setup. 
+
+Table 13. Ablation analysis of the EMA module.                                       
+
+> Cityscapes →DensePASS ( C2D )
+> Exp. Method Common Private H-Score
+> ①Baseline 52.56 8.57 14.74
+> ①Self-Att 55.45 10.95 18.28
+> ①Self-Att+Margin Projection 55.64 15.06 23.71
+> ②EMA w/o Margin Projection 55.03 7.56 13.30
+> ③EMA w/o Learnable Scale 55.50 13.07 21.16
+> ④EMA w/o Learnable Bias 55.59 7.35 12.99
+> ⑤EMA w/o Learnable Magnitude 54.04 5.20 9.48
+> ⑥EMA (Full) 56.12 13.00 21.11
+
+## Sec. B: Quantitative Comparison 
+
+B.1. Further Analysis 
+
+As shown in Tab. 13, we evaluate the effectiveness of the EMA module. The core of our design is the Margin Projec-tion, an enhancement to the self-attention mechanism that consistently improves performance. In the initial compar-ison (experiment ①), progressively adding attention-based components consistently improves both Common and Pri-vate results, indicating that attention enhances domain-shared representations. Introducing Margin Projection no-tably increases the Private accuracy and achieves the highest H-Score among non-EMA variants, confirming the benefit of margin-based separation for target-specific learning. In the EMA ablation, removing Margin Projection ( ②) leads to a clear performance drop, suggesting its importance in maintaining target-domain feature separability. The ab-sence of the Learnable Scale ( ③) has a minor effect, while omitting the Learnable Bias ( ④) causes a marked decline, highlighting the need for bias correction to address domain shifts. Finally, removing the Learnable Magnitude ( ⑤) re-sults in the most severe degradation, demonstrating that the learnable magnitude is crucial for stable feature representa-tion and overall performance. 
+
+Table 14. Comparison of the number of parameters (M), FLOPs (G), MACs (G), and test time per image (ms). Experiments are conducted on a single RTX 4090 and AMD Ryzen 9 5950X CPU. 
+
+Method #Params FLOPs MACs Time 
+
+OSBP [44] 85.15 M 59.45 G 29.73 G 26.86 ms UAN [58] 85.29 M 59.45 G 29.73 G 26.67 ms UniOT [21] 85.22 M 59.45 G 29.73 G 27.03 ms DMLP [61] 90.15 M 59.45 G 29.73 G 27.12 ms MIC [20] 85.68 M 14.86 G 7.43 G 26.62 ms DAF [18] 85.15 M 59.45 G 29.73 G 27.76 ms HRDA [19] 85.69 M 14.86 G 7.43 G 26.25 ms BUS [9] 85.68 M 14.86 G 7.43 G 26.06 ms Ours 86.47 M 59.45 G 29.73 G 28.09 ms 
+
+Table 15. Sensitivity analysis of the self-attention layer in the EMA module. Note that, since the Euler encoding in EMA re-quires both real and imaginary components, the dimensionality must be even. 
+
+Cityscapes → DensePASS ( C2D )
+
+Exp. Layer Common Private H-Score 
+
+① - 52.56 8.57 14.74 
+
+② 2 56.12 13.00 21.11 
+
+③ 4 54.80 9.94 16.83 
+
+⑤ 8 54.99 6.04 10.88 
+
+Table 16. Sensitivity analysis under different threshold values. Re-sults are reported on Cityscapes → DensePASS ( C2D ). 
+
+Cityscapes → DensePASS ( C2D )
+
+Exp. Threshold Common Private H-Score 
+
+① 0.4 53.03 1.66 3.22 
+
+② 0.5 56.02 6.17 11.11 
+
+③ 0.6 56.81 18.86 28.32 
+
+④ 0.7 54.59 9.66 16.41 
+
+B.2. Sensitivity Analysis 
+
+Sensitivity of attention layer. As shown in Tab. 15, we conduct the sensitivity analysis to evaluate the effect of self-attention layers in the EMA module. A moderate atten-tion depth notably improves adaptation: two layers yield the highest H-Score, with consistent gains across both common and private classes. This configuration strengthens the an-gle space coupling induced by the Euler encoding, enabling the model to capture domain-invariant and domain-specific patterns more effectively. However, deeper layers lead to overfitting to source-domain priors, reducing target adapt-ability and overall balance. These results indicate that the Input Image 
+
+> Ground Truth
+> DAFormer
+> BUS
+> Ours
+> UniOT Figure 7. Qualitative comparison between our method and existing OSDA and UDA approaches.
+> Figure 8. Illustration of the match matrix derived from the graph affinity and the matching ground-truth in the GMA module.
+
+EMA module performs best with limited yet sufficient at-tention depth, while excessive layers hinder generalization. 
+
+Sensitivity of threshold. As shown in Tab. 16, we analyze the sensitivity of the threshold used in generating pseudo-labels for private classes during source and target domain mixup training. With the threshold set to 0.4 (①), the model exhibits the lowest mIoU and H-Score for both common and private classes, indicating severe confusion between the two categories. Increasing the threshold to 0.5 (②) leads to a clear improvement in segmentation performance, par-ticularly reflected in a higher H-Score. Further raising the threshold to 0.6 (③) enhances the recall of unknown classes while also improving the accuracy on known class mIoU. However, raising the threshold to 0.7 (④) reduces both com-mon and private mIoU, suggesting that too strict a confi-dence filter can impair pseudo-label generation. 
+
+B.3. Model Efficiency 
+
+As shown in Tab. 14, we evaluate the efficiency of the pa-rameters (M), FLOPs (G), MACs (G), and test time per im-age (ms), and compare these metrics with existing methods. OSBP [44], UAN [58], UniOT [21], and DMLP [61] have about 85 M to 90 M parameters and 59 .45 G FLOPs, requir-ing around 27 ms per image, indicating relatively high com-plexity. In contrast, MIC [20], DAF [18], HRDA [19], and BUS [9] are more lightweight, with only 14 .86 G FLOPs and faster inference. Our method achieves a similar com-putational scale to the above models, with a slightly higher Road  and S idewalk  Wall  and F ence            
+
+> Seen Unseen
+> Sky and C ar Car and B us
+> Building and T errain Car and M otorcycle Motorcycle and B icycle Trafficlight and V egetation Road and S ky Figure 9. T-SNE visualization of data from seen and unseen viewpoints.
+
+parameter count ( 86 .47 M ) and inference time ( 28 .09 ms ). 
+
+B.4. Visualization Analysis 
+
+Qualitative Results. As illustrated in Fig. 7, we present a qualitative comparison of open-set UDA segmenta-tion results using the OSDA [13] methods BUS [9] and UniOT [21], as well as the UDA method DAFormer [18], to evaluate the effectiveness of our proposed approach. Com-pared with existing methods, our approach delivers im-proved segmentation performance across both known and unknown classes. In particular, it achieves superior open-set performance relative to DAFormer [18], demonstrates greater robustness to small open-set objects than BUS [9], and substantially mitigates closed-set class and private class foreground objects misidentification errors frequently ob-served in UniOT [21]. 
+
+Graph Match Results. As shown in Fig. 8, we visualize the matching matrix from the learnable affinity and its cor-responding ground truth within the proposed GMA module for both the source and target domains. The highlighted re-gions in the ground truth indicate the nodes that should be matched. The predicted matching matrix closely aligns with the ground truth, demonstrating the effectiveness of the pro-posed GMA module in open-set graph matching. 
+
+Seen and Unseen Viewpoints. As shown in Fig. 9, we perform visualization experiments on both the seen dataset Cityscapes [12] and the unseen dataset DensePASS [37]. For the stuff classes [3] ( e.g. , road, sidewalk, sky) and the thing classes [3] ( e.g. , car, bus, motorcycle). For stuff classes and thing classes, categories within the same group tend to share certain similarities, which is reflected in their overlapping or intersecting distributions in the t-SNE visu-alization. In contrast, when comparing categories across stuff and thing classes, their t-SNE embeddings typically show a significant separation, indicating substantial feature-level differences between the two groups. For objects viewed from both seen and unseen perspectives, domain shift occurs across categories due to variations in the field of view. 
+
+Qualitative results for EMA module. As shown in Fig. 10, we perform qualitative analysis of the EMA module using Principal Component Analysis (PCA) to identify regions with consistent color or brightness, while the L2 norm high-lights areas receiving model attention. For the PCA pro-jection, the proposed EMA method better highlights thing classes such as buildings, maintains smoother and less noisy representations in stuff classes like the sky, and achieves higher cross-view consistency in vegetation regions. For the Euclidean (L2) norm visualization, the baseline suffers from limited activation and reduced brightness in geomet-rically distorted regions, whereas our method effectively overcomes this issue and better highlights objects at long ranges and under wide viewpoints. 
+
+## Sec. C: Limitations and Outlook 
+
+C.1. Societal Implications 
+
+As illustrated in Fig. 11, our proposed Extrapolative Do-main Adaptive Panoramic Segmentation framework de-livers significant societal benefits across four domains: quadruped robotics, autonomous driving, assistive naviga-tion for people with visual impairments, and drone-based perception. By enhancing semantic and panoramic percep-tion, our method enables quadruped robots to operate reli-ably in hazardous environments, supports autonomous ve-hicles in making safer decisions under diverse conditions, assists visually impaired users with real-time spatial aware-ness, and strengthens drone perception for environmental monitoring, precision agriculture, and infrastructure inspec-tion. Euler -Margin Attention , EMA  (Ours) MobileSAM  + DAFormer , Baseline 
+
+> PCA
+> Projection
+> PCA
+> Projection
+
+Input  Panoramic  Image                    
+
+> RGB Input
+> RGB Input PCA
+> Projection
+> PCA
+> Projection
+> RGB Input PCA
+> Projection
+> PCA
+> Projection
+> RGB Input PCA
+> Projection
+> PCA
+> Projection
+> RGB Input
+> RGB Input
+> RGB Input
+> RGB Input
+> Euclidean Norm
+> (L2 Norm)
+> Euclidean Norm
+> (L2 Norm)
+> Euclidean Norm
+> (L2 Norm)
+> Euclidean Norm
+> (L2 Norm)
+> Euclidean Norm
+> (L2 Norm)
+> Euclidean Norm
+> (L2 Norm)
+> Euclidean Norm
+> (L2 Norm)
+> Euclidean Norm
+> (L2 Norm)
+
+Figure 10. Qualitative results for EMA. We visualize feature representations using Principal Component Analysis (PCA) and the L2 norm. 
+
+C.2. Future Research Directions 
+
+In the future, we plan to pursue two main research direc-tions. The first focuses on methodological improvements, with the aim of improving the performance, efficiency, and robustness of our current approach. The second direction involves application-oriented extensions, where we intend to adapt and apply our methods to broader or more complex real-world scenarios. Building upon the first research direc-tion, we note that in pseudo-label training, the private class is currently threshold-based. To advance this, future work suggests improving it to a threshold-free private class mech-anism, in line with existing research [38, 43, 73]. Despite progress in related areas, test-time adaptation [30, 40] and source-free domain adaptation [27, 53] have received lim-ited attention in open-world vision for panoramic images. In the future, we will expand the applicability of this method further. Experiments show that the technique maintains sta-ble performance under different fields of view, which con-firms its adaptability to various imaging conditions. Subse-quent work will explore its applications in panoramic, fish-eye, wide-angle, and pinhole images and further extend it to real-world scenes. 
+
+C.3. Limitations and Potential Solutions 
+
+In edge computing scenarios or environments with limited computational resources, our model still exhibits a limit for parameter scalability and inference efficiency. This limita-tion primarily arises from the adoption of the cross-domain open-set graph matching mechanism and the Euler-Margin attention module. Although these components enhance the generalization in unseen views, they inevitably introduce additional parameter overhead and computational costs dur-ing inference. We provide two of the above issues. For model architecture, we consider adopting a lightweight self-attention mechanism integrated with our proposed Euler-interval projection and amplitude & phase modulation, aim-ing to preserve representational expressiveness while reduc-ing parameter complexity. To enhance computational effi-ciency, we plan to conduct the quantization to accelerate inference and reduce memory consumption. Figure 11. Societal implications of panoramic vision technology.

@@ -1,0 +1,142 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.15475v1/fig-001.webp",
+      "caption": "Figure 1. Extrapolative Domain Adaptation (EDA) extends beyond the training FoV and known semantic categories, facilitating the transfer of knowledge from pinhole supervision to unlabeled 360° perception. It addresses both cross-view geometric distortions and the semantic extrapolation to unknown categories.",
+      "page": 1,
+      "index": 1,
+      "width": 496,
+      "height": 254
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15475v1/fig-002.webp",
+      "caption": "Table 1. Comparisons under Camera Shift {Pin2Pan, Real2Real} for Cityscapes → DensePASS (C2D) open-set domain adaptation in outdoor scenarios. * indicates an experiment based on DAFormer [18].",
+      "page": 6,
+      "index": 2,
+      "width": 1026,
+      "height": 208
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15475v1/fig-003.webp",
+      "caption": "Table 2. Comparisons under Camera Shift {Syn2Real, Pan2Pan} for SynPASS → DensePASS (S2D) open-set domain adaptation in outdoor scenarios. * indicates an experiment based on DAFormer [18].",
+      "page": 6,
+      "index": 3,
+      "width": 1026,
+      "height": 214
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15475v1/fig-004.webp",
+      "caption": "Table 14. Comparison of the number of parameters (M), FLOPs (G), MACs (G), and test time per image (ms). Experiments are conducted on a single RTX 4090 and AMD Ryzen 9 5950X CPU.",
+      "page": 15,
+      "index": 4,
+      "width": 496,
+      "height": 333
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15475v1/fig-005.webp",
+      "caption": "Table 4. Comparisons under Camera Shift (Syn2Real, Pan2Pin) and Weather Shift {Fog, Rain, Night, Sunny, Cloudy}→{Fog, Rain, Night, Sunny, Snow} for SynPASS→ACDC (S2A) open-set domain adaptation in outdoor scenarios. * indicates DAFormer-based results [18].",
+      "page": 7,
+      "index": 5,
+      "width": 1026,
+      "height": 215
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15475v1/fig-006.webp",
+      "caption": "Table 3. Comparisons under different Camera Shift (Pin2Pan,Syn2Syn ) and Weather Shift {Sunny}→{Sunny, Cloudy, Fog, Rain, Night} for GTA → SynPASS (G2S) open-set domain adaptation in outdoor scenarios. * indicates an experiment based on DAFormer [18].",
+      "page": 7,
+      "index": 6,
+      "width": 1026,
+      "height": 213
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15475v1/fig-007.webp",
+      "caption": "Table 11. Image resolutions for different datasets involved in the four open-set settings. Crop size is unified to 512×512 for training.",
+      "page": 14,
+      "index": 7,
+      "width": 1031,
+      "height": 281
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15475v1/fig-008.webp",
+      "caption": "Table 9. Comparison of domain adaptation settings with the domain shift.",
+      "page": 14,
+      "index": 8,
+      "width": 864,
+      "height": 246
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15475v1/fig-009.webp",
+      "caption": "Table 10. Base and private classes used in the PAN2PAN, SYN2SYN, and SYN2REAL experiments. Shared classes (green) are common to both the source and target domains, while private classes (red) appear only in either the source or the target domain. Weather conditions follow the same convention: green indicates shared conditions across both domains, and red indicates conditions specific to a single domain.",
+      "page": 14,
+      "index": 9,
+      "width": 1031,
+      "height": 548
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15475v1/fig-010.webp",
+      "caption": "Figure 2. Illustration of the proposed EDA-PSeg, which tackles cross-view and semantic extrapolation. The framework incorporates two key components: the Graph Matching Adapter (GMA), which constructs a high-order graph to align domain shared class graph nodes, and the Euler-Margin Attention (EMA), which models features with the Euler formula to enhance angle invariance under unseen viewpoints.",
+      "page": 3,
+      "index": 10,
+      "width": 1036,
+      "height": 584
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15475v1/fig-011.webp",
+      "caption": "Figure 10. Qualitative results for EMA. We visualize feature representations using Principal Component Analysis (PCA) and the L2 norm.",
+      "page": 18,
+      "index": 11,
+      "width": 1036,
+      "height": 593
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15475v1/fig-012.webp",
+      "caption": "Figure 6. Conceptual comparison of the domain adaptation setting.",
+      "page": 13,
+      "index": 12,
+      "width": 1036,
+      "height": 281
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15475v1/fig-013.webp",
+      "caption": "Figure 5. T-SNE visualization of source and target domains in EDA-PSeg. (a) The prototype exhibits a relatively mixed unknown class. (b) Ours is the relatively separable unknown class.",
+      "page": 8,
+      "index": 13,
+      "width": 496,
+      "height": 271
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15475v1/fig-014.webp",
+      "caption": "Figure 11. Societal implications of panoramic vision technology.",
+      "page": 19,
+      "index": 14,
+      "width": 1036,
+      "height": 660
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15475v1/fig-015.webp",
+      "caption": "Figure 9. T-SNE visualization of data from seen and unseen viewpoints.",
+      "page": 17,
+      "index": 15,
+      "width": 1025,
+      "height": 334
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15475v1/fig-016.webp",
+      "caption": "Figure 8. Illustration of the match matrix derived from the graph affinity and the matching ground-truth in the GMA module.",
+      "page": 16,
+      "index": 16,
+      "width": 496,
+      "height": 390
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15475v1/fig-017.webp",
+      "caption": "Figure 7. Qualitative comparison between our method and existing OSDA and UDA approaches.",
+      "page": 16,
+      "index": 17,
+      "width": 1029,
+      "height": 631
+    }
+  ]
+}

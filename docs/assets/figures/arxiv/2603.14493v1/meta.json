@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.14493v1/fig-001.webp",
+      "caption": "Figure 3. ImageWikiQA with class-label distractors. Left: an example transformation where one distractor is replaced by the correct class name. Right: accuracy with/without a class-name distractor, before fine-tuning and after fine-tuning, using LLM Backbone, Full, 1e-6. The substantial decrease in accuracy and the concurrent increase in “mischoice on class name” after fine-tuning indicate that the model ceases to follow prompt instructions, instead defaulting to outputting the choice with class label directly. Therefore, the primary issue is task-specific overfitting rather than catastrophic forgetting.",
+      "page": 6,
+      "index": 1,
+      "width": 813,
+      "height": 298
+    },
+    {
+      "url": "assets/figures/arxiv/2603.14493v1/fig-002.webp",
+      "caption": "Figure 4. Ablations for data-hybrid training. (a) Mixing ImageNet-VQA with Flowers102, OCR-VQA, or LLaVA-665K (each at 50% of training instances). (b) Varying the LLaVA-665K mix from 0% to 70%; larger, darker markers denote higher ratios. Augmenting the training data with diverse textual inputs helps to alleviate task-specific overfitting. Consequently, this data-hybrid method improves model robustness in the OODT –IDI setting with minimal trade-offs for ID performance. Training details are in Appendix B.3.",
+      "page": 7,
+      "index": 2,
+      "width": 988,
+      "height": 380
+    },
+    {
+      "url": "assets/figures/arxiv/2603.14493v1/fig-003.webp",
+      "caption": "Figure 1. Evaluation matrix. A 2×2 design crossing text and image. In this work, for both text and images, we define in-distribution (ID) data as samples drawn from the same probability distribution as the training set. Conversely, out-of-distribution (OOD) data originates from a distribution not encountered during training; during evaluation, we report average accuracy within each quadrant. This setup allows us to systematically evaluate a comprehensive range of training and evaluation scenarios. Further details are provided in Appendix A.1.",
+      "page": 3,
+      "index": 3,
+      "width": 813,
+      "height": 415
+    },
+    {
+      "url": "assets/figures/arxiv/2603.14493v1/fig-004.webp",
+      "caption": "Table 3. Continual learning on the MLLM-CL benchmark. We highlight best and second best separately for with and without replay. Our simple methods (IncLoRA, SeqFull) are competitive with specialized approaches under replay, and dominate most columns without replay.",
+      "page": 8,
+      "index": 4,
+      "width": 1017,
+      "height": 606
+    },
+    {
+      "url": "assets/figures/arxiv/2603.14493v1/fig-005.webp",
+      "caption": "Table 1. ID accuracy and robustness deltas across recipes. “Final Acc” is ImageNet-VQA validation accuracy; in parentheses we show the difference to LLM Backbone, Full, 1e-5. “∆ vs. zero-shot” reports percentage-point change relative to the pre-trained model on OODT –IDI and OODT –OODI . To enhance visual clarity, we use red to highlight performance degradations >3pp and blue for changes",
+      "page": 4,
+      "index": 5,
+      "width": 785,
+      "height": 231
+    },
+    {
+      "url": "assets/figures/arxiv/2603.14493v1/fig-006.webp",
+      "caption": "Figure 2. Single-task fine-tuning across the evaluation matrix. Each curve traces checkpoints during fine-tuning: x-axis = ID accuracy on ImageNet validation (the fine-tuned task), y-axis = accuracy on an ID/OOD evaluation. Layout and colors follow Figure 1. Legends show trainable part (method, learning rate). Performance is largely maintained in IDT –OODI and OODT –OODI with simplest regularization on parameter updata, with a notable drop only in OODT –IDI . Full hyperparameters are in Appendix B.1.",
+      "page": 4,
+      "index": 6,
+      "width": 834,
+      "height": 553
+    },
+    {
+      "url": "assets/figures/arxiv/2603.14493v1/fig-007.webp",
+      "caption": "Table 4. VQA Dataset Curated from BSCCM",
+      "page": 12,
+      "index": 7,
+      "width": 845,
+      "height": 519
+    }
+  ]
+}

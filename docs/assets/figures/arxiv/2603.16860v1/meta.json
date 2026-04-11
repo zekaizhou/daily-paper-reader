@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.16860v1/fig-001.webp",
+      "caption": "Fig. 4: Hardware setup. Our real-world platform consists of two Franka FR3 arms positioned opposite each other to enable bimanual manipulation within a shared workspace. A top-mounted RealSense D435i camera captures the interaction area, where deformable objects are placed on the work surface for automated data collection and further manipulation.",
+      "page": 5,
+      "index": 1,
+      "width": 512,
+      "height": 317
+    },
+    {
+      "url": "assets/figures/arxiv/2603.16860v1/fig-002.webp",
+      "caption": "Fig. 3: Qualitative comparison of video generation results. Baselines fail to follow the specified actions or produce unrealistic deformations, while our method generates deformations that is both action-consistent and physically plausible, demonstrating its reliability as a verifier for VLM fine-tuning.",
+      "page": 5,
+      "index": 2,
+      "width": 1052,
+      "height": 406
+    },
+    {
+      "url": "assets/figures/arxiv/2603.16860v1/fig-003.webp",
+      "caption": "Fig. 5: Success rate improvements via RL fine-tuning. Our RL pipeline improves success rates by 15%–40% over zero-shot baselines across all evaluated real-world tasks.",
+      "page": 6,
+      "index": 3,
+      "width": 512,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/arxiv/2603.16860v1/fig-004.webp",
+      "caption": "Fig. 2: Overview of DreamPlan. Our framework consists of three stages. (1) Zero-shot proposal: given the current observation and goal image, a pretrained VLM planner generates multiple candidate keypoint-based manipulation actions. (2) World model learning: these zero-shot actions are executed to collect diverse action–observation trajectories, which are used to fine-tune an action-conditioned diffusion world model that predicts object deformation outcomes from rendered robot-motion videos. (3) World-model-guided alignment: the trained world model acts as a verifier to evaluate sampled VLM actions by predicting their future outcomes; comparing predicted outcomes yields pairwise preferences (more vs. less goal-consistent actions), which are used to fine-tune the VLM planner via Odds Ratio Policy Optimization (ORPO), aligning it toward physics-consistent behaviors without additional real-world interaction.",
+      "page": 4,
+      "index": 4,
+      "width": 1002,
+      "height": 675
+    },
+    {
+      "url": "assets/figures/arxiv/2603.16860v1/fig-005.webp",
+      "caption": "Fig. 6: Real-world task setups and qualitative comparison. We evaluate our RL-finetuned Qwen3-VL (DreamPlan) on toy arm repositioning, rope straightening, and cloth folding. Leftmost columns show the initial and target states, with green and red arrows indicating predicted action vectors. The time-lapse sequences contrast the successful executions of our RL-finetuned model (top rows, green borders) against the typical failures of the pure zero-shot Qwen3-VL baseline (bottom rows, pink borders).",
+      "page": 7,
+      "index": 5,
+      "width": 802,
+      "height": 693
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.21309v2/fig-001.webp",
+      "caption": "Table 1: Subject-wise performance (WAR, UAR) on the BioVid dataset for TTA-CaP and other TTA methods.",
+      "page": 22,
+      "index": 1,
+      "width": 666,
+      "height": 292
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21309v2/fig-002.webp",
+      "caption": "Table 4: Subject-wise performance (F1 score) on the BAH dataset for TTA-CaP and other TTA methods. Best F1 scores are highlighted in bold.",
+      "page": 10,
+      "index": 2,
+      "width": 582,
+      "height": 553
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21309v2/fig-003.webp",
+      "caption": "Table 3: Subject-wise performance (F1 score) on the StressID dataset for TTA-CaP and other TTA methods. Best F1 scores are highlighted in bold.",
+      "page": 10,
+      "index": 3,
+      "width": 720,
+      "height": 280
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21309v2/fig-004.webp",
+      "caption": "Table 2: Subject-wise performance (F1 score) on the BioVid dataset for TTA-CaP and other TTA methods. Best F1 scores are highlighted in bold.",
+      "page": 10,
+      "index": 4,
+      "width": 720,
+      "height": 280
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21309v2/fig-005.webp",
+      "caption": "Fig. 5: (a) Average WAR for target subjects in BioVid for zero-shot CLIP, static personalized source cache only, dynamic target cache only, and TTA-CaP (static + dynamic). (b) Ablation of source-cache construction in BioVid. Average WAR across target subjects. Prototypes: the personalized source cache built from source-subject prototypes.",
+      "page": 14,
+      "index": 5,
+      "width": 725,
+      "height": 193
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21309v2/fig-006.webp",
+      "caption": "Fig. 3: Qualitative visualization. Left: t-SNE visualization of the embedding space before/after cache fusion for two subjects from StressID. Right: gate pass rates (fraction of frames passing each criterion and updating the caches).",
+      "page": 12,
+      "index": 6,
+      "width": 675,
+      "height": 254
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21309v2/fig-007.webp",
+      "caption": "Fig. 2: Overview of our TTA-CaP. (top) Offline source prototype extraction. For each source-domain subject, CLIP image embeddings are clustered, and representative prototypes are selected to define a labeled set of source prototypes. (bottom) Online TTA and tri-gate cache update. At test time, frozen CLIP encoders produce text and visual embeddings and an initial prediction through contrastive similarity. A fixed personalized source cache retrieves the top-m nearest source prototypes as a stable reference. A tri-gate controls updates to a dynamic target cache with positive and negative entries. Finally, predictions are obtained by embedding-level fusion of the CLIP visual embedding with retrieved cache items, enabling cost-effective personalization without training (backpropagation) at test-time.",
+      "page": 5,
+      "index": 7,
+      "width": 652,
+      "height": 415
+    }
+  ]
+}

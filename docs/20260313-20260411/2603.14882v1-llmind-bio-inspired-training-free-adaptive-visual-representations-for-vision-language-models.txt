@@ -1,0 +1,422 @@
+Title: LLMind: Bio-inspired Training-free Adaptive Visual Representations for Vision-Language Models
+
+URL Source: https://arxiv.org/pdf/2603.14882v1
+
+Published Time: Tue, 17 Mar 2026 05:48:52 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# LLMind: Bio-inspired Training-free Adaptive Visual Representations for Vision-Language Models 
+
+## Soumyaratna Debnath Bui Duc Manh Zinan Liu Lin Wang †
+
+## Nanyang Technological University, Singapore 
+
+soumyara004@e.ntu.edu.sg ducmanh.bui@ntu.edu.sg zinan001@e.ntu.edu.sg linwang@ntu.edu.sg Human perception 
+
+Are  there any people  riding  bikes? 
+
+> Yes , there is one person
+
+Uniform  Sampling 
+
+Current  VLMs       
+
+> VLM
+> There is no one
+> riding any bikes
+> High Resolution Input
+> Neuro science Grounded
+> Mˆbius
+> Transform
+> Input Image Cortical Magnification Adaptive Sampling
+> VLM
+> Yes , there is one person
+
+Bio-inspired Adaptive Sampling (BASS)  
+
+> Performance @ 5% Pixel Budget for Qwen2.5-VL ,
+> 22.68 %
+> 34.09 %
+> 20.19 %
+> Performance @ 3% Pixel Budget for Qwen2.5-VL ,
+> 24.01 %
+> 26.16 %
+> 21.54 %
+> Sampling Methods
+> Datasets
+> VQAv2
+> A-OKVQA
+> Seed-Bench
+> % Accuracy gain of
+> LLMind over
+> Uniform sampling
+
+(a)  (b) 
+
+Figure 1. (a) Illustration of the underlying principle of our Bio-inspired Adaptive Sampling Strategy (BASS). (b) Performance comparison at 5% and 3% pixel budgets using Qwen2.5-VL [5] across datasets. Project page: https://empactlab.github.io/LLMind-CVPR-2026/ 
+
+## Abstract 
+
+Vision-Language Models (VLMs) typically assume a uni-form spatial fidelity across the entire field of view of visual inputs, dedicating equal precision to even the uninformative regions. By contrast, human vision is neither uniform nor static. It is adaptive, selective, and resource-efficient. In light of this, we present the first systematic analysis of bio-inspired visual representation methods, providing insights for more efficient and adaptive VLMs. We propose LLMind 
+
+(Looking Like the Mind ), a novel training-free framework that mimics foveated encoding and cortical magnification in human vision to achieve adaptive , efficient representa-tions for VLMs under tight pixel budgets. Our key idea is to explore a Bio-inspired Adaptive Sampling Strategy ( BASS ). This empowers us to design a M¨ obius-parameterized mod-ule that performs non-uniform sampling while preserv-ing global scene structure. On top of BASS, we introduce closed-loop semantic feedback ( CSF ) via test-time adapta-
+
+> †
+
+Corresponding author. 
+
+tion to align the perceptual saliency with the textual infor-mation from the frozen VLM. We evaluate LLMind against uniform and other sampling baselines across diverse scene-level and region-guided visual question answering (VQA) benchmarks. The results show that ours achieves dramatic gains, with average improvements by +20 % on VQAv2, 
+
++38 % on Seed-Bench, and +37 % on A-OKVQA compared to uniform sampling under tight pixel budgets. More sur-prisingly, results reveal that LLMind can retain up to 82 %, 
+
+92 % and 97 % of the full-resolution performance with only 1%, 3% and 5% of the pixels, respectively. Moreover, LL-Mind is lightweight, plug-and-play, and compatible with existing VLMs without requiring architectural changes. 
+
+## 1. Introduction 
+
+Vision-Language Models (VLMs) have recently demon-strated impressive progress in multimodal reasoning and vi-sual question answering (VQA) [3, 10, 32, 46]. By jointly encoding visual and textual cues, these models can infer se-mantic correspondences and generate contextually coherent 
+
+> arXiv:2603.14882v1 [cs.CV] 16 Mar 2026
+
+responses. However, despite these advances, existing mod-els still operate under an assumption: perception requires uniform access to every pixel of an image [42, 48]. For in-stance, typical VLMs, e.g ., Qwen [50] or LLaVA [31] based on attention mechanisms do not employ attention to modu-late the spatial sampling of visual inputs [27]. Attention in transformers redistributes representational emphasis across features, but the underlying image is still uniformly sam-pled at fixed resolution. Consequently, VLMs allocate equal computational resources to semantically irrelevant back-ground regions and critical foreground details alike [8, 23]. While computationally tractable at small scales, these mod-els become inefficient as image resolution increases, forcing models to uniformly downsample and, consequently, dis-card critical details from all regions of the image. Although dynamic tokenization [7, 39] has recently been introduced to address such issues, it still requires full-resolution input, which limits its suitability for edge systems. From a neuroscience perspective, uniform downsam-pling does not reflect how biological vision allocates com-putational resources [42, 48]. Instead, the human visual system employs a hierarchical, attention-driven foveation strategy: the fovea provides high-acuity detail in a small attended region, while the peripheral retina conveys coarse, context-rich information that guides subsequent gaze shifts and processing [44] (Fig. 1 (a)). Through rapid sac-cadic movements, the visual system dynamically reposi-tions this high-resolution window, sampling the scene adap-tively based on task demands [25, 29]. This mechanism re-flects the principle of cortical magnification , where per-ceptually salient regions occupy disproportionately large representational space in the visual cortex [14]. Perception, therefore, is not a static snapshot but an active optimization process that maximizes information gain while minimizing computational expenditure [16]. Inspired by the foveated encoding and cortical magnifi-cation in human vision, an interesting question arises: Can biologically inspired sampling strategies enable VLMs to achieve higher reasoning efficiency and accuracy than conventional uniform sampling under limited pixel bud-gets? To answer this, we present the first comprehensive analysis of the visual representation strategies in VLMs, evaluating their effectiveness against uniform sampling across multiple VQA benchmarks. Building on this, we propose LLMind , a novel adaptive sampling framework that emulates the human visual system for the visual stim-uli. 1 Our core idea is to explore a Bio-inspired Adaptive Sampling Strategy ( BASS ) (Sec. 3.1). BASS serves as a computational analogue of cortical magnification, wherein the foveal region occupies a disproportionately large corti-cal representation [11]. To make it possible, we use M¨ obius transformation [4, 37], a mathematical tool that is parame-
+
+> 1Here, visual stimuli correspond to the input image of VLMs.
+
+terized to simulate cortical magnification. As a conformal mapping on the spherical plane, M¨ obius transformations perform smooth mappings of the image space ( i.e . rotation, translation, scaling, inversion) while preserving local geom-etry. As such, we can dynamically remap the spatial domain of an image, magnifying task-relevant regions with higher sampling density while compressing peripheral areas. We optimize the BASS parameters in a training-free loop using a perceptual loss, guided by the semantic out-put of the frozen VLM. Since the frozen VLM model is non-differentiable, we then introduce closed-loop semantic feedback ( CSF ) via test-time adaptation using Simultane-ous Perturbation Stochastic Approximation [43] to estimate gradients directly from input-output interactions (Sec. 3.2). Unlike prior training-free methods that require access to in-ternal model parameters or gradients of open ( white-box )VLM [49], our gradient-free CSF strategy can also seam-lessly integrate with proprietary ( black-box ) APIs, requiring no architectural modifications or parameter access. We extensively evaluate LLMind against uniform and other sampling baselines across diverse benchmark datasets, considering two complementary VQA paradigms: 
+
+Scene-level VQA for holistic reasoning and Region-guided VQA for localized understanding. LLMind improves the average performance 2 by +20% on VQAv2 [21], +38% 
+
+on Seed-Bench [30], and +37% on A-OKVQA [41] com-pared to uniform sampling under the same pixel budget for scene-level VQA tasks. For region-guided VQA, LL-Mind achieves an average gain of 35% over uniform sam-pling, even surpassing the full-resolution accuracy while us-ing only 1% of the pixels (See Sec. 4.3). To summarise, the major contributions of this paper are: • Inspired by neuroscience-grounded knowledge, we iden-tify a fundamental problem in VLMs and conduct the first comprehensive analysis of the visual representation strategies in VLMs. • We propose BASS that dynamically reallocates pixel bud-get to perceptually and semantically salient regions as a computational analogue of human vision (Sec. 3.1). • We introduce the CSF mechanism that aligns visual per-ception with task-driven reasoning in a training-free, test-time optimization compatible with both white-box and black-box VLMs (Sec. 3.2). • We validate our method on standard VQA benchmarks, demonstrating consistent improvements in reasoning ac-curacy under constrained pixel budgets for both scene-level and region-guided settings (Sec. 4.3). 
+
+## 2. Related Works 
+
+Multi-Resolution and Non-Uniform Visual Sampling. 
+
+Early studies modeled the human visual system to under-stand the functional limits of peripheral vision [6, 15],           
+
+> 2Average across 1%, 3% and 5% pixel budgets. Full Resolution Uniform Sampled LLMind
+> Winter Summer
+> What is the season depicted in the image?
+> Full Resolution Uniform Sampled LLMind
+> Red Black Red
+> Input Images Attention Maps
+> What color is the football player's helmet?
+> Input Images Attention Maps  Winter Figure 2. Qualitative comparison with Qwen2.5-VL on Seed-Bench at 5% pixel budget. LLMind adaptively allocates resolu-tion to semantically important regions, preserving visual evidence critical for answering the question. Zoom in for a better view .
+
+but did not translate these insights to AI-based systems. Later research extended this direction by applying foveated texture-based input representations to deep networks, show-ing that peripheral texture encoding enhances generaliza-tion, high-frequency sensitivity, and robustness to occlu-sion [12, 24]. A neuro-computational model further sug-gested that the advantage of peripheral over central vi-sion arises from the intrinsic utility of peripheral features, which generate a broader representational spreading trans-form [45]; however, this work was limited to scene classi-fication. Some works have even explored biologically in-spired retinal sampling to mimic foveal vision and reduce visual redundancy for prosthetic or neuromorphic applica-tions [40], but these methods remain hardware-bounded, and limited to low-level sensory encoding. Recent studies have examined how multi-resolution processing contributes to robustness and efficiency in vision models [1, 17]. In an effort to exploit spatially adaptive representations, several works have explored non-uniform sampling, particularly foveated schemes that densely sample regions near a fixa-tion point while sparsifying the periphery [2, 34, 38]. How-ever, these approaches often introduced new task-specific architectures rather than utilizing existing pretrained ones. 
+
+Foveation in Modern Neural Architectures. Building upon the foundations of non-uniform visual sampling, re-cent works have integrated foveation principles into modern neural architectures. PerViT [36] modeled peripheral vi-sion by injecting biologically inspired inductive biases into Transformer self-attention, while Killick et al . [28] intro-duced an end-to-end differentiable foveated vision model using graph convolution and sunflower-patterned sampling. Costa et al . [9] further explored cortical magnification by incorporating a retinal sampling layer that reproduced foveal magnification and radial bias through ganglion-cell-based resampling. However, these approaches remain task-specific, training-dependent, and limited to image classi-fication tasks. Thus, most prior works have focused on simpler single-modality tasks and has limited insight into how biologically inspired sampling can enhance higher-level reasoning in VLMs. Recently, two works by Gizdov et al . [19, 20] demon-strated that variable-resolution sampling improves VQA and detection accuracy in existing Large multimodal mod-els (LMM) under tight pixel budgets. However, their sampling scheme remains static, single-fixation, and does not account for salient or semantic features. In contrast, our framework performs dynamic, inference-time adaptive sampling that accounts for both salient and semantic fea-tures under strict pixel constraints, thereby improving per-formance over Gizdov et al . [19, 20]. 
+
+Training-Free Optimization for Multimodal Adapta-tion. Recent works have explored training-free optimiza-tion in multimodal systems through visual prompt manip-ulation [26, 49]. ControlMLLM [49], for example, opti-mized latent variables over attention maps at test time to guide focus toward region-of-interest cues. Our framework draws inspiration from this paradigm but differs fundamen-tally: rather than optimizing over attention maps, we opti-mize the sampling transformation itself, thereby modulat-ing the visual input before encoding. Moreover, while most training-free frameworks, including ControlMLLM, still re-quire access to internal attention maps or gradients, thus op-erating in a white-box setting. Our method is entirely black-box compatible, functioning seamlessly with closed-source VLMs without any internal model access. 
+
+## 3. Methodology 
+
+Overview: An overview of the proposed framework is illustrated in Fig. 3. The core of our design is a Bio-inspired Adaptive Sampling Strategy (BASS) that serves as a front-end sampling module. Based on a M¨ obius trans-formation, this generator produces a sampling grid that allo-cates resolution dynamically, mimicking the foveated struc-ture of the human eye. The transformation parameters are optimized at inference time through a perceptual loss and CSF, analogous to the saccadic eye movement that continu-ously refines human visual focus. Formally, given an image I ∈ R H×W ×3 and a set of questions q, the framework pro-duces an adaptively sampled image ˆI that maximizes rea-soning accuracy under a constrained pixel budget B.
+
+ˆI = arg max   
+
+> Eθ(I)
+
+F( ˆI, q, θ f ), (1) where Eθ denotes the BASS module,parameterized by M¨ obius transformation coefficients θ and F denotes the frozen VLM’s response quality. 
+
+3.1. Bio-inspired Adaptive Sampling Strategy 
+
+Insight. Inspired by the non-uniform spatial acuity of the human visual system, we design a M¨ obius transformation-based Bio-inspired Adaptive Sampling Strategy (BASS) (See Fig. 4). M¨ obius transformation provides a continu-ous, conformal mapping of the image plane. It bends the image space so that the cognitive region is magnified while the surrounding areas are smoothly compressed. 
+
+Forward and Inverse M¨ obius Warp. We apply a M¨ obius transformation to the input images via stereographic pro-jection. Given an input image I, each pixel corresponds to a spherical direction s ∈ S2. We first map s to the complex plane using north-pole stereographic projection 
+
+Σ : S2 → C, yielding w = Σ( s). The M¨ obius transfor-mation used in our model is parameterized by real scalars 
+
+a, b, c, d (normalized to avoid degenerate matrices), and is applied in the complex domain, and the transformed com-plex value z is defined as: 
+
+z = a w + bc w + d (2) 
+
+z is then mapped back to a point on the sphere via the in-verse stereographic projection Σ−1, and finally projected back into image coordinates using the standard mapping Π.Therefore, the overall forward warp M(I) is: 
+
+M(I)[ u, v ] = I⋆
+
+
+
+Π
+
+
+
+Σ−1
+
+ d Σ( s(u, v )) − b
+
+−c Σ( s(u, v )) + a
+
+ 
+
+(3) where I⋆ denotes bilinear sampling and s(u, v ) converts the image pixel (u, v ) to its corresponding spherical direction. The inverse warp uses the inverse M¨ obius z−1, defined as: 
+
+z−1 = d w − b
+
+−c w + a ., (4) resulting in the inverse transformation M−1(I):      
+
+> M−1(I)[ u, v ] = I⋆
+> 
+> Π
+> 
+> Σ−1
+> aΣ( s(u, v )) + bcΣ( s(u, v )) + d
+> 
+> (5)
+
+Learning the M¨ obius Parameters. In our implementa-tion, a lightweight Multilayer Perceptron (MLP) predicts the M¨ obius parameters, which we represent as a real-valued vector θ ∈ R 4, corresponding to the real part of the coef-ficients of the M¨ obius transformation. To incorporate this into an adaptive image sampling framework, we formulate the Sampling Strategy Eθ as a differentiable mapping: 
+
+ˆI = Eθ (I) = M−1
+
+> θ
+
+ I(SB (Mθ (I)))  (6) where Mθ (.) and M−1 
+
+> θ
+
+(.) denote the forward and inverse M¨ obius transforms parameterized by θ (Eq. 3 and Eq. 5 respectively), SB (.) performs uniform sampling at a con-trolled pixel budget B, and I(.) denotes the interpolation operator (e.g. bilinear interpolation) to restore the image to the original resolution. 
+
+3.2. Closed-Loop Semantic Feedback 
+
+Insight. We introduce the CSF module to adapt the sam-pling based on semantics cues via test-time adaptation of the BASS parameters, ensuring that the visual detail is allo-cated to regions most relevant to the task. 
+
+Perceptual Loss. Our perceptual loss is designed to achieve two primary objectives: maintaining global per-ceptual fidelity and accentuating semantically salient struc-tures. To this end, we define a composite loss function: 
+
+Limg = α · L V SI + β · L DIST S + γ · L M SE (7) where α, β and γ are weighting coefficients. Limg bal-ances semantic saliency, structural integrity, and optimiza-tion stability. It combines a Visual Saliency-Induced Index (VSI) [52] term to prioritize human-attentive re-gions, a Deep Image Structure and Texture Similarity (DISTS) [13] metric to enforce perceptual alignment in fea-ture space, and a Mean Squared Error (MSE) regularizer to ensure pixel-level smoothness and stabilize training. 
+
+Semantic Loss. While the perceptual loss Limg preserves visual quality, the challenge is how to improve semantic rea-soning accuracy for the given question q. We therefore inte-grate textual feedback from the frozen VLM by comparing predicted answers with ground-truth responses. Given the model’s predicted answer ypred and reference answer ygt ,we compute the text loss as: 
+
+Ltext = 1 − cos ( E(ypred ), E (ygt )) (8) where E(·) denotes normalized embeddings obtained from a Sentence Transformer (MiniLM [47]). This formulation captures semantic similarity rather than exact string match-ing, making it robust to paraphrasing. Since the VLM op-erates as a black box, gradients from Ltext cannot be di-rectly propagated through the model. To address this, we employ Simultaneous Perturbation Stochastic Approxi-mation (SPSA) to estimate the gradient. Let θ ∈ R4 rep-resent the M¨ obius transformation parameters. The gradient estimate is computed as: 
+
+∇θ Ltext ≈ Ltext (θ + δ∆) − L text (θ − δ∆) 2δ (9) where δ > 0 is a small perturbation size, and ∆ ∈ R4 is a random perturbation vector with components sampled from a symmetric Bernoulli distribution, i.e., ∆i ∼ {± 1} with equal probability. Furthermore, to improve training efficiency, we employ an adaptive question selection strategy that focuses on chal-lenging examples. Let Q = {q1, . . . , q N } be the set of Latent Encoding Layer  
+
+> Transformation
+> Layers
+> Mˆbius
+> Parameters
+> Bio-inspired
+> Adaptive Sampling
+> (BASS)
+> Input Image
+> I
+> Pixel Budget
+> B
+> Sampled Image
+> Self and Cross Attention
+> Visual Encoder Text Encoder
+
+Frozen VLM    
+
+> Questions
+> <q 1, q 2… q n>
+> Semantic Loss Predicted Outputs
+> ypred
+> GT Answers
+> ygt
+> Inference
+> CSF (SPSA Based Optimization)
+> MLP Network
+> Forward Pass
+> Backward Pass
+> Perceptual Loss
+
+Figure 3. Overview of the proposed framework. Given the input image I, the MLP network predicts the M¨ obius transformation coefficients, which are used by BASS (Sec. 3.1) to produce the sampled image ˆI. The Perceptual loss Limg (Eq. 7) between I and ˆI flows through the network to optimize the MLP parameters. In parallel, a frozen VLM processes a set of questions q to generate predicted answers ypred . These are compared with the ground-truth answers ygt to obtain the Semantic loss Ltext (Eq. 8) for further guiding the optimization of the MLP parameters using SPSA (Eq. 9). Mˆbius 
+
+> Transformation
+> Input Image
+> I
+> Sampling and
+> Interpolation
+> Pixel Budget
+> B
+> Inverse Mˆbius Transformation
+> Mˆbius Coefficients
+> Sampled Image
+
+Figure 4. Illustration of the Bio-inspired Adaptive Sampling Strategy (BASS). Given an input image I, the MLP predicts M¨ obius parameters θ to warp the image toward salient regions (Eq. 3). The warped image is uniformly sampled under pixel bud-get B through SB (·), and then reconstructed to its original resolu-tion via an interpolation operator I(·). Finally, the inverse trans-formation (Eq. 5) restores the global spatial structure, yielding the adaptively sampled image ˆI.
+
+all questions and w(t) 
+
+> i
+
+be the weight associated with ques-tion qi at optimization step t. We initialize weights uni-formly: w(0)  
+
+> i
+
+= 1 /N . After each evaluation, weights are updated exponentially based on performance: w(t+1)  
+
+> i
+
+=
+
+w(t) 
+
+> i
+
+· exp 
+
+
+
+η · I[qi is wrong ]
+
+> N
+
+
+
+, where η > 0 is a learning rate and I[·] is the indicator function. Questions for SPSA gradi-ent estimation are then sampled proportionally to their cur-rent weights P (select qi) = wiPNj=1 wj
+
+. We formulate the fi-nal optimization objective as a weighted combination of the perceptual and semantic losses. Let Limg be the perceptual loss and β > 0 a balancing coefficient. The combined up-date direction is: 
+
+gtotal = ∇θ Limg + β · ∥∇ θ Limg ∥∥∇ θ Ltext ∥ ∇θ Ltext (10) where gradient norms are computed for numerical stabil-ity. This enables gradient-free optimization while maintain-ing focus on semantically challenging cases, even when the VLM’s internal gradients are inaccessible. 
+
+## 4. Experiments and Evaluation 
+
+4.1. Settings and Implementation Details 
+
+Evaluation Details. We evaluate the LLMind across two complementary VQA paradigms that jointly examine its ca-pability for holistic scene understanding as well as region-guided reasoning. For all experiments, we restrict our study to lightweight VLMs (< 4B parameters) to emphasize the framework’s adaptability in low-resource scenarios. This choice reflects a practical motivation : recent works show that small-scale models, with efficient design choices and sampling mechanisms, can approach their larger counter-parts [18, 35]. Our experiments, therefore, highlight how the proposed method enhances reasoning ability without re-lying on massive model capacity. 
+
+(1) Scene-level VQA. We evaluate the model’s capa-bility for global reasoning over the entire visual scene. The questions demand comprehension of semantic relation-ships, contextual attributes, and high-level visual concepts present across the image. For example, queries such as 
+
+“What best describes the pool of water?” or “How many Table 1. Quantitative comparison of bio-inspired and uniform sampling strategies on scene-level VQA benchmarks under tight-budget constraints (1%, 3%, 5%) . We report full-resolution accuracy, sampled accuracy at each budget, accuracy gain over uniform sampling, and accuracy retained relative to the full-resolution baseline. 
+
+Dataset Model Accuracy (%) Sampling Method Accuracy Sampled ∆ Accuracy Gain (%) Accuracy Retained Full Res. (%) over Uniform Sample (% of Full Res.) 1% 3% 5% 1% 3% 5% 1% 3% 5% VQAv2 
+
+Qwen2.5-VL 86.96 Uniform Sampling 47.31 52.71 59.94 – – – 54.40 60.61 68.92 Static Foveated 46.18 51.96 58.30 -2.38 -1.42 -2.73 53.10 59.75 67.04 Sunflower Inspired 43.77 47.41 52.85 -7.48 -10.05 -11.82 50.33 54.51 60.77 Radial Sampling 44.79 46.25 50.12 -5.32 -12.25 -16.38 51.50 53.18 57.63 
+
+LLMind (Ours) 55.05 65.37 73.54 +16.36 +24.01 +22.68 63.31 75.17 84.56 
+
+SmolVLM 80.01 Uniform Sampling 46.38 53.28 59.06 – – – 57.96 66.59 73.81 Static Foveated 44.24 51.64 58.43 -4.61 -3.07 -1.06 55.29 64.54 73.02 Sunflower Inspired 46.45 50.55 56.38 +0.15 -5.12 -4.53 58.05 63.17 70.46 Radial Sampling 42.99 47.07 50.92 -7.30 -11.65 -13.78 53.73 58.83 63.64 
+
+LLMind (Ours) 58.88 70.40 76.46 +26.95 +32.13 +29.46 73.59 87.98 95.56 
+
+LLaVA-OneVision 73.34 Uniform Sampling 40.98 49.15 57.60 – – – 55.87 67.01 78.53 Static Foveated 42.27 42.88 45.37 +3.14 -12.75 -21.23 57.63 58.46 61.86 Sunflower Inspired 42.29 46.02 50.51 +3.19 -6.36 -12.30 57.66 62.74 68.87 Radial Sampling 40.10 42.40 45.25 -2.14 -13.73 -21.44 54.67 57.81 61.69 
+
+LLMind (Ours) 47.00 54.49 62.38 +14.69 +10.86 +8.29 64.08 74.29 85.05 A-OKVQA 
+
+Qwen2.5-VL 85.67 Uniform Sampling 44.31 48.77 52.01 – – – 51.72 56.93 60.71 Static Foveated 45.58 50.65 56.78 +2.87 +3.85 +9.17 53.20 59.12 66.28 Sunflower Inspired 43.23 46.28 51.61 -2.44 -5.11 -0.77 50.46 54.02 60.24 Radial Sampling 45.58 47.16 48.90 +2.87 -3.30 -5.98 53.20 55.05 57.08 
+
+LLMind (Ours) 51.18 61.53 69.74 +15.50 +26.16 +34.09 59.74 71.82 81.41 
+
+SmolVLM 78.60 Uniform Sampling 39.78 45.06 48.73 – – – 50.61 57.33 62.00 Static Foveated 42.09 46.98 51.44 +5.81 +4.26 +5.56 53.55 59.77 65.45 Sunflower Inspired 44.27 46.20 48.64 +11.29 +2.53 -0.18 56.32 58.78 61.88 Radial Sampling 41.48 43.58 47.33 +4.27 -3.28 -2.87 52.77 55.45 60.22 
+
+LLMind (Ours) 64.81 72.63 76.81 +62.92 +61.19 +57.62 82.46 92.40 97.72 
+
+LLaVA-OneVision 60.26 Uniform Sampling 34.80 35.71 42.33 – – – 57.75 59.26 70.25 Static Foveated 34.23 35.28 37.27 -1.64 -1.20 -11.95 56.80 58.55 61.85 Sunflower Inspired 27.68 30.91 36.24 -20.46 -13.44 -14.39 45.93 51.29 60.14 Radial Sampling 28.29 28.03 29.78 -18.71 -21.51 -29.65 46.95 46.52 49.42 
+
+LLMind (Ours) 43.01 46.09 53.18 +23.59 +29.07 +25.63 71.37 76.49 88.25 Seed Bench 
+
+Qwen2.5-VL 71.25 Uniform Sampling 35.53 41.55 48.45 – – – 49.87 58.32 68.00 Static Foveated 34.75 42.05 49.4 -2.20 +1.20 +1.96 48.77 59.02 69.33 Sunflower Inspired 36.70 40.55 44.6 +3.29 -2.41 -7.95 51.51 56.91 62.60 Radial Sampling 35.20 39.45 41.75 -0.93 -5.05 -13.83 49.40 55.37 58.60 
+
+LLMind (Ours) 40.28 50.50 58.23 +13.37 +21.54 +20.19 56.53 70.88 81.73 
+
+SmolVLM 51.6 Uniform Sampling 21.81 26.38 29.19 – – – 42.27 51.12 56.57 Static Foveated 30.20 36.85 42.65 +38.47 +39.69 +46.11 58.53 71.41 82.66 Sunflower Inspired 33.60 34.95 37.85 +54.06 +32.49 +29.67 65.12 67.73 73.35 Radial Sampling 30.80 33.15 36.05 +41.22 +25.66 +23.50 59.69 64.24 69.86 
+
+LLMind (Ours) 37.42 43.44 45.97 +71.57 +64.67 +57.49 72.52 84.19 89.09 
+
+LLaVA-OneVision 37.75 Uniform Sampling 18.65 21.60 24.35 – – – 49.40 57.22 64.50 Static Foveated 24.85 25.55 25.60 +33.24 +18.29 +5.13 65.83 67.68 67.81 Sunflower Inspired 21.40 23.90 25.15 +14.75 +10.65 +3.29 56.69 63.31 66.62 Radial Sampling 22.90 21.70 22.55 +22.79 +0.46 -7.39 60.66 57.48 59.74 
+
+LLMind (Ours) 26.05 27.85 30.40 +39.68 +28.94 +24.85 69.01 73.77 80.53 
+
+people are visible in the image?” require a holistic un-derstanding spanning the full spatial extent. We conduct experiments on 5000+ question-answer pairs from VQAv2 
+
+and 2000+ pairs from Seed-Bench to evaluate general scene-level reasoning capabilities for LLMind. Additionally, we evaluate LLMind on A-OKVQA dataset, which requires in-tegrating external, world-based knowledge for comprehen-sive visual understanding. 
+
+(2) Region-guided VQA. We evaluate the model’s lo-calized reasoning by using explicit region prompts to direct the model’s focus toward relevant spatial areas. Each ques-tion is associated with a bounding region that defines a cog-nitive window . The questions require interpreting spatial cues to perform region-specific classification (RSC) within the defined cognitive window. For example, “Is the object 
+
+⟨location ⟩ a ⟨class A ⟩ or a ⟨class B ⟩?” or “Can you pro-vide a description of the region ⟨location ⟩?” . We adopt data configuration as ControlMLLM [49] for this setting, follow-ing the Ferret [51] setup to construct 1400+ region-guided questions from the LVIS [22] validation split. Uniform Sampled  Static Foveated  Radial Sampled  Sunflower Inspired  LLMind Full Resolution Figure 5. Illustration of the compared sampling methods under 10% pixel budget. Zoom in for a better view .
+
+Implementation Details. All experiments were conducted on a system equipped with 4 × NVIDIA GeForce RTX 5090 GPUs (32 GB VRAM each). For each image, we perform an inference-time optimization for a fixed number of iter-ations t. Within this process, the SPSA update step is ap-plied every t/ 5 iterations in equal intervals. Unless oth-erwise specified, all images are processed at their original resolution without resizing. We adopt the concept of information-matched images 
+
+proposed by Gizdov et al. [20], which provides a principled way to compare sampling strategies under identical pixel budgets. Specifically, two sampling maps are constructed such that they contain the same number of sampled pix-els, differing only in how those samples are spatially dis-tributed. This ensures that any observed performance dif-ferences arise purely from the sampling distribution rather than from differences in information content. The computational overhead for LLMind is marginal and bounded by t, with latency of ∼ 0.011 s/iter w/o SPSA and 
+
+∼ 4.75 s/iter with SPSA (reducible via optimizations [49]). 
+
+4.2. Baseline Methods 
+
+Fig. 5 illustrates the sampling baselines evaluated in our study alongside LLMind. Each method allocates the same total information budget but differs in how resolution is spa-tially distributed across the visual field. After sampling, all representations are upsampled via interpolation to the orig-inal input resolution, ensuring that any performance differ-ences arise purely from the sampling distribution rather than from differences in input size. 
+
+(1) Uniform Sampling. We include a uniform sampling condition as a baseline, where the same total pixel budget is spread evenly across the entire image. 
+
+(2) Static Foveated. We implement the static-foveated baseline following the formulation of Gizdov et al . [19, 20], using log-polar sampling to generate variable-resolution in-puts. Consistent with the original setting, the fixation point is fixed at the image center throughout all experiments. 
+
+(3) Sunflower Inspired. We adopt a biologically in-spired sampling layout following the sunflower phyllotaxis model proposed by Killick et al . [28]. Unlike the origi-nal work, we employ this sampling formulation purely as a static input transformation without the graph-convolutional processing. Following the static foveate setting, the fixation is fixed at the image center. 
+
+(4) Radial Sampling. We implement a static radial sam-Full Resolution 
+
+> LLMind (Ours)
+> Uniform Sampled
+
+Figure 6. Category-wise performance on A-OKVQA at a 5% pixel budget with Qwen2.5-VL (4B). Zoom in for a better view .
+
+pling scheme inspired by the retinal model of Robert-Inacio 
+
+et al . [40]. The fixation is fixed at the image center, and the foveal region is preserved at full resolution, while main-taining the overall information-matched constraint so that the total number of sampled pixels remains consistent. 
+
+4.3. Results and Discussion 
+
+Our experimental results are structured around the follow-ing research questions (RQs), which guide our evaluation: 
+
+RQ-1: Does LLMind improve scene-level VQA accu-racy across diverse benchmarks by selectively allocating pixels to semantically informative regions? 
+
+RQ-2: Can LLMind enhance region-guided VQA accu-racy by reducing background distraction and improving evidence grounding? 
+
+RQ-3: What is the impact of the CSF module on sam-pling quality across different pixel budgets, and how es-sential is it for semantic alignment? 
+
+4.3.1. Comparison on Scene-level VQA. 
+
+Table 1 presents the quantitative results on VQAv2, Seed-Bench, and A-OKVQA under strict pixel budgets (1–5%), evaluated across Qwen2.5-VL [5] (4B), SmolVLM [35] (2B), and LLaVA-OneVision [31] (0.9B). 
+
+[A-1] LLMind consistently outperforms all competing sampling strategies under strict pixel budgets. It retains more than 55% of the full-resolution accuracy at only 1% pixels, over 70% at 3%, and above 80% at 5% across all benchmarks. At peak efficiency, LLMind preserves up to 82% , 92% , and 97% of the full-resolution perfor-mance at the 1%, 3%, and 5% budgets. Fig. 2 provides qualitative comparisons on Seed-Bench for Qwen2.5-VL, including attention visualizations. LL-Mind’s attention closely aligns with the full-resolution model, consistently focusing on the evidence-relevant re-gions, whereas uniform sampling produces diffuse and of-ten misplaced attention. Moreover, the question-category-wise analysis (Fig. 6) reveals that LLMind improves per-formance across all major reasoning categories, indicating broad gains that extend beyond any specific task type. Table 2. Performance comparison of various sampling methods for a single RSC-based VQA task on the LVIS dataset.                                                   
+
+> Model Accuracy (%) Sampling Accuracy Sampled Full Res. Method (%) 1% 3% 5% 10%
+> Qwen3-VL 50.60 Uniform Sampling 44.80 45.63 50.40 51.60 Static Foveated 46.10 48.50 49.40 50.40 Sunflower Inspired 47.60 47.50 49.70 49.50 Radial Sampling 45.30 46.70 48.10 48.20
+> LLMind (Ours) 54.60 62.90 71.40 77.50
+> DeepSeek-VL 46.10 Uniform Sampling 43.50 43.90 44.10 47.80 Static Foveated 44.50 45.00 44.80 45.20 Sunflower Inspired 43.90 44.40 44.60 44.50 Radial Sampling 44.30 44.30 45.20 44.43
+> LLMind (Ours) 53.20 59.20 62.20 66.80
+
+Table 3. Performance comparison of various sampling methods for multiple RSC-based VQA tasks on the LVIS dataset.                                                   
+
+> Model Accuracy (%) Sampling Accuracy Sampled Full Res. Method (%) 1% 3% 5% 10%
+> Qwen3-VL 60.20 Uniform Sampling 50.90 53.49 55.30 56.85 Static Foveated 50.38 52.19 53.74 56.58 Sunflower Inspired 51.16 53.22 55.29 56.07 Radial Sampling 48.83 50.64 51.42 56.07
+> LLMind (Ours) 60.21 66.41 72.61 77.26
+> DeepSeek-VL 51.93 Uniform Sampling 43.15 45.22 47.29 50.39 Static Foveated 44.96 48.57 52.45 51.42 Sunflower Inspired 42.63 47.02 48.57 49.87 Radial Sampling 43.15 45.21 45.73 50.38
+> LLMind (Ours) 50.90 60.47 65.12 65.63
+
+4.3.2. Comparison on Region-guided VQA. 
+
+Table 2 and Table 3 present results for single- and multi-region guided VQA on the LVIS dataset, where each ques-tion specifies a cognitive window. We evaluate Qwen3-VL [50] (2B) and DeepSeek-VL [33] (2B) in this set-ting, which requires performing region-specific classifica-tion (RSC) through VQA within the cognitive window. 
+
+[A-2] LLMind consistently surpasses all baselines under both single and multi-region guided VQA. With only 3% 
+
+pixels, LLMind even outperforms the full-resolution input , indicating that removing irrelevant visual content can reduce distraction and improve reasoning fidelity. The targeted visual allocation in LLMind explains its ability to surpass full-resolution inputs in region-guided tasks. Small VLMs such as Qwen3 (2B) and DeepSeek-VL (2B) achieve below 60% accuracy at full resolution, indicating limited robustness in this setting. By revealing only evidence-relevant regions and suppressing background clutter, LLMind reduces the influence of background clutter and scene-level priors that often lead to hallucinations. As a result, the model makes decisions that are more closely grounded in the specified regions, leading to more reliable and accurate reasoning. 
+
+4.3.3. Ablation and Analysis 
+
+We conduct an ablation study on the A-OKVQA dataset us-ing Qwen2.5-VL to analyze the roles of pixel budget and the CSF module (Fig. 7). 
+
+[A-3] Without CSF, LLMind relies only on perceptual similarity, yielding gains over Uniform Sampling at low pixel budgets but diminishing at higher budgets where perceptual cues fail to highlight semantic regions. With CSF, performance improves consistently across all pixel budgets, showing that semantic feedback is essential for guiding sampling toward task-relevant evidence. With CSF, LLMind achieves even stronger gains: at only 20% of the sampled pixels, it surpasses the full-resolution accuracy , indicating that VLMs do not inherently require the entire image to perform well. When sampling is guided adaptively toward semantically relevant regions, the model can match and even exceed the performance obtained from full-resolution inputs. We also observe diminishing re-turns beyond the 20% pixel budget. The accuracy grad-ually converges toward the full-resolution performance as the pixel budget increases. 
+
+Figure 7. Ablation study on A-OKVQA dataset with Qwen2.5-VL (4B) illustrating the impact of pixel budget and the CSF module on LLMind’s performance. Zoom in for a better view .
+
+## 5. Conclusion and Future Work 
+
+In this work, we investigated the role of biologically in-spired sampling in enhancing visual reasoning under con-strained pixel budgets. We introduced LLMind , a training-free adaptive sampling strategy inspired by cortical magnifi-cation in human vision. Comprehensive evaluations across diverse datasets and multiple backbone VLMs demonstrate that LLMind consistently outperforms uniform and other bio-inspired baseline, in both scene-level and region-guided 
+
+VQA settings, highlighting its utility for efficient and scal-able multimodal intelligence. 
+
+Future Work: Looking forward, we aim to extend this framework toward more generative and 3D-aware vision-language tasks, including object-centric descriptions, 3D VQA, and compression-aware perception for neural render-ing pipelines. We hope this work encourages further explo-ration of perceptually grounded representations in VLMs. 
+
+Acknowledgments: This work is supported by the MOE AcRF Tier 1: Call2/2025 under Grant No. RG160/25 and NTU Start Up Grant. References 
+
+[1] Abdulghani M Abdulghani, Mokhles M Abdulghani, Wilbur L Walters, and Khalid H Abed. Data augmentation with noise and blur to enhance the performance of yolo7 ob-ject detection algorithm. In 2023 Congress in Computer Sci-ence, Computer Engineering, & Applied Computing (CSCE) ,pages 180–185. IEEE, 2023. 3 [2] Emre Akbas and Miguel P Eckstein. Object detection through search with a foveated visual system. PLoS com-putational biology , 13(10):e1005743, 2017. 3 [3] Jean-Baptiste Alayrac, Jeff Donahue, Pauline Luc, Antoine Miech, Iain Barr, Yana Hasson, Karel Lenc, Arthur Men-sch, Katherine Millican, Malcolm Reynolds, et al. Flamingo: a visual language model for few-shot learning. Advances in neural information processing systems , 35:23716–23736, 2022. 1 [4] Douglas N Arnold and Jonathan P Rogness. M¨ obius trans-formations revealed. Notices of the American Mathematical Society , 55(10):1226–1231, 2008. 2 [5] Shuai Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, Sibo Song, Kai Dang, Peng Wang, Shijie Wang, Jun Tang, et al. Qwen2. 5-vl technical report. arXiv preprint arXiv:2502.13923 , 2025. 1, 7 [6] Benjamin Balas, Lisa Nakano, and Ruth Rosenholtz. Asummary-statistic representation in peripheral vision ex-plains visual crowding. Journal of vision , 9(12):13–13, 2009. 2[7] Daniel Bolya, Cheng-Yang Fu, Xiaoliang Dai, Peizhao Zhang, Christoph Feichtenhofer, and Judy Hoffman. To-ken merging: Your vit but faster. arXiv preprint arXiv:2210.09461 , 2022. 2 [8] Gianni Brauwers and Flavius Frasincar. A general survey on attention mechanisms in deep learning. IEEE transactions on knowledge and data engineering , 35(4):3279–3298, 2021. 2 [9] Danny da Costa, Lukas Kornemann, Rainer Goebel, and Mario Senden. Convolutional neural networks develop ma-jor organizational principles of early visual cortex when en-hanced with retinal sampling. Scientific Reports , 14(1):8980, 2024. 3 [10] Wenliang Dai, Junnan Li, Dongxu Li, Anthony Tiong, Junqi Zhao, Weisheng Wang, Boyang Li, Pascale N Fung, and Steven Hoi. Instructblip: Towards general-purpose vision-language models with instruction tuning. Advances in neural information processing systems , 36:49250–49267, 2023. 1 [11] PM Daniel and D Whitteridge. The representation of the visual field on the cerebral cortex in monkeys. The Journal of physiology , 159(2):203, 1961. 2 [12] Arturo Deza and Talia Konkle. Emergent proper-ties of foveated perceptual systems. arXiv preprint arXiv:2006.07991 , 2020. 3 [13] Keyan Ding, Kede Ma, Shiqi Wang, and Eero P Simoncelli. Image quality assessment: Unifying structure and texture similarity. IEEE transactions on pattern analysis and ma-chine intelligence , 44(5):2567–2581, 2020. 4 [14] John Duncan. Selective attention and the organization of vi-sual information. Journal of experimental psychology: Gen-eral , 113(4):501, 1984. 2 [15] Jeremy Freeman and Eero P Simoncelli. Metamers of the ventral stream. Nature neuroscience , 14(9):1195–1201, 2011. 2 [16] Karl Friston. The free-energy principle: a unified brain the-ory? Nature reviews neuroscience , 11(2):127–138, 2010. 2 [17] Stephanie Fu, Mark Hamilton, Laura Brandt, Axel Feldman, Zhoutong Zhang, and William T Freeman. Featup: A model-agnostic framework for features at any resolution. arXiv preprint arXiv:2403.10516 , 2024. 3 [18] Zhangwei Gao, Zhe Chen, Erfei Cui, Yiming Ren, Weiyun Wang, Jinguo Zhu, Hao Tian, Shenglong Ye, Junjun He, Xizhou Zhu, et al. Mini-internvl: a flexible-transfer pocket multi-modal model with 5% parameters and 90% perfor-mance. Visual Intelligence , 2(1):32, 2024. 5 [19] Andrey Gizdov, Shimon Ullman, and Daniel Harari. Vari-able resolution improves visual question answering under a limited pixel budget. In European Conference on Computer Vision , pages 289–298. Springer, 2024. 3, 7 [20] Andrey Gizdov, Shimon Ullman, and Daniel Harari. See-ing more with less: Human-like representations in vision models. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 4408–4417, 2025. 3, 7 [21] Yash Goyal, Tejas Khot, Douglas Summers-Stay, Dhruv Ba-tra, and Devi Parikh. Making the v in vqa matter: Elevating the role of image understanding in visual question answer-ing. In Proceedings of the IEEE conference on computer vision and pattern recognition , pages 6904–6913, 2017. 2 [22] Agrim Gupta, Piotr Dollar, and Ross Girshick. Lvis: Adataset for large vocabulary instance segmentation. In Pro-ceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 5356–5364, 2019. 6 [23] Kai Han, Yunhe Wang, Hanting Chen, Xinghao Chen, Jianyuan Guo, Zhenhua Liu, Yehui Tang, An Xiao, Chun-jing Xu, Yixing Xu, et al. A survey on vision transformer. 
+
+IEEE transactions on pattern analysis and machine intelli-gence , 45(1):87–110, 2022. 2 [24] Anne Harrington, Vasha DuTell, Mark Hamilton, Ayush Tewari, Simon Stent, William T Freeman, and Ruth Rosen-holtz. Coco-periph: bridging the gap between human and machine perception in the periphery. In The Twelfth Interna-tional Conference on Learning Representations , 2023. 3 [25] Mary Hayhoe and Dana Ballard. Eye movements in natural behavior. Trends in cognitive sciences , 9(4):188–194, 2005. 2[26] Menglin Jia, Luming Tang, Bor-Chun Chen, Claire Cardie, Serge Belongie, Bharath Hariharan, and Ser-Nam Lim. Vi-sual prompt tuning. In European conference on computer vision , pages 709–727. Springer, 2022. 3 [27] Salman Khan, Muzammal Naseer, Munawar Hayat, Syed Waqas Zamir, Fahad Shahbaz Khan, and Mubarak Shah. Transformers in vision: A survey. ACM computing surveys (CSUR) , 54(10s):1–41, 2022. 2 [28] George Killick, Paul Henderson, Paul Siebert, and Gerardo Aragon-Camarasa. Foveation in the era of deep learning. 
+
+arXiv preprint arXiv:2312.01450 , 2023. 3, 7 [29] Michael Land and Benjamin Tatler. Looking and acting: vi-sion and eye movements in natural behaviour . Oxford Uni-versity Press, 2009. 2 [30] Bohao Li, Rui Wang, Guangzhi Wang, Yuying Ge, Yix-iao Ge, and Ying Shan. Seed-bench: Benchmarking mul-timodal llms with generative comprehension. arXiv preprint arXiv:2307.16125 , 2023. 2 [31] Bo Li, Yuanhan Zhang, Dong Guo, Renrui Zhang, Feng Li, Hao Zhang, Kaichen Zhang, Peiyuan Zhang, Yanwei Li, Zi-wei Liu, et al. Llava-onevision: Easy visual task transfer. 
+
+arXiv preprint arXiv:2408.03326 , 2024. 2, 7 [32] Junnan Li, Dongxu Li, Silvio Savarese, and Steven Hoi. Blip-2: Bootstrapping language-image pre-training with frozen image encoders and large language models. In In-ternational conference on machine learning , pages 19730– 19742. PMLR, 2023. 1 [33] Haoyu Lu, Wen Liu, Bo Zhang, Bingxuan Wang, Kai Dong, Bo Liu, Jingxiang Sun, Tongzheng Ren, Zhuoshu Li, Hao Yang, et al. Deepseek-vl: towards real-world vision-language understanding. arXiv preprint arXiv:2403.05525 ,2024. 8 [34] Hristofor Lukanov, Peter K¨ onig, and Gordon Pipa. Bio-logically inspired deep learning model for efficient foveal-peripheral vision. Frontiers in Computational Neuroscience ,15:746204, 2021. 3 [35] Andr´ es Marafioti, Orr Zohar, Miquel Farr´ e, Merve Noyan, Elie Bakouch, Pedro Cuenca, Cyril Zakka, Loubna Ben Allal, Anton Lozhkov, Nouamane Tazi, et al. Smolvlm: Redefining small and efficient multimodal models. arXiv preprint arXiv:2504.05299 , 2025. 5, 7 [36] Juhong Min, Yucheng Zhao, Chong Luo, and Minsu Cho. Peripheral vision transformer. Advances in Neural Informa-tion Processing Systems , 35:32097–32111, 2022. 3 [37] John Olsen. The geometry of m¨ obius transformations. 
+
+Rochester: University of Rochester , 2010. 2 [38] Beatriz Paula and Plinio Moreno. Learning to search for and detect objects in foveal images using deep learning. In 
+
+Iberian Conference on Pattern Recognition and Image Anal-ysis , pages 223–237. Springer, 2023. 3 [39] Yongming Rao, Wenliang Zhao, Benlin Liu, Jiwen Lu, Jie Zhou, and Cho-Jui Hsieh. Dynamicvit: Efficient vision transformers with dynamic token sparsification. Advances in neural information processing systems , 34:13937–13949, 2021. 2 [40] Fr´ ed´ erique Robert-Inacio, R´ emy Scaramuzzino, Quentin Stainer, and Edith Kussener-Combier. Biologically inspired image sampling for electronic eye. In 2010 Biomedical Circuits and Systems Conference (BioCAS) , pages 246–249. IEEE, 2010. 3, 7 [41] Dustin Schwenk, Apoorv Khandelwal, Christopher Clark, Kenneth Marino, and Roozbeh Mottaghi. A-okvqa: Abenchmark for visual question answering using world knowl-edge. In European conference on computer vision , pages 146–162. Springer, 2022. 2 [42] Leo Schwinn, Doina Precup, Bj¨ orn Eskofier, and Dario Zanca. Behind the machine’s gaze: Neural networks with biologically-inspired constraints exhibit human-like visual attention. arXiv preprint arXiv:2204.09093 , 2022. 2 [43] James C Spall. Multivariate stochastic approximation using a simultaneous perturbation gradient approximation. IEEE transactions on automatic control , 37(3):332–341, 2002. 2 [44] Hans Strasburger, Ingo Rentschler, and Martin J¨ uttner. Pe-ripheral vision and pattern recognition: A review. Journal of vision , 11(5):13–13, 2011. 2 [45] Panqu Wang and Garrison W Cottrell. Central and peripheral vision for scene recognition: A neurocomputational model-ing exploration. Journal of vision , 17(4):9–9, 2017. 3 [46] Peng Wang, Shuai Bai, Sinan Tan, Shijie Wang, Zhihao Fan, Jinze Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, et al. Qwen2-vl: Enhancing vision-language model’s perception of the world at any resolution. arXiv preprint arXiv:2409.12191 , 2024. 1 [47] Wenhui Wang, Furu Wei, Li Dong, Hangbo Bao, Nan Yang, and Ming Zhou. Minilm: Deep self-attention distillation for task-agnostic compression of pre-trained transformers. Ad-vances in neural information processing systems , 33:5776– 5788, 2020. 4 [48] Yulin Wang, Yang Yue, Yang Yue, Huanqian Wang, Haojun Jiang, Yizeng Han, Zanlin Ni, Yifan Pu, Minglei Shi, Rui Lu, et al. Emulating human-like adaptive vision for efficient and flexible machine visual perception. Nature Machine In-telligence , pages 1–19, 2025. 2 [49] Mingrui Wu, Xinyue Cai, Jiayi Ji, Jiale Li, Oucheng Huang, Gen Luo, Hao Fei, Guannan Jiang, Xiaoshuai Sun, and Ron-grong Ji. Controlmllm: Training-free visual prompt learning for multimodal large language models. Advances in Neural Information Processing Systems , 37:45206–45234, 2024. 2, 3, 6, 7 [50] An Yang, Anfeng Li, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu, Chang Gao, Chengen Huang, Chenxu Lv, et al. Qwen3 technical report. arXiv preprint arXiv:2505.09388 , 2025. 2, 8 [51] Haoxuan You, Haotian Zhang, Zhe Gan, Xianzhi Du, Bowen Zhang, Zirui Wang, Liangliang Cao, Shih-Fu Chang, and Yinfei Yang. Ferret: Refer and ground anything anywhere at any granularity. arXiv preprint arXiv:2310.07704 , 2023. 6[52] Lin Zhang, Ying Shen, and Hongyu Li. Vsi: A visual saliency-induced index for perceptual image quality assess-ment. IEEE Transactions on Image processing , 23(10): 4270–4281, 2014. 4

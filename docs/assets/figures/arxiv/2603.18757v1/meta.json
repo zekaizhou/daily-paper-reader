@@ -1,0 +1,110 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.18757v1/fig-001.webp",
+      "caption": "Table 1. Comparison (%) on Cross-Weather adaptation task Cityscapes→Foggy Cityscapes (C→F)",
+      "page": 6,
+      "index": 1,
+      "width": 1026,
+      "height": 475
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18757v1/fig-002.webp",
+      "caption": "Figure 8. T-SNE visualization of the features extracted from both domains.",
+      "page": 15,
+      "index": 2,
+      "width": 986,
+      "height": 341
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18757v1/fig-003.webp",
+      "caption": "Figure 1. (a) Existing DAOD methods focus on aligning features at image and instance-level to extract domain-invariant features. However, they only achieve local alignment due to the locality of CNN-based backbone and head, resulting in insufficient alignment across regions. (b) Our DA-Mamba utilizes SSM’s long-range perception capability to extract global domain-invariant features, introducing the ImageAware SSM module to the backbone to supplement global domain attributes, and the Object-Aware SSM module to the detection head to model spatial and semantic dependencies between objects, achieving fine-grained alignment at image and instance-level.",
+      "page": 2,
+      "index": 3,
+      "width": 1036,
+      "height": 357
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18757v1/fig-004.webp",
+      "caption": "Table 3. Comparison (%) on Cross-Style adaptation task Pascal VOC→Clipart (P→Clp)",
+      "page": 7,
+      "index": 4,
+      "width": 1026,
+      "height": 344
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18757v1/fig-005.webp",
+      "caption": "Table 2. Comparison (%) on Cross-FOV adaptation task Cityscapes→BDD100K (C→B) and Cross-Style adaptation task Pascal VOC→Comic (P→Cmc)",
+      "page": 7,
+      "index": 5,
+      "width": 1026,
+      "height": 375
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18757v1/fig-006.webp",
+      "caption": "Figure 7. T-SNE visualization of the features extracted from the target domain.",
+      "page": 14,
+      "index": 6,
+      "width": 882,
+      "height": 384
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18757v1/fig-007.webp",
+      "caption": "Figure 5. Visualizations of the extracted feature map.",
+      "page": 13,
+      "index": 7,
+      "width": 1036,
+      "height": 429
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18757v1/fig-008.webp",
+      "caption": "Figure 6. Visualizations of the similarity between the features of a certain point and other regions on the feature map.",
+      "page": 13,
+      "index": 8,
+      "width": 727,
+      "height": 421
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18757v1/fig-009.webp",
+      "caption": "Table 6. Comparison (%) of computational overhead.",
+      "page": 8,
+      "index": 9,
+      "width": 1026,
+      "height": 203
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18757v1/fig-010.webp",
+      "caption": "Figure 2. Overview of the proposed DA-Mamba. The proposed IA-SSM and OA-SSM are integrated into the FPN of the backbone and detection head, respectively, providing fine-grained image and instance-level global-local alignment.",
+      "page": 4,
+      "index": 10,
+      "width": 931,
+      "height": 364
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18757v1/fig-011.webp",
+      "caption": "Figure 3. The architecture of (a) Mamba layer [21] (b) Image-Aware SSM module and (c) Object-Aware SSM module.",
+      "page": 4,
+      "index": 11,
+      "width": 983,
+      "height": 310
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18757v1/fig-012.webp",
+      "caption": "Figure 4. Different structure for IA-SSM and OA-SSM.",
+      "page": 12,
+      "index": 12,
+      "width": 496,
+      "height": 338
+    },
+    {
+      "url": "assets/figures/arxiv/2603.18757v1/fig-013.webp",
+      "caption": "Figure 9. Detection results visualization.",
+      "page": 16,
+      "index": 13,
+      "width": 1036,
+      "height": 632
+    }
+  ]
+}

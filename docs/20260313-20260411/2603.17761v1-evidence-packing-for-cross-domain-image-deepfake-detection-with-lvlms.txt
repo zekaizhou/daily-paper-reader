@@ -1,0 +1,572 @@
+Title: Evidence Packing for Cross-Domain Image Deepfake Detection with LVLMs
+
+URL Source: https://arxiv.org/pdf/2603.17761v1
+
+Published Time: Thu, 19 Mar 2026 01:21:29 GMT
+
+Number of Pages: 7
+
+Markdown Content:
+# Evidence Packing for Cross-Domain Image Deepfake Detection with LVLMs 
+
+Yuxin Liu 1,3, Fei Wang 2,3,∗, Kun Li 4, Yiqi Nie 1,3, Junjie Chen 2,3, Zhangling Duan 3,∗, Zhaohong Jia 1 
+
+> 1
+
+Anhui University 2 Hefei University of Technology  
+
+> 3
+
+IAI, Hefei Comprehensive National Science Center 4 United Arab Emirates University 
+
+Abstract —Image Deepfake Detection (IDD) separates manipu-lated images from authentic ones by spotting artifacts of synthesis or tampering. Although large vision-language models (LVLMs) offer strong image understanding, adapting them to IDD often demands costly fine-tuning and generalizes poorly to diverse, evolving manipulations. We propose the Semantic Consistent Evidence Pack (SCEP), a training-free LVLM framework that replaces whole-image inference with evidence-driven reasoning. SCEP mines a compact set of suspicious patch tokens that best reveal manipulation cues. It uses the vision encoder’s CLS token as a global reference, clusters patch features into coherent groups, and scores patches with a fused metric combining CLS-guided semantic mismatch with frequency- and noise-based anomalies. To cover dispersed traces and avoid redundancy, SCEP samples a few high-confidence patches per cluster and applies grid-based NMS, producing an evidence pack that conditions a frozen LVLM for prediction. Experiments on diverse benchmarks show SCEP outperforms strong baselines without LVLM fine-tuning. 
+
+Index Terms —Image Deepfake Detection, LVLM, Evidence Pack, Training-free 
+
+I. I NTRODUCTION 
+
+Image Deepfake Detection (IDD) aims to identify manipu-lated images by analyzing visual cues that reveal synthetic generation or deliberate tampering, playing a critical role in improving the reliability and trustworthiness of modern information systems [1]. The central challenge in IDD is to capture subtle, localized manipulation traces, such as blend-ing artifacts at boundaries or biases and inconsistencies in low-level image statistics [2]. Recent studies [3] [4] have increasingly leveraged large vision-language models (LVLMs), reformulating IDD as a Visual Question Answering (VQA)-style recognition problem and fine-tuning pretrained back-bones to enhance robustness under real-world conditions. Zhang et al . [3] formulate IDD as a VQA task, modeling human intuition by generating textual rationales that articulate common-sense cues for classifying an image as real or fake. Nguyen et al . [4] modify LLaVA with a texture-biased CLIP visual encoder and further encourage the model’s test-time reasoning to remain grounded in visual evidence, improving the reliability of IDD. However, such methods typically rely on high-quality supervision, including carefully crafted question templates and human-authored textual rationales. Although LVLMs demonstrate strong image understanding capabilities, fine-tuning them for deepfake image detection often incurs 
+
+* Corresponding Author: Fei Wang, Zhangling Duan (A)  Direct Image Inference               
+
+> Real or Fake
+> (B) VQA Inference (C) Logits -Based Inference
+> Question: Is this
+> image Real or Fake?
+> Choice: A:Real B:Fake
+> LVLM Lora LVLM Lora
+> A:Real orB:Fake
+> Leveraging the identified
+> fake cues, determine
+> whether the image is
+> Real or Fake.
+> LVLM Lora
+> Leveraging the identified
+> fake cues, determine
+> whether the image is
+> Real or Fake.
+> ······
+> Logits real Logits fake
+> PFake
+> Softmax
+> PReal
+> (D) Our Training -free framework
+> Spectral
+> Distribution
+> JSD
+> Divergence
+> Semantic
+> Cluster
+> Semantic
+> Discrepancy
+> Residual
+> Energy
+> Median
+> & MAD
+> Coherent
+> Ranking
+> Leveraging the identified
+> fake cues, determine
+> whether the image is
+> Real or Fake.
+> Cue
+> Fusion
+> Top -k
+> Mining NMS
+> LVLM
+> Text
+> Encoder
+> Real
+> Fake
+> or
+
+Fig. 1: Comparison of LVLM inference paradigms for IDD. (A) Direct inference uses the full image. (B) VQA-style inference formulates IDD. (C) Logits-based inference uses token probabilities. (D) A training-free, evidence-driven framework that selects compact evidence tokens with fre-quency/noise cues and grid-based NMS for LVLM prediction. substantial computational overhead and still exhibits limited generalization across diverse manipulation types [5]. Image key token selection aims to identify a compact subset of informative visual tokens that preserves salient image content while reducing redundancy and computational cost for downstream reasoning [6]. To this end, our research focuses on the following challenges: (i) Training LVLMs typically requires substantial computational resources, and applying IDD to training-free LVLMs faces the difficulty of ensuring robust generalization across diverse forgery types and scenar-ios. (ii) Generic token selection strategies, largely optimized for semantics or efficiency, often remove fine-grained manipu-lation cues in training-free LVLMs for IDD, diluting evidence and degrading reliability. (iii) Token selection is sensitive to an image’s low-level statistics, which can distract it from forgery-relevant cues. Integrating forgery-aware cues and low-level statistical priors into token selection can better surface manipulation-relevant tokens, improving the robustness of training-free LVLMs for IDD. Motivated by these challenges, we propose Semantic Consistent Evidence Pack (SCEP) , a training-free deepfake cue mining framework that selectively isolates forgery-relevant patch tokens and suppresses irrelevant semantic content. (1) We feed the input image into a frozen vision encoder to obtain the CLS token and patch embeddings. 
+
+> arXiv:2603.17761v1 [cs.CV] 18 Mar 2026
+
+To enforce semantic consistency, we cluster patch features into coherent groups and perform evidence mining and suspect-control contrast only within each group, encouraging the LVLM to focus on manipulation cues over semantic content. (2) Within each semantic cluster, SCEP assigns every valid patch token a suspiciousness score by combining a CLS-guided semantic discrepancy with patch-level frequency and noise anomalies. It retains a small set of top-ranked tokens per cluster and applies grid-based NMS to suppress spatially redundant candidates. The final verdict is obtained by ag-gregating evidence across clusters and prompting a frozen LVLM with the assembled evidence pack. As shown in Fig. 1, existing IDD methods span supervised LVLM fine-tuning, training-free whole-image inference with frozen LVLMs, and VQA- or logits-based formulations, often relying on carefully designed question templates and human-authored rationales. In contrast, our framework shifts the inference paradigm from reasoning over the entire image to evidence-driven reasoning. The contributions of this work are summarized as follows:  
+
+> •
+
+We propose SCEP, a training-free LVLM framework that replaces whole-image inference with weighted evidence rea-soning, reducing redundant tokens and improving sensitivity to subtle forgery cues.  
+
+> •
+
+SCEP anchors semantic clustering with the frozen CLS token and fuses CLS-supervised semantic discrepancy with low-level frequency and noise anomalies into a unified cluster-wise suspiciousness score.  
+
+> •
+
+Top-ranked tokens are selected within each cluster and refined with grid-based NMS to reduce semantic and spatial redundancy, yielding a compact, spatially diverse evidence set with cross-cluster coverage.  
+
+> •
+
+Extensive experiments demonstrate that SCEP substantially improves IDD by supplying more informative and less redundant evidence for LVLM inference. II. M ETHODOLOGY 
+
+A. Overview 
+
+This work focuses on IDD by leveraging LVLMs without task-specific fine-tuning. We cast IDD as a binary decision problem on multimodal inputs. Each instance contains a visual input I ∈ RH×W ×3, and the model outputs a label indicat-ing whether the content is manipulated or authentic. In the standard inference setting, we consider a frozen LVLM M(·),which takes an input image I together with a prompt P ∈ RL
+
+and outputs a decision F as 
+
+F = M(I, P). (1) However, directly performing inference with a frozen LVLM often fails to precisely capture subtle forgery cues in 
+
+I, while producing a large number of redundant visual tokens during decoding. To address this limitation, we propose the 
+
+Semantic Consistent Evidence Pack (SCEP) , a training-free framework that extracts the vision encoder class token CLS as a global semantic anchor, clusters patch embeddings to enforce semantic consistency, and ranks suspicious tokens by fusing CLS-supervised semantic discrepancy with frequency and noise anomaly cues, thereby yielding a weighted evidence pack for LVLM inference, as illustrated in Fig. 2. (1) We feed the input image I into a frozen vision encoder to extract the class token t[CLS ] and patch embeddings {tr,c }gh
+
+> r=1
+> gw
+> c=1
+
+,where gw and gh denote the number of patch tokens along the vertical and horizontal axes. Next, clustering is performed in the patch embedding space to obtain K semantic groups 
+
+{Ck}Kk=1 , such that evidence mining and suspect control contrast are confined to semantically consistent regions, al-lowing the LVLM to focus on manipulation cues rather than semantic content. (2) Within each semantic cluster Ck, SCEP scores each valid token tr,c ∈ Ck using CLS-supervised semantic discrepancy, which provides a global semantic prior for identifying semantically inconsistent patches. In parallel, SCEP computes low-level anomaly cues at the patch scale, including a frequency score Afreq  
+
+> r,c
+
+that captures deviations in the patch DCT band energy distribution and a noise score and a noisy score Anoise  
+
+> r,c
+
+derived from inconsistencies in high-frequency residual statistics. Tokens are then ranked within 
+
+Ck, and a preliminary candidate set ˆSk ⊆ Ck is obtained by selecting the top-k1 tokens. To reduce spatial redundancy, we further apply a grid-based non-maximum suppression operator 
+
+NMS( ·), which discards candidates within an ℓ2 distance of any higher scored token, yielding the final evidence set 
+
+Sk ⊆ ˆSk. The final prediction ˆF is obtained by aggregating all evidence pairs across clusters as Sk and encoding the prompt into a token sequence ˆP ∈ RL. The LVLM M(·) performs inference with Sk and ˆP:
+
+ˆF = M(S k, ˆP) . (2) 
+
+B. Semantic Clustering and CLS-Supervised Scoring 
+
+The primary objective of semantic space processing is to isolate and highlight manipulation cues that deviate from the global image context, enabling more focused and accurate deepfake detection [7]. To this end, we adopt a two-step pipeline that performs semantic clustering over patch em-beddings and then scores semantic discrepancies under CLS supervision. Concretely, given an input image I, we feed it into a frozen vision encoder to obtain the class token tCLS and the patch embeddings {tr,c }gh
+
+> r=1
+> gw
+> c=1
+
+. Inspired by prior work on spherical clustering [8], spherical k-means is applied to cluster patch embeddings by angular similarity, yielding semantically coherent regions that group visually similar patches. For spherical k-means, we assign each normalized embed-ding to the centroid with the highest cosine similarity: 
+
+zr,c = arg max 
+
+> j∈{ 1,...,K }
+
+˜t⊤
+
+> r,c
+
+μj , (3) 
+
+Ck = {tr,c | zr,c = k}, (4) where ˜tr,c = tr,c /∥tr,c ∥2 is the normalized embedding and 
+
+μj is the centroid of cluster j.In IDD, manipulation cues are subtle and localized, and naively ranking all patch tokens is often dominated by se-mantically irrelevant regions. To prioritize regions whose local semantics diverge from the overall image content, we measure Vision Embeddings  Semantic Cluster                 
+
+> Image
+> Encoder
+> Patch i
+> Low
+> Mid
+> High
+> ···
+> ···
+> Patch
+> Index 01234pn ···
+> Energy
+> Spectral
+> Spectral Distribution
+> Patch
+> Index
+> Median
+> MAD
+> ···
+> ···
+> Median &MAD
+> 01234···pn
+> JSD Divergence
+> CLS -Aware
+> Encoder
+> Text
+> Prompt:
+> Clas sify the image
+> as Real or Fake
+> Overa ll
+> Evidence Tokens
+
+LVLM 
+
+Real or Fake       
+
+> Select Top -k
+> Fuse &
+> Token Selection Dual -Cue Anomaly Scoring
+> ···
+> ···
+> Residual Energy
+> 01234···pn
+> Spectral
+> Energy
+> Token Flow
+
+e
+
+I
+
+R 
+
+> ····
+> ····
+> ····
+> ····
+> NMS
+> ····
+> ····
+> ····
+> ····
+> ····
+> CLS
+> ····
+> ····
+> ····
+> ····
+> CLS
+> ····
+> ····
+> ····
+> ····
+> CLS
+> RGB
+> Residual -noise Map
+> DCT Spectrum
+
+Fig. 2: Overview of SCEP for training-free IDD. (1) Dual-cue patch anomalies are scored in semantic space: frequency is measured by JSD between each patch’s DCT spectrum, while noise is quantified from residuals via the median and MAD. (2) Patch embeddings are clustered around the CLS anchor to select top-k evidence tokens, and grid-based NMS removes redundant ones. The resulting evidence pack conditions a frozen LVLM to predict Real or Fake. token-level inconsistency with respect to the global context encoded by t[CLS ] and rank tokens within each cluster Ck.Concretely, for each toke tr,c ∈ C k, we compute a CLS-supervised semantic discrepancy Asem  
+
+> r,c
+
+by converting cosine similarity into a distance: 
+
+Asem  
+
+> r,c
+
+= 1 − t⊤
+
+> r,c
+
+t[CLS ]
+
+∥tr,c ∥2 ∥t[CLS ]∥2
+
+. (5) 
+
+C. Frequency Anomaly Cue via DCT Band Discrepancy 
+
+To better capture subtle manipulation cues that are often missed by conventional analyses, two complementary anomaly cues are introduced, namely frequency anomalies and noise anomalies [9] [10] [11]. They probe irregularities in the frequency domain and residual noise statistics, respectively, thereby exposing manipulation artifacts that are difficult to detect from pixel-space evidence alone. For each patch pr,c , we apply a 2D DCT to obtain its coefficient map Fr,c from which we summarize the patch spectrum by aggregating band-wise DCT energy over K pre-defined frequency bands {B k}Kk=1 . Band-wise normalization then yields the patch-level frequency distribution vector qr,c ∈
+
+RK , where each component is computed as 
+
+q(k) 
+
+> r,c
+
+= e(k)
+
+> r,c
+
+PKj=1 e(j)
+
+> r,c
+
+. (6) To compare local spectra against an image-level baseline in IDD, the reference frequency profile is computed by averaging the patch-wise distributions ¯q:
+
+¯q = 1
+
+ghgwghX
+
+> r=1
+> gw
+
+X
+
+> c=1
+
+qr,c , (7) where gw and gh denote the number of patch tokens along the vertical and horizontal axes. Following recent IDD studies that measure distributional discrepancies via Jensen-Shannon divergence JSD( ·) [12], each patch is assigned a frequency anomaly score Afreq  
+
+> r,c
+
+by comparing its local spectrum distribution to the image-level profile 
+
+Afreq  
+
+> r,c
+
+= JSD( qr,c ∥ ¯q) . (8) 
+
+D. Residual Noise Anomaly Score Computation 
+
+Complementary to frequency statistics, deepfake-induced residual-noise artifacts, often concentrated near blended boundaries, are characterized by jointly modeling a local residual mismatch and a global robust deviation. For each patch pr,c , we apply Gaussian smoothing to obtain a low-pass patch pblur  
+
+> r,c
+
+and compute the residual map 
+
+Rr,c = |pr,c − pblur  
+
+> r,c
+
+|, which isolates the attenuated high-frequency components and provides a complementary signal for residual-noise artifact modeling. The residual energy Eres 
+
+> r,c
+
+is then computed as 
+
+Eres  
+
+> r,c
+
+= 1
+
+|pr,c |
+
+X
+
+> x∈pr,c
+
+R(x). (9) TABLE I: Performance on DFBench across AI-generated subsets. The table compares multiple frozen LVLM backbones and token-pruning baselines, A-ViT and DynamicViT. Rows shaded in lavender indicate token-pruning baselines, while the row shaded in light gray highlights SCEP.                                                                                                                                                                                                                                                                                                        
+
+> Datasets Playground [13] SD3.5 Large [14] PixArt-Sigma [15] Infinity [16] Kandinsky -3 [17] Flux Schnell [18] Kolors [19]
+> Methods / Metrics Acc% F1 Acc% F1 Acc% F1 Acc% F1 Acc% F1 Acc% F1 Acc% F1
+> Kimi-VL 10.53 0.36 9.72 0.24 15.22 0.25 5.65 0.14 15.98 0.33 3.32 0.08 6.54 0.33 MiniCPM-V 26.43 0.39 3.56 0.07 32.33 0.42 8.67 0.12 21.22 0.23 2.32 0.29 13.76 0.27 Janus-Pro 10.33 0.07 3.48 0.08 2.27 0.31 2.23 0.03 0.34 0.17 0.31 0.27 0.36 0.12 Owl2.1 12.43 0.18 2.03 0.04 18.93 0.29 6.43 0.05 17.83 0.21 21.86 0.16 15.73 0.18 Gemma-3 41.21 0.54 32.33 0.26 48.66 0.64 22.63 0.29 30.24 0.43 23.69 0.31 21.78 0.37 +A-ViT [20] 42.21 0.56 33.43 0.27 48.73 0.67 26.23 0.33 32.24 0.46 24.12 0.31 23.54 0.39 +DynamiViT [21] 42.76 0.57 35.76 0.32 48.86 0.69 27.12 0.35 37.24 0.46 26.87 0.31 23.65 0.43
+> +SCEP (Ours) 43.33 0.61 36.41 0.34 49.12 0.73 28.67 0.41 39.87 0.50 31.66 0.34 30.21 0.45 Datasets SD3 Medium [14] Flux Dev [18] NOVA [22] LaVi-Bridge [23] Janus [24] Real Source Overall Methods / Metrics Acc% F1 Acc% F1 Acc% F1 Acc% F1 Acc% F1 Acc% F1 Acc% F1
+> Kimi-VL 9.32 0.14 18.00 0.33 16.31 0.33 22.03 0.28 17.01 0.33 96.02 0.68 18.89 0.29 MiniCPM-V 30.12 0.28 5.55 0.18 30.98 0.37 10.00 0.22 18.99 0.18 95.56 0.51 23.03 0.27 Janus-Pro 15.54 0.12 4.55 0.19 8.04 0.04 5.51 0.04 1.17 0.19 95.44 0.56 11.50 0.16 Owl2.1 23.33 0.25 9.43 0.11 27.3 0.21 18.32 0.33 18.23 0.12 96.76 0.61 22.20 0.21 Qwen3-VL 34.44 0.45 29.39 0.23 33.33 0.44 32.22 0.37 29.99 0.40 84.9 0.57 22.20 0.17 Gemma-3 50.01 0.61 46.60 0.43 44.44 0.60 42.68 0.49 39.91 0.49 98.0 0.76 41.86 0.47 +A-ViT [20] 50.37 0.64 46.60 0.44 45.52 0.63 42.86 0.49 39.91 0.51 98.0 0.77 42.59 0.49 +DynamicViT [21] 50.94 0.66 46.60 0.47 45.83 0.65 43.76 0.49 39.91 0.54 98.04 0.79 43.66 0.51
+> +SCEP (Ours) 51.23 0.67 48.43 0.55 47.32 0.67 46.23 0.43 40.21 0.51 98.06 0.80 54.44 0.53
+
+The noise anomaly score Anoise  
+
+> r,c
+
+is defined as the normalized residual energy Eres  
+
+> r,c
+
+, using the median and median absolute deviation (MAD) as follows: 
+
+Anoise  
+
+> r,c
+
+= Eres  
+
+> r,c
+
+− median( Eres )MAD( Eres ) + ϵ , (10) where median( Eres ) is the median of Eres  
+
+> r,c
+
+over all patches, 
+
+MAD( Eres ) is the median absolute deviation of Eres , and ϵ
+
+is a small constant for numerical stability. The suspiciousness score Sr,c for each patch pr,c is defined as 
+
+Sr,c = Asem  
+
+> r,c
+
++ α Afreq  
+
+> r,c
+
++ Anoise 
+
+> r,c
+
+ , (11) where α balances the contribution of the low-level cues relative to the semantic discrepancy. Patches are ranked within each semantic cluster based on Sr,c to maintain semantic coherence during evidence mining. For each cluster Ck, the top-k1
+
+patches ˆSk are selected by the fused score: 
+
+ˆSk = Top -k1
+
+
+
+{S r,c | pr,c ⊆ C k}
+
+
+
+. (12) To reduce redundant selections from spatially adjacent patches, non-maximum suppression N M S (·) is applied to ˆSk
+
+using patch boxes on the image grid [25], yielding the final suspicious token set Sk:
+
+Sk = NMS  ˆSk; τ , (13) where τ is the overlap threshold. The resulting Sk are finally aggregated as a compact, manipulation-revealing evidence pack to condition the frozen LVLM for the IDD decision. III. EXPERIMENT 
+
+A. Experimental Settings 1) Datasets: We evaluate SCEP on DFBench [26], a large-scale IDD benchmark with three partitions: Real , AI-edited ,and AI-generated . AI-generated images typically contain the richest fine-grained spatial details, whereas AI-edited samples exhibit intermediate characteristics, preserving authentic re-gions while introducing localized manipulations. 
+
+2) Implementaion Details: We evaluate SCEP in atraining-free IDD setting, where each image is classified as Real or Fake. Results are reported in Tables I, II, and IV using Accuracy (Acc%) and F1-score (F1) over the AI-generated and Real-image partitions and their corresponding datasets, as well as the AI-edited partition spanning diverse manipulation types, together with Overall performance. Accordingly, we in-stantiate our framework on multiple frozen LVLMs, including Kimi-VL-16B [27], Gemma-3-12B [28], MiniCPM-V-8B [29], Janus-Pro-7B [30], Owl2.1-7B [31], and Qwen3-VL-8B [32], with no task-specific fine-tuning. We further compare our approach with A-ViT [20] and DynamicViT [21] by evaluating them using their best-performing backbone model. In the Real-image partitions, following DFBench, we report only Accuracy (Acc%). Specifically, we vary α ∈ { 0, 0.3, 0.7, 0.9}
+
+to examine how the frequency and noise anomaly terms in Eq. 11 affect detection performance across different partitions and manipulation types. We additionally report the inference latency of our frame-work, with all experiments conducted on an NVIDIA A6000 server equipped with an Intel(R) Xeon(R) Gold 6330 CPU. Object Enhance  Style Change Semantic Change Object Operation 
+
+S1 
+
+S2 
+
+S3 
+
+S4 
+
+S1 
+
+S2 
+
+S3 
+
+S4 
+
+S1 
+
+S2 
+
+S3 
+
+S4 
+
+S1 
+
+S2 
+
+S3 
+
+S4 
+
+Playground  SD3 Medium  PixArt -Sigma  Infinity  Kandinsky -3
+
+SD3 Medium  Flux  Dev  NOVA  LaVi -Bridge  Janus 
+
+S1 
+
+S2 
+
+S3 
+
+S4 
+
+S1 
+
+S2 
+
+S3 
+
+S4 
+
+S1 
+
+S2 
+
+S3 
+
+S4 
+
+S1 
+
+S2 
+
+S3 
+
+S4 
+
+S1 
+
+S2 
+
+S3 
+
+S4 
+
+S1 
+
+S2 
+
+S3 
+
+S4 
+
+S1 
+
+S2 
+
+S3 
+
+S4 
+
+S1 
+
+S2 
+
+S3 
+
+S4 
+
+S1 
+
+S2 
+
+S3 
+
+S4 
+
+S1 
+
+S2 
+
+S3 
+
+S4 Fig. 3: Representative cases from DFBench with the evidence patches selected by our method. The first row shows AI-edited subsets, while the second and third rows show AI-generated subsets. S1-S4 denote the top evidence patches sampled from distinct semantic clusters and ranked by the fused anomaly score. S1-S2 typically localize the dominant manipulated regions, while S3-S4 provide auxiliary evidence capturing subtle or secondary manipulation cues. TABLE II: SCEP on DFBench real-image Datasets.                                                              
+
+> Methods LIVE [33] CSIQ [34] TID2013 [35] KADID ] [36] KonIQ-10k [37] Overall
+> Kimi-VL 66.32 53.12 75.21 60.03 85.32 69.39 Gemma-3 71.21 75.32 67.21 57.11 69.15 68.33 MiniCPM-V 70.00 79.12 74.21 66.60 71.21 72.56 Janus-Pro 61.21 54.21 55.31 58.03 66.13 59.68 Owl2.1 77.12 68.99 70.02 77.43 71.71 72.44 Qwen3-VL 87.81 87.76 84.31 88.21 79.38 84.87 +A-ViT 89.65 87.34 87.45 88.01 84.11 86.71 +DynamicViT 90.65 88.54 85.56 88.37 83.67 86.75
+> +SECP (Ours) 91.74 90.03 88.32 89.92 85.32 88.09
+
+TABLE III: Performance with Varying α on AI-Edited.                                                                      
+
+> Setting Object Enhance Object Operation Semantic Change Style Change Real Source Overall Acc% F1 Acc% F1 Acc% F1 Acc% F1 Acc% F1 Acc% F1
+> α= 0 48.93 0.38 41.28 0.34 48.34 0.40 49.87 0.48 83.74 0.63 68.03 0.45
+> α= 0 .350.67 0.45 50.43 0.52 49.93 0.43 50.13 0.53 88.34 0.68 57.90 0.52
+> α= 0 .757.32 0.56 50.01 0.59 52.21 0.47 60.00 0.61 90.01 0.70 61.91 0.59
+> α= 0 .954.07 0.53 52.94 0.50 51.74 0.45 51.60 0.49 79.89 0.58 58.05 0.51
+
+B. Performance Analysis 
+
+From Table IV, on the AI-generated subsets, SCEP achieves its strongest gains on Gemma-3, getting the overall accuracy of 54.44% and the F1 score of 0.53. On the AI-edited subsets, the largest improvement is observed with Qwen3-VL, where SCEP gets the overall accuracy of 61.91% and the F1 score of 0.58. The larger gains on AI-generated and AI-edited images suggest that global semantic prompting alone misses fine-grained synthesis artifacts and localized edits, while SCEP’s fused semantic, frequency, and noise cues provide more dis-criminative evidence for IDD without task-specific fine-tuning. On the Real-image subsets, SCEP preserves strong overall performance without noticeable degradation, suggesting that the frequency and noise cues are non-intrusive on authentic images. 
+
+C. Case Study on Evidence Patch Mining 
+
+Fig. 3 provides qualitative evidence that complements the quantitative results in Tables I II IV. The AI-edited cases shows that the evidence patches for Object Enhance and Object Operation predominantly localize to manipulated re-gions, capturing abrupt texture discontinuities and localized TABLE IV: Performance on DFBench On AI-Edited Subsets.                                                                                                                           
+
+> Methods Object Enhance Object Operation Semantic Change Style Change Real Source Overall Acc %F1 Acc %F1 Acc% F1 Acc% F1 Acc% F1 Acc% F1
+> Kimi-VL 11.21 0.19 13.21 0.23 21.21 0.34 19.32 0.16 83.32 0.64 29.65 0.31 Gemma-3 21.34 0.21 23.32 0.21 15.65 0.12 19.92 0.19 85.54 0.61 33.15 0.27 MiniCPM-V 13.32 0.23 19.03 0.29 28.32 0.34 33.32 0.28 81.21 0.52 35.04 0.33 Janus-Pro 16.21 0.17 23.12 0.21 23.32 0.32 28.12 0.21 87.77 0.58 35.71 0.30 Owl2.1 36.32 0.32 23.45 0.21 27.32 0.31 30.02 0.25 82.32 0.53 39.89 0.32 Qwen3-VL 53.43 0.49 45.54 0.54 49.09 0.40 57.54 0.51 87.66 0.56 58.65 0.50 +A-ViT 55.77 0.50 46.32 0.55 50.14 0.41 57.98 0.53 87.78 0.61 59.59 0.52 +DynamicViT 55.97 0.51 48.82 0.57 51.89 0.47 58.01 0.57 88.81 0.62 60.69 0.54
+> +SECP (Ours) 57.32 0.56 50.01 0.59 52.21 0.47 60.00 0.61 90.01 0.70 61.91 0.58
+
+TABLE V: Per-image inference time (s) of frozen LVLMs with and without SCEP.                 
+
+> Setting LVLM inference time (s) Kimi-VL-16B MiniCPM-V-8B Janus-Pro-7B Owl2.1-7B Qwen3-VL-8B
+> Vanilla 33.17 23.76 26.39 24.15 21.44
+> +SCEP (Ours) 28.36 16.72 19.34 20.89 13.56
+
+high-frequency inconsistencies, rather than semantically cor-rect yet uninformative backgrounds. For Style Change, the patches consistently attend to regions with style-induced spec-tral shifts, indicating that low-level anomalies remain reliable complementary cues when semantic consistency is largely preserved. In AI-generated subjects , the evidence patches tend to concentrate on generation-specific artifacts, such as globally over-smoothed textures, unnatural high-frequency statistics, and inconsistent fine-grained details. These observations verify that SCEP consistently retrieves semantically grounded yet anomaly-sensitive evidence, thereby improving IDD detection accuracy across both localized edits and synthesized images. 
+
+D. Inference Latency 
+
+As shown in Table V, SCEP consistently reduces inference latency across all frozen LVLM, delivering speedups ranging about 1.58 times. IV. CONCLUSIONS We propose SCEP, a training-free LVLM-based framework for IDD that moves beyond costly fine-tuning and brittle whole-image inference. SCEP mines a compact evidence set of manipulation-revealing visual tokens via patch clustering and fused anomaly scoring. In particular, frequency cues capture spectral irregularities such as abnormal high-frequency energy, while residual-noise cues expose boundary-localized inconsistencies induced by blending or synthesis. Experiments on DFBench demonstrate that SCEP consistently improves IDD accuracy and robustness across diverse manipulation types while remaining training-free and efficient. REFERENCES [1] G Pei, J Zhang, M Hu, G Zhai, C Wang, Z Zhang, J Yang, C Shen, and D Tao, “Deepfake generation and detection: A benchmark and survey. arxiv 2024,” arXiv preprint arXiv:2403.17881 .[2] Andrii Yermakov, Jan Cech, Jiri Matas, and Mario Fritz, “Deep-fake detection that generalizes across benchmarks,” arXiv preprint arXiv:2508.06248 , 2025. [3] Yue Zhang, Ben Colman, Xiao Guo, Ali Shahriyari, and Gaurav Bharaj, “Common sense reasoning for deepfake detection,” in European con-ference on computer vision . Springer, 2024, pp. 399–415. [4] Tuan Nguyen, Naseem Khan, Khang Tran, NhatHai Phan, and Issa Khalil, “Prpo: Paragraph-level policy optimization for vision-language deepfake detection,” arXiv preprint arXiv:2509.26272 , 2025. [5] Viacheslav Pirogov, “Visual language models as zero-shot deepfake detectors,” arXiv preprint arXiv:2507.22469 , 2025. [6] Rajat Koner, Gagan Jain, Prateek Jain, Volker Tresp, and Sujoy Paul, “Lookupvit: Compressing visual information to a limited number of tokens,” in European Conference on Computer Vision . Springer, 2024, pp. 322–337. [7] Jiazhi Guan, Hang Zhou, Zhibin Hong, Errui Ding, Jingdong Wang, Chengbin Quan, and Youjian Zhao, “Delving into sequential patches for deepfake detection,” Advances in Neural Information Processing Systems , vol. 35, pp. 4517–4530, 2022. [8] Kurt Hornik, Ingo Feinerer, Martin Kober, and Christian Buchta, “Spher-ical k-means clustering,” Journal of statistical software , vol. 50, pp. 1–22, 2012. [9] Hossein Kashiani, Niloufar Alipour Talemi, and Fatemeh Afghah, “Freqdebias: Towards generalizable deepfake detection via consistency-driven frequency debiasing,” in 2025 IEEE/CVF Conference on Com-puter Vision and Pattern Recognition (CVPR) . IEEE, 2025, pp. 8775– 8785. [10] Fei Wang, Dan Guo, Kun Li, Zhun Zhong, and Meng Wang, “Fre-quency decoupling for motion magnification via multi-level isomorphic architecture,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2024, pp. 18984–18994. [11] Kun Li, Pengyu Liu, Dan Guo, Fei Wang, Zhiliang Wu, Hehe Fan, and Meng Wang, “Mmad: Multi-label micro-action detection in videos,” in 
+
+Proceedings of the IEEE/CVF International Conference on Computer Vision , 2025, pp. 13225–13236. [12] Si-Qi Liu, Qirui Wang, and Pong C Yuen, “Bottom-up domain prompt tuning for generalized face anti-spoofing,” in European Conference on Computer Vision . Springer, 2024, pp. 170–187. [13] Daiqing Li, Aleks Kamko, Ehsan Akhgari, Ali Sabet, Linmiao Xu, and Suhail Doshi, “Playground v2. 5: Three insights towards en-hancing aesthetic quality in text-to-image generation,” arXiv preprint arXiv:2402.17245 , 2024. [14] Patrick Esser, Sumith Kulal, Andreas Blattmann, Rahim Entezari, Jonas M¨ uller, Harry Saini, Yam Levi, Dominik Lorenz, Axel Sauer, Frederic Boesel, et al., “Scaling rectified flow transformers for high-resolution image synthesis,” in Forty-first international conference on machine learning , 2024. [15] Junsong Chen, Chongjian Ge, Enze Xie, Yue Wu, Lewei Yao, Xiaozhe Ren, Zhongdao Wang, Ping Luo, Huchuan Lu, and Zhenguo Li, “Pixart-
+
+σ: Weak-to-strong training of diffusion transformer for 4k text-to-image generation,” in European Conference on Computer Vision . Springer, 2024, pp. 74–91. [16] Jian Han, Jinlai Liu, Yi Jiang, Bin Yan, Yuqi Zhang, Zehuan Yuan, Bingyue Peng, and Xiaobing Liu, “Infinity: Scaling bitwise autoregres-sive modeling for high-resolution image synthesis,” in Proceedings of the Computer Vision and Pattern Recognition Conference , 2025, pp. 15733–15744. [17] Vladimir Arkhipkin, Viacheslav Vasilev, Andrei Filatov, Igor Pavlov, Julia Agafonova, Nikolai Gerasimenko, Anna Averchenkova, Evelina Mironova, Anton Bukashkin, Konstantin Kulikov, et al., “Kandinsky 3: Text-to-image synthesis for multifunctional generative framework,” 
+
+arXiv preprint arXiv:2410.21061 , 2024. [18] Micah Hodosh, Peter Young, and Julia Hockenmaier, “Framing image description as a ranking task: Data, models and evaluation metrics,” 
+
+Journal of Artificial Intelligence Research , vol. 47, pp. 853–899, 2013. [19] Kolors Team, “Kolors: Effective training of diffusion model for photorealistic text-to-image synthesis,” arXiv preprint , 2024. [20] Hongxu Yin, Arash Vahdat, Jose M Alvarez, Arun Mallya, Jan Kautz, and Pavlo Molchanov, “A-vit: Adaptive tokens for efficient vision transformer,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , 2022, pp. 10809–10818. [21] Yongming Rao, Wenliang Zhao, Benlin Liu, Jiwen Lu, Jie Zhou, and Cho-Jui Hsieh, “Dynamicvit: Efficient vision transformers with dynamic token sparsification,” Advances in neural information processing sys-tems , vol. 34, pp. 13937–13949, 2021. [22] Haoge Deng, Ting Pan, Haiwen Diao, Zhengxiong Luo, Yufeng Cui, Huchuan Lu, Shiguang Shan, Yonggang Qi, and Xinlong Wang, “Autore-gressive video generation without vector quantization,” arXiv preprint arXiv:2412.14169 , 2024. [23] Shihao Zhao, Shaozhe Hao, Bojia Zi, Huaizhe Xu, and Kwan-Yee K Wong, “Bridging different language models and generative vision models for text-to-image generation,” in European Conference on Computer Vision . Springer, 2024, pp. 70–86. [24] Chengyue Wu, Xiaokang Chen, Zhiyu Wu, Yiyang Ma, Xingchao Liu, Zizheng Pan, Wen Liu, Zhenda Xie, Xingkai Yu, Chong Ruan, et al., “Janus: Decoupling visual encoding for unified multimodal understanding and generation,” in Proceedings of the Computer Vision and Pattern Recognition Conference , 2025, pp. 12966–12977. [25] Alexander Neubeck and Luc Van Gool, “Efficient non-maximum suppression,” in 18th international conference on pattern recognition (ICPR’06) . IEEE, 2006, vol. 3, pp. 850–855. [26] Jiarui Wang, Huiyu Duan, Juntong Wang, Ziheng Jia, Woo Yi Yang, Xiaorong Zhu, Yu Zhao, Jiaying Qian, Yuke Xing, Guangtao Zhai, et al., “Dfbench: Benchmarking deepfake image detection capability of large multimodal models,” in Proceedings of the 33rd ACM International Conference on Multimedia , 2025, pp. 12666–12673. [27] Kimi Team, Angang Du, Bohong Yin, Bowei Xing, Bowen Qu, Bowen Wang, Cheng Chen, Chenlin Zhang, Chenzhuang Du, Chu Wei, et al., “Kimi-vl technical report,” arXiv preprint arXiv:2504.07491 , 2025. [28] Gemma Team, Aishwarya Kamath, Johan Ferret, Shreya Pathak, Nino Vieillard, Ramona Merhej, Sarah Perrin, Tatiana Matejovicova, Alexan-dre Ram´ e, Morgane Rivi` ere, et al., “Gemma 3 technical report,” arXiv preprint arXiv:2503.19786 , 2025. [29] Tianyu Yu, Zefan Wang, Chongyi Wang, Fuwei Huang, Wenshuo Ma, Zhihui He, Tianchi Cai, Weize Chen, Yuxiang Huang, Yuanqian Zhao, et al., “Minicpm-v 4.5: Cooking efficient mllms via architecture, data, and training recipe,” arXiv preprint arXiv:2509.18154 , 2025. [30] Xiaokang Chen, Zhiyu Wu, Xingchao Liu, Zizheng Pan, Wen Liu, Zhenda Xie, Xingkai Yu, and Chong Ruan, “Janus-pro: Unified multimodal understanding and generation with data and model scaling,” 
+
+arXiv preprint arXiv:2501.17811 , 2025. [31] Qinghao Ye, Haiyang Xu, Jiabo Ye, Ming Yan, Anwen Hu, Haowei Liu, Qi Qian, Ji Zhang, and Fei Huang, “mplug-owl2: Revolutionizing multi-modal large language model with modality collaboration,” in 
+
+Proceedings of the ieee/cvf conference on computer vision and pattern recognition , 2024, pp. 13040–13051. [32] An Yang, Anfeng Li, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu, Chang Gao, Chengen Huang, Chenxu Lv, et al., “Qwen3 technical report,” arXiv preprint arXiv:2505.09388 , 2025. [33] Hamid R Sheikh, Muhammad F Sabir, and Alan C Bovik, “A statistical evaluation of recent full reference image quality assessment algorithms,” 
+
+IEEE Transactions on image processing , vol. 15, no. 11, pp. 3440–3451, 2006. [34] Eric C Larson and Damon M Chandler, “Most apparent distortion: full-reference image quality assessment and the role of strategy,” Journal of electronic imaging , vol. 19, no. 1, pp. 011006–011006, 2010. [35] Nikolay Ponomarenko, Lina Jin, Oleg Ieremeiev, Vladimir Lukin, Karen Egiazarian, Jaakko Astola, Benoit Vozel, Kacem Chehdi, Marco Carli, Federica Battisti, et al., “Image database tid2013: Peculiarities, results and perspectives,” Signal processing: Image communication , vol. 30, pp. 57–77, 2015. [36] Hanhe Lin, Vlad Hosu, and Dietmar Saupe, “Kadid-10k: A large-scale artificially distorted iqa database,” in 2019 Eleventh International Conference on Quality of Multimedia Experience (QoMEX) . IEEE, 2019, pp. 1–3. [37] Vlad Hosu, Hanhe Lin, Tamas Sziranyi, and Dietmar Saupe, “Koniq-10k: An ecologically valid database for deep learning of blind image quality assessment,” IEEE Transactions on Image Processing , vol. 29, pp. 4041–4056, 2020.

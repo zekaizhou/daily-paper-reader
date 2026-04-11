@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.14951v1/fig-001.webp",
+      "caption": "TABLE I PERFORMANCE COMPARISON ON SJTU-PCQA DATASET. THE BEST AND SECOND-BEST NR-PCQA RESULTS ARE HIGHLIGHTED IN BOLD AND italic, RESPECTIVELY.",
+      "page": 5,
+      "index": 1,
+      "width": 516,
+      "height": 260
+    },
+    {
+      "url": "assets/figures/arxiv/2603.14951v1/fig-002.webp",
+      "caption": "Fig. 1. Architecture of the proposed GT-PCQA. (a) During the training stage, the model alternates between image pairs and multi-view point cloud pairs. Visual inputs are encoded by the vision encoder and abstracted into compact representations, while attribute-specific text prompts (e.g., texture-aware or geometry-aware) are embedded into textual representations. The aligned multimodal features are then fed into a LoRA-adapted LLM to perform relative quality comparison, enabling stable and effective instruction tuning under heterogeneous 2D–3D supervision. (b) During the inference stage, the trained MLLM is fully frozen, and each test point cloud is evaluated against an anchor set via soft comparison, ultimately predicting the final quality score.",
+      "page": 3,
+      "index": 2,
+      "width": 1064,
+      "height": 634
+    }
+  ]
+}

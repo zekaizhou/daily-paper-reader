@@ -1,0 +1,150 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-001.webp",
+      "caption": "Figure 3: Overview of the proposed framework. Phase 1 constructs IdtVP data effectively supporting both zero-shot inference and model training. Phases 2-3 introduce a generalized optimization paradigm (SFT followed by Re3-DAPO) that is transferable to other prompting variants (e.g., BIVP).",
+      "page": 6,
+      "index": 1,
+      "width": 920,
+      "height": 383
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-002.webp",
+      "caption": "Table 5: Main results on test set (RS=RxnScribe, RC=RxnCaption-15k-test, SR=ScannedRxn). Met. and Drp.(↓) denote the Metric value and the performance drop relative to the upper bound, respectively.",
+      "page": 11,
+      "index": 2,
+      "width": 644,
+      "height": 365
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-003.webp",
+      "caption": "Table 11: Prompt used for Step 3: Coreference Resolution.",
+      "page": 25,
+      "index": 3,
+      "width": 925,
+      "height": 1116
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-004.webp",
+      "caption": "Table 12: Prompt used for Step 4: Reaction Extraction & Structuring.",
+      "page": 26,
+      "index": 4,
+      "width": 925,
+      "height": 1216
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-005.webp",
+      "caption": "Table 7: Prompt used for identifier extraction.",
+      "page": 15,
+      "index": 5,
+      "width": 922,
+      "height": 604
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-006.webp",
+      "caption": "Figure 1: Overview of the Identifier as Visual Prompting (IdtVP) strategy. Left: VLMs learn visualtext alignment from identifier-rich interleaved literature during pre-training. Middle: IdtVP inputs diagrams annotated with molecule identifiers to activate this pre-trained knowledge. Right: The model outputs structured reactions, directly using these identifiers as “handles” to concisely represent complex molecules.",
+      "page": 2,
+      "index": 6,
+      "width": 920,
+      "height": 381
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-007.webp",
+      "caption": "Table 4: Performance comparison of different identifier detectors on the RxnCaption-15k-test set. We evaluate the impact of detector precision on the Soft-F1 and Hybrid-F1 scores across different VLM prompting strategies.",
+      "page": 10,
+      "index": 7,
+      "width": 494,
+      "height": 256
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-008.webp",
+      "caption": "Figure 8: Fine-grained performance comparison across different reaction diagram types (Single, Multi-line, Tree, and Cyclic). We evaluate the F1 scores (Hybrid and Soft Match) by performing Supervised Fine-Tuning (SFT) on Qwen2.5-VL and testing the zero-shot capabilities on Gemini 3.0 Pro. Both are evaluated under three representation strategies: BROS, BIVP, and IdtVP.",
+      "page": 18,
+      "index": 8,
+      "width": 917,
+      "height": 655
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-009.webp",
+      "caption": "Table 9: Prompt used for Step 1: Anchor Extraction.",
+      "page": 23,
+      "index": 9,
+      "width": 925,
+      "height": 1156
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-010.webp",
+      "caption": "Figure 5: Overview of the Cross-Modal Verification pipeline. System processes double-stream inputs: visual parsing of raw diagrams via RxnID (top) and textual extraction from the manuscript via Idt-TE (bottom), enabling downstream applications such as Precision Refinement (Case A) and Contextual Enrichment (Case B).",
+      "page": 13,
+      "index": 10,
+      "width": 882,
+      "height": 466
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-011.webp",
+      "caption": "Table 1: Comparison of different visual prompting strategies under zero-shot setting. H-F1 and S-F1 denote Hybrid-F1 and Soft-F1 scores, respectively (%).",
+      "page": 4,
+      "index": 11,
+      "width": 610,
+      "height": 221
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-012.webp",
+      "caption": "Figure 9: Typical error cases of RxnID. We categorize the common failure modes into three types: (A) Low-resolution diagrams, where degraded visual quality frequently leads to inaccurate OCR predictions. (B) The presence of unconventional graphical icons (e.g., lightbulbs or sun symbols, highlighted by red boxes). Since these are neither standard chemical structures nor text, the model struggles to interpret them correctly. (C) Highly complex Cyclic diagrams containing a dense concentration of reaction steps, which challenge the model’s spatial reasoning capabilities.",
+      "page": 19,
+      "index": 12,
+      "width": 918,
+      "height": 541
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-013.webp",
+      "caption": "Figure 7: Visualization of sample data from the ScannedRxn dataset.",
+      "page": 17,
+      "index": 13,
+      "width": 918,
+      "height": 843
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-014.webp",
+      "caption": "Figure 4: Reward ∆ change on the val dataset. The Y-axis denotes the reward improvement relative to the initial step (Step 0).",
+      "page": 12,
+      "index": 14,
+      "width": 922,
+      "height": 283
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-015.webp",
+      "caption": "Table 10: Prompt used for Step 2: Dependency Check.",
+      "page": 24,
+      "index": 15,
+      "width": 925,
+      "height": 1177
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-016.webp",
+      "caption": "Figure 10: The overall architecture of Idt-TE pipeline. Specifically, the Idt-TE pipeline operates in three stages: Phase 1 digitizes and structures the raw manuscript into logical paragraphs. Phase 2 employs a cascaded, context-aware LLM framework to resolve cross-paragraph dependencies and extract reaction entities based on semantic anchors. Finally, Phase 3 applies rigorous rule-based curation to validate and canonicalize the extracted records, ultimately enabling precision refinement and contextual enrichment of the visual predictions.",
+      "page": 20,
+      "index": 16,
+      "width": 922,
+      "height": 604
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-017.webp",
+      "caption": "Figure 2: Attention heatmaps of different prompting strategies. The top panels illustrate the input images, textual prompts, and corresponding output formats for each strategy. The bottom panels visualize the Text-to-Image attention heatmaps, computed by averaging the attention weights across all heads per layer, followed by average pooling across all layers. Notably, IdtVP yields far more precise and comprehensive visual grounding on molecules and text compared to BROS and BIVP.",
+      "page": 5,
+      "index": 17,
+      "width": 922,
+      "height": 521
+    },
+    {
+      "url": "assets/figures/arxiv/2603.15011v2/fig-018.webp",
+      "caption": "Figure 6: Overview of the annotation pipeline for the ScannedRxn dataset.",
+      "page": 16,
+      "index": 18,
+      "width": 922,
+      "height": 337
+    }
+  ]
+}

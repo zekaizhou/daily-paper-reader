@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.14882v1/fig-001.webp",
+      "caption": "Table 1. Quantitative comparison of bio-inspired and uniform sampling strategies on scene-level VQA benchmarks under tightbudget constraints (1%, 3%, 5%). We report full-resolution accuracy, sampled accuracy at each budget, accuracy gain over uniform sampling, and accuracy retained relative to the full-resolution baseline.",
+      "page": 6,
+      "index": 1,
+      "width": 977,
+      "height": 992
+    },
+    {
+      "url": "assets/figures/arxiv/2603.14882v1/fig-002.webp",
+      "caption": "Figure 2. Qualitative comparison with Qwen2.5-VL on SeedBench at 5% pixel budget. LLMind adaptively allocates resolution to semantically important regions, preserving visual evidence critical for answering the question. Zoom in for a better view.",
+      "page": 3,
+      "index": 2,
+      "width": 414,
+      "height": 602
+    },
+    {
+      "url": "assets/figures/arxiv/2603.14882v1/fig-003.webp",
+      "caption": "Figure 3. Overview of the proposed framework. Given the input image I , the MLP network predicts the Möbius transformation coefficients, which are used by BASS (Sec. 3.1) to produce the sampled image Î . The Perceptual loss Limg (Eq. 7) between I and Î flows through the network to optimize the MLP parameters. In parallel, a frozen VLM processes a set of questions q to generate predicted answers ypred. These are compared with the ground-truth answers ygt to obtain the Semantic loss Ltext (Eq. 8) for further guiding the optimization of the MLP parameters using SPSA (Eq. 9).",
+      "page": 5,
+      "index": 3,
+      "width": 912,
+      "height": 437
+    }
+  ]
+}
