@@ -1,0 +1,94 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.21502v1/fig-001.webp",
+      "caption": "Fig. 1. Evolution of Error Types under Increasing Domain Shift (based on 2000 randomly sampled test images). As domain shift intensifies, the three error types exhibit distinct patterns. (a) Taking Co-DETR as an example, the Class Confusion Rate remains low with little fluctuation and does not increase noticeably under stronger shifts. The False Positive Rate also stays relatively low and even declines slightly in most scenarios. In contrast, the False Negative Rate increases monotonically and remains substantially higher than the other two, becoming the main source of performance degradation. (b) With VFM4SDG, all three error types are reduced to varying degrees, especially the False Negative Rate. Although false negatives still increase with stronger domain shift, their growth is markedly slower than in the baseline, indicating that the proposed method better stabilizes detection by alleviating miss-dominated degradation.",
+      "page": 1,
+      "index": 1,
+      "width": 529,
+      "height": 287
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21502v1/fig-002.webp",
+      "caption": "TABLE I GENERALIZATION RESULTS ON FIVE DIFFERENT DOMAINS.",
+      "page": 6,
+      "index": 2,
+      "width": 524,
+      "height": 260
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21502v1/fig-003.webp",
+      "caption": "TABLE II QUANTITATIVE RESULTS (%) ON THE DAYTIME-CLEAR SCENE.",
+      "page": 6,
+      "index": 3,
+      "width": 516,
+      "height": 244
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21502v1/fig-004.webp",
+      "caption": "Fig. 3. Qualitative comparisons under diverse domain conditions. We compare our detection results with state-of-the-art methods, with different categories indicated by distinct colors. From left to right: Ground Truth (GT), SA-DETR (DINO-based), VFM4SDG (DINO-based), Frozen-DETR (Co-DETR-based), and VFM4SDG (Co-DETR-based). The results span multiple domains, including Daytime-Clear, Daytime-Foggy, Dusk-Rainy, Night-Rainy, and Night-Clear. Compared with existing approaches, VFM4SDG produces more complete detections under severe appearance variations, substantially reducing both missed detections and false positives. Overall predictions remain more stable and consistent across domains, demonstrating stronger cross-domain robustness.",
+      "page": 11,
+      "index": 4,
+      "width": 1055,
+      "height": 1184
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21502v1/fig-005.webp",
+      "caption": "TABLE III QUANTITATIVE RESULTS (%) ON THE NIGHT-CLEAR SCENE.",
+      "page": 7,
+      "index": 5,
+      "width": 516,
+      "height": 260
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21502v1/fig-006.webp",
+      "caption": "TABLE IV QUANTITATIVE RESULTS (%) ON THE DAYTIME-FOGGY SCENE.",
+      "page": 7,
+      "index": 6,
+      "width": 516,
+      "height": 258
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21502v1/fig-007.webp",
+      "caption": "TABLE VI QUANTITATIVE RESULTS (%) ON THE NIGHT-RAINY SCENE.",
+      "page": 7,
+      "index": 7,
+      "width": 516,
+      "height": 261
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21502v1/fig-008.webp",
+      "caption": "TABLE V QUANTITATIVE RESULTS (%) ON THE DUSK-RAINY SCENE.",
+      "page": 7,
+      "index": 8,
+      "width": 516,
+      "height": 260
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21502v1/fig-009.webp",
+      "caption": "Fig. 5. Representative failure cases of VFM4SDG (Co-DETR-based) under challenging domain conditions. From left to right: GT and VFM4SDG predictions. The examples include scenarios with heavy rain, nighttime illumination, dense fog, motion blur, small-scale objects, and severe occlusion. While the proposed method maintains robust detection performance in most cases, certain missed detections still occur under extreme visibility degradation or when objects are extremely small and partially occluded.",
+      "page": 13,
+      "index": 9,
+      "width": 474,
+      "height": 707
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21502v1/fig-010.webp",
+      "caption": "Fig. 2. Overall framework of VFM4SDG. Built upon a DETR-based detector, VFM4SDG leverages a frozen VFM as a cross-domain structural visual prior for single-domain generalized object detection. At the encoding stage, Cross-domain Stable Relational Prior Distillation (CSRPD) transfers cross-domain stable inter-instance relational structures from VFM to the encoder, yielding a representation space with enhanced relational stability under domain shift. At the decoding stage, Semantic-Contextual Prior-based Query Enhancement (SCPQE) injects VFM-derived semantic and positional priors into decoder queries via cross-attention, enabling stable semantic and spatial query alignment in unseen domains.",
+      "page": 4,
+      "index": 10,
+      "width": 1060,
+      "height": 486
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21502v1/fig-011.webp",
+      "caption": "Fig. 4. Visualization of Encoder Feature Responses (Layer-2) under Domain Shift. From left to right: source image, Co-DETR encoder features, DINOv3 features, and VFM4SDG (Co-DETR-based) encoder features. The visualizations correspond to the second encoder layer (relatively high spatial resolution). Warmer colors indicate stronger feature responses.",
+      "page": 12,
+      "index": 11,
+      "width": 932,
+      "height": 1369
+    }
+  ]
+}

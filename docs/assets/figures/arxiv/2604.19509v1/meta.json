@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.19509v1/fig-001.webp",
+      "caption": "Figure 3: Confusion matrices across the three VLMs for aggregated performance of True-Positive (green), False-Positive (red), True-Negative (blue), False-Negative (orange) across the clustered object classes. Opacity in columns (excluding the mean) reflect the weight of the respective score. As with Figure 2, the humanoid robot baseline is presented on the top row, and the non-humanoid robots on the bottom. Note that results are predominantly weighted towards true-positive (correct affordance characterisation), or false negative (conservative bias) for most affordance-object relations with notable outliers being the ’Lift’ and ’Cut’ affordances for the non-humanoid robots.",
+      "page": 6,
+      "index": 1,
+      "width": 1056,
+      "height": 550
+    },
+    {
+      "url": "assets/figures/arxiv/2604.19509v1/fig-002.webp",
+      "caption": "Figure 4: Examples of VLM semantic-affordance inference mapped to bounding boxes with GroundingDINO. The top row illustrates examples from the synthetic video dataset, and the middle and bottom rows from the real world data; household items, and construction materials respectively. Affordance and performance classifications have been overlayed to provide evaluation insights in these cases. True-positives are bounded by purple boxes, false-positives by red boxes, and true-negatives by pink boxes.",
+      "page": 7,
+      "index": 2,
+      "width": 1002,
+      "height": 688
+    },
+    {
+      "url": "assets/figures/arxiv/2604.19509v1/fig-003.webp",
+      "caption": "Figure 1: An illustration of our Semantic-Affordance Mapping pipeline applied to a non-humanoid robot (1) The camera feed of the robot is sampled every 𝑛 frames and provided as input to the VLM alongside a natural language description of the physical properties of the robot. The VLM is tasked to identify objects in the frame and the affordances available to the robot, given its physical description. A structured output of affordance-object relations is returned. (2) Identified objects are passed to GroundingDINO with frame 𝑛 and two frames either side (𝑛 − 𝑘 , 𝑛 + 𝑘) to establish bounding boxes in the image plane. These bounding boxes are used with the recorded robot odometry to triangulate object positions in world space, and form the semantic-affordance mapping tuple: ⟨Object, Affordance, Location⟩. (3) Semantic similarity measures are performed against existing objects in the scene graph within distance 𝑑 to consolidate variance in the VLM object labels.",
+      "page": 3,
+      "index": 3,
+      "width": 1002,
+      "height": 332
+    },
+    {
+      "url": "assets/figures/arxiv/2604.19509v1/fig-004.webp",
+      "caption": "Figure 2: Affordance-object inference F1 scores and standard deviation over five independent trials. Objects have been clustered into five distinct groups. The top row describes the results produced by the baseline humanoid robot, and the bottom row the non-humanoid robots. Of the three affordances we examine, the humanoid baseline captures the ’Pick’ affordance, synonymous with ’Grasp’, but tends to default to out-of-scope human-like affordances in place of ’Lift’ in the case of Gemini and GPT and ’Push’ across all models, leading to a high-false negative rate and lower overall performance. Improvements are observed in non-humanoid robots for the ’Push’ affordance, indicating that constrained descriptions of the robots capabilities are beneficial for novel tool use. Notably, Claude’s inference capabilities of the ’Pick’ affordance dramatically diminishes for non-humanoid robots, suggesting a lesser capacity for embodiment generalisation. The non-humanoid robot which affords ’Lift’ underperforms due to a criterion of objects being above the robot chassis, exposing the weaknesses in spatial awareness and generalised context awareness.",
+      "page": 5,
+      "index": 4,
+      "width": 1056,
+      "height": 534
+    }
+  ]
+}

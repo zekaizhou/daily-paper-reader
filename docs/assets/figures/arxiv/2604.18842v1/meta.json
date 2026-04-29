@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.18842v1/fig-001.webp",
+      "caption": "Fig. 4: Dataset-Expert mapping under GEM for 12 datasets (IDs in Table 1) across 8 experts. Blue circles denote the fractional plan x⋆, where datasets may split across multiple experts. Red markers show the final assignment x̂ after hierarchical rounding.",
+      "page": 6,
+      "index": 1,
+      "width": 514,
+      "height": 335
+    },
+    {
+      "url": "assets/figures/arxiv/2604.18842v1/fig-002.webp",
+      "caption": "Fig. 12: Class-level performance on COCO, O365, and VG. We compare DINO-GEM to baselines trained on either single datasets or a joint mixture. GEM outperforms both, demonstrating finegrained expert specialization across hundreds of object categories.",
+      "page": 12,
+      "index": 2,
+      "width": 429,
+      "height": 640
+    },
+    {
+      "url": "assets/figures/arxiv/2604.18842v1/fig-003.webp",
+      "caption": "Fig. 7: Visualizing expert specialization. Each row shows an input and the corresponding heatmaps from different models. SoftMoE shows diffuse, noisy activations. Sinkhorn yields sharper maps but misses relevant regions. GEM without rounding results in overlapping activations, as fractional assignments distribute each query across multiple experts. GEM produces object-aligned maps, demonstrating accurate and interpretable localization.",
+      "page": 9,
+      "index": 3,
+      "width": 498,
+      "height": 309
+    }
+  ]
+}

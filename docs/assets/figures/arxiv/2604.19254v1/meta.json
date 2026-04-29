@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.19254v1/fig-001.webp",
+      "caption": "Table 1: Comparison of different PEFT methods across model sizes on generation and understanding benchmarks. Reported results are the average of 5 runs. Bold indicates the best result among baselines per backbone group. ShadowPEFT indicates the shadow-attached inference mode. Detached Shadow Only means the results of the detached centralized shadow model. Bold indicates the best result per dataset within each parameter group, and underline denotes the overall best result per dataset.",
+      "page": 7,
+      "index": 1,
+      "width": 829,
+      "height": 509
+    },
+    {
+      "url": "assets/figures/arxiv/2604.19254v1/fig-002.webp",
+      "caption": "Table 3: Case study comparison of generated responses across Detached Shadow-Only, ShadowPEFT, LoRA, and DoRA. Red color marks wrong answers. Orange color annotates hallucinations.",
+      "page": 10,
+      "index": 2,
+      "width": 831,
+      "height": 855
+    },
+    {
+      "url": "assets/figures/arxiv/2604.19254v1/fig-003.webp",
+      "caption": "Figure 2: Architecture of ShadowPEFT. (a) Shadow Injection Module. The discrepancy δ(ℓ) is projected through a low-rank bottleneck (Wdown∼N (0, σ2), Wup=0) and added back to the base hidden state. (b) Base Encoding Module. The frozen base layer encodes the refined representation. (c) Shadow Update Module. The base output h(ℓ) out is LayerNorm-normalised, then split into a transform Wt and a sigmoid gate σ(Wg); their product updates the shadow state via a gated residual.",
+      "page": 4,
+      "index": 3,
+      "width": 721,
+      "height": 294
+    },
+    {
+      "url": "assets/figures/arxiv/2604.19254v1/fig-004.webp",
+      "caption": "Figure 3: (a) Parameter scaling: GSM8K accuracy of LoRA, DoRA, and ShadowPEFT with the parameter scales from 0.1B to 0.5B (base model: Qwen3 8B). (b) Inference latency (mean ± std over 10 attempts) across three base model sizes.",
+      "page": 9,
+      "index": 4,
+      "width": 789,
+      "height": 267
+    }
+  ]
+}

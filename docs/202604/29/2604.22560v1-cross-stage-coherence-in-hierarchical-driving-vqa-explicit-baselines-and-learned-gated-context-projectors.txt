@@ -1,0 +1,368 @@
+Title: Cross-Stage Coherence in Hierarchical Driving VQA: Explicit Baselines and Learned Gated Context Projectors
+
+URL Source: https://arxiv.org/pdf/2604.22560v1
+
+Published Time: Mon, 27 Apr 2026 00:57:47 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+Preprint. Under review. 
+
+# Cross-Stage Coherence in Hierarchical Driving VQA: Explicit Baselines and Learned Gated Context Projectors 
+
+Gautam Kumar Jain 
+
+Technische Hochschule Augsburg TTZ Landsberg, Landsberg am Lech, Germany 
+
+gautam.kumar.jain@tha.de 
+
+Carsten Markgraf 
+
+Technische Hochschule Augsburg TTZ Landsberg, Landsberg am Lech, Germany 
+
+carsten.markgraf@tha.de 
+
+Julian St¨ ahler 
+
+Technische Hochschule Augsburg TTZ Landsberg, Landsberg am Lech, Germany 
+
+julian.staehler@tha.de 
+
+## Abstract 
+
+Graph Visual Question Answering (GVQA) for autonomous driving orga-nizes reasoning into ordered stages, namely Perception, Prediction, and Planning, where planning decisions should remain consistent with the model’s own perception. We present a comparative study of cross-stage context passing on DriveLM-nuScenes using two complementary mech-anisms. The explicit variant evaluates three prompt-based conditioning strategies on a domain-adapted 4B VLM (Mini-InternVL2-4B-DA-DriveLM) without additional training, reducing NLI contradiction by up to 42.6% and establishing a strong zero-training baseline. The implicit variant intro-duces gated context projectors, which extract a hidden-state vector from one stage and inject a normalized, gated projection into the next stage’s input embeddings. These projectors are jointly trained with stage-specific QLoRA adapters on a general-purpose 8B VLM (InternVL3-8B-Instruct) while updating only ∼0.5% of parameters. The implicit variant achieves a statistically significant 34% reduction in planning-stage NLI contradiction (bootstrap 95% CIs, p < 0.05) and increases cross-stage entailment by 50%, evaluated with a multilingual NLI classifier to account for mixed-language outputs. Planning language quality also improves (CIDEr +30.3%), but lexical overlap and structural consistency degrade due to the absence of driving-domain pretraining. Since the two variants use different base models, we present them as complementary case studies: explicit context passing provides a strong training-free baseline for surface consistency, while implicit gated projection delivers significant planning-stage semantic gains, suggesting domain adaptation as a plausible next ingredient for full-spectrum improvement. 
+
+## 1 Introduction 
+
+Autonomous driving research is shifting toward systems that produce interpretable, multi-step reasoning before committing to an action Sima et al. (2023); Tian et al. (2024); Shao et al. (2023). Vision-language models (VLMs), pretrained on large multimodal corpora, carry priors about object behavior, traffic rules, and causal relationships that purely geometric planners lack Azzolini et al. (2025); Jiang et al. (2025); Renz et al. (2025). Graph Visual Question Answering (Graph VQA), introduced by DriveLM Sima et al. (2023), organizes driving-based reasoning into three ordered stages: Perception ( Perc ), Prediction (Pred ), and Planning ( Plan ). The ordering reflects real dependencies: a prediction that ignores perception is likely incoherent; a plan that ignores prediction is potentially unsafe. 1
+
+> arXiv:2604.22560v1 [cs.CV] 24 Apr 2026
+
+Preprint. Under review. 
+
+Figure 1: Context passing mechanisms for hierarchical driving VQA. (a) Shared setup: six surround-view cameras and three stage-specific questions. (b) Flat: each stage pro-cesses image and question independently. (c) History-chain: prior answers flow as con-versational history. (d) Injection-chain: prior answers are prepended as structured text prefixes. (e) Proposed framework: learned context vectors ( perception to prediction ,
+
+prediction to planning ) are projected between stages via gated linear modules; an op-tional skip routes perception context directly to planning. GVQA therefore serves as a structured diagnostic where cross-stage information flow can be measured directly. A model that answers each stage independently risks outputs that are locally fluent but globally contradictory Xie et al. (2025). End-to-end architectures Jia et al. (2025); Tang et al. (2025) pass structured feature tokens between tasks, but these encode physical scene elements, not compressed semantic outputs. Chain-of-thought methods Ishaq et al. (2025); Wang et al. (2024); Xing et al. (2024) rely on the autoregressive context window, which is not trainable as a routing mechanism. Stage-specific adapters Jia et al. (2023) train each adapter independently, making cross-stage coherence accidental. What is missing is a trainable mechanism that propagates a compact semantic state from one reasoning stage to the next. We approach this through two complementary forms of cross-stage context passing (Fig-ure 1). In the explicit form, context passes between stages as generated text through one of three prompt-based conditions; no training is involved. In the implicit form, a compact vector from the VLM’s last-layer hidden states is projected and gated into the next stage’s input embeddings through a learned linear module, within a single inference pipeline. The explicit variant uses Mini-InternVL2-4B-DA-DriveLM OpenGVLab (2024); Gao et al. (2024), a domain-adapted model; the implicit variant uses InternVL3-8B-Instruct OpenGVLab (2025); Zhu et al. (2025), a general-purpose VLM without driving pretraining. Results across variants are not directly comparable; we report them as comple-mentary case studies. Our contributions are: 1. Explicit context-passing study using structured prompt injection on a domain-adapted 4B VLM, showing that hierarchical conditioning reduces NLI contradiction by up to 42.6% with no training. 2. Modular implicit reasoning framework with three stage-specific QLoRA adapters on InternVL3-8B, connected by gated context projectors that route compressed semantic state between stages, training only ∼0.5% of parameters. 2Preprint. Under review. 3. NLI-based cross-stage consistency protocol. An evaluation framework for hierar-chical driving VQA that combines lexical overlap, rule-based structural consistency, and NLI-based contradiction scores across adjacent stage pairs, a property absent from existing driving VQA benchmarks. 4. Domain adaptation as a missing ingredient. A diagnostic finding: implicit gated projection significantly improves planning-stage NLI coherence (bootstrap 95% CIs, p < 0.05) regardless of base model, but surface-level consistency (lexical overlap, structural extraction) requires driving-domain pretraining. This identifies a plausible prerequisite for future work applying implicit context routing to driving VQA. 
+
+## 2 Related Work 
+
+2.1 Vision-Language Models for Autonomous Driving 
+
+VLMs have been applied to driving as reasoning components within planning pipelines Tian et al. (2024); Shao et al. (2023); Jiang et al. (2025); Xing et al. (2024) and as end-to-end systems Renz et al. (2025); Zhou et al. (2025); Hegde et al. (2025); Gariboldi et al. (2025). These works target closed-loop control or trajectory planning. Our work operates in the GVQA diagnostic setting, using it as a testbed for cross-stage state passing rather than closed-loop control. 
+
+2.2 Hierarchical and Multi-Stage Reasoning 
+
+In end-to-end planning, DriveTransformer Jia et al. (2025), HiP-AD Tang et al. (2025), CogAD Wang et al. (2025), and PARA-Drive Weng et al. (2024) propagate structured feature tokens tied to physical entities between task heads, not compressed semantic states from natural-language answers. In VQA, DriveLM Sima et al. (2023) links perception–prediction–planning QA pairs via a dependency graph; DriveLMM-o1 Ishaq et al. (2025) and DriveCoT Wang et al. (2024) generate step-by-step reasoning chains but rely on the autoregressive context window rather than a trainable routing mechanism. Hierarchical QA for driving Mohamud et al. (2025) uses a hand-crafted question tree with fixed templates. Hint-AD Ding et al. (2024), VERDI Feng et al. (2025), and ALN-P3 Ma et al. (2025) improve representations via language grounding across the perception-prediction-planning stack but do not route a learned semantic state between VQA stages at inference time. 
+
+PEFT and benchmarks. LoRA Hu et al. (2021) and QLoRA Dettmers et al. (2023) enable parameter-efficient adaptation; DriveAdapter Jia et al. (2023) applies feature-alignment adapters across module boundaries but trains each stage independently; MMA Seputis et al. (2024) extends adapter placement to both branches. The DriveLM benchmark Sima et al. (2023) evaluates per-stage language quality (top entry: Precise Drive Huang et al. (2024), composite 0.6064); DriveBench Xie et al. (2025) adds robustness evaluation. A property absent from these benchmarks is cross-stage consistency : whether a model’s Planning answer is semantically coherent with its own Perception answer. 
+
+Remaining gap. Recent latent reasoning work (COCONUT Hao et al. (2024); CODI Shen et al. (2025)) routes hidden states forward rather than decoding to tokens, improving reasoning efficiency. However, both operate within a single homogeneous reasoning chain and do not address cross-stage coherence across discrete, adapter-separated tasks with different semantic objectives. No prior work has evaluated whether learned hidden-state routing reduces semantic contradiction between structured reasoning stages, nor has the modular training regime (frozen upstream adapters, trainable downstream adapters and projector) been studied for driving VQA. Gated context projectors address this gap. 3Preprint. Under review. 
+
+## 3 Problem Formulation 
+
+3.1 GVQA as a Structured Reasoning Testbed 
+
+Let v ∈ V denote a multi-camera observation of a driving scene (six synchronized RGB frames from the nuScenes sensor suite Caesar et al. (2019)). The reasoning stages are 
+
+S = {s1, s2, s3} = {P erc , Pred , Plan }, with a causal dependency: planning should follow from prediction, which should follow from perception. For each stage sk there is a set of Mk question-answer pairs Qk = {(qk,j, a∗
+
+> k,j
+
+)}Mk
+
+> j=1
+
+. Let 
+
+fθ denote a VLM parameterized by θ. The independent (flat) baseline ˆa flat  
+
+> k,j
+
+= fθ (v, qk,j)
+
+provides no mechanism for cross-stage coherence. The goal is to define hierarchically conditioned policies ˆa hier  
+
+> k,j
+
+that condition on the output of stage sk−1 when answering stage 
+
+sk, and to measure whether this reduces cross-stage contradictions. 
+
+3.2 Explicit Reasoning: Prompt-Based Context Passing 
+
+In the explicit variant, context passes between stages as generated text, without any trainable component. We evaluate three conditions on Mini-InternVL2-4B-DA-DriveLM. 
+
+Condition 1 (Flat). Each stage receives only the visual input and its own question: ˆa flat  
+
+> k
+
+= fθ (v, qk).
+
+Condition 2 (History-chain). All three stages are posed within a single multi-turn conver-sation. Stage 1 is answered first; the model’s autoregressive memory carries its response into subsequent turns: ˆa hist  
+
+> k
+
+= fθ
+
+ v, qk history ( ˆa1, . . . , ˆ ak−1),where history (·) denotes the conversation state maintained by the VLM’s chat interface. 
+
+Condition 3 (Injection-chain). Each stage is a fresh single-turn call, but prior-stage answers are prepended as a structured text prefix: ˆa inj  
+
+> k
+
+=
+
+fθ
+
+ v, πk( ˆa1, . . . , ˆak−1, qk), where πk concatenates prior answers as labeled fields, e.g. π3 = "Perception: ˆa1. Prediction: ˆa2. Now answer: q3".
+
+3.3 Implicit Reasoning: Learned Gated Context Projection 
+
+The implicit variant replaces text-level context passing with a trainable mechanism oper-ating in the VLM’s hidden-state space ( D = 3584 for InternVL3-8B). We describe three components. 
+
+Semantic context extraction. Let Hk ∈ RL×D denote the last-layer hidden states after processing stage sk, where L is the sequence length. The context vector hk ∈ RD is the hidden state at position τk:
+
+hk = Hk[τk],where τk is the last non-visual, non-padding prompt token. In a causal transformer, this position attends to the entire preceding context and encodes a compressed representation of the model’s scene understanding conditioned on the question. 
+
+Gated projection. The context hk is transformed into a conditioning signal for stage sk+1:˜hk = σ(gk) · Wk
+
+ hk
+
+∥hk∥2 + ε
+
+
+
+, ˜hk ∈ RD,4Preprint. Under review. 
+
+Figure 2: Architecture of the implicit variant. The frozen InternVL3-8B-Instruct backbone carries three stage-specific LoRA adapters. After each stage, a gated context projector extracts the hidden state at the final prompt token and injects a normalized, gated projection into the input embeddings of the next stage. The full three-stage chain executes in a single inference pipeline. where Wk ∈ RD×D is a learnable weight matrix, gk ∈ R is a learnable scalar gate, σ(·) is the sigmoid function, and ε = 10 −6. L2-normalization is necessary because raw hidden-state norms ( ∼100–200) exceed token embedding norms ( ∼4); without it, the projected vector causes generation collapse. The gate starts near zero ( gk = −3.5, σ(gk) ≈ 0.029) and learns to open during training, providing a curriculum from independent to context-conditioned inference. 
+
+Single-position injection. The gated context ˜hk is added to the input embedding at position τk+1: Ek+1[τk+1] += ˜hk, where Ek+1 ∈ RL×D. Single-position injection avoids a distribution shift across the full sequence and keeps the injection site identical between training and inference. 
+
+## 4 Experimental Setup 
+
+4.1 Models and Dataset Explicit variant. Mini-InternVL2-4B-DA-DriveLM, a 4B-parameter VLM domain-adapted on DriveLM-nuScenes with a coordinate-aware loss. No additional training; all three prompt conditions are evaluated inference-only. 
+
+Implicit variant. InternVL3-8B-Instruct, a general-purpose 8B-parameter VLM with no driving-domain pretraining, loaded with 4-bit NF4 quantization (double quantization) and fine-tuned via QLoRA Dettmers et al. (2023) with stage-specific LoRA adapters. The vision encoder and all non-adapter parameters remain frozen. 5Preprint. Under review. 
+
+Dataset. Both variants use DriveLM-nuScenes Sima et al. (2023); Caesar et al. (2019) (v1.1, 
+
+∼3 ,200 keyframes, 80/20 split): six camera views stitched into a 1344 × 896 image with stage-specific QA pairs. Consistency analysis uses three fixed open-ended questions across 796 validation scenes (Figure 1). 
+
+4.2 Training Protocol Flat adapter baselines. Three independent LoRA adapters (one per stage) trained sepa-rately on their respective QA pairs with the full backbone frozen. 
+
+Sequential training with context projection. Training follows the pipeline Perc → P red →Plan in two phases. In Phase 1 ( P∗ 
+
+> erc
+
+→ P red ), the trained Perception adapter is frozen ( ∗)and a new Prediction adapter is trained jointly with projector W1 and gate g1. In Phase 2 (P∗ 
+
+> erc
+
+→ P ∗ 
+
+> red
+
+→ P lan ), both upstream adapters are frozen and a Planning adapter is trained with projector W2 and gate g2. An optional skip connection adds projector W1→3 routing Perception context directly into Planning. In Phase 2, W2 and g2 can optionally be initialized from the trained W1 and g1 of Phase 1, providing a starting point that has already learned to route hidden-state context. Preliminary experiments with Mini-InternVL2-4B-DA-DriveLM showed progressive quality degradation when attaching sequential LoRA adapters to the already fine-tuned model, motivating the switch to InternVL3-8B-Instruct with freshly initialized adapters. 
+
+Hyperparameters. All LoRA adapters: rank r = 16, α = 32, dropout 0.05, applied to all attention and MLP projection layers. Backbone: BF16 with 4-bit NF4 double quantization. Optimizer: AdamW, base LR 1.5 × 10 −5, weight decay 0.05, cosine schedule with 10% warmup. Context projectors receive 3.0 × the base LR; gates receive 25.0 ×. Projector weights initialized at scale 0.01; gate scalars at gk = −3.5. Per-adapter deterministic seeds ensure identical initialization between flat and sequential variants. Total trainable parameters: 
+
+∼0.5% of the 8B backbone. 
+
+4.3 Evaluation Metrics Language quality. Per-stage answers scored against DriveLM ground truth using BLEU-1 Papineni et al. (2002), ROUGE-L Lin (2004), and CIDEr Vedantam et al. (2014). 
+
+Cross-stage consistency. Three complementary metrics computed over the fixed open-ended questions across all validation scenes. Lexical overlap: For each ordered stage pair 
+
+(sk, sk+1), key terms are extracted (tokens > 3 characters after stop-word removal) and source-term recall in the target is computed: LexOverlap (sk, sk+1) = |terms ( ˆak) ∩ terms ( ˆak+1)||terms ( ˆak)| .
+
+Structural consistency: A rule-based system extracts driving-domain attributes (traffic lights, ego actions, pedestrian status) and checks for logical contradictions: StructConsist =
+
+1 − contradictions/rule checks , counted only when both answers contain extractable at-tributes. NLI-based consistency: A multilingual NLI classifier (mDeBERTa-v3-base-XNLI, 100 languages Laurer et al. (2023)) scores each adjacent answer pair for entailment, neutrality, and contradiction across Perc → P red and (Perc + Pred ) → P lan . The primary metric is average contradiction probability (lower is better). A multilingual classifier is essential because the implicit variant produces mixed-language outputs (Section 5.4). 
+
+## 5 Results 
+
+5.1 Context Projector Dynamics 
+
+Figure 3 shows the effective injection ratio ∥ ˜hk∥2/∥Ek+1[τk+1]∥2 and gate opening σ(gk)
+
+over training. The perception →prediction injection ratio rises to ∼0.07 in Phase 1, while 6Preprint. Under review. 
+
+Figure 3: Effective context injection strength (top) and gate opening σ(gk) (bottom) during training, for three projector transitions. Table 1: Per-stage language quality on DriveLM-nuScenes validation (InternVL3-8B-Instruct+QLoRA). Flat adapters are trained independently. Sequential variants add learned context projectors between frozen upstream and trainable downstream adapters. 
+
+P∗ 
+
+> erc
+
+→ P red evaluates prediction; PPP variants evaluate planning. 
+
+Flat Adapters Seq. Seq. PPP Metric Perc Pred Plan P∗ → P red No skip Skip Skip+Transf. BLEU-1 ↑ 23.8 36.5 30.1 33.0 31.5 32.9 34.1 
+
+ROUGE-L ↑ 19.0 33.2 21.6 39.2 22.9 24.1 25.3 CIDEr ↑ 50.2 65.1 51.5 91.4 55.7 61.6 67.1 the gate increases only marginally ( σ(gk) ≈ 0.029 → 0.030). For prediction →planning and skip projectors, weight transfer eliminates the cold-start period and yields higher final injection ratios ( ∼0.09–0.12). The near-constant gate combined with a growing injection ratio reveals that Wk carries the primary conditioning signal, while gk functions as a protective 
+
+stability margin rather than a routing mechanism: initialized near-closed ( σ(−3.5 ) ≈ 0.029), it prevents injection collapse during early training before the projector weights (initialized at scale 0.01, given 3 × base LR) have converged. 
+
+5.2 Per-Stage Language Quality 
+
+Table 1 reports language quality for flat and sequential variants. 
+
+Sequential training improves downstream generation. The sequential PPP variants outperform the flat planning baseline, with monotonic gains from no-skip to skip to skip+transfer. The strongest planning result is PPP skip+transfer: BLEU-1 34.1 (vs. 30.1 flat, +13.3%), ROUGE-L 25.3 (vs. 21.6, +17.1%), and CIDEr 67.1 (vs. 51.5, +30.3%). The two-stage P∗ 
+
+> erc
+
+→ P red variant achieves the highest ROUGE-L (39.2) and CIDEr (91.4), reflecting substantial benefit from Perception context at the Prediction stage. 7Preprint. Under review. Table 2: Cross-stage consistency on DriveLM-nuScenes. Explicit: Mini-InternVL2-4B-DA (domain-adapted, inference-only); Implicit: InternVL3-8B+QLoRA (general-purpose). NLI uses a multilingual classifier (mDeBERTa-v3-base-XNLI, 100 languages). ↓/↑: lower/higher is better. NLI columns average both stage transitions. Bootstrap 95% CIs confirm planning-stage NLI improvements are statistically significant (Section 5.3).                                  
+
+> Variant Condition Lex. Overlap ↑Struct. Consist. ↑NLI-contra ↓NLI-entail ↑
+> Explicit (4B-DA) Flat 0.123 0.624 0.461 0.071 History-chain 0.390 0.675 0.264 0.134
+> Injection-chain 0.265 0.586 0.355 0.133 Implicit (8B-QLoRA) Flat adapters 0.102 0.684 0.351 0.042 PPP no skip 0.064 0.312 0.334 0.061 PPP skip 0.054 0.188 0.335 0.062 PPP skip+transfer 0.067 0.359 0.333 0.063
+
+Table 3: Average answer length (tokens) and language distribution for the implicit variant. Sequential training shortens Prediction outputs and introduces mixed-language generation. 
+
+Stage Flat PPP no skip PPP skip PPP skip+transf. 
+
+Perception 52.3 48.7 48.7 48.7 Prediction 26.3 8.3 8.3 8.3 Planning 21.6 20.0 19.5 20.4 
+
+5.3 Cross-Stage Consistency Analysis 
+
+Table 2 reports cross-stage consistency for both variants, evaluated on 796 validation scenes. 
+
+Explicit variant. Both hierarchical conditions improve consistency. History-chaining achieves the strongest results: NLI contradiction drops by 42.6% (0.461 → 0.264), lexical overlap triples, and entailment nearly doubles. Injection-chaining also reduces NLI con-tradiction ( −22.9%) with stable answer length. Remaining structural contradictions are dominated by “pedestrian crossing → accelerate/maintain” (38 of 56 flat contradictions), reflecting model bias rather than context-passing failure. 
+
+Implicit variant: NLI improvements. The learned projectors concentrate their semantic ef-fect at the planning stage: (Perc + Pred ) → P lan contradiction drops by 34.4% (0.340 → 0.223; Table 2 averages both transitions: 0.351 → 0.333), while cross-stage entailment increases by 50% (0.042 → 0.063). Planning is the safety-critical stage where contradictions matter most (e.g. perceiving pedestrians yet planning to accelerate). The average contradiction reduction (0.351 → 0.333) is modest and not statistically significant, indicating that the projectors selectively improve the planning transition rather than uniformly reducing contradiction throughout the chain. 
+
+Implicit variant: lexical and structural degradation. Lexical overlap and structural con-sistency decrease relative to the flat baseline. The diagnostic in Table 3 explains this pattern. 
+
+Statistical significance. Bootstrap CIs (10,000 resamples, 95% level) on 796 valida-tion scenes confirm the planning-stage result: (Perc + Pred ) → P lan contradiction flat 0.340 [0.315, 0.365 ] vs. no-skip 0.223 [0.203, 0.243 ] (non-overlapping, p < 0.05). Average en-tailment also improves significantly: 0.042 [0.036, 0.048 ] vs. 0.061 [0.053, 0.069 ]. The average contradiction reduction (0.351 → 0.333) is not statistically significant, as the planning-stage gain is diluted when averaged across both stage transitions. Lexical and structural degradations are also significant (non-overlapping CIs), consistent with Section 5.4. 8Preprint. Under review.                   
+
+> Stage Outputs C
+> Explicit variant (Mini-InternVL2-4B-DA)
+> Flat P: Many pedestrians and a car [. . . ] carrying a backpack and crossing the road. [. . . ]
+> Pr: Keep going straight, change to the left lane, slightly offset to the left.
+> Pl: The action is to keep going at the same speed, and the action is to slightly offset to the right.
+> 1
+> Inj. P: A man wearing a white shirt to the front [. . . ] a silver sedan [. . . ] and a pedestrian to the back left [. . . ]
+> Pr: The man wearing a white shirt will turn right, the silver sedan will turn right [. . . ]
+> Pl: The action is to keep going at the same speed, the action is to turn right, and the action is to stop. 0
+> Implicit variant (InternVL3-8B + QLoRA)
+> Flat P: [. . . ] A silver car on the left side. Pedestrians walking on the sidewalk. [. . . ]
+> Pr: Pedestrian 1: Will cross the road. No, they will not be in the ego vehicle’s path.
+> Pl: Keep going at the same speed. Accelerate and go ahead.
+> 1
+> Seq. P: Brick buildings; pedestrians on sidewalk near building entrance; silver car parked on roadside.
+> Pr: They may enter the ego path and continue crossing.
+> Pl: The action that the ego vehicle should take is to slow down. The action that would be dangerous is to brake suddenly. 0
+
+Figure 4: Success case for Scene 162. Stage outputs ( P/Pr /Pl ) are verbatim (abbreviated). C:structural contradiction count. Underlines mark contradiction triggers/resolutions. Both flat baselines perceive pedestrians but plan to maintain speed; hierarchical variants resolve the contradiction. 
+
+5.4 Diagnostic: Answer Length and Language Distribution 
+
+Sequential variants produce shorter Prediction answers (8.3 vs. 26.3 tokens) and mixed-language outputs (38% Chinese at Prediction), both tracing to the lack of driving-domain pretraining. Shorter answers lower lexical overlap mechanically; mixed-language outputs fail English-oriented rule extractors, inflating structural contradictions. Because we employ a multilingual NLI classifier (mDeBERTa-v3-base-XNLI, 100 languages), NLI scores are not confounded by the language shift: the classifier evaluates semantic coherence regardless of output language. The planning-stage NLI improvement (Section 5.3) therefore reflects genuine semantic alignment, not an evaluation artifact. 
+
+5.5 Qualitative Results 
+
+Figure 4 shows a representative success case. Both flat baselines perceive pedestrians but plan to maintain speed or accelerate (NLI-C = 0.995); both hierarchical variants resolve the contradiction. Additional examples, including failure cases, appear in Appendix A. 
+
+## 6 Conclusion 
+
+This paper introduced a modular hierarchical reasoning framework for multi-stage driving VQA, studying two complementary mechanisms for propagating information between Perception, Prediction, and Planning. Explicit context passing reduces NLI contradiction by up to 42.6% with zero training cost, establishing a strong baseline. Implicit gated context projectors deliver a statistically significant 34% reduction in planning-stage NLI contradiction and a 50% increase in cross-stage entailment (bootstrap 95% CIs, p < 0.05), alongside improved planning language quality (CIDEr +30.3%), while updating only 9Preprint. Under review. 
+
+∼0.5% of parameters. The planning stage is where coherence failures are most safety-relevant (e.g. perceiving pedestrians yet accelerating), making this the highest-impact metric. Surface-level metrics (lexical overlap, structural extraction) additionally appear to depend on driving-domain pretraining, suggesting a plausible hypothesis for future work: applying the implicit framework to a domain-adapted base model may recover the surface degradation while preserving the planning-stage NLI gains. 
+
+Future work. Applying the implicit framework to a domain-adapted base model would test whether NLI gains extend to surface-level metrics. Our experience with the explicit vari-ant suggests a concrete recipe: domain pretraining on driving VQA data with a coordinate-aware loss, applied specifically to the Perception adapter, would ground the upstream stage in spatial scene structure before sequential training begins. This should reduce mixed-language generation and restore structural consistency while preserving the planning-stage semantic gains. More broadly, the projector mechanism generalizes to any multi-step rea-soning pipeline where intermediate hidden states should condition downstream generation. 
+
+## References 
+
+Nvidia Alisson Azzolini, Hannah Brandon, Prithvijit Chattopadhyay, Huayu Chen, Jinju Chu, Yin Cui, Jenna Diamond, Yifan Ding, Francesco Ferroni, R.S. Govindaraju, Jinwei Gu, Siddharth Gururani, Imad El Hanafi, Zekun Hao, Jacob Samuel Huffman, Jingyi Jin, Brendan Johnson, Rizwan Ahmed Khan, George Kurian, Elena Lantz, Nayeon Lee, Zhaoshuo Li, Xuan Li, Tsung-Yi Lin, Yen-Chen Lin, Ming-Yu Liu, Andrew Mathau, Yun Ni, Lindsey Pavao, Wei Ping, David W. Romero, Misha Smelyanskiy, Shuran Song, Lyne P. Tchapmi, Andrew Z. Wang, Boxin Wang, Haoxiang Wang, Fangyin Wei, Jiashu Xu, Yao Xu, Dinghao Yang, Xiaodong Yang, Zhuoling Yang, Xiaohui Zeng, and Zhe Zhang. Cosmos-reason1: From physical common sense to embodied reasoning. ArXiv , abs/2503.15558, 2025. URL https://api.semanticscholar.org/CorpusID:277150473 .Holger Caesar, Varun Bankiti, Alex H. Lang, Sourabh Vora, Venice Erin Liong, Qiang Xu, Anush Krishnan, Yuxin Pan, Giancarlo Baldan, and Oscar Beijbom. nuscenes: A multi-modal dataset for autonomous driving. 2020 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pp. 11618–11628, 2019. URL https://api.semanticscholar. org/CorpusID:85517967 .Tim Dettmers, Artidoro Pagnoni, Ari Holtzman, and Luke Zettlemoyer. Qlora: Effi-cient finetuning of quantized llms. ArXiv , abs/2305.14314, 2023. URL https://api. semanticscholar.org/CorpusID:258841328 .Kairui Ding, Boyuan Chen, Yuchen Su, Huan ang Gao, Bu Jin, Chonghao Sima, Wuqiang Zhang, Xiaohui Li, Paul Barsch, Hongyang Li, and Hao Zhao. Hint-ad: Holistically aligned interpretability in end-to-end autonomous driving. In Conference on Robot Learning ,2024. URL https://api.semanticscholar.org/CorpusID:272550834 .Bowen Feng, Zhiting Mei, Baiang Li, Julian Ost, Roger Girgis, Anirudha Majumdar, and Felix Heide. Verdi: Vlm-embedded reasoning for autonomous driving. CoRR , abs/2505.15925, May 2025. URL https://doi.org/10.48550/arXiv.2505.15925 .Zhangwei Gao, Zhe Chen, Erfei Cui, Yiming Ren, Weiyun Wang, Jinguo Zhu, Hao Tian, Shenglong Ye, Junjun He, Xizhou Zhu, Lewei Lu, Tong Lu, Yu Qiao, Jifeng Dai, and Wenhai Wang. Mini-internvl: A flexible-transfer pocket multimodal model with 5% parameters and 90% performance. 2024. URL https://arxiv.org/abs/2410.16261 .Cristian Gariboldi, Hayato Tokida, Ken Kinjo, Yuki Asada, and Alexander Carballo. Vlad: A vlm-augmented autonomous driving framework with hierarchical planning and interpretable decision process. ArXiv , abs/2507.01284, 2025. URL https://api. semanticscholar.org/CorpusID:280113318 .Shibo Hao, Sainbayar Sukhbaatar, DiJia Su, Xian Li, Zhiting Hu, Jason E. Weston, and Yuan-dong Tian. Training large language models to reason in a continuous latent space. ArXiv ,abs/2412.06769, 2024. URL https://api.semanticscholar.org/CorpusID:274610816 .10 Preprint. Under review. Deepti Hegde, Rajeev Yasarla, Hong Cai, Shizhong Han, Apratim Bhattacharyya, Shweta Mahajan, Litian Liu, Risheek Garrepalli, Vishal M. Patel, and Fatih Murat Porikli. Dis-tilling multi-modal large language models for autonomous driving. 2025 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pp. 27575–27585, 2025. URL 
+
+https://api.semanticscholar.org/CorpusID:275570813 .J. Edward Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, and Weizhu Chen. Lora: Low-rank adaptation of large language models. ArXiv ,abs/2106.09685, 2021. URL https://api.semanticscholar.org/CorpusID:235458009 .Bin Huang, Siyuan Wang, Yuanpeng Chen, Yidan Wu, Hui Song, Zifan Ding, Jing Leng, Chen Liang, Peng Xue, Junliang Zhang, and Tiankun Zhao. Precise drive with vlm: First prize solution for prcv 2024 drive lm challenge. ArXiv , abs/2411.02999, 2024. URL 
+
+https://api.semanticscholar.org/CorpusID:273821165 .Ayesha Ishaq, Jean Lahoud, Ketan More, Omkar Thawakar, Ritesh Thawkar, Dinura Dis-sanayake, Noor Ahsan, Yuhao Li, Fahad Shahbaz Khan, Hisham Cholakkal, Ivan Laptev, Rao Muhammad Anwer, and Salman H. Khan. Drivelmm-o1: A step-by-step reasoning dataset and large multimodal model for driving scenario understanding. 2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pp. 20501–20508, 2025. URL https://api.semanticscholar.org/CorpusID:276961886 .Xiaosong Jia, Yulu Gao, Li Chen, Junchi Yan, Patrick Langechuan Liu, and Hongyang Li. Driveadapter: Breaking the coupling barrier of perception and planning in end-to-end autonomous driving. 2023 IEEE/CVF International Conference on Computer Vision (ICCV) ,pp. 7919–7929, 2023. URL https://api.semanticscholar.org/CorpusID:260351212 .Xiaosong Jia, Junqi You, Zhiyuan Zhang, and Junchi Yan. Drivetransformer: Unified transformer for scalable end-to-end autonomous driving. ArXiv , abs/2503.07656, 2025. URL https://api.semanticscholar.org/CorpusID:276928652 .Bo Jiang, Shaoyu Chen, Qian Zhang, Wenyu Liu, and Xinggang Wang. Alphadrive: Un-leashing the power of vlms in autonomous driving via reinforcement learning and rea-soning. ArXiv , abs/2503.07608, 2025. URL https://api.semanticscholar.org/CorpusID: 276928398 .Moritz Laurer, Wouter van Atteveldt, Andreu Casas, and Kasper Welbers. Building efficient universal classifiers with natural language inference. ArXiv , abs/2312.17543, 2023. URL 
+
+https://api.semanticscholar.org/CorpusID:266690861 .Chin-Yew Lin. ROUGE: A package for automatic evaluation of summaries. In Text Summa-rization Branches Out , pp. 74–81, Barcelona, Spain, July 2004. Association for Computa-tional Linguistics. URL https://aclanthology.org/W04-1013/ .Yunsheng Ma, Burhaneddin Yaman, Xin Ye, Mahmut Yurt, Jingru Luo, Abhirup Mallik, Ziran Wang, and Liu Ren. Aln-p3: Unified language alignment for perception, prediction, and planning in autonomous driving. ArXiv , abs/2505.15158, 2025. URL https://api. semanticscholar.org/CorpusID:278782814 .Safaa Abdullahi Moallim Mohamud, Minjin Baek, and Dong Seog Han. Hierarchical question-answering for driving scene understanding using vision-language models. 2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pp. 13576–13581, 2025. URL https://api.semanticscholar.org/CorpusID:279118849 .OpenGVLab. Mini-InternVL2-4B-DA-DriveLM. https://huggingface.co/OpenGVLab/ Mini-InternVL2-4B-DA-DriveLM , 2024. Hugging Face model card, accessed 2026-03-18. OpenGVLab. Internvl3-8b-instruct. https://huggingface.co/OpenGVLab/ InternVL3-8B-Instruct , 2025. Hugging Face model card, accessed 2026-03-18. Kishore Papineni, Salim Roukos, Todd Ward, and Wei-Jing Zhu. Bleu: a method for automatic evaluation of machine translation. In Proceedings of the 40th Annual Meeting on Association for Computational Linguistics , ACL ’02, pp. 311–318, USA, 2002. Association 11 Preprint. Under review. for Computational Linguistics. doi: 10.3115/1073083.1073135. URL https://doi.org/10. 3115/1073083.1073135 .Katrin Renz, Long Chen, Elahe Arani, and Oleg Sinavski. Simlingo: Vision-only closed-loop autonomous driving with language-action alignment. 2025 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pp. 11993–12003, 2025. URL https: //api.semanticscholar.org/CorpusID:276937682 .Dominykas Seputis, Serghei Mihailov, Soham Chatterjee, and Zehao Xiao. Multi-modal adapter for vision-language models. ArXiv , abs/2409.02958, 2024. URL https://api. semanticscholar.org/CorpusID:272423981 .Hao Shao, Yuxuan Hu, Letian Wang, Steven L. Waslander, Yu Liu, and Hongsheng Li. Lmdrive: Closed-loop end-to-end driving with large language models. 2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pp. 15120–15130, 2023. URL 
+
+https://api.semanticscholar.org/CorpusID:266174267 .Zhenyi Shen, Hanqi Yan, Linhai Zhang, Zhanghao Hu, Yali Du, and Yulan He. Codi: Compressing chain-of-thought into continuous space via self-distillation. ArXiv ,abs/2502.21074, 2025. URL https://api.semanticscholar.org/CorpusID:276725056 .Chonghao Sima, Katrin Renz, Kashyap Chitta, Li Chen, Hanxue Zhang, Chengen Xie, Ping Luo, Andreas Geiger, and Hongyang Li. Drivelm: Driving with graph visual question answering. In European Conference on Computer Vision , 2023. URL https://api. semanticscholar.org/CorpusID:266435584 .Yingqi Tang, Zhuo Xu, Zhaotie Meng, and Erkang Cheng. Hip-ad: Hierarchical and multi-granularity planning with deformable attention for autonomous driving in a single de-coder. ArXiv , abs/2503.08612, 2025. URL https://api.semanticscholar.org/CorpusID: 276928606 .Xiaoyu Tian, Junru Gu, Bailin Li, Yicheng Liu, Chenxu Hu, Yang Wang, Kun Zhan, Peng Jia, Xianpeng Lang, and Hang Zhao. Drivevlm: The convergence of autonomous driving and large vision-language models. CoRR , abs/2402.12289, 2024. URL https://doi.org/10. 48550/arXiv.2402.12289 .Ramakrishna Vedantam, C. Lawrence Zitnick, and Devi Parikh. Cider: Consensus-based image description evaluation. 2015 IEEE Conference on Computer Vision and Pattern Recog-nition (CVPR) , pp. 4566–4575, 2014. URL https://api.semanticscholar.org/CorpusID: 9026666 .Tianqi Wang, Enze Xie, Ruihang Chu, Zhenguo Li, and Ping Luo. Drivecot: Integrating chain-of-thought reasoning with end-to-end driving. ArXiv , abs/2403.16996, 2024. URL 
+
+https://api.semanticscholar.org/CorpusID:268680338 .Zhennan Wang, Jian Teng, Canqun Xiang, Kangliang Chen, Xing Pan, Lu Deng, and Weihao Gu. Cognitive-hierarchy guided end-to-end planning for autonomous driving. 2025. URL 
+
+https://api.semanticscholar.org/CorpusID:278959879 .Xinshuo Weng, B. Ivanovic, Yan Wang, Yue Wang, Marco Pavone, and Nvidia Research. Para-drive: Parallelized architecture for real-time autonomous driving. 2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pp. 15449–15458, 2024. URL 
+
+https://api.semanticscholar.org/CorpusID:271888154 .Shaoyuan Xie, Lingdong Kong, Yuhao Dong, Chonghao Sima, Wenwei Zhang, Qi Alfred Chen, Ziwei Liu, and Liang Pan. Are vlms ready for autonomous driving? an empirical study from the reliability, data, and metric perspectives. ArXiv , abs/2501.04003, 2025. URL https://api.semanticscholar.org/CorpusID:275342613 .Shuo Xing, Chen Qian, Yuping Wang, Hongyuan Hua, Kexin Tian, Yang Zhou, and Zhengzhong Tu. Openemma: Open-source multimodal model for end-to-end autonomous driving. 2025 IEEE/CVF Winter Conference on Applications of Computer Vision Work-shops (WACVW) , pp. 911–919, 2024. URL https://api.semanticscholar.org/CorpusID: 274859410 .12 Preprint. Under review. Xingcheng Zhou, Xu Han, Feng Yang, Yunpu Ma, and Alois Knoll. Opendrivevla: To-wards end-to-end autonomous driving with large vision language action model. ArXiv ,abs/2503.23463, 2025. URL https://api.semanticscholar.org/CorpusID:277452134 .Jinguo Zhu, Weiyun Wang, Zhe Chen, Zhaoyang Liu, Shenglong Ye, Lixin Gu, Hao Tian, Yuchen Duan, Weijie Su, Jie Shao, Zhangwei Gao, Erfei Cui, Xuehui Wang, Yue Cao, Yangzhou Liu, Xingguang Wei, Hongjie Zhang, Haomin Wang, Weiye Xu, Hao Li, Jiahao Wang, Nianchen Deng, Songze Li, Yinan He, Tan Jiang, Jiapeng Luo, Yi Wang, Conghui He, Botian Shi, Xingcheng Zhang, Wenqi Shao, Junjun He, Yingtong Xiong, Wenwen Qu, Peng Sun, Penglong Jiao, Han Lv, Lijun Wu, Kaipeng Zhang, Huipeng Deng, Jiaye Ge, Kai Chen, Limin Wang, Min Dou, Lewei Lu, Xizhou Zhu, Tong Lu, Dahua Lin, Yu Qiao, Jifeng Dai, and Wenhai Wang. Internvl3: Exploring advanced training and test-time recipes for open-source multimodal models. 2025. URL https://arxiv.org/abs/2504.10479 .
+
+## LLM Usage Disclosure 
+
+Sections of this paper were drafted and revised with the assistance of a large language model (Claude, Anthropic). All technical content, experimental design, results, and scientific claims are solely the authors’ own. The LLM was not used to generate data, produce plots, evaluate results, or originate research ideas. 
+
+## A Extended Qualitative Examples 
+
+This appendix supplements Section 5.5 with four additional scenes (two per variant), cover-ing both success and failure cases of hierarchical context passing. Scene 162 (main paper, Figure 4) demonstrated the common success pattern; the examples below illustrate the remaining cases. 
+
+A.1 Explicit Variant: Success Case (Scene 48) 
+
+Scene 48 illustrates the red light → maintain speed contradiction type. The flat baseline explicitly perceives a red light and a pedestrian to the front right, yet plans to maintain speed (C=1). Under injection-chaining, the model’s perception shifts to a pedestrian-heavy construction scene without a traffic light; the structural checker finds no contradiction-triggering element (C=0). 
+
+Figure 5: Surround-view input for Scene 48 (DriveLM-nuScenes). Explicit variant success case. 
+
+A.2 Explicit Variant: Failure Case (Scene 489) 
+
+Scene 489 is a case where the flat baseline is consistent but the injection-chain introduces a contradiction. The flat condition perceives both a pedestrian crosswalk and a green 13 Preprint. Under review. Table 4: Scene 48 – Explicit variant success case. Injection-chain removes the red-light contradiction. C = structural contradiction count.          
+
+> Stage Outputs C
+> Flat P: [. . . ] a pedestrian to the front right of the ego car, and a red light to the front right of the ego car.
+> Pr: Keep going straight, turn left, turn right.
+> Pl: The action is to keep going at the same speed. Turning left would be dangerous.
+> 1
+> Inj. P: There are many pedestrians, three barriers, two traffic cones [. . . ] The pedestrians are standing at the roadside.
+> Pr: One of the pedestrians will turn right. This will bring them into the ego vehicle’s path.
+> Pl: The action is to keep going at the same speed. 0
+
+light; its plan avoids the pedestrian by turning right (C=0). Under injection-chaining, perception foregrounds the pedestrian crossing while the plan defaults to maintaining speed, triggering the pedestrian crossing → maintain speed contradiction (NLI-C = 0.982 at the planning transition). 
+
+Figure 6: Surround-view input for Scene 489 (DriveLM-nuScenes). Explicit variant failure case. Table 5: Scene 489 – Explicit variant failure case. Injection-chain introduces a pedestrian-crossing contradiction. C = structural contradiction count.                
+
+> Stage Outputs C
+> Flat P: [. . . ] a black and white van, a black car, people walking on the sidewalk, a pedestrian crosswalk [. . . ] and a green light. [. . . ]
+> Pr: The brown car will turn right, and the blue sedan will continue going straight. They will be in the ego vehicle’s path.
+> Pl: Turning right is a good idea. Turning left is dangerous. 0Inj. P: A white sedan to the front left, a pedestrian crossing the road to the front right, and a black sedan to the back.
+> Pr: The white sedan will change to the left lane, the pedestrian will continue moving forward, and the black sedan will change to the right lane.
+> Pl: The action of keep going at the same speed is safe, the action of changing to the top right lane is dangerous.
+> 1
+
+A.3 Implicit Variant: Success Case (Scene 120) 
+
+Scene 120 demonstrates the green light → stop contradiction type in the flat adapter baseline. The flat adapter perceives a green traffic light yet includes “decelerate to a stop” among safe actions, yielding one structural contradiction. The sequential PPP variant perceives the same green light and plans to maintain speed with no stopping action, producing a structurally consistent output (struct = 1.0, NLI-C = 0.001). 
+
+A.4 Implicit Variant: Failure Case (Scene 360) 
+
+Scene 360 shows the opposite pattern: the flat adapter baseline scores C=0 while the sequential PPP skip variant scores C=1. The flat plan hedges by listing both “brake to 14 Preprint. Under review. 
+
+Figure 7: Surround-view input for Scene 120 (DriveLM-nuScenes). Implicit variant success case. Table 6: Scene 120 – Implicit variant success case. Sequential PPP removes the green-light/stop contradiction. C = structural contradiction count.             
+
+> Stage Outputs C
+> Flat P: [. . . ] Traffic Light: Green light visible. Road Markings: Visible on the wet road surface. [. . . ]
+> Pr: The traffic light is green, so the ego vehicle can proceed. The truck is stationary. There are no other vehicles in the immediate vicinity.
+> Pl: Gently decelerate gradually to a stop , keep going at the same speed, and slightly offset to the left are safe actions. Turning left, turning right, and braking suddenly are dangerous actions.
+> 1
+> Seq. P: [. . . ] Traffic Light: Green light visible. Road Markings: Crosswalk and lane markings on the wet road. Buildings under construction [. . . ]
+> Pr: None, no safety issue.
+> Pl: The action is to keep going at the same speed. The reason is that there is no safety issue. 0
+
+a stop” and “keep going at the same speed”; the checker assigns C=0 because it finds a stopping action, even though the plan is internally contradictory. Under sequential skip, the prediction dismisses the pedestrian (“Neither of these objects will be in the ego vehicle’s path”), and the plan commits to maintaining speed (C=1). The sequential plan is more decisive but penalized by the checker, illustrating a limitation of the rule-based metric: hedging with contradictory actions can score better than a single coherent action that omits a safety-relevant response. 
+
+Figure 8: Surround-view input for Scene 360 (DriveLM-nuScenes). Implicit variant failure case. 15 Preprint. Under review. Table 7: Scene 360 – Implicit variant failure case. Sequential PPP skip introduces a pedestrian-crossing contradiction. C = structural contradiction count.          
+
+> Stage Outputs C
+> Flat P: [. . . ] Pedestrian: Walking on the sidewalk [. . . ] Appears to be crossing the road. [. . . ]
+> Pr: [. . . ] Pedestrian crossing the road: may continue to cross, potentially entering the ego vehicle’s path. The ego vehicle should be prepared to stop or slow down [. . . ]
+> Pl: Gently brake to a stop; keep going at the same speed. 0Seq. P: [. . . ] Pedestrian: Walking on the sidewalk [. . . ] Appears to be crossing the road. [. . . ]
+> Pr: The black car in front will continue forward. The pedestrian will continue walking along the sidewalk. Neither of these objects will be in the ego vehicle’s path.
+> Pl: The action is to keep going at the same speed. It is safe, and it is not dangerous.
+> 1
+
+Table 8: Summary of qualitative examples. Scene 162 appears in the main paper (Figure 4); Scenes 48, 489, 120, 360 are detailed above. All outputs are in English. 
+
+Variant Scene Flat C Hier. C Type Contradiction pattern 
+
+Explicit 162 (main) 1 0 Best ped crossing → maintain Explicit 48 1 0 Best red light → maintain Explicit 489 0 1 Worst ped crossing → maintain Implicit 162 (main) 1 0 Best ped crossing → accelerate Implicit 120 1 0 Best green light → stop Implicit 360 0 1 Worst ped crossing → maintain 
+
+A.5 Summary of Appendix Examples 
+
+The two dominant failure modes across all examples are: (1) pedestrian crossing → acceler-ate/maintain , which accounts for the majority of structural contradictions in both variants (Section 5.3), and (2) traffic light → contradictory action (red light with maintain speed, or green light with stop). In the success cases, hierarchical context consistently resolves these contradictions. In the failure cases, the hierarchical condition either re-introduces the pedestrian-crossing bias (explicit) or suppresses safety-relevant context through the learned projector (implicit). These patterns are consistent with the aggregate quantitative findings in Tables 2 and 3. 16

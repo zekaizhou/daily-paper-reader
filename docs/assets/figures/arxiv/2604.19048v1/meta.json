@@ -1,0 +1,86 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.19048v1/fig-001.webp",
+      "caption": "Figure 1: Illustration of limitations in existing mechanisms. (a) MLP-based Routing: Fails to explicitly match tasks with expert capabilities, resulting in expert homogenization. (b) Uniform Weight Fusion: Applies a uniform update strength across diverse tasks, ignoring specific requirements and limiting multi-task generalization.",
+      "page": 1,
+      "index": 1,
+      "width": 452,
+      "height": 588
+    },
+    {
+      "url": "assets/figures/arxiv/2604.19048v1/fig-002.webp",
+      "caption": "Table 1: Results of comparison experiments across Commonsense Reasoning benchmarks. TP indicates Trainable Parameters (%). †means the results from MoORE (Yuan et al., 2025). Bold: Best results; Underline: Second-best results.",
+      "page": 6,
+      "index": 2,
+      "width": 939,
+      "height": 403
+    },
+    {
+      "url": "assets/figures/arxiv/2604.19048v1/fig-003.webp",
+      "caption": "Table 2: Results of comparison experiments across GLUE benchmark. The upper block presents the baselines, while the lower block reports the performance of SAMoRA and its ablation variants. Bold: Best results; Underline: Second-best results.",
+      "page": 7,
+      "index": 3,
+      "width": 902,
+      "height": 406
+    },
+    {
+      "url": "assets/figures/arxiv/2604.19048v1/fig-004.webp",
+      "caption": "Figure 5: Visualization of expert activation patterns on the unseen MMLU benchmark. The top row (MLP Router) exhibits severe mode collapse, while our SAMoRA (bottom row) maintains diverse and adaptive routing across different subjects.",
+      "page": 14,
+      "index": 4,
+      "width": 935,
+      "height": 283
+    },
+    {
+      "url": "assets/figures/arxiv/2604.19048v1/fig-005.webp",
+      "caption": "Figure 6: Sensitivity Analysis on hyperparameters evaluated on the Commonsense Reasoning dataset. Subfigure (a) and (b) illustrate different ablation settings.",
+      "page": 14,
+      "index": 5,
+      "width": 451,
+      "height": 373
+    },
+    {
+      "url": "assets/figures/arxiv/2604.19048v1/fig-006.webp",
+      "caption": "Figure 2: Overview of our SAMoRA. We design a Semantic-Aware Router and a Task-Adaptive Scaling mechanism, integrated within an asymmetric MoE-LoRA architecture consisting of a shared Expert A and multiple Semantic Experts B.",
+      "page": 4,
+      "index": 6,
+      "width": 937,
+      "height": 461
+    },
+    {
+      "url": "assets/figures/arxiv/2604.19048v1/fig-007.webp",
+      "caption": "Table 4: The basic information of Commonsense Reasoning Dataset",
+      "page": 12,
+      "index": 7,
+      "width": 479,
+      "height": 311
+    },
+    {
+      "url": "assets/figures/arxiv/2604.19048v1/fig-008.webp",
+      "caption": "Table 3: Comparison of learnable parameters and computational complexity. Notations: din/dout are input/output dimensions, r is the rank, N is the expert number, K is the task number. dg denote task embedding sizes for MoELoRA and SAMoRA. SAMoRA achieves a superior trade-off by combining asymmetric experts with efficient routing.",
+      "page": 12,
+      "index": 8,
+      "width": 821,
+      "height": 261
+    },
+    {
+      "url": "assets/figures/arxiv/2604.19048v1/fig-009.webp",
+      "caption": "Table 7: Prompt templates used for the Natural Language Understanding benchmark (GLUE). The placeholders (e.g., {sentence}) represent the input fields from the dataset.",
+      "page": 16,
+      "index": 9,
+      "width": 950,
+      "height": 408
+    },
+    {
+      "url": "assets/figures/arxiv/2604.19048v1/fig-010.webp",
+      "caption": "Table 8: Detailed hyperparameter settings for all baseline methods on Commonsense Reasoning and GLUE benchmark. Common settings are listed in the top section, while method-specific parameters are detailed below. “-” indicates the parameter is not applicable.",
+      "page": 16,
+      "index": 10,
+      "width": 939,
+      "height": 517
+    }
+  ]
+}
