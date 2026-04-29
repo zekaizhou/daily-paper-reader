@@ -1,0 +1,150 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-001.webp",
+      "caption": "Figure 1. Overview of the proposed Hierarchical Pre-Training of Vision Encoders (HIVE) framework. The vision encoder extracts hierarchical visual features, which are projected and integrated into the large language model (LLM) through cross-attention. This enables multi-layered feature alignment, improving representation learning, semantic understanding, and gradient flow. Green text indicates correct model predictions, while red text highlights incorrect predictions.",
+      "page": 1,
+      "index": 1,
+      "width": 432,
+      "height": 286
+    },
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-002.webp",
+      "caption": "Figure 5. Gradient map visualization for Sample 1: ”Investigators and journalists gather around the car of person after an attack on Wednesday.” Gradients emphasize individuals and vehicles with sharp, localized activations in early layers.",
+      "page": 15,
+      "index": 2,
+      "width": 446,
+      "height": 448
+    },
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-003.webp",
+      "caption": "Figure 6. Gradient map visualization for Sample 2: ”Colorful plastic and aluminum chairs leaning against tables at a cafe outdoor dining area.” Early layers highlight fine-grained details such as chair edges, while deeper layers emphasize broader scene structure.",
+      "page": 15,
+      "index": 3,
+      "width": 446,
+      "height": 448
+    },
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-004.webp",
+      "caption": "Figure 7. Gradient map visualization for Sample 3: ”Person makes a move on defenders during the spring game.” HIVE captures dynamic motion cues, focusing on the athlete and defenders.",
+      "page": 15,
+      "index": 4,
+      "width": 446,
+      "height": 445
+    },
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-005.webp",
+      "caption": "Table 1. Classification accuracy (%) on various benchmarks comparing our proposed method, HIVE, with self-attention-based approaches. Results are reported as mean ± standard deviation (SD) over 3 runs. Base represents the original foundation models (CLIP or SigLIP) without additional LLM-supported pre-training. SA represents a self-attention-based vision encoder with LLM-supported pre-training, while HIVE represents our proposed cross-attention-based pre-training framework. The best results are in bold.",
+      "page": 7,
+      "index": 5,
+      "width": 1010,
+      "height": 265
+    },
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-006.webp",
+      "caption": "Table 4. Classifier fine-tuning hyperparameters for HIVE and baselines.",
+      "page": 13,
+      "index": 6,
+      "width": 394,
+      "height": 525
+    },
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-007.webp",
+      "caption": "Table 5. Hyperparameters for VLM fine-tuning on vision-language tasks.",
+      "page": 13,
+      "index": 7,
+      "width": 682,
+      "height": 277
+    },
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-008.webp",
+      "caption": "Figure 2. Gradient map visualization from the first to the final layer. The first image is the original image with the caption: “a horse rider in full riding gear is riding on a horse - stock photo.” The remaining images demonstrate more granular gradients in earlier layers due to cross-attention pre-training.",
+      "page": 8,
+      "index": 8,
+      "width": 423,
+      "height": 420
+    },
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-009.webp",
+      "caption": "Figure 3. Attention map visualization illustrating hierarchical cross-attention behavior. The x-axis corresponds to sampled tokens, while the y-axis represents encoder layers from lower (top) to higher (bottom) layers. HIVE efficiently integrates multi-level features, with lower layers attending to specific details and higher layers producing broader, more abstract activations.",
+      "page": 8,
+      "index": 9,
+      "width": 423,
+      "height": 462
+    },
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-010.webp",
+      "caption": "Figure 12. Attention map visualization for Sample 1: ”Investigators and journalists gather around the car of person after an attack on Wednesday.” HIVE emphasizes key elements such as the car and surrounding individuals, demonstrating improved semantic localization.",
+      "page": 17,
+      "index": 10,
+      "width": 1036,
+      "height": 283
+    },
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-011.webp",
+      "caption": "Figure 14. Attention map visualization for Sample 3: ”Person makes a move on defenders during the spring game.” HIVE effectively highlights the athlete’s movement and surrounding players, improving focus on dynamic elements.",
+      "page": 17,
+      "index": 11,
+      "width": 1036,
+      "height": 421
+    },
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-012.webp",
+      "caption": "Figure 13. Attention map visualization for Sample 2: ”Colorful plastic and aluminum chairs leaning against tables at a cafe outdoor dining area.” HIVE highlights chairs and tables with sharper focus, enhancing object-level localization.",
+      "page": 17,
+      "index": 12,
+      "width": 1036,
+      "height": 240
+    },
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-013.webp",
+      "caption": "Figure 4. Comparison of hierarchical and cascaded pre-training approaches for vision encoders. Hierarchical pre-training (left) establishes direct cross-attention across multiple layers, allowing for stronger gradient propagation and better feature integration. Cascaded pretraining (right) restricts interactions to the final layer, leading to attenuated gradient signals and weaker hierarchical feature learning.",
+      "page": 12,
+      "index": 13,
+      "width": 915,
+      "height": 469
+    },
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-014.webp",
+      "caption": "Table 3. Pre-training hyperparameters for the three-stage pre-training procedure used in HIVE.",
+      "page": 12,
+      "index": 14,
+      "width": 802,
+      "height": 300
+    },
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-015.webp",
+      "caption": "Figure 8. Gradient map visualization for Sample 4. HIVE maintains granular focus on key visual features, improving gradient flow.",
+      "page": 16,
+      "index": 15,
+      "width": 446,
+      "height": 448
+    },
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-016.webp",
+      "caption": "Figure 11. Gradient map visualization for Sample 7. Stable gradient propagation ensures effective visual feature learning across hierarchical layers.",
+      "page": 16,
+      "index": 16,
+      "width": 446,
+      "height": 448
+    },
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-017.webp",
+      "caption": "Figure 9. Gradient map visualization for Sample 5. Enhanced gradient stability enables sharper feature refinement in early layers.",
+      "page": 16,
+      "index": 17,
+      "width": 446,
+      "height": 448
+    },
+    {
+      "url": "assets/figures/arxiv/2604.00086v1/fig-018.webp",
+      "caption": "Figure 10. Gradient map visualization for Sample 6. HIVE consistently emphasizes meaningful visual elements across encoder layers.",
+      "page": 16,
+      "index": 18,
+      "width": 446,
+      "height": 448
+    }
+  ]
+}

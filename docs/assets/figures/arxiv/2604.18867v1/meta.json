@@ -1,0 +1,110 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.18867v1/fig-001.webp",
+      "caption": "Figure 1. Motivation (ImageNet [6] Val.) Fig. 1a: robust accuracy on superclasses (one level above the leaf classes). TeCoA [32], PMG [42], and FARE [38] use adversaries derived from base classes and thus perform poorly on superclasses. Fig. 1b: transfer attack success rates on base classes. For our model, adversarial samples generated on superclasses were used. In contrast, TeCoA [32], PMG [42], and FARE [38], the base classes are susceptible to attacks obtained from superclasses, highlighting the need for model robustification across class hierarchy (our model). Examples of superclasses & leaves: (i) parent: equine, children: horse, zebra, (ii) parent: car, children: freight car, taxi, (iii) parent: bag, children: backpack, purse.",
+      "page": 1,
+      "index": 1,
+      "width": 495,
+      "height": 522
+    },
+    {
+      "url": "assets/figures/arxiv/2604.18867v1/fig-002.webp",
+      "caption": "Table 5. Average performance (%) across different vision architectures of CLIP using the perturbation radius of ϵX = 1/255.",
+      "page": 6,
+      "index": 2,
+      "width": 496,
+      "height": 1295
+    },
+    {
+      "url": "assets/figures/arxiv/2604.18867v1/fig-003.webp",
+      "caption": "Figure 2. Understanding Hyperbolic Geometry. Fig. 2a: Trees can be embedded in the Poincaré ball with low distortion (∼ 1+ϵ) [37]. Thus, the distance between tree nodes d̃r(u,v) is the analogue of the Riemannian distance dr(u,v) between hyperbolic embeddings. The norm of the vector measured in the Poincaré ball is a proxy to the hierarchical level of a node in the tree (Fig. 2b) (we use “reciprocal”: L is the root level and 0 is the leaves). For the visual brach of CLIP, we have images with base class labels only. Thus, hyperbolic average (HypAvg) produces more generic embeddings from the more specific embeddings (closer to the center than children), e.g., from wolf 1, wolf 2, wolf 3 it produces wolf, and from wolf, dog it produces canine. To produce a robust adversarial sample used for robustification, we compute δX (added to a sample) that makes nodes on the red path move across the decision boundary towards other categories (e.g., blue path). Fig. 2b: The ℓ2 norm of features (e.g., text ψ(·)) controls the embedding level, e.g., ∥ψ(tlc)∥2>∥ψ(tl+1 c )∥2 (red vs. blue arrow) has order 0<l< l+1<L in the Poincaré ball. Fig. 2c: Hyperbolic vs. Euclidean classifier’s limit on viable margin size w.r.t. the ℓ2 norm of features (η). Our hyperbolic classifier can separate embeddings by an infinite margin (blue solid curve) when norm η→1/ √ r for curvature r. The Euclidean model (dashed black) has finite margin. Several levels of hierarchy produce several margin sizes in (0,∞) to cover several levels of generalization, producing more general adversarial perturbation δX compared to the Euclidean model.",
+      "page": 2,
+      "index": 3,
+      "width": 1018,
+      "height": 231
+    },
+    {
+      "url": "assets/figures/arxiv/2604.18867v1/fig-004.webp",
+      "caption": "Table 10. Ablation study of three loss components in our method for average clean and robust accuracy (%) on 15 datasets.",
+      "page": 7,
+      "index": 4,
+      "width": 495,
+      "height": 469
+    },
+    {
+      "url": "assets/figures/arxiv/2604.18867v1/fig-005.webp",
+      "caption": "Figure 3. Our pipeline. Text & image CLIP encoders are used. For text, we look up each class in a hierarchical tree (e.g., WorldNet for ImageNet) and extract the path from the leaf category to the root, e.g., animal←mammal←canine←wolf. For each category level, we form one text prompt and encode it with CLIP. The exponential map elevates embeddings from the Euclidean space into the hyperbolic space (Poincaré ball). HypAvg is hyperbolic averaging that generalizes specific embeddings (e.g., wolf 1, wolf 2, wolf 3) into a more generic parent embedding of wolf. Using the Riemannian distance, the text and visual “wolf” paths are aligned by a classifier while pushed away from other paths. Adversarial perturbations δT and δX are obtained on such a hierarchical classifier by the PGD [31] for the robust model fine-tuning.",
+      "page": 3,
+      "index": 5,
+      "width": 496,
+      "height": 827
+    },
+    {
+      "url": "assets/figures/arxiv/2604.18867v1/fig-006.webp",
+      "caption": "Table 23. AutoAttack results.",
+      "page": 18,
+      "index": 6,
+      "width": 1026,
+      "height": 204
+    },
+    {
+      "url": "assets/figures/arxiv/2604.18867v1/fig-007.webp",
+      "caption": "Figure 5. The hierarchy of a sub-branch in ImageNet with the root node of “Feline”. The leaf nodes represent the original base classes.",
+      "page": 13,
+      "index": 7,
+      "width": 821,
+      "height": 456
+    },
+    {
+      "url": "assets/figures/arxiv/2604.18867v1/fig-008.webp",
+      "caption": "Figure 6. The hierarchy of CIFAR-10. The leaf nodes represent the original base classes.",
+      "page": 13,
+      "index": 8,
+      "width": 756,
+      "height": 521
+    },
+    {
+      "url": "assets/figures/arxiv/2604.18867v1/fig-009.webp",
+      "caption": "Table 22. Comparisons of the Hyperbolic and the Euclidean variants, including naive hierarchical models.",
+      "page": 17,
+      "index": 9,
+      "width": 1026,
+      "height": 269
+    },
+    {
+      "url": "assets/figures/arxiv/2604.18867v1/fig-010.webp",
+      "caption": "Figure 4. Our pipeline.",
+      "page": 12,
+      "index": 10,
+      "width": 1026,
+      "height": 371
+    },
+    {
+      "url": "assets/figures/arxiv/2604.18867v1/fig-011.webp",
+      "caption": "Figure 9. Diverse types of taxonomies w.r.t. base categories for different hierarchies.",
+      "page": 20,
+      "index": 11,
+      "width": 825,
+      "height": 813
+    },
+    {
+      "url": "assets/figures/arxiv/2604.18867v1/fig-012.webp",
+      "caption": "Table 1. Zero-shot clean accuracy (%). Adversarial fine-tuning is conducted on ImageNet, followed by evaluations across 15 datasets.",
+      "page": 5,
+      "index": 12,
+      "width": 1026,
+      "height": 219
+    },
+    {
+      "url": "assets/figures/arxiv/2604.18867v1/fig-013.webp",
+      "caption": "Table 2. Zero-shot robust accuracy (%). Adversarial samples are generated by the PGD attack of 20 steps with the image-level perturbation radius ϵX = 1/255. Adversarial fine-tuning is conducted on ImageNet, followed by robustness evaluations over 15 datasets.",
+      "page": 5,
+      "index": 13,
+      "width": 1026,
+      "height": 207
+    }
+  ]
+}

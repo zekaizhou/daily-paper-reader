@@ -1,0 +1,70 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.03231v1/fig-001.webp",
+      "caption": "Table 2: Performance comparison of vision-language models on PixMo benchmarks. CoME-VL consistently improves visual understanding and grounding, with notable gains on counting and pointing tasks (@3px/5px). - denotes not supported.",
+      "page": 6,
+      "index": 1,
+      "width": 918,
+      "height": 487
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03231v1/fig-002.webp",
+      "caption": "Figure 9: Layer-wise attention rollout for deeper layers: DINOv3 illustrating the transition from spatially coherent object-level attention to semantically discriminative region focus.",
+      "page": 15,
+      "index": 2,
+      "width": 844,
+      "height": 830
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03231v1/fig-003.webp",
+      "caption": "Figure 4: Qualitative results on PixMo pointing. Compared to prior VLMs, CoME-VL demonstrates more precise coordinate-level grounding for fine-grained visual queries.",
+      "page": 7,
+      "index": 3,
+      "width": 1046,
+      "height": 185
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03231v1/fig-004.webp",
+      "caption": "Figure 8: Layer-wise attention rollout for deeper layers: SigLIP2 illustrating the transition from spatially coherent object-level attention to semantically discriminative region focus.",
+      "page": 14,
+      "index": 4,
+      "width": 844,
+      "height": 692
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03231v1/fig-005.webp",
+      "caption": "Figure 7: Layer-wise attention rollout for deeper layers: DINOv3 illustrating the transition from spatially coherent object-level attention to semantically discriminative region focus.",
+      "page": 13,
+      "index": 5,
+      "width": 844,
+      "height": 832
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03231v1/fig-006.webp",
+      "caption": "Figure 2: Semantic feature analysis. (a) Layer-wise comparison of spatial attention in DINOv3 and SigLIP2.We visualize attention masks from four representative layers per model (early, early-mid, mid-late, final), showing the top 30% attention with contour overlays. (b) Layer-wise attention rollout visualization using Gard-CAM for the selective layers from Fig 1. (Best view in zoom)",
+      "page": 4,
+      "index": 6,
+      "width": 1006,
+      "height": 513
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03231v1/fig-007.webp",
+      "caption": "Figure 3: Overview of the proposed multi-encoder, multi-scale vision-language framework. Images are processed by two complementary vision encoders (SigLIP2 and DINOv3), with hierarchical features extracted across layers, fused via orthogonalityregularized mixing (OL), spatially aligned using RoPE-based cross-attention, and injected into a decoder-only language model for grounding and generation.",
+      "page": 5,
+      "index": 7,
+      "width": 844,
+      "height": 565
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03231v1/fig-008.webp",
+      "caption": "Figure 10: Layer-wise attention rollout for deeper layers: SigLIP2, illustrating the transition from spatially coherent object-level attention to semantically discriminative region focus.",
+      "page": 16,
+      "index": 8,
+      "width": 844,
+      "height": 709
+    }
+  ]
+}

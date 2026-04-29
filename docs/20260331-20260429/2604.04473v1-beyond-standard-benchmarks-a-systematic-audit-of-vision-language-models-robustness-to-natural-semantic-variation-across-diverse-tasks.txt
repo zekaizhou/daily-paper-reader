@@ -1,0 +1,510 @@
+Title: Beyond Standard Benchmarks: A Systematic Audit of Vision-Language Model's Robustness to Natural Semantic Variation Across Diverse Tasks
+
+URL Source: https://arxiv.org/pdf/2604.04473v1
+
+Published Time: Tue, 07 Apr 2026 01:47:48 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+# Beyond Standard Benchmarks: A Systematic Audit of Vision-Language Model’s Robustness to Natural Semantic Variation Across Diverse Tasks 
+
+Jia Chengyu 1, AprilPyone MaungMaung 2, Huy H. Nguyen 2,Jinyin Chen 1, and Isao Echizen 2 
+
+> 1
+
+Zhejiang University of Technology, Hangzhou, Zhejiang, China  
+
+> 2
+
+National Institute of Informatics, Tokyo, Japan 
+
+Abstract. Recent advances in vision-language models (VLMs) trained on web-scale image-text pairs have enabled impressive zero-shot trans-fer across a diverse range of visual tasks. However, comprehensive and independent evaluation beyond standard benchmarks is essential to un-derstand their robustness, limitations, and real-world applicability. This paper presents a systematic evaluation framework for VLMs under nat-ural adversarial scenarios for diverse downstream tasks, which has been overlooked in previous evaluation works. We evaluate a wide range of VLMs (CLIP, robust CLIP, BLIP2, and SigLIP2) on curated adversar-ial datasets (typographic attacks, ImageNet-A, and natural language-induced adversarial examples). We measure the natural adversarial per-formance of selected VLMs for zero-shot image classification, seman-tic segmentation, and visual question answering. Our analysis reveals that robust CLIP models can amplify natural adversarial vulnerabilities, and CLIP models significantly reduce performance for natural language-induced adversarial examples. Additionally, we provide interpretable anal-yses to identify failure modes. We hope our findings inspire future re-search in robust and fair multimodal pattern recognition. 
+
+Keywords: Image encoder · Robustness · Natural Adversarial Testing. 
+
+1 Introduction 
+
+Vision-language models (VLMs) represent a profound shift from a task-specific paradigm to an open-world, task-agnostic perception. Concretely, the contrastive language-image pre-training (CLIP) model leverages contrastive training to align images and text within a unified embedding space, exhibiting remarkable versa-tility in zero-shot generalization across diverse tasks without task-specific adap-tation [15, 22]. Notably, it demonstrates robust classification performance un-der natural distribution shifts [5, 11, 13, 23, 32]. Beyond standalone applications, CLIP’s image encoder serves as a foundational component in modern large vision-language models (LVLMs), including OpenFlamingo [3] and LLaVA [18], where it is integrated with large language models ( e.g ., MPT [27] and Vicuna [8]).  
+
+> arXiv:2604.04473v1 [cs.CV] 6 Apr 2026 2J. Chengyu et al.
+
+These LVLMs exhibit exceptional zero-shot capabilities in tasks such as image captioning [21] and visual question answering (VQA) [26]. Given the growing adoption of LVLMs in real-world applications, ensuring their safety and alignment is critical. Recent studies reveal their vulnerabil-ity to adversarial attacks, particularly in the visual modality [36, 38]. For in-stance, even commercial systems like Google’s BARD can be compromised by carefully crafted perturbations [9]. Researchers have proposed unsupervised ad-versarial fine-tuning methods ( e.g ., robust CLIP) to mitigate such threats [25]. However, VLMs face new threats. Robustness is no longer limited to invariance against pixel-level corruptions, but also requires alignment with the wide range of semantic concepts expressed through language. For example, typographic at-tacks, where overlaid text ( e.g ., a “dog” label on a cat image) misleads predic-tions [10, 14, 20]. Accordingly, understanding the capa-      
+
+> Fig. 1. Performance comparison of vision-language models under natural adversarial scenarios. Large areas indi-cate better overall performance.
+
+bilities, failure modes, and biases of VLMs such as CLIP is crucial for their responsi-ble and effective deployment. Therefore, a recent work evaluates CLIP for mul-tiple robustness dimensions such as vi-sual factor variations, uncertainty cali-bration, out-of-distribution detection, and modality interaction [31]. However, the previous evaluation effort falls short for two reasons. (a) There is limited natural adversarial robustness evaluation (only ImageNet-A [13] was used although there are other natural adversarial scenarios such as typographic attacks). (b) The focus is on image classification only al-though VLMs are used for diverse down-stream tasks. To fill this gap, we propose an evaluation framework for VLMs under natural adversarial scenarios for three downstream tasks: zero-shot image classification, semantic segmentation, and visual question answering. Our evaluation results reveal that robust CLIP models can amplify natural adversarial vulnerabilities (a previously unknown and serious risk) as shown in Fig. 1, although ImageNet-1k classification is comparable. CLIP models significantly reduce performance for natural language–induced adversarial semantics (overlooked in prior evalua-tions). SigLIP2 models achieve overall best performance in natural adversarial settings. Our contributions are as follows. We construct adversarial datasets with (1) typographic attacks, where superimposed text misleads classification [10], (2) natural adversarial examples, comprising unmodified yet challenging real-world images (ImageNet-A [13]), and (3) natural language-induced adversarial images [39], which exploit multimodal alignment through semantically aligned but misleading visuals. We evaluate a wide range of VLMs, totaling 22 models Vision-Language Model Evaluation 3
+
+(OpenAI CLIP [22], timm CLIP with a ResNet backbone [33], robust CLIP [25], SigLIP2 [30], PaLiGemma2, and BLIP2 [16]) under natural adversarial scenar-ios for three downstream tasks. Beyond empirical benchmarking, we provide interpretable analyses to uncover failure modes: (i) CLIP’s vision encoder overly relies on local textures ( e.g ., text artifacts) over global semantics, and (ii) its alignment mechanism is susceptible to spurious correlations between visual and textual features. 
+
+2 Related Work 
+
+Vision-Language Pretraining. Recent vision-language models ( e.g ., CLIP [22], ALIGN [15], SigLIP2 [30], and BLIP2 [16]) leverage large-scale image–text pre-training to enable strong zero-shot and transfer performance across a wide range of vision and multimodal tasks. CLIP-style models are typically trained using contrastive objectives on image–text pairs, while more recent architectures such as BLIP2 combine frozen vision encoders with lightweight language models to support both discriminative and generative tasks. Beyond standard CLIP, robust CLIP [24] has explored robustness-enhanced variants obtained by fine-tuning CLIP models on perturbation-based or adversarially augmented data. These models aim to improve resilience to input perturbations while retaining CLIP’s transfer capabilities. However, the robustness of both standard and robustness-enhanced vision-language models is not yet rigorously evaluated under natural adversarial settings, especially for different downstream tasks. 
+
+Robustness Evaluation. Prior work has developed several frameworks to as-sess the robustness of CLIP and related vision–language models. Early work primarily examined distribution shifts and adversarial perturbations in image classification, often using corrupted [12] or out-of-distribution variants of Ima-geNet [13]. Tu et al. [31] advocate for a holistic robustness evaluation of CLIP by examining multiple robustness dimensions, including visual factor variations, uncertainty calibration, out-of-distribution detection, and modality interaction. However, their focus remains largely classification-centric. Other analysis work has investigated limitations in basic image augmentations comprehension for CLIP and SigLIP, revealing gaps in image-level understanding under transfor-mations [1]. More recently, studies have also shown brittleness in CLIP’s text encoders under lexical, syntactic, and semantic perturbations, pointing to robust-ness issues beyond the visual modality [29]. Despite these advances, robustness under natural adversarial scenarios and evaluations beyond image classification remain underexplored. Our work addresses this gap by evaluating natural adver-sarial robustness across multiple settings and tasks, comparing CLIP, robustness-enhanced CLIP variants, SigLIP2, and BLIP2. 
+
+3 Evaluation Framework 
+
+We propose a comprehensive natural adversarial evaluation framework for vision-language pretrained image encoders (CLIP-style models). Figure 2 provides an 4 J. Chengyu et al. 
+
+overview of the proposed framework, which systematically analyzes the robust-ness and interpretability of CLIP-style models under diverse natural adversarial scenarios across various downstream tasks.  
+
+> Fig. 2. Proposed evaluation framework. Vision-language models are evaluated against typographic attacks, ImageNet-A, and natural language-induced adversarial examples across multiple downstream tasks. Framework also supports interpretability analysis.
+
+3.1 Targets of Evaluation 
+
+Our evaluation targets a set of representative image encoders drawn from modern vision–language models, selected to reflect diverse training objectives, architec-tural designs, and robustness strategies. Specifically, our evaluation encompasses 22 vision–language models spanning seven families: 3 OpenAI CLIP [22], 1 timm ResNet CLIP [33], 6 Robust CLIP [25] (4 FARE & 2 TeCoA), 4 SigLIP2 [30], 4 PaLiGemma2 ( SigLIP-So400m with Gemma2), and 4 BLIP2 [16] (with T5/OPT). CLIP and its robustness-enhanced variants serve as contrastive vision–language baselines, enabling direct comparison between standard pretraining and adver-sarially fine-tuned representations. SigLIP2 represents large-scale contrastive models trained with alternative loss formulations and data curation strategies, offering a strong non-CLIP contrastive baseline. BLIP2 introduces a different multimodal design that combines pretrained vision encoders with lightweight language models, allowing us to examine robustness under a hybrid discrimi-native–generative paradigm. Across all model families, we focus on the image encoders as the primary evaluation target. All models are evaluated under a unified protocol across the same downstream tasks and natural adversarial set-tings. 
+
+3.2 Natural Adversarial Scenarios 
+
+We construct three types of natural adversarial scenarios to evaluate model ro-bustness in realistic settings: (1) typographic attacks with visually confusing Vision-Language Model Evaluation 5
+
+text, (2) natural adversarial examples that are inherently ambiguous or misclas-sified, and (3) natural language-induced adversarial examples, where prompts (that carry adversarial semantic information) mislead the model. These scenar-ios aim to reflect real-world challenges beyond synthetic perturbations. 
+
+Typographic Attacks. To evaluate robustness against visually deceptive tex-tual cues, we construct a typographic attack dataset comprising both real-world and synthetic settings. Real-world examples were collected from datasets such as the real-world typographic attack dataset (RTA-100) [4], which features 1,000 images across 100 categories with physically attached misleading text ( i.e ., printed or handwritten labels like stickers). Synthetic examples are generated by overlaying text ( i.e ., incorrect class names) onto images using electronic fonts. 
+
+Natural Adversarial Examples. We use ImageNet-A [13], a challenging bench-mark of natural adversarial examples created through adversarial filtration, which are collected from various sources (iNaturalist, Flickr) related to 200 Im-ageNet classes, and we apply a rigorous filtering process: images are retained only if ResNet-50 models consistently misclassified them with low confidence (confidence in correct class < 15% ). This process can be formalized as selecting images X where max( pθ (ytrue |x)) < t for all model variants θ in the filtering ensemble, with threshold t = 0 .15 . The resulting dataset contains 7,500 natu-rally occurring images that cause consistent failures across models despite being easily recognizable by humans ( ≈ 90% human accuracy). 
+
+Natural Language-Induced Adversarial Examples. A recent study showed that some high-frequency semantic information such as “foggy”, “humid”, “stretch-ing”, etc . in real images can cause classification errors (known as natural language-induced adversarial examples [39]). We construct a natural language-induced adversarial dataset for 10-class animal classification by optimizing discrete text prompts p (e.g ., “two green dogs wearing clothes stretching on a foggy day”) using an adaptive genetic algorithm to maximize the attack success rate as in [39], 
+
+ASR( p) = #{f (G(p)) ̸ = y}
+
+#{G(p)} , (1) and semantic consistency, 
+
+SEM( p) = CLIP( G(p), g t), (2) where G is Z-Image [28] (open-source high-efficiency image generation model), 
+
+f is the target classifier, y is a true class, and gt is true class prompt ( e.g ., “a photo of a cat”). The prompts, initialized with 20 variants per animal, evolve over 8 generations via crossover/mutation ( pm = 0 .01 ) and word-space pruning, yielding 160 adversarial images per class with high transferability (ASR( p) >
+
+84%) .
+
+3.3 Evaluation Tasks Image Classification. We evaluate zero-shot image classification performance following the protocol established by Radford et al. [22]. For each category, 6 J. Chengyu et al. 
+
+class labels are embedded into textual queries using the descriptive template: “a photo of a class label.” We additionally incorporate the learned logit scale and bias parameters during the similarity calculation to align with its sig-moid loss training objective for SigLIP2 due to its architectural divergence and lack of a native prompt-based classification head. We exclude BLIP2 from this evaluation because it is not designed for prompt-based zero-shot classifi-cation. We use ImageNet-1K as the clean dataset. Natural adversarial variants included: (1) typographic attacks, with both RTA-100 [10] (real-word replace-ments) and ImageNet-typo [14] (distracting digital text with confusing labels added to ImageNet-1K images), (2) ImageNet-A [13], a collection of naturally ad-versarial examples, and (3) a natural language-included adversarial dataset [39], built from Animal-10 by selecting 100 images per class (1,000 total), where mis-leading textual elements are embedded. 
+
+Semantic Segmentation. For CLIP-based models, we attach a CLIPSeg de-coder [19] to the CLIP vision encoder, injecting selected intermediate transformer features via skip connections during inference. For SigLIP2, we adapt its vision encoder using a lightweight segmentation head that operates on intermediate vi-sual features, following standard encoder–decoder designs for dense prediction. For BLIP-2, we adapt its frozen visual backbone by attaching a lightweight de-coder. Selected intermediate visual features are injected into the decoder via skip connections, following an effective design for dense prediction. We use Phrase-Cut [34] as the clean dataset. Adversarial versions included: (1) a synthetic typographic variant with added confusing text overlays and (2) segmentation annotations on ImageNet-A and the Animal-10 adversarial set using Grounded-Segment-Anything [6]. 
+
+Visual Question Answering (VQA). We use CLIP-ViL [26] for all CLIP models, retaining the MCAN [35] setup (LSTM encoder and modular co-attention over grid features extracted via reshaped ViT patches or pre-pooling ResNet lay-ers). PaLiGemma2 with SigLIP-So400m and Gemma2 text encoders for SigLIP2 models, and BLIP-2 models were evaluated using few-shot VQA for blip2-opt-2.7b and zero-shot settings for the remaining variants. We use the VQA-v2 dataset [2] as the clean benchmark. Adversarial sets included: (1) a synthetic version of VQA-v2 with typographic perturbations in the image and (2) question-answer pairs automatically generated over ImageNet-A and Animal-10, produced using GPT-4o. Hereinafter, (LangAdv) denotes natural language-induced ad-versarial examples, and (-typo.) denotes VQA-v2 with synthetic typographical attack. 
+
+3.4 Evaluation Metrics 
+
+We use standard evaluation metrics for each downstream task. For classifica-tion, we report top-1 accuracy. For VQA, we evaluate using accuracy and exact match. For segmentation, we report two metrics: foreground intersection-over-union (IoU FG ), which measures the overlap between predicted and ground-truth Vision-Language Model Evaluation 7
+
+foreground regions, and pixel accuracy, which calculates the percentage of cor-rectly predicted pixels over the entire image. 
+
+3.5 Interpretability Analysis 
+
+To gain insight into the vision encoder’s behavior under adversarial conditions, we employ three complementary interpretability techniques: class activation map-ping (CAM) [7], sparse autoencoder-based feature analysis (SAE) [17], and atten-tion head visualization [37]. These methods respectively highlight salient input regions, uncover latent semantic structure, and examine attention distribution patterns, offering a multi-faceted understanding of model vulnerabilities. 
+
+Class Activation Mapping. To investigate the spatial sensitivity of the vision encoder, we apply a generalized CAM method tailored for Transformer archi-tectures. Unlike traditional CAM approaches designed for CNNs, it leverages attention-based relevance propagation to construct class-specific heatmaps that highlight regions contributing most to the model’s output. Let A ∈ Rh×q×k de-note the attention map from a multi-head self-attention layer, where h is the number of heads, q is the number of query tokens, and k the number of key tokens. Following Chefer et al. [7], we compute a head-aggregated attention rel-evance map A ∈ Rq×k using gradient-based weighting: 
+
+A = Eh(( ∇A ◦ A)+), (3) where ∇A = ∂y t 
+
+> ∂x
+
+is the gradient of the model output for class t, the operator, ( ◦)denotes the Hadamard product, and (·)+ clips negative contributions. Relevance is propagated across layers using update rules: 
+
+Rqq ← Rqq + A · Rqq , Rqk ← Rqk + A · Rqk . (4) 
+
+Sparse Autoencoder-based Feature Encoding. To uncover the latent struc-ture of the representations learned by vision encoder and to analyze its sensi-tivity to natural adversarial examples, we use sparse autoencoders (SAE) as a tool for post hoc interpretability. SAEs aim to disentangle polysemantic neuron activations into monosemantic units by learning a sparse dictionary over the embedding space of the model. Given a pretrained model f : X → Rd, we ex-tract activation vectors v = fl(x) from layer l, where x ∈ X is the input image. An SAE consists of an encoder ϕ(v) = σ(W τ
+
+> enc
+
+(v − b)) ∈ Rω and a decoder 
+
+ψ(ϕ(v)) = W τ
+
+> dec
+
+ϕ(v) + b, where ω is the latent dimension, and σ is typically ReLU or Top-K activation enforcing sparsity. The SAE is optimized with the loss: 
+
+L(v) = || v − ˆv|| 2 + λ|| (ϕ(v)) || 1, (5) where ˆv = ψ(ϕ(v)) , and λ controls the sparsity level. To quantify the inter-pretability of each latent neuron, we use the Monosemanticity Score ( MS ), de-fined for neuron k over a dataset of N images as: 
+
+MS k = 1
+
+N (N − 1) 
+
+X
+
+> n̸=m
+
+rknm snm , (6) 8 J. Chengyu et al. 
+
+where snm is the cosine similarity between CLIP embeddings of images xn and 
+
+xm, and rknm = akn akm weights the similarity by using the normalized activation values of neuron k. High MS values indicate neurons that consistently respond to semantically coherent image concepts, making them easier to interpret and localize. In the context of natural adversarial perturbations, we analyze how monosemantic neurons change their activation patterns. 
+
+Attention Head. To investigate model’s vulnerability to natural adversarial images, we analyze attention heads in vision encoder, hypothesizing that spe-cific heads encode safety-related features based on recent LVLM findings [37]. Formally, for an input image x, the vision encoder processes a tokenized input sequence through multiple Transformer layers, each with H attention heads. In the l-th layer, the attention output from head h is denoted as: 
+
+ahl = Attention hl (Qhl , K hl , V hl ), (7) where Q, K, and V are query, key, and value matrices derived from input token embeddings. The final output of the layer is: 
+
+xl+1 = xl +
+
+> H
+
+X
+
+> h=1
+
+Ohl ahl , (8) with Ohl as the output projection for head h.
+
+4 Evaluation Results & Analysis 
+
+4.1 Zero-Shot Image Classification 
+
+As shown in Fig. 3, CLIP’s performance drops significantly under natural ad-versarial conditions, particularly on LangAdv (38.25%). Interestingly, despite being designed for robustness, robust CLIP suffers from even lower accuracy on ImageNet-A (34.17%) and RTA-100 (31.6%). In contrast, SigLIP2 achieves supe-rior robustness across nearly all scenarios, suggesting that its training regimen-potentially involving more diverse or targeted data mixtures-effectively addresses challenging out-of-distribution shifts and semantic perturbations. 
+
+4.2 Semantic Segmentation 
+
+Figure 4 reports the average foreground IoU and precision for segmentation un-der clean and natural adversarial conditions. While all models achieve reasonable performance on PhraseCut, segmentation quality degrades substantially under natural language adversarial prompts and synthetic typographic perturbations, highlighting the vulnerability of segmentation to both linguistic and low-level visual disturbances. SigLIP2 consistently outperforms other models in terms of robustness, retaining relatively higher IoU and precision across perturbations. BLIP2 is comparatively insensitive to textual interference; however, its overall segmentation performance remains poor, particularly on ImageNet-A and Lan-gAdv, indicating limited robustness to distribution shifts. Vision-Language Model Evaluation 9IN1k 
+
+IN-A 
+
+IN-typo 
+
+RTA100 
+
+LangAdv 
+
+0.00 
+
+0.25 
+
+0.50 
+
+0.75 
+
+1.00 
+
+> Top-1 Accuracy
+
+OpenAI CLIP 
+
+IN1k 
+
+IN-A 
+
+IN-typo 
+
+RTA100 
+
+LangAdv 
+
+timm ResNet CLIP 
+
+IN1k 
+
+IN-A 
+
+IN-typo 
+
+RTA100 
+
+LangAdv 
+
+Robust CLIP 
+
+IN1k 
+
+IN-A 
+
+IN-typo 
+
+RTA100 
+
+LangAdv 
+
+SigLIP2 
+
+ViT-B-16-openai 
+
+ViT-B-32-openai 
+
+ViT-L-14-openai 
+
+ResNet50-timm 
+
+ViT-B-16-fare4 
+
+ViT-B-16-tecoa4 
+
+ViT-B-32-fare4 
+
+ViT-B-32-tecoa4 
+
+ViT-L-14-fare2 
+
+ViT-L-14-fare4 
+
+ViT-L-14-tecoa2 
+
+ViT-L-14-tecoa4 
+
+SigLIP2-B-16-224 
+
+SigLIP2-B-16-256 
+
+SigLIP2-B-16-384 
+
+SigLIP2-B-16-512 
+
+SigLIP2-B-32-256 
+
+SigLIP2-L-16-256 
+
+SigLIP2-L-16-512 
+
+Fig. 3. The classification performance across clean and natural adversarial datasets. IN: ImageNet. IN-A: ImageNet-A. IN-typo: ImageNet-typographic. LangAdv: language induced adversarial images. PhraseCut 
+
+> IN-A(seg)
+> PC-typo
+> RTA100(seg)
+> LangAdv(seg)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> mIoU
+
+OpenAI CLIP 
+
+> PhraseCut
+> IN-A(seg)
+> PC-typo
+> RTA100(seg)
+> LangAdv(seg)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+
+Robust CLIP 
+
+> PhraseCut
+> IN-A(seg)
+> PC-typo
+> RTA100(seg)
+> LangAdv(seg)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+
+BLIP2 
+
+> PhraseCut
+> IN-A(seg)
+> PC-typo
+> RTA100(seg)
+> LangAdv(seg)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+
+SigLIP2 
+
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Precision
+
+ViT-B-16-openai 
+
+ViT-B-32-openai 
+
+ViT-L-14-openai 
+
+ResNet50-timm 
+
+ViT-B-16-fare4 
+
+ViT-B-16-tecoa4 
+
+ViT-L-14-fare2 
+
+ViT-L-14-tecoa4 
+
+BLIP2-flan-t5-xl 
+
+BLIP2-flan-t5-xxl 
+
+BLIP2-opt-2.7b 
+
+BLIP2-opt-6.7b 
+
+SigLIP2-B-16-224 
+
+SigLIP2-B-16-256 
+
+SigLIP2-B-16-384 
+
+SigLIP2-B-16-512 
+
+SigLIP2-B-32-256 
+
+SigLIP2-L-16-256 
+
+SigLIP2-L-16-512 
+
+IoU Precision 
+
+Fig. 4. The segmentation performance across clean and natural adversarial datasets. PC-typo: PhraseCut-typographic. IN-A: ImageNet-A. LangAdv: language induced ad-versarial images. 
+
+4.3 Visual Question Answering 
+
+Figure 5 reports VQA performance under clean and adversarial settings. While accuracy consistently drops under adversarial perturbations, SigLIP2 remains comparatively stable across conditions. Among BLIP2 variants, FLAN-T5–based models show stronger robustness to typographic and language-based adversaries, whereas BLIP2-OPT degrades markedly under natural language attacks. Over-all, these results suggest that recent models improve robustness in VQA, but adversarial sensitivity remains significant. VQAv2 
+
+IN-A(vqa) 
+
+VQAv2-typo 
+
+RTA100(vqa) 
+
+LangAdv(vqa) 
+
+0.0 
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 
+
+> VQA Accuracy
+
+OpenAI CLIP 
+
+VQAv2 
+
+IN-A(vqa) 
+
+VQAv2-typo 
+
+RTA100(vqa) 
+
+LangAdv(vqa) 
+
+Robust CLIP 
+
+VQAv2 
+
+IN-A(vqa) 
+
+VQAv2-typo 
+
+RTA100(vqa) 
+
+LangAdv(vqa) 
+
+BLIP2 
+
+VQAv2 
+
+IN-A(vqa) 
+
+VQAv2-typo 
+
+RTA100(vqa) 
+
+LangAdv(vqa) 
+
+SigLIP2 
+
+ViT-B-16-openai 
+
+ViT-B-32-openai 
+
+ViT-L-14-openai 
+
+ResNet50-timm 
+
+ViT-B-16-fare4 
+
+ViT-B-16-tecoa4 
+
+ViT-B-32-fare4 
+
+ViT-B-32-tecoa4 
+
+ViT-L-14-fare2 
+
+ViT-L-14-fare4 
+
+ViT-L-14-tecoa2 
+
+ViT-L-14-tecoa4 
+
+BLIP2-flan-t5-xl 
+
+BLIP2-flan-t5-xxl 
+
+BLIP2-opt-2.7b 
+
+BLIP2-opt-6.7b 
+
+paligemma2-3b-224 
+
+paligemma2-3b-448 
+
+paligemma2-10b-224 
+
+paligemma2-10b-448 
+
+Fig. 5. The visual question answer performance across clean and natural adversarial datasets. IN-A: ImageNet-A. LangAdv: language induced adversarial images. 
+
+4.4 Key Findings 
+
+Across all tasks, natural language-induced adversarial prompts consistently re-sult in the most substantial performance drop, underscoring the inherent vul-10 J. Chengyu et al. 
+
+nerability of CLIP’s cross-modal alignment to subtle linguistic variation. This suggests that robustness in multimodal models cannot be solely achieved through visual-domain regularization or augmentation. Furthermore, we observe that robustness-enhanced variants, while partially mitigating specific adversarial ef-fects, often do so at the cost of performance on standard benchmarks and fail to generalize across adversarial types and tasks. Our key findings are as follows: (1) Robust CLIP was less robust than stan-dard CLIP under natural adversarial scenarios, particularly with challenging or linguistically perturbed inputs. (2) Under natural adversarial conditions, CLIP’s performance fell sharply in classification, segmentation, and VQA, especially with language-induced attacks. (3) SigLIP2 consistently demonstrates superior overall robustness across all evaluated tasks, suggesting more effective handling of semantic perturbations. (4) While BLIP2 partially mitigates typographic at-tacks, it still suffers significant performance degradation under complex pertur-bations such as ImageNet-A and LangAdv. (5) In segmentation and VQA tasks, variants utilizing the FLAN-T5 backbone exhibit slightly better resilience than OPT-based counterparts.          
+
+> Fig. 6. GradCAM of vision-language models in different natural adversarial im-ages. Quadrants: ImageNet-Typo, RTA100 (top); ImageNet-A, LangAdv (bottom). Columns: Original, CLIP, robust CLIP, BLIP2, SigLIP2. Heatmaps denote high (red) to low (blue) attention intensity.
+
+4.5 Interpretable Analysis CAM. We analyze the spatial attention behaviors using CAM visualizations (Fig. 6). Under typographic perturbations, CAM results show a consistent shift of attention from the true semantic object to overlaid or embedded text regions. This effect is most pronounced in CLIP, where text dominates the attention map regardless of semantic relevance, reflecting a strong text-centric inductive bias induced by large-scale web pretraining. Robust CLIP exhibits smoother and less concentrated attention patterns due to adversarial training; however, it remains sensitive to textual interference, indicating that improved robustness stabilizes attention but does not fundamentally resolve text over-reliance. BLIP2 and SigLIP2 display weaker attention bias toward text when object semantics are clear, but still exploit textual cues when visual features are ambiguous, sug-gesting that text acts as a secondary signal under visual uncertainty. On ImageNet-A, CLIP, Robust CLIP, and BLIP2 produce diffuse and poorly localized activations in cluttered scenes, indicating limited object localization Vision-Language Model Evaluation 11 
+
+under high visual complexity. In contrast, SigLIP2 better preserves focus on the salient object, likely benefiting from targeted training on more challenging samples. On the LangAdv dataset, CLIP-based models and BLIP2 exhibit notice-able attention shifts toward non-essential regions, leading to inconsistent visual grounding across samples. SigLIP2, however, shows no clear feature displacement in the examined cases, suggesting stronger alignment between visual attention and semantic content.  
+
+> Fig. 7. The statistical distribution of SAE latent features across standard (ImageNet-1K) and various natural adversarial datasets. Each point represents a latent feature, positioned by its activation frequency (x-axis) and mean activation magnitude (y-axis), with color-coding indicating label entropy.
+
+SAE. The Sparse Autoencoder (SAE) latent distributions reveal a fundamen-tal shift in vision-language model’s feature activation patterns when transition-ing from standard to adversarial datasets. In ImageNet-1K, the latent space is dominated by high-magnitude, high-entropy features (red points in Fig. 7), indicating that the model relies on a dense set of broad, overlapping features for standard classification. In contrast, natural adversarial datasets such as RTA100, ImageNet-A, and LangAdv exhibit a significant emergence of low-entropy, sparsely activated features (blue points in Fig. 7) in the lower-frequency regions. This suggests that adversarial perturbations (such as typographic noise or complex backgrounds) force the model to activate “atypical” or highly specific latents that are normally dormant or suppressed. The performance degradation on these datasets can thus be explained as a feature-level fragmentation: the adversarial inputs distract the model from its primary high-confidence features, triggering a long tail of specialized but less robust latents that lead to inconsistent and incorrect semantic mappings. 
+
+Attention Head. Visualization of attention heads further reveal modality-specific vulnerabilities, as shown in Fig. 8. In typographic attack images, cer-tain attention heads within the visual transformer layers are disproportionately activated by textual patterns, often leading to incorrect or overly confident pre-dictions. These heads display behavior analogous to adversarially triggered neu-rons in standard deep networks, highlighting potential structural fragility. For ImageNet-A and natural language-induced adversarial examples, we do not ob-serve consistent or discriminative head activation patterns, suggesting that the failure in these scenarios is more diffuse and stems from high-level misalignment 12 J. Chengyu et al. 
+
+rather than localized structural bias. This limits the efficacy of targeted prun-ing or reweighting strategies in such cases. In contrast, BLIP-2 and SigLIP-2 do not exhibit pronounced head-wise biases across the four adversarial settings, indicating a more resilient and distributed representation mechanism.  
+
+> Fig. 8. Accuracy variation of CLIP via single-head masking on natural adversarial examples. Highlighted areas denote critical heads where masking induces a substantial accuracy (>15%).
+
+5 Discussion 
+
+Our evaluation demonstrates that SigLIP2 exhibits consistently stronger ro-bustness under natural adversarial settings, preserving semantic alignment and object-centric attention in cluttered or perturbed scenes. In contrast, Robust CLIP frequently underperforms standard CLIP, suggesting that adversarial fine-tuning tailored to synthetic perturbations does not generalize well to naturally occurring adversarial variations. Interpretable analyses indicate that CLIP’s fail-ures largely stem from a persistent over-reliance on local textual artifacts, and that adversarial fine-tuning can degrade cross-task generalization and multi-modal reasoning. To address these issues, we recommend incorporating more diverse and semantically challenging training data, as well as targeted interven-tions such as contrastive adversarial training and attention head pruning, while carefully balancing robustness gains against performance on clean data. 
+
+Limitations. We primarily assess robustness through frozen image encoders with task-specific adapters, which may not fully capture the behavior of end-to-end vision-language systems. In addition, while our natural adversarial bench-marks span multiple settings, they do not exhaust the full space of real-world adversarial conditions. Finally, in challenging datasets such as ImageNet-A, fail-ure modes are often diffuse and non-discriminative, making it difficult for the evaluation to attribute errors to specific architectural components or localized mechanisms. 
+
+Future Research Directions. (1) Future research should rethink the efficacy of adversarial fine-tuning, as strategies tailored for synthetic perturbations may inadvertently amplify vulnerabilities to natural adversarial variations. (2) Be-yond visual-domain regularization, future designs must address the fragility of cross-modal alignment under subtle linguistic variations to achieve holistic ro-bustness. (3) Targeted structural interventions, such as pruning safety-aware Vision-Language Model Evaluation 13 
+
+attention heads, should be explored to mitigate the model’s persistent over-reliance on local textual artifacts. (4) Developing more resilient models requires moving beyond standard benchmarks to incorporate diverse and semantically challenging data mixtures that better represent real-world distribution shifts. 
+
+6 Conclusion 
+
+This paper provides the first holistic evaluation of vision-language models across classification, segmentation, and visual question answering under natural adver-sarial scenarios. Our results show that robust CLIP underperforms CLIP in most cases, revealing its limited generalization. We further identified key failure pat-terns via interpretable analysis and demonstrated that targeted strategies-such as contrastive adversarial training and attention head pruning-can improve ro-bustness, though often with trade-offs. Our findings highlight the need for more adaptive and generalizable robustness solutions for image encoders. 
+
+References 
+
+1. Anis, A.M., Ali, H., Sarfraz, S.: On the limitations of vision-language models in understanding image transforms. arXiv preprint arXiv:2503.09837 (2025) 2. Antol, S., Agrawal, A., Lu, J., Mitchell, M., Batra, D., Zitnick, C.L., Parikh, D.: Vqa: Visual question answering. In: Proceedings of the IEEE international confer-ence on computer vision. pp. 2425–2433 (2015) 3. Awadalla, A., Gao, I., Gardner, J., Hessel, J., Hanafy, Y., Zhu, W., Marathe, K., Bitton, Y., Gadre, S., Sagawa, S., et al.: Openflamingo: An open-source framework for training large autoregressive vision-language models. arXiv preprint arXiv:2308.01390 (2023) 4. Azuma, H., Matsui, Y.: Defense-prefix for preventing typographic attacks on clip. In: Proceedings of the IEEE/CVF International Conference on Computer Vision. pp. 3644–3653 (2023) 5. Barbu, A., Mayo, D., Alverio, J., Luo, W., Wang, C., Gutfreund, D., Tenenbaum, J., Katz, B.: Objectnet: A large-scale bias-controlled dataset for pushing the limits of object recognition models. Advances in neural information processing systems 
+
+32 (2019) 6. Carion, N., Gustafson, L., Hu, Y.T., Debnath, S., Hu, R., Suris, D., Ryali, C., Alwala, K.V., Khedr, H., Huang, A., Lei, J., Ma, T., Guo, B., Kalla, A., Marks, M., Greer, J., Wang, M., Sun, P., Rädle, R., Afouras, T., Mavroudi, E., Xu, K., Wu, T.H., Zhou, Y., Momeni, L., Hazra, R., Ding, S., Vaze, S., Porcher, F., Li, F., Li, S., Kamath, A., Cheng, H.K., Dollár, P., Ravi, N., Saenko, K., Zhang, P., Feichtenhofer, C.: Sam 3: Segment anything with concepts (2025), https://arxiv. org/abs/2511.16719 
+
+7. Chefer, H., Gur, S., Wolf, L.: Generic attention-model explainability for interpret-ing bi-modal and encoder-decoder transformers. In: Proceedings of the IEEE/CVF international conference on computer vision. pp. 397–406 (2021) 8. Chiang, W.L., Li, Z., Lin, Z., Sheng, Y., Wu, Z., Zhang, H., Zheng, L., Zhuang, S., Zhuang, Y., Gonzalez, J.E., et al.: Vicuna: An open-source chatbot impressing gpt-4 with 90%* chatgpt quality. See https://vicuna. lmsys. org (accessed 14 April 2023) 2(3), 6 (2023) 14 J. Chengyu et al. 9. Dong, Y., Chen, H., Chen, J., Fang, Z., Yang, X., Zhang, Y., Tian, Y., Su, H., Zhu, J.: How robust is google’s bard to adversarial image attacks? arXiv preprint arXiv:2309.11751 (2023) 10. Goh, G., Cammarata, N., Voss, C., Carter, S., Petrov, M., Schubert, L., Radford, A., Olah, C.: Multimodal neurons in artificial neural networks. Distill 6(3), e30 (2021) 11. Hendrycks, D., Basart, S., Mu, N., Kadavath, S., Wang, F., Dorundo, E., Desai, R., Zhu, T., Parajuli, S., Guo, M., et al.: The many faces of robustness: A critical analysis of out-of-distribution generalization. In: Proceedings of the IEEE/CVF international conference on computer vision. pp. 8340–8349 (2021) 12. Hendrycks, D., Dietterich, T.: Benchmarking neural network robustness to common corruptions and perturbations. In: International Conference on Learning Represen-tations (2019) 13. Hendrycks, D., Zhao, K., Basart, S., Steinhardt, J., Song, D.: Natural adversarial examples. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. pp. 15262–15271 (2021) 14. Ilharco, G., Wortsman, M., Gadre, S.Y., Song, S., Hajishirzi, H., Kornblith, S., Farhadi, A., Schmidt, L.: Patching open-vocabulary models by interpolating weights. Advances in Neural Information Processing Systems 35 , 29262–29277 (2022) 15. Jia, C., Yang, Y., Xia, Y., Chen, Y.T., Parekh, Z., Pham, H., Le, Q., Sung, Y.H., Li, Z., Duerig, T.: Scaling up visual and vision-language representation learning with noisy text supervision. In: International conference on machine learning. pp. 4904–4916. PMLR (2021) 16. Li, J., Li, D., Savarese, S., Hoi, S.: Blip-2: Bootstrapping language-image pre-training with frozen image encoders and large language models. In: International conference on machine learning. pp. 19730–19742. PMLR (2023) 17. Lim, H., Choi, J., Choo, J., Schneider, S.: Sparse autoencoders reveal selective remapping of visual concepts during adaptation. In: The Thirteenth International Conference on Learning Representations 18. Liu, H., Li, C., Wu, Q., Lee, Y.J.: Visual instruction tuning. Advances in neural information processing systems 36 , 34892–34916 (2023) 19. Lüddecke, T., Ecker, A.: Image segmentation using text and image prompts. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recog-nition. pp. 7086–7096 (2022) 20. Materzyńska, J., Torralba, A., Bau, D.: Disentangling visual and written concepts in clip. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. pp. 16410–16419 (2022) 21. Mokady, R., Hertz, A., Bermano, A.H.: Clipcap: Clip prefix for image captioning. arXiv preprint arXiv:2111.09734 (2021) 22. Radford, A., Kim, J.W., Hallacy, C., Ramesh, A., Goh, G., Agarwal, S., Sastry, G., Askell, A., Mishkin, P., Clark, J., et al.: Learning transferable visual models from natural language supervision. In: International conference on machine learning. pp. 8748–8763. PmLR (2021) 23. Recht, B., Roelofs, R., Schmidt, L., Shankar, V.: Do imagenet classifiers generalize to imagenet? In: International conference on machine learning. pp. 5389–5400. PMLR (2019) 24. Schlarmann, C., Singh, N.D., Croce, F., Hein, M.: Robust clip: Unsupervised ad-versarial fine-tuning of vision embeddings for robust large vision-language models. In: Forty-first International Conference on Machine Learning Vision-Language Model Evaluation 15 25. Schlarmann, C., Singh, N.D., Croce, F., Hein, M.: Robust clip: Unsupervised ad-versarial fine-tuning of vision embeddings for robust large vision-language models. In: International Conference on Machine Learning. pp. 43685–43704. PMLR (2024) 26. Shen, S., Li, L.H., Tan, H., Bansal, M., Rohrbach, A., Chang, K.W., Yao, Z., Keutzer, K.: How much can CLIP benefit vision-and-language tasks? In: Interna-tional Conference on Learning Representations (2022) 27. Team, M.N., et al.: Introducing mpt-7b: A new standard for open-source, com-mercially usable llms. DataBricks (May, 2023) www. mosaicml. com/blog/mpt-7b (2023) 28. Team, Z.I.: Z-image: An efficient image generation foundation model with single-stream diffusion transformer. arXiv preprint arXiv:2511.22699 (2025) 29. Tran, A., Rossetto, L.: On the brittleness of clip text encoders. arXiv preprint arXiv:2511.04247 (2025) 30. Tschannen, M., Gritsenko, A., Wang, X., Naeem, M.F., Alabdulmohsin, I., Parthasarathy, N., Evans, T., Beyer, L., Xia, Y., Mustafa, B., et al.: Siglip 2: Multilingual vision-language encoders with improved semantic understanding, lo-calization, and dense features. arXiv preprint arXiv:2502.14786 (2025) 31. Tu, W., Deng, W., Gedeon, T.: Toward a holistic evaluation of robustness in clip models. IEEE Transactions on Pattern Analysis and Machine Intelligence (2025) 32. Wang, H., Ge, S., Lipton, Z., Xing, E.P.: Learning robust global representations by penalizing local predictive power. Advances in neural information processing systems 32 (2019) 33. Wightman, R.: Pytorch image models. https://github.com/rwightman/ pytorch-image-models (2019). https://doi.org/10.5281/zenodo.4414861 34. Wu, C., Lin, Z., Cohen, S., Bui, T., Maji, S.: Phrasecut: Language-based image seg-mentation in the wild. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. pp. 10216–10225 (2020) 35. Yu, Z., Yu, J., Cui, Y., Tao, D., Tian, Q.: Deep modular co-attention networks for visual question answering. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. pp. 6281–6290 (2019) 36. Zhao, Y., Pang, T., Du, C., Yang, X., Li, C., Cheung, N.M.M., Lin, M.: On eval-uating adversarial robustness of large vision-language models. Advances in Neural Information Processing Systems 36 , 54111–54138 (2023) 37. Zheng, Z., Zhao, J., Yang, L., He, L., Li, F.: Spot risks before speaking! un-raveling safety attention heads in large vision-language models. arXiv preprint arXiv:2501.02029 (2025) 38. Zhou, M., Patel, V.M.: Enhancing adversarial robustness for deep metric learning. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. pp. 15325–15334 (2022) 39. Zhu, X., Xu, P., Zeng, G., Dong, Y., Hu, X.: Natural language induced adversarial images. In: Proceedings of the 32nd ACM International Conference on Multimedia. pp. 10872–10881 (2024)

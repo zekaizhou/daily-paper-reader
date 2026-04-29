@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.01834v1/fig-001.webp",
+      "caption": "Fig. 1. Overview of the proposed method. The top and bottom rows show the feature and ranking space, respectively. The rank score is derived by applying the ranking function r(x) to the features in the top row. (a) Initial distribution in a semi-supervised domain adaptation scenario, considering class order (× ≻ ⋄ ≻ ◦), and target rank distribution estimation for unlabeled target samples. (b) Association of source and target rank distributions with rank-based soft labels, where arrow size indicates the association weight. (c) Semi-supervised domain adaptation using cross-domain ranking and continuous distribution alignment.",
+      "page": 2,
+      "index": 1,
+      "width": 844,
+      "height": 326
+    }
+  ]
+}

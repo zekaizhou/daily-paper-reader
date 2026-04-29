@@ -1,0 +1,110 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.29902v1/fig-001.webp",
+      "caption": "Table 8 | Impact of the judge model and inter-judge rank correlation. Claude, Gemini, and GPT denote Claude Sonnet 4.5, Gemini 2.5 Pro, and GPT-5, respectively.",
+      "page": 11,
+      "index": 1,
+      "width": 980,
+      "height": 230
+    },
+    {
+      "url": "assets/figures/arxiv/2603.29902v1/fig-002.webp",
+      "caption": "Table 9 | Full Statistics of ATP-Bench. Note that \"#TC per GT\" stands for the number of tool calls per ground truth answer.",
+      "page": 15,
+      "index": 2,
+      "width": 667,
+      "height": 683
+    },
+    {
+      "url": "assets/figures/arxiv/2603.29902v1/fig-003.webp",
+      "caption": "Figure 1 | Examples of eight task categories and corresponding model performance. Since our benchmark targets agentic tool-planning ability, evaluation outputs and ground truths contain tool-planning tags instead of rendered images (See Figure 2). For better interpretability, we present results obtained after end-to-end tool execution.",
+      "page": 2,
+      "index": 3,
+      "width": 979,
+      "height": 752
+    },
+    {
+      "url": "assets/figures/arxiv/2603.29902v1/fig-004.webp",
+      "caption": "Table 1 | Comparison of ATP-Bench with existing benchmarks. ATP-Bench is the first to integrate hybrid image sourcing (Reference & Generation) and dual query types (QA & VQA) with expert-level annotations for both queries and ground truths.",
+      "page": 3,
+      "index": 4,
+      "width": 779,
+      "height": 200
+    },
+    {
+      "url": "assets/figures/arxiv/2603.29902v1/fig-005.webp",
+      "caption": "Table 4 | Success Rate of models across eight categories.",
+      "page": 8,
+      "index": 5,
+      "width": 896,
+      "height": 256
+    },
+    {
+      "url": "assets/figures/arxiv/2603.29902v1/fig-006.webp",
+      "caption": "Table 3 | Final Score of models across eight categories (Renovation and Encyclopedia is abbreviated as Renova. and Encyclo. respectively).",
+      "page": 8,
+      "index": 6,
+      "width": 896,
+      "height": 256
+    },
+    {
+      "url": "assets/figures/arxiv/2603.29902v1/fig-007.webp",
+      "caption": "Table 2 | Statistics of ATP-Bench. Note that \"#TC per GT\" stands for the number of tool calls per ground truth answer.",
+      "page": 4,
+      "index": 7,
+      "width": 881,
+      "height": 254
+    },
+    {
+      "url": "assets/figures/arxiv/2603.29902v1/fig-008.webp",
+      "caption": "Figure 4 | Tool Adoption Rates per query for representative models. The reference tool is omitted due to its high dominance; all models utilize it in over 90% of queries.",
+      "page": 9,
+      "index": 8,
+      "width": 844,
+      "height": 186
+    },
+    {
+      "url": "assets/figures/arxiv/2603.29902v1/fig-009.webp",
+      "caption": "Figure 5 | Tool Success Rates per tool call for representative models on each tool.",
+      "page": 9,
+      "index": 9,
+      "width": 844,
+      "height": 192
+    },
+    {
+      "url": "assets/figures/arxiv/2603.29902v1/fig-010.webp",
+      "caption": "Table 5 | Missed Image of models across eight categories; lower is better.",
+      "page": 9,
+      "index": 10,
+      "width": 896,
+      "height": 261
+    },
+    {
+      "url": "assets/figures/arxiv/2603.29902v1/fig-011.webp",
+      "caption": "Figure 2 | Overview of ATP-Bench dataset construction and evaluation pipelines.",
+      "page": 5,
+      "index": 11,
+      "width": 984,
+      "height": 718
+    },
+    {
+      "url": "assets/figures/arxiv/2603.29902v1/fig-012.webp",
+      "caption": "Table 11 | Human evaluation results for end-to-end execution. # Inappr. denotes the average count of inappropriate images. Note that fewer # Inappr. images do not imply a higher Success Rate, as malformed tool calls fail to generate any output. MI and FS represent the count of missed images (↓) and the overall quality score (↑), respectively.",
+      "page": 16,
+      "index": 12,
+      "width": 983,
+      "height": 427
+    },
+    {
+      "url": "assets/figures/arxiv/2603.29902v1/fig-013.webp",
+      "caption": "Table 10 | Detailed breakdown of SR (all values are in %). 1a-c metrics evaluate content placement accuracy, while 2a-c metrics evaluate tool-calling accuracy.",
+      "page": 16,
+      "index": 13,
+      "width": 827,
+      "height": 281
+    }
+  ]
+}

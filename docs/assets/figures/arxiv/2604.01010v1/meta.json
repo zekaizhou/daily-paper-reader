@@ -1,0 +1,86 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.01010v1/fig-001.webp",
+      "caption": "Figure 6: Additional ImageNet-D qualitative examples. PDA stabilizes fine-grained recognition by aggregating evidence from multiple paraphrases that describe shape, part configuration, and material, instead of relying on a single corrupted view.",
+      "page": 25,
+      "index": 1,
+      "width": 936,
+      "height": 700
+    },
+    {
+      "url": "assets/figures/arxiv/2604.01010v1/fig-002.webp",
+      "caption": "Figure 7: Additional COCO captioning examples. PDA detects and repairs conflicts between a corrupted short caption and VLM answers to verification sub-questions, yielding minimally edited but visually consistent captions.",
+      "page": 26,
+      "index": 2,
+      "width": 936,
+      "height": 700
+    },
+    {
+      "url": "assets/figures/arxiv/2604.01010v1/fig-003.webp",
+      "caption": "Figure 1: Overview of the threat model and PDA. (a) Attack phase: an adversary adds pixel-level perturbations guided by VLM gradients, causing the model to flip its answer under the original question. (b) Defense phase: our training-free, text-side Paraphrase–Decomposition–Aggregation pipeline, requires only black-box access, and suppresses adversarially biased views by cross-checking stable visual evidence.",
+      "page": 2,
+      "index": 3,
+      "width": 477,
+      "height": 441
+    },
+    {
+      "url": "assets/figures/arxiv/2604.01010v1/fig-004.webp",
+      "caption": "Table 6: Comparisons with additional test-time baselines.",
+      "page": 10,
+      "index": 4,
+      "width": 572,
+      "height": 310
+    },
+    {
+      "url": "assets/figures/arxiv/2604.01010v1/fig-005.webp",
+      "caption": "Table 2: Overall comparison on three tasks. Results for VQA-v2 (VQA Accuracy), ImageNet-D (Top-1 Accuracy), and MS COCO (CLIPScore). Rows list defenses applied to each victim model (LLaVA-1.5-7B/13B), including SmoothLLM (Swap/Insert/Patch), SemanticSmooth (Paraphrase/Summarise), TeCoA, FARE, and our PDA. Clean denotes performance on unperturbed inputs; ADV denotes performance on adversarially perturbed inputs under the same evaluation protocol.",
+      "page": 8,
+      "index": 5,
+      "width": 984,
+      "height": 309
+    },
+    {
+      "url": "assets/figures/arxiv/2604.01010v1/fig-006.webp",
+      "caption": "Figure 3: Qualitative effect of PDA. (a) The base VLM is attacked into choosing “jeans” in a two-way “t shirt vs. jeans” question, whereas PDA paraphrases the query into targeted checks and recovers the correct “t shirt” label. (b) For a cluttered scene with a black-and-white cat in a green bowl, PDA decomposes the caption prompt into factual sub-questions and aggregates the answers into a faithful caption.",
+      "page": 8,
+      "index": 6,
+      "width": 916,
+      "height": 356
+    },
+    {
+      "url": "assets/figures/arxiv/2604.01010v1/fig-007.webp",
+      "caption": "Figure 2: Pipeline of the proposed PDA defense and its variants. Given an image x and a query t, the Paraphrase Agent produces semantically equivalent prompts. Each prompt is factorized by the Question Decomposer into atomic questions that are individually answered by the base VLM. The Answer Aggregation Agent performs confidence- and consistency-aware fusion to yield the final prediction. The bottom panels illustrate four PDA variants: (a) PDA-Full, (b) PDA-RJV, (c) PDA-RDA and PDA-PV.",
+      "page": 4,
+      "index": 7,
+      "width": 929,
+      "height": 533
+    },
+    {
+      "url": "assets/figures/arxiv/2604.01010v1/fig-008.webp",
+      "caption": "Figure 4: Overall performance of PDA variants on VQA-v2 and ImageNet-D under different paraphrase counts (K=3 and K=5).",
+      "page": 12,
+      "index": 8,
+      "width": 577,
+      "height": 465
+    },
+    {
+      "url": "assets/figures/arxiv/2604.01010v1/fig-009.webp",
+      "caption": "Figure 5: Additional VQA-v2 qualitative examples. For each adversarial image we compare the answer of the undefended VLM with the output of PDA and visualize key paraphrases and sub-questions that support the corrected decision.",
+      "page": 24,
+      "index": 9,
+      "width": 936,
+      "height": 700
+    },
+    {
+      "url": "assets/figures/arxiv/2604.01010v1/fig-010.webp",
+      "caption": "Table 3: Robustness under more challenging white-box attacks on ImageNet-D and VQA-v2.",
+      "page": 9,
+      "index": 10,
+      "width": 594,
+      "height": 333
+    }
+  ]
+}

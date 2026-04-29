@@ -1,0 +1,181 @@
+Title: Ranking-Guided Semi-Supervised Domain Adaptation for Severity Classification
+
+URL Source: https://arxiv.org/pdf/2604.01834v1
+
+Published Time: Fri, 03 Apr 2026 00:43:09 GMT
+
+Number of Pages: 5
+
+Markdown Content:
+## RANKING-GUIDED SEMI-SUPERVISED DOMAIN ADAPTATION FOR SEVERITY CLASSIFICATION 
+
+## Shota Harada ⋆ Ryoma Bise ⋆ Kiyohito Tanaka † Seiichi Uchida ⋆⋆ Kyushu University, Japan  
+
+> †
+
+## Kyoto Second Red Cross Hospital, Japan 
+
+ABSTRACT 
+
+Semi-supervised domain adaptation leverages a few labeled and many unlabeled target samples, making it promising for addressing domain shifts in medical image analysis. How-ever, existing methods struggle with severity classification due to unclear class boundaries. Severity classification in-volves naturally ordered class labels, complicating adapta-tion. We propose a novel method that aligns source and target domains using rank scores learned via ranking with class order. Specifically, Cross-Domain Ranking ranks sample pairs across domains, while Continuous Distribution Align-ment aligns rank score distributions. Experiments on ulcer-ative colitis and diabetic retinopathy classification validate the effectiveness of our approach, demonstrating successful alignment of class-specific rank score distributions. 
+
+Index Terms — Semi-supervised domain adaptation, severity classification, ordinal classification, learning to rank 
+
+1. INTRODUCTION 
+
+Domain shift problems, arising from differences between training and test data, pose significant challenges in medical image analysis. For example, a disease classifier trained on labeled images from one hospital (source) often underper-forms on data from a different hospital (target) due to varia-tions in imaging equipment, conditions, and protocols. These differences lead to discrepancies in feature distributions be-tween source and target domains, impairing the classifier’s generalization ability. Therefore, effective domain adapta-tion methods are crucial for improving classifier performance across different medical settings. Semi-supervised domain adaptation (SSDA) effectively addresses domain shift by leveraging a few labeled and many unlabeled target samples. SSDA methods can improve per-formance over unsupervised domain adaptation with a few ef-forts, making them appealing for constructing diagnostic sup-port systems. However, SSDA for severity classification is challenging due to the ambiguity of class boundaries caused by the continuity of classes, where classes represent ordered levels of disease severity rather than distinct classes. Most existing domain adaptation methods assume that classes form distinct clusters in the feature space, which en-ables alignment across domains by matching class-specific clusters. However, this assumption does not hold for severity classification, where class boundaries are inherently blurred, and distinct clusters for each class are difficult to achieve. Consequently, applying traditional SSDA methods for com-mon classification [1–8] to this task often leads to suboptimal results, as these methods fail to capture the ordered nature of severity levels, resulting in misaligned feature distributions. To address this issue, we propose a novel adaptation approach that leverages a rank score representing continu-ous severity progression obtained through learning to rank. Learning to rank estimates which sample in a pair is more severe based on its relative label, which represents the sever-ity order based on their class labels. We first apply learning to rank [9] to the source samples, learning a continuous severity-based feature distribution and ranks (classes), as shown in Fig. 1 (a). When applied to the target samples, the feature distribution deviates from the source distribution due to domain shift, as shown at the bottom of Fig. 1 (a). As a result, the rank score distribution for each class shifts. Here, similar to many other domain adaptation methods that assume feature vectors of the same class form a cluster, we assume that, despite the shift in the target distribution, samples within each class retain a similar severity-based ordering. In this study, we align the feature distributions by match-ing the rank score distributions of the shared ranking function. Aligning the distributions as discrete classes is ineffective due to the ambiguous class boundaries caused by class continuity. In contrast, by treating the classes as rank scores and aligning those scores, we mitigate class continuity. This approach in-troduces the continuous progression of severity as rank scores into the SSDA process, enabling domain adaptation that takes into account the fact that, in reality, each sample belongs to a continuous severity rather than a discrete class. Specifically, this is achieved using the following components: 1. Cross-Domain Ranking (CDR): CDR performs ranking using relative severity labels between source and target samples, ensuring consistent rank scores across domains. By aligning samples based on relative ranking, CDR es-tablishes a common severity scale, ensuring consistent          
+
+> arXiv:2604.01834v1 [cs.CV] 2 Apr 2026 Unlabeled target samples Labeled source samples Labeled target samples
+> Classification boundary
+> Feature space Ranking space
+> Ranking function
+> (a)
+> 𝑞𝑞 3
+> Source rank distribution
+> 𝜇𝜇 1𝜇𝜇 2𝜇𝜇 3
+> Target rank distribution 𝑞𝑞
+> 𝑟𝑟 (𝑥𝑥 )
+> 𝑞𝑞 1𝑞𝑞 2
+> 𝑞𝑞 3(𝑥𝑥 𝑖𝑖 𝑢𝑢 )
+> 𝑟𝑟 (𝑥𝑥 )
+> 𝑟𝑟 (𝑥𝑥 𝑖𝑖 𝑠𝑠 )
+> 𝑟𝑟 (𝑥𝑥 𝑖𝑖 𝑡𝑡 )𝑟𝑟 (𝑥𝑥 𝑖𝑖 𝑢𝑢 )
+> (b)
+> 𝑟𝑟 (𝑥𝑥 𝑖𝑖 𝑠𝑠 )
+> 𝑞𝑞 (1| 𝑥𝑥 𝑖𝑖 𝑢𝑢 )𝑞𝑞 (2| 𝑥𝑥 𝑖𝑖 𝑢𝑢 )
+> 𝑞𝑞 (3| 𝑥𝑥 𝑖𝑖 𝑢𝑢 )
+> (c)
+> 𝑟𝑟 (𝑥𝑥 𝑖𝑖 𝑢𝑢 )
+
+Fig. 1 . Overview of the proposed method. The top and bottom rows show the feature and ranking space, respectively. The rank score is derived by applying the ranking function r(x) to the features in the top row. (a) Initial distribution in a semi-supervised domain adaptation scenario, considering class order ( × ≻ ⋄ ≻ ◦ ), and target rank distribution estimation for unlabeled target samples. (b) Association of source and target rank distributions with rank-based soft labels, where arrow size indicates the association weight. (c) Semi-supervised domain adaptation using cross-domain ranking and continuous distribution alignment. severity interpretation. Unlike traditional ranking, which operates within a single domain, CDR extends ranking across domains for meaningful correspondence. 2. Continuous Distribution Alignment (CDA): CDA refines alignment by estimating rank-based soft labels, leveraging the class continuity of unlabeled target samples. Unlike hard pseudo-labels, these labels probabilistically associate samples with classes, capturing continuous severity. CDA minimizes the distance between source and target rank score distributions, ensuring effective domain alignment despite ambiguous class boundaries. CDR and CDA together align rank scores between do-mains, thereby aligning feature distributions based on class order. By constraining feature distributions to reflect the or-dinal structure of severity levels, the proposed method en-ables effective domain adaptation for severity classification, where clear class distinctions are often absent. Aligning rank score distributions through ordered class constraints allows for domain-independent feature extraction and improves per-formance in these tasks for medical imaging. Our contributions are summarized as follows: • We propose a ranking-guided SSDA framework for sever-ity classification that aligns source and target domains using ordered class labels, addressing ambiguous class boundaries. • We introduce CDA with the rank-based soft label, which is a simple and effective loss function for domain adapta-tion on this task. Additionally, we introduce CDR, a novel approach for SSDA in this task that learns rankings from cross-domain sample pairs. 
+
+2. RANKING-GUIDED SEMI-SUPERVISED DOMAIN ADAPTATION 
+
+In semi-supervised domain adaptation of severity classi-fication, we are given Ns labeled source samples Ds =
+
+{(xsi , y si )}Ns
+
+> i=1
+
+, where xsi is the i−th sample in the source domain and ysi ∈ { 1, ..., C } is its ordered class label. We are also given Nt labeled target samples Dt = {(xti, y ti )}Nt
+
+> i=1
+
+and Nu unlabeled target samples Du = {xui }Nu
+
+> i=1
+
+. We aim to improve the classification performance in the target domain utilizing target samples Dt and Du and source samples Ds.The network in the proposed method is a hierarchical structure in which a feature extractor Fe branches into a classifier Fc and a ranking function Fr . A sample xi is passed through Fe to obtain the features, which are then passesd through Fc and Fr to obtain the class probabil-ity p(xi) = Fc(Fe(xi)) ∈ [0 , 1] C and the rank score 
+
+r(xi) = Fr (Fe(xi)) ∈ R, respectively. The proposed method is optimized in two steps: first, us-ing Ds, it is optimized with pairwise ranking loss, which uses relative labels derived from class labels as ground-truth, and classification loss; second, it is further optimized by cross-domain ranking on Ds and Dt, along with continuous distri-bution alignment using Ds, Dt, and Ds.
+
+Cross-Domain Ranking : To address domain shifts in the rank scores of labeled source and target samples, we propose cross-domain ranking (CDR), which trains pairwise rankings from pairs sampled across domains. While class labels are typically treated independently in each domain, we mitigate the domain shift by learning to rank across domains. We pair labeled source and target samples Ds ∪ D t for ranking, ensuring consistent rankings across domains and aligning the rank score distributions of both domains. For the CDR, we input a pair of labeled samples, xi and Labeled target samples  
+
+> Unlabeled target samples
+> Labeled source samples
+> Ranking function
+> 𝑟𝑟 (𝑥𝑥 )
+> (a) (b)
+
+Fig. 2 . Effect of Cross-Domain Ranking (CDR). (a) Distribu-tion when learning to rank within the same domain. (b) Dis-tribution with CDR. The dashed lines represent sample pairs. 
+
+xj , sampled from Ds ∪ D t into Fe, and then minimize the ranking loss [9] which is defined as:                                
+
+> Lr(xi,xj) = −oi,j log h(ri,j )−(1 −oi,j ) log (1 −h(ri,j )) ,(1)
+> oi,j =
+> (
+> 1(yi> y j)if yi̸=yj,
+> 12if yi=yj,
+
+where h(·) is a sigmoid function, and ri,j is r(xi) − r(xj ).This loss function forces samples with larger classes to have higher rank scores than those with smaller classes. Along with CDR, we minimize Eq. 1 within the same domain and the cross-entropy loss Lc using Ds and Dt for classification. As shown in Fig. 2, CDR is essential in semi-supervised domain adaptation. Ranking with a single domain improves class discrimination within each domain, but the class dis-tributions may not align across domains. For example, in Fig. 2 (a), the rank score of the ⋄ class sample in the target is smaller than that of the ◦ class sample in the source (with the actual order being ⋄ ≻ ◦ ). In contrast, CDR avoids such discrepancies, as shown in Fig. 2 (b), aligning the rank score distributions between domains. Thus, cross-domain ranking is crucial in semi-supervised domain adaptation. 
+
+Continuous Distribution Alignment : Continuous Distribu-tion Alignment (CDA) aligns the rank score distributions of both domains by leveraging associations between sam-ples and the rank score distribution in the source domain, as shown in Fig. 1 (b). CDA uses rank-based soft labels, derived from the estimated rank score distribution of unlabeled target samples, to associate them with the source domain’s rank score distributions. Labeled samples from both domains are similarly associated with the source distribution. CDA then minimizes the distance between the rank scores and their corresponding distributions, aligning rank score distributions and, ultimately, the feature distributions across domains. CDA trains in the following steps. We first model the rank score distribution for each class of unlabeled target samples 
+
+Du using GMM with the number of cluster C, which is the same as the number of classes, and obtain the k-th cluster probability q(k|xui ). Next, we minimize the CDA loss to re-duce the distance between the rank score of each sample and the average rank score for each class in the source domain μk
+
+as a class prototype, which is defined as:                           
+
+> La(xi) =
+> CX
+> k=1
+> wi,k (r(xi)−μk)2,(2)
+> μk=1
+> P
+> ysn∈D s1(ysn=k)
+> X
+> (xsj,y sj)∈D s
+> 1(ysj=k)r(xsj),wi,k =
+> (
+> 1(yi=k)if xi∈ D s∪ D t,q(k|xi)if xi∈ D u,
+
+where wi,k is the rank-based soft label that indicates the as-signment ratio for class k of xi. The labeled samples are directly assigned to their class, while unlabeled samples are assigned based on rank-based soft labels, maintaining their original rank order while matching the source distribution. The overall loss function is defined as follows:             
+
+> L=X
+> xi,xj∈D s∪D t
+> {L c(xi) + Lc(xj) + Lr(xi,xj)}
+> +λX
+> xl∈D s∪D t∪D u
+> La(xl),(3)
+
+where λ is a hyper-parameter to balance CDA and the others. 
+
+3. EXPERIMENTS Dataset : In this experiment, we used two classification tasks: ulcerative colitis (UC) classification of endoscopic images and diabetic retinopathy (DR) classification of fundus im-ages. For each task, we prepared two datasets. For UC, we used LIMUC [11] and a private dataset collected from Ky-oto Second Red Cross Hospital (Private), both of which are annotated by experts using a 4-level Mayo score, one of the severity scores for UC. The number of images in LIMUC and Private were 11 ,276 and 10 ,265 , respectively. For DR, we used FGADR [12] and DDR [13], both of which are anno-tated by experts on a 5-level scale. The number of images in FGADR and DDR was 1,842 and 11 ,017 , respectively. We used LIMUC and DDR as the source, the rest as the target. We randomly split the source domain into patient units, with 60% , 20% , and 20% of the samples allocated to training, validation, and testing, respectively. The val-idation set was used only during pretraining. To perform 5-fold cross-validation, we applied patient-disjoint random sampling to the target. During training, we randomly selected 
+
+10 samples per class as labeled target samples Dt, and 10 
+
+samples per class for validation. 
+
+Comparative Methods : We compared the proposed method with the six methods: S, trained with only labeled source samples; S+T , trained with both labeled source and labeled target samples; MME [7], CDAC [3], and SLA [8], semi-supervised domain adaptation methods; ORUDA [10], unsu-pervised domain adaptation method for ordinal classification. For a fair comparison, ORUDA used the labeled target sam-ples Dt to learn the same loss function as Ds.Table 1 . Classification results for target test samples when the number of labeled target samples per class is 10 . Bold indicates the best, while underline indicates the second best, and mP, mR, and mF1 are the mean of the macro Precision, the macro Recall, and the macro F1, respectively. Method Accuracy mP mR mF1 Accuracy mP mR mF1 LIMUC →Private DDR →FGADR S 0.369 0.352 0.481 0.288 0.323 0.437 0.354 0.248 
+
+S+T 0.582 0.444 0.580 0.444 0.422 0.427 0.408 0.367 
+
+MME [7] 0.613 0.470 0.596 0.477 0.420 0.392 0.434 0.356 
+
+CDAC [3] 0.599 0.429 0.553 0.430 0.404 0.397 0.405 0.351 
+
+SLA [8] 0.540 0.448 0.578 0.441 0.383 0.452 0.379 0.310 
+
+ORUDA [10] 0.555 0.433 0.531 0.441 0.342 0.337 0.331 0.289 
+
+Ours 0.611 0.521 0.587 0.494 0.470 0.470 0.454 0.407 
+
+Table 2 . The ablation study with Cross-Domain Rank-ing (CDR) and Continuous Distribution Alignment (CDA) in LIMUC →Private. CDR CDA Accuracy mP mR mF1 
+
+0.588 0.455 0.572 0.447 
+
+✓ 0.615 0.479 0.588 0.484 
+
+✓ 0.606 0.478 0.589 0.472 
+
+✓ ✓ 0.611 0.521 0.587 0.494 
+
+Implementation Details : ResNet-50 [14] pretrained on Im-ageNet [15] was used as a backbone network for the fea-ture extractor Fe with its last linear layer removed. A lin-ear layer was used for both the classifier Fc and the rank-ing function Fr . During pretraining and adaptation, we ap-plied class-weighted random sampling to obtain mini-batches with approximately an equal number of labeled samples per class. To train with standard ranking loss and the CDR, we randomly combined samples in a mini-batch to make sample pairs. The parameter λ in Eq. 3 was set to 10 −5 and 10 −6
+
+for the UC classification and the DR classification. We termi-nated the training of the model by early stopping, referred to as the macro F1 (mF1) of the validation set. 
+
+Experimental Results : Table 1 shows the classification per-formance of the target test samples in the UC and DR tasks with 10 labeled target samples per class. This confirmed that the proposed method outperformed the others in mP and mF1. However, several methods outperformed it in mR. Given the class imbalance in the dataset, mF1 is the most crucial metric, and the proposed method achieved the best performance. Table 2 shows the results of the ablation study with CDR and CDA. The results demonstrate that both CDR and CDA effectively improve mP and mR. In particular, CDR con-tributes to the improvement of mP, while CDA enhances mR, which is a reasonable trend since CDA aligns the entire data distribution between both domains, while CDR relies on la-beled samples. The significant improvement when both are trained simultaneously suggests they work complementarily. Fig. 3 shows the rank score distributions before and after adaptation. The horizontal and vertical axes represent the Source domain  
+
+> Target domain
+> Pretrained rank distribution Adapted rank distribution
+
+Fig. 3 . Visualization of the rank score distribution in LIMUC →Private. The horizontal and vertical axes represent the rank score and sample density, respectively. rank score and sample density, respectively. The top and bottom rows show the source and target domains, respec-tively, with color indicating class and dashed lines showing the source mode for each class. Before adaptation, the dis-tributions do not match between domains, but after applying the proposed method, the distributions are aligned for each domain and class, demonstrating its effectiveness in this task. 
+
+4. CONCLUSION 
+
+In this paper, we proposed a semi-supervised domain adap-tation method for severity classification leveraging learning to rank for continuous class boundaries. It consists of Cross-Domain Ranking, which aligns domain distributions by rank-ing labeled sample pairs made from cross-domains, and Con-tinuous Distribution Alignment, which aligns rank score dis-tributions between domains with rank-based soft labels. Ex-periments on two severity classification tasks demonstrated its effectiveness. The experimental results confirmed that the model pretrained on the source domain aligns target samples according to class order, and that the adaptation step enhances class discrimination while preserving class alignment. 5. COMPLIANCE WITH ETHICAL STANDARDS 
+
+This study was performed in line with the principles of the Declaration of Helsinki. Approval was granted by the Ethics Committee of Kyoto Second Red Cross Hospital. 
+
+6. ACKNOWLEDGMENTS 
+
+This work was supported by JST ACT-X Grant Number JP-MJAX23CN, JST ASPIRE Grant Number JPMJAP2403, and AMED Grant Number JP25mk0121326. 
+
+7. REFERENCES 
+
+[1] Gewen He, Xiaofeng Liu, Fangfang Fan, and Jane You, “Classification-aware semi-supervised domain adapta-tion,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops ,2020, pp. 4147–4156. [2] Pin Jiang, Aming Wu, Yahong Han, Yunfeng Shao, Meiyu Qi, and Bingshuai Li, “Bidirectional adversar-ial training for semi-supervised domain adaptation,” in 
+
+Proceedings of the International Joint Conference on Artificial Intelligence , 2020, pp. 934–940. [3] Jichang Li, Guanbin Li, Yemin Shi, and Yizhou Yu, “Cross-domain adaptive clustering for semi-supervised domain adaptation,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recogni-tion , 2021, pp. 2505–2514. [4] Jichang Li, Guanbin Li, and Yizhou Yu, “Adaptive be-tweenness clustering for semi-supervised domain adap-tation,” IEEE Transactions on Image Processing , vol. 32, pp. 5580–5594, 2023. [5] Jichang Li, Guanbin Li, and Yizhou Yu, “Inter-domain mixup for semi-supervised domain adaptation,” Pattern Recognition , vol. 146, pp. 110023, 2024. [6] Kai Li, Chang Liu, Handong Zhao, Yulun Zhang, and Yun Fu, “ECACL: A holistic framework for semi-supervised domain adaptation,” in Proceedings of the IEEE/CVF International Conference on Computer Vi-sion , 2021, pp. 8578–8587. [7] Kuniaki Saito, Donghyun Kim, Stan Sclaroff, Trevor Darrell, and Kate Saenko, “Semi-supervised domain adaptation via minimax entropy,” in Proceedings of the IEEE/CVF International Conference on Computer Vi-sion , 2019, pp. 8050–8058. [8] Yu-Chu Yu and Hsuan-Tien Lin, “Semi-supervised do-main adaptation with source label adaptation,” in Pro-ceedings of the IEEE/CVF Conference on Computer Vi-sion and Pattern Recognition , June 2023, pp. 24100– 24109. [9] Chris Burges, Tal Shaked, Erin Renshaw, Ari Lazier, Matt Deeds, Nicole Hamilton, and Greg Hullender, “Learning to rank using gradient descent,” in Proceed-ings of the International Conference on Machine Learn-ing , 2005, pp. 89–96. [10] Boris Chidlovskii, Assem Sadek, and Christian Wolf, “Universal domain adaptation in ordinal regression,” 
+
+arXiv preprint arXiv:2106.11576 , 2021. [11] Gorkem Polat, Haluk Tarik Kani, Ilkay Ergenc, Yesim Ozen Alahdab, Alptekin Temizel, and Ozlen Atug, “Improving the computer-aided estimation of ul-cerative colitis severity according to mayo endoscopic score by using regression-based deep learning,” Inflam-matory Bowel Diseases , pp. 1431–1439, 2022. [12] Yi Zhou, Boyang Wang, Lei Huang, Shanshan Cui, and Ling Shao, “A benchmark for studying diabetic retinopathy: Segmentation, grading, and transferabil-ity,” IEEE Transactions on Medical Imaging , vol. 40, no. 3, pp. 818–828, 2021. [13] Tao Li, Yingqi Gao, Kai Wang, Song Guo, Hanruo Liu, and Hong Kang, “Diagnostic assessment of deep learn-ing algorithms for diabetic retinopathy screening,” In-formation Sciences , vol. 501, pp. 511–522, 2019. [14] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun, “Deep residual learning for image recognition,” in 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops , 2016, pp. 770–778. [15] Olga Russakovsky, Jia Deng, Hao Su, Jonathan Krause, Sanjeev Satheesh, Sean Ma, Zhiheng Huang, Andrej Karpathy, Aditya Khosla, Michael Bernstein, Alexan-der C. Berg, and Li Fei-Fei, “ImageNet large scale vi-sual recognition challenge,” International Journal of Computer Vision , vol. 115, pp. 211–252, 2015.
