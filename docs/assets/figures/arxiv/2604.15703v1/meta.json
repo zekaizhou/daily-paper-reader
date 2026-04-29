@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.15703v1/fig-001.webp",
+      "caption": "Fig. 5. The t-SNE visualization of the 3D embeddings from PB dataset before (left) and after (right) fine-tuning. Embeddings with the same color correspond to the same category.",
+      "page": 6,
+      "index": 1,
+      "width": 512,
+      "height": 260
+    },
+    {
+      "url": "assets/figures/arxiv/2604.15703v1/fig-002.webp",
+      "caption": "Fig. 1. Overview of the P3T framework. The upper part represents the 3D branch with a Point Prompter, and the lower part corresponds to the text branch with a Text Prompter.",
+      "page": 2,
+      "index": 2,
+      "width": 1054,
+      "height": 354
+    },
+    {
+      "url": "assets/figures/arxiv/2604.15703v1/fig-003.webp",
+      "caption": "Fig. 2. Architecture of Point Prompter. It takes n patches of a point cloud, and generates a prompt token and offsets for both local points and center of each patch. The offsets are added to the target patches to create deformed patches, which are then concatenated to original patches.",
+      "page": 3,
+      "index": 3,
+      "width": 1054,
+      "height": 437
+    },
+    {
+      "url": "assets/figures/arxiv/2604.15703v1/fig-004.webp",
+      "caption": "TABLE I CLASSIFICATION ACCURACIES (%) ON TWO DATASETS. #LP DENOTES THE NUMBER OF LEARNABLE PARAMETERS. ∗ INDICATES THE PERFORMANCE UNDER PPT SETTING.",
+      "page": 4,
+      "index": 4,
+      "width": 477,
+      "height": 615
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.12403v1/fig-001.webp",
+      "caption": "Figure 1. An example of how prompt quality varies depending on the selected views. When the (a) selected views are noisy and fail to capture key object features, the prompt is adapted in an incorrect direction, resulting in erroneous predictions. In contrast, (b) informative views containing essential features guide the prompt toward the correct semantics, resulting in accurate predictions. This highlights the critical role of robust view selection.",
+      "page": 1,
+      "index": 1,
+      "width": 491,
+      "height": 305
+    },
+    {
+      "url": "assets/figures/arxiv/2604.12403v1/fig-002.webp",
+      "caption": "Table 1. Comparison of methods on multiple ImageNet variants. We report top-1 accuracy (%) on each dataset and their averages. Numbers in parentheses indicate improvement over the corresponding baseline (TPT, CoOp+TPT, or MaPLe+TPT).",
+      "page": 6,
+      "index": 2,
+      "width": 1031,
+      "height": 458
+    },
+    {
+      "url": "assets/figures/arxiv/2604.12403v1/fig-003.webp",
+      "caption": "Table 3. Comparison of methods on multiple downstream datasets.",
+      "page": 7,
+      "index": 3,
+      "width": 1031,
+      "height": 396
+    },
+    {
+      "url": "assets/figures/arxiv/2604.12403v1/fig-004.webp",
+      "caption": "Figure 3. Visualization of views selected by each anchor modality. For each test image, we compare the augmented views selected by the text-guided and image-guided filters with the previous selection strategies. Green boxes indicate correctly selected views containing the target object, whereas red boxes mark views where the object is absent or unrecognizable.",
+      "page": 8,
+      "index": 4,
+      "width": 481,
+      "height": 311
+    },
+    {
+      "url": "assets/figures/arxiv/2604.12403v1/fig-005.webp",
+      "caption": "Figure 2. Overview of the proposed dual-modality anchor framework. The process begins with (a) text anchor construction. Multiple LLM-generated descriptions per class are encoded with the CLIP text encoder, and N augmented images are encoded with the CLIP image encoder. We then compute image–text alignment by measuring cosine similarity and perform alignment-weighted aggregation to form text anchors. Using these anchors, we compute joint alignment–confidence scores to each views and keep the top q% of N augmented views. (b) In the image anchor construction stage, the text-guided selected views are aggregated into a prototype bank that captures the visual distribution. The image anchor set is obtained by collecting the top-K class prototypes. We again compute joint alignment–confidence scores with the image anchors and retain the top p% of N augmented views. The final view set is the union of the two filters.",
+      "page": 4,
+      "index": 5,
+      "width": 1028,
+      "height": 484
+    }
+  ]
+}

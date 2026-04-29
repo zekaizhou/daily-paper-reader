@@ -1,0 +1,872 @@
+Title: Majorization-Guided Test-Time Adaptation for Vision-Language Models under Modality-Specific Shift
+
+URL Source: https://arxiv.org/pdf/2604.24602v1
+
+Published Time: Tue, 28 Apr 2026 02:08:58 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+# Majorization-Guided Test-Time Adaptation for Vision-Language Models under Modality-Specific Shift 
+
+# Lixian Chen 
+
+Guangdong University of Technology Guangzhou, China 3123003175@mail2.gdut.edu.cn 
+
+# Mingxuan Huang 
+
+Sun Yat-sen University Guangzhou, China huangmx53@mail2.sysu.edu.cn 
+
+# Yanhui Chen 
+
+Guangdong University of Technology Guangzhou, China chenyanhui91@mails.gdut.edu.cn 
+
+# Junyi Lin 
+
+Guangdong University of Technology Guangzhou, China 3123001378@mail2.gdut.edu.cn 
+
+# Yang Shi 
+
+Guangdong University of Technology Guangzhou, China sudo.shiyang@gmail.com 
+
+## Abstract 
+
+Vision-language models transfer well in zero-shot settings, but at deployment the visual and textual branches often shift asymmet-rically. Under this condition, entropy-based test-time adaptation can sharpen the fused posterior while increasing error, because an unreliable modality may still dominate fusion. We study this failure mode through a majorization view of multimodal posteriors and cast adaptation as a constrained de-mixing problem on the fused prediction. Based on this view, we propose MG-MTTA, which keeps the backbone frozen and updates only a lightweight gate or adapter. The objective combines fused-posterior entropy minimization with a reliability-aware gate prior built from anchor-based modality con-sistency and cross-modal conflict. Our analysis gives conditions under which entropy reduction preserves the correct ranking and a threshold that characterizes modality-dominance failure. On the ImageNet-based benchmark, MG-MTTA improves top-1 accuracy from 57.97 to 66.51 under semantics-preserving textual shift and from 21.68 to 26.27 under joint visual-textual shift, while remaining competitive in the visual-only benchmark. These results show that multimodal test-time adaptation should control modality reliability, not just prediction entropy. 
+
+## CCS Concepts 
+
+• Computing methodologies → Artificial intelligence .
+
+## Keywords 
+
+vision language model, test time adaptation, majorization, doubly stochastic mixing, modality specific shift 
+
+## 1 Introduction 
+
+Vision-language models (VLMs) have become a standard founda-tion for multimodal recognition, retrieval, and open-vocabulary understanding. Their large-scale pretraining substantially improves zero-shot transfer and cross-modal reasoning across diverse tasks. However, realistic deployment rarely preserves the source-domain conditions seen during pretraining [ 3, 14 ]. Instead, the two modal-ities are often perturbed asymmetrically: the visual stream may suffer from blur, occlusion, low illumination, or style shift, while the textual stream may exhibit prompt-template drift, lexical variation, or other forms of semantics-preserving phrasing shift [ 3 , 21 , 29 ]. The resulting challenge is therefore not merely uncertainty under a single distribution shift, but multimodal decision-making under modality-specific shift. This asymmetry creates a failure mode that is specific to multi-modal fusion. When one modality becomes unreliable but remains artificially sharp, entropy minimization can further increase confi-dence in an incorrect fused decision [ 25 ]. In other words, a lower-entropy posterior is not necessarily a better posterior once fusion is driven by modality imbalance. A satisfactory test-time adaptation method for VLMs should therefore do more than sharpen predic-tions: it should identify when entropy reduction corresponds to genuine recovery and when it merely amplifies the influence of a corrupted modality. Our starting point is to view modality-specific shift through pos-terior geometry. We model each modality-level posterior as a doubly stochastic mixing of an underlying clean posterior, up to a residual that captures deviation from the idealized mixing model [ 10 ]. Under this view, test-time adaptation becomes a constrained de-mixing problem on the fused posterior. This perspective is useful for two reasons. First, it provides a principled explanation of why entropy may increase under shift and why a successful update should re-verse that trend only along a valid majorization direction [ 10 , 17 ]. Second, it exposes the role of modality reliability in fusion: if one stream is poorly explained by the mixing model or conflicts sharply with the other stream, its contribution should be downweighted during adaptation [ 15 , 28 ]. Throughout the paper, we distinguish between an ideal analysis object based on doubly stochastic mixing and its practical implementation. The former clarifies the majoriza-tion geometry of multimodal degradation and recovery, whereas the latter is realized by a computable modality-to-anchor reliability proxy built from running anchors. Based on this formulation, we propose a majorization-guided test-time adaptation method that keeps the vision-language back-bone frozen and updates only a lightweight gate or adapter module. The method combines entropy minimization on the fused posterior with reliability-aware regularization derived from two computable signals: an anchor-based reliability proxy inspired by doubly sto-chastic fit, and a cross-modality disagreement proxy that reflects conflict between the two streams. The resulting objective keeps the trainable subset small and is directly aligned with the theoretical quantities used in our analysis. We further show that entropy reduction is beneficial only un-der additional structural conditions. In particular, if the adapted   
+
+> arXiv:2604.24602v1 [cs.CV] 27 Apr 2026 Lixian Chen, Mingxuan Huang, Yanhui Chen, Junyi Lin, and Yang Shi “a photo of a dog” “a ph0to of a d0g”
+> “a ph0to of a d0g”
+> “a ph0to of a d0g”
+> balanced
+> gate
+> entropy-
+> only
+> adapt ation
+> text-
+> biased
+> gate
+> dog cat car dog cat car
+
+## 1 2
+
+## 3 4
+
+> 
+> reliability-
+> aware
+> gate
+> dog cat car
+> reliable
+> cue
+> conflict
+> cue
+> dog cat car
+
+Figure 1: Motivation. Under modality-specific shift, biased fusion can produce a sharper but less reliable posterior. Entropy-only adaptation may further amplify an incorrect fused decision, whereas MG-MTTA uses reliability and conflict cues to guide the fusion gate toward a more reliable adaptation direction. 
+
+fused posterior moves along a correct majorization direction and preserves the decisive ranking induced by the clean fused posterior, entropy reduction is accompanied by prediction preservation. Con-versely, when the gate overweights a biased modality beyond an explicit threshold, the fused decision can be forced to flip. The em-pirical evaluation follows this separation. Visual corruption bench-marks provide a standard CLIP test-time adaptation anchor, while semantics-preserving textual shift and joint shift form the main multimodal evaluation. Conflicting textual perturbations, such as negation or class-inconsistent descriptions, are reserved for failure analysis because they probe modality dominance more directly. Our contributions are summarized as follows. 
+
+• We identify a multimodal-specific failure mode of entropy-based test-time adaptation under modality-specific shift, where lower entropy can reflect confidence amplification by a biased modality rather than genuine recovery. 
+
+• We formulate this problem as a multimodal posterior de-mixing problem based on majorization and doubly stochas-tic mixing, and derive conditions under which entropy re-duction is beneficial together with a modality-dominance threshold that characterizes a concrete failure regime. 
+
+• We propose a lightweight adaptation method that updates only a gate or adapter module while keeping the pretrained backbone frozen, using reliability-aware regularization based on an anchor-based reliability proxy and cross-modality disagreement. 
+
+• We establish an evaluation protocol that separates visual shift, semantics-preserving textual shift, and joint shift, while treating conflicting textual perturbations as failure analysis rather than as part of the main robustness bench-mark. 
+
+## 2 Related Work 2.1 Test-Time Adaptation 
+
+Test-time adaptation (TTA) aims to adapt a source model to un-labeled target data at inference time without full retraining [ 7 ]. Representative methods reduce predictive entropy, update normal-ization statistics, stabilize predictions with teacher models, filter unreliable samples, or restrict adaptation to small parameter sub-sets for robustness [ 11 , 12 , 22 , 23 ]. These approaches have been especially effective in image classification, where the model output is usually treated as a single posterior to be sharpened or stabilized under shift. The multimodal case is more delicate. Once prediction depends on both visual and textual streams, lower entropy does not by itself imply a better decision. The outcome also depends on whether fusion remains aligned with the more reliable modality. This dif-ference motivates the setting considered here, where the visual posterior, the textual posterior, and the fused posterior are treated as separate but coupled objects. Majorization-Guided Test-Time Adaptation for Vision-Language Models under Modality-Specific Shift 
+
+## 2.2 Vision-Language Models under Shift and Test-Time Adaptation 
+
+Vision-language models built on contrastive pretraining and large-scale multimodal learning have substantially improved transfer across recognition, retrieval, and open-vocabulary tasks [ 1 , 16 , 26 ]. At the same time, their predictions remain sensitive to prompt de-sign, visual corruptions, and broader distribution shift [ 4, 13 , 24 ]. Existing studies have mainly documented this sensitivity through performance degradation, calibration, or prompt robustness anal-yses [ 3, 14 ], making clear that robustness remains fragile once deployment conditions depart from pretraining. Recent work has therefore extended TTA to vision-language and multimodal models through prompt tuning, lightweight adaptation, or reliability-aware correction [ 5, 9, 18 , 25 ]. These methods are the closest practical neighbors to our setting because they adapt frozen or lightly updated multimodal backbones under target shift. Still, most existing formulations are organized around entropy min-imization, consistency, or heuristic reliability adjustment. Although robustness is evaluated on the fused prediction, the fused posterior itself is usually not treated as the object of analysis. As a result, current methods say relatively little about when entropy reduction preserves the correct fused ranking and when it instead reinforces a biased modality. Our formulation focuses on this point directly by studying multimodal adaptation at the fused-posterior level. 
+
+## 2.3 Fusion, Reliability, and Majorization 
+
+A separate line of work studies multimodal fusion under modal-ity imbalance and shows that reliability-aware weighting can im-prove prediction by reducing the influence of noisy or misaligned streams [ 6 , 20 , 27 , 28 ]. This line of research provides an impor-tant practical intuition for our setting: when the modalities are not equally trustworthy, robust fusion should not weight them equally. Separately, majorization theory provides a natural language for describing how probability vectors become more mixed or less mixed [ 10 ]. While it is closely related to entropy and posterior geometry, it has rarely been used to study multimodal adaptation. In this paper, majorization is not used only as a descriptive tool. It is also used to clarify when entropy reduction corresponds to genuine recovery and when a sharper prediction is simply a sharper mistake under modality-specific shift. 
+
+## 3 Method 
+
+MG-MTTA adapts a frozen vision-language model by updating only a lightweight fusion module at test time. For each test sample, the model first produces visual and textual predictions, then estimates modality reliability from running anchors and cross-modality con-flict, and finally regularizes the fusion gate toward the more reliable modality. The fused prediction is optimized with entropy minimiza-tion, gate regularization, and batch diversity. The rest of this section first states the practical adaptation rule used in deployment and then introduces the majorization-based mixing view that motivates it. 
+
+## 3.1 Problem Setting and Practical Adaptation Rule 
+
+We consider an unlabeled test stream of multimodal samples 𝑧 =
+
+(𝑥 𝑣 , 𝑥 𝑡 ) with label space Y = {1, . . . , 𝐾 }. The superscripts 𝑣 and 
+
+𝑡 denote the visual and textual modalities. For each sample, the pretrained model produces modality-level posteriors 𝑝 𝑣 (𝑧 ), 𝑝 𝑡 (𝑧 ) ∈ 
+
+R𝐾 on the probability simplex 
+
+Δ𝐾 −1 =
+
+(
+
+𝑢 ∈ R𝐾 
+
+> ≥0
+> 𝐾
+
+∑︁ 
+
+> 𝑘 =1
+
+𝑢 𝑘 = 1
+
+)
+
+. (1) We write 𝑝 𝑓 (𝑧 ) for the fused posterior produced by the frozen model before adaptation, and 𝑞 𝜙 (𝑧 ) ∈ Δ𝐾 −1 for the adapted fused posterior after updating the lightweight fusion module with parameters 𝜙 .Throughout the paper, 𝑢 [1] ≥ · · · ≥ 𝑢 [𝐾 ] denotes the entries of a vector 𝑢 sorted in nonincreasing order, and the Shannon entropy of a posterior 𝑢 is 
+
+𝐻 (𝑢 ) = −
+
+> 𝐾
+
+∑︁ 
+
+> 𝑘 =1
+
+𝑢 𝑘 log 𝑢 𝑘 . (2) Our main-text formulation uses a gated convex fusion rule 
+
+𝑞 𝜙 (𝑧 ) = 𝛼 𝜙 (𝑧 )𝑝 𝑣 (𝑧 ) +  1 − 𝛼 𝜙 (𝑧 )𝑝 𝑡 (𝑧 ), (3) where 𝛼 𝜙 (𝑧 ) ∈ [ 0, 1] is the output of a lightweight gate. In imple-mentation, the same rule is instantiated at the logit level followed by softmax. For simplicity, the main text is written with a scalar gate; an adapter implementation can be interpreted as inducing an effective gate after local linearization. We update only the lightweight gate or adapter while keeping both modality encoders frozen. The adaptation objective is 
+
+L( 𝜙 ) = Lent (𝜙 ) + 𝜆 𝑔 Lgate (𝜙 ) + 𝜆 𝑑 Ldiv (𝜙 ), (4) where Lent sharpens the fused posterior, Lgate aligns the learned gate with a reliability-aware prior, and Ldiv prevents batch collapse. The practical gate prior is defined in Sec. 3.3, and the three loss terms are given in Sec. 3.4. 
+
+## 3.2 Idealized Multimodal Posterior Mixing 
+
+To analyze modality-specific shift, we introduce latent clean pos-teriors 𝜋 𝑣 (𝑧 ) and 𝜋 𝑡 (𝑧 ) for the two modalities, and a clean fused posterior 𝜋 𝑓 (𝑧 ) ∈ Δ𝐾 −1. We model each shifted modality posterior as a mixed version of its clean counterpart. 
+
+Definition 3.1 (Doubly stochastic mixing) . A matrix 𝐷 ∈ R𝐾 ×𝐾 is doubly stochastic if 𝐷 𝑖 𝑗 ≥ 0 for all 𝑖, 𝑗 , each row sums to one, and each column sums to one. For a sample 𝑧 , the shifted posterior of modality 𝑚 ∈ { 𝑣, 𝑡 } follows 
+
+𝑝 𝑚 (𝑧 ) = 𝐷 𝑚 (𝑧 )𝜋 𝑚 (𝑧 ) + 𝑟 𝑚 (𝑧 ), (5) where 𝐷 𝑚 (𝑧 ) is doubly stochastic and 𝑟 𝑚 (𝑧 ) is a residual term that measures deviation from ideal mixing. When 𝑟 𝑚 (𝑧 ) = 0, the operator 𝐷 𝑚 (𝑧 ) redistributes probability mass without changing the total mass globally, which makes it a natural model for posterior flattening. Modality asymmetry arises because the two modalities may undergo different mixing operators, 
+
+𝐷 𝑣 (𝑧 ) and 𝐷 𝑡 (𝑧 ).Lixian Chen, Mingxuan Huang, Yanhui Chen, Junyi Lin, and Yang Shi 
+
+For analysis, we define the clean fusion target 
+
+𝜋 𝑓 (𝑧 ) = 𝛽 ★ (𝑧 )𝜋 𝑣 (𝑧 ) +  1 − 𝛽 ★ (𝑧 )𝜋 𝑡 (𝑧 ), (6) where 𝛽 ★ (𝑧 ) ∈ [ 0, 1] denotes the desired clean modality weight. 
+
+Proposition 3.2 (Entropy increase under ideal mixing) . Let 𝑢 ∈
+
+Δ𝐾 −1 and let 𝐷 be a doubly stochastic matrix. Then 𝑢 ⪰ 𝐷𝑢 , where 
+
+⪰ denotes majorization. Consequently, 𝐻 (𝐷𝑢 ) ≥ 𝐻 (𝑢 ).Proposition 3.2 gives the basic direction of degradation: under ideal mixing, a shifted posterior becomes more mixed than its clean counterpart. This idealized view is used only for analysis. In de-ployment, we do not estimate the sample-wise mixing operator online; instead, we build a practical reliability signal from running modality anchors. 
+
+## 3.3 Reliability-Aware Gate Prior 
+
+The ideal analysis object is a modality-wise residual that measures how well the current posterior can be explained as a doubly sto-chastic mixing of a clean anchor. Let ¯𝜋 𝑚 denote a clean modality anchor for modality 𝑚 ∈ { 𝑣, 𝑡 }. We define 
+
+𝜌 ★ 
+
+> 𝑚
+
+(𝑧 ) = min  
+
+> 𝐷 ∈ D 𝐾
+
+∥𝑝 𝑚 (𝑧 ) − 𝐷 ¯𝜋 𝑚 ∥1 , (7) where D𝐾 is the set of all 𝐾 × 𝐾 doubly stochastic matrices. A small value of 𝜌 ★ 
+
+> 𝑚
+
+(𝑧 ) means that the current posterior remains well explained by a mixed clean anchor. At test time, however, neither the clean anchor nor the opti-mal mixing operator is available. We therefore maintain a running anchor posterior ¯𝑝 𝑚 for each modality and use a computable proxy 
+
+˜𝜌 𝑚 (𝑧 ) = sort ↓
+
+ 𝑝 𝑚 (𝑧 ) − sort ↓
+
+  ¯𝑝 𝑚  
+
+> 1
+
+. (8) The proxy is small when the current modality posterior remains close to its anchor and large when it drifts away. We compare sorted posterior profiles because majorization is characterized by ordered partial sums, so the proxy preserves the geometry most relevant to the analysis. The running anchor is updated from recent high-confidence samples within the current batch. Let 
+
+Bconf  
+
+> 𝑚
+
+= {𝑧 ∈ B : max  
+
+> 𝑘
+
+𝑝 𝑚 𝑘 (𝑧 ) ≥ 𝜂 }, (9) 
+
+ˆ𝑝 𝑚 = 1
+
+|B conf  
+
+> 𝑚
+
+|∑︁ 𝑧 ∈ B conf 
+
+> 𝑚
+
+𝑝 𝑚 (𝑧 ), (10) where 𝜂 is the anchor confidence threshold. The anchor is then updated by exponential moving average, 
+
+¯𝑝 𝑚 ← 𝜇 ¯𝑝 𝑚 + ( 1 − 𝜇 ) ˆ𝑝 𝑚 , (11) with 𝜇 ∈ [ 0, 1) denoting the EMA momentum. Besides anchor consistency, we also use cross-modality disagree-ment as an auxiliary signal. We define the conflict score 
+
+𝜅 (𝑧 ) = JS  𝑝 𝑣 (𝑧 ), 𝑝 𝑡 (𝑧 ) + 𝜆 𝑟 𝑅  𝑝 𝑣 (𝑧 ), 𝑝 𝑡 (𝑧 ), (12) where JS (· , ·) is the Jensen–Shannon divergence [ 8] and 𝑅 (· , ·) is a normalized ranking disagreement score. We convert the proxy reliabilities into gate-prior logits: 
+
+ℓ𝑣 (𝑧 ) = −𝜏 ˜𝜌 𝑣 (𝑧 ), (13) 
+
+ℓ𝑡 (𝑧 ) = −𝜏 ˜𝜌 𝑡 (𝑧 ), (14) where 𝜏 > 0 is a temperature parameter. To let conflict strengthen the preference toward the more anchor-consistent modality, we define 
+
+𝑑 (𝑧 ) = sign   ˜𝜌 𝑣 (𝑧 ) − ˜𝜌 𝑡 (𝑧 ), (15) and update the logits as 
+
+ℓ𝑣 (𝑧 ) ← ℓ𝑣 (𝑧 ) − 𝜆 𝑐 𝜅 (𝑧 ) 𝑑 (𝑧 ), (16) 
+
+ℓ𝑡 (𝑧 ) ← ℓ𝑡 (𝑧 ) + 𝜆 𝑐 𝜅 (𝑧 ) 𝑑 (𝑧 ), (17) where 𝜆 𝑐 ≥ 0 controls the strength of the conflict correction. The resulting modality prior is 
+
+[𝑎 𝑣 (𝑧 ), 𝑎 𝑡 (𝑧 )] = softmax  ℓ𝑣 (𝑧 ), ℓ 𝑡 (𝑧 ). (18) This asymmetric correction is necessary: adding the same conflict offset to both logits would cancel under the softmax and would not affect the gate prior. 
+
+## 3.4 Majorization-Aware Adaptation Objective 
+
+The three terms in Eq. (4) are 
+
+Lent (𝜙 ) = 1
+
+|B| ∑︁ 𝑧 ∈ B 
+
+𝐻  𝑞 𝜙 (𝑧 ), (19) 
+
+Lgate (𝜙 ) = 1
+
+|B| ∑︁ 𝑧 ∈ B 
+
+KL 
+
+
+
+[𝛼 𝜙 (𝑧 ), 1 − 𝛼 𝜙 (𝑧 )] [𝑎 𝑣 (𝑧 ), 𝑎 𝑡 (𝑧 )] 
+
+
+
+, (20) 
+
+Ldiv (𝜙 ) = −𝐻 1
+
+|B| ∑︁ 𝑧 ∈ B 
+
+𝑞 𝜙 (𝑧 )
+
+!
+
+. (21) The entropy term sharpens the fused posterior. The gate term regularizes the learned fusion weight toward the reliability-aware prior in Eq. (18) . The diversity term discourages the batch mar-ginal from collapsing to a single class. Only the lightweight gate or adapter is updated throughout test-time adaptation. 
+
+## 3.5 Theoretical Analysis in the Main Text 
+
+We now state the main results that connect the idealized mixing model in Sec. 3.2 to the practical gate prior in Sec. 3.3. Proofs are deferred to the appendix. 
+
+Definition 3.3 (Top-one margin) . For a clean fused posterior 𝜋 𝑓 (𝑧 ),let 𝑐 ★ (𝑧 ) = argmax 𝑘 𝜋 𝑓 𝑘 (𝑧 ). The clean top-one margin is 
+
+𝛾 (𝑧 ) = 𝜋 𝑓 𝑐 ★ (𝑧 ) (𝑧 ) − max    
+
+> 𝑗 ≠𝑐 ★(𝑧 )
+
+𝜋 𝑓 𝑗 (𝑧 ). (22) The sample is margin-separable if 𝛾 (𝑧 ) > 0.
+
+Theorem 1 (Sufficient condition for beneficial demixing). 
+
+Fix a sample 𝑧 with margin-separable clean fused posterior 𝜋 𝑓 (𝑧 ). As-sume that the adapted fused posterior 𝑞 𝜙 (𝑧 ) satisfies three conditions: (i) 𝑞 𝜙 (𝑧 ) ⪰ 𝑝 𝑓 (𝑧 ); (ii) the order of the largest two coordinates of 𝑞 𝜙 (𝑧 )
+
+agrees with that of 𝜋 𝑓 (𝑧 ); and (iii) ∥𝑞 𝜙 (𝑧 ) − 𝜋 𝑓 (𝑧 )∥ ∞ < 𝛾 (𝑧 )/ 2. Then 
+
+𝐻  𝑞 𝜙 (𝑧 ) ≤ 𝐻  𝑝 𝑓 (𝑧 ) (23) 
+
+and 
+
+argmax 
+
+> 𝑘
+
+𝑞 𝜙,𝑘 (𝑧 ) = 𝑐 ★ (𝑧 ). (24) Majorization-Guided Test-Time Adaptation for Vision-Language Models under Modality-Specific Shift frozen 
+
+# backbone reliability-guided gate adapted 
+
+# posterior 
+
+entropy 
+
+diversity 
+
+# Inputs 
+
+# shifted text 
+
+# prompt 
+
+lightweight 
+
+gate 
+
+reliability 
+
+conflict 
+
+anchor 
+
+update 
+
+only 
+
+vision 
+
+encoder 
+
+text 
+
+encoder 
+
+> t
+
+# p
+
+> v
+
+# p
+
+## 
+
+gate 
+
+regularization 
+
+Figure 2: Overview of MG-MTTA. A frozen vision-language backbone produces modality-level predictions from shifted visual and textual inputs. Running anchors and cross-modality conflict define a reliability-aware prior for a lightweight gate or adapter. The fused prediction is obtained by logit-level convex fusion followed by softmax, and only the lightweight module is updated with entropy, gate regularization, and diversity objectives. 
+
+Theorem 1 separates two requirements that entropy alone does not capture. The majorization condition gives a valid demixing direction, while the ranking and margin conditions prevent an in-correct class from overtaking the clean top class. Entropy reduction is beneficial only when both requirements hold. 
+
+Corollary 3.4 (Correctness transfer from the clean fused classifier) .
+
+Under the assumptions of Theorem 1, if the clean fused classifier predicts the true label of sample 𝑧 , then the adapted fused classifier also predicts the true label of sample 𝑧 .The next result identifies a concrete failure regime caused by biased modality weighting. 
+
+Proposition 3.5 (Failure threshold under modality dominance) .
+
+Fix a sample 𝑧 and let 𝑐 denote the correct class. Let 𝑗 be any competing class. Define the modality-specific margins 
+
+Δ𝑣 𝑐,𝑗 (𝑧 ) = 𝑝 𝑣 𝑐 (𝑧 ) − 𝑝 𝑣 𝑗 (𝑧 ), Δ𝑡 𝑐,𝑗 (𝑧 ) = 𝑝 𝑡 𝑐 (𝑧 ) − 𝑝 𝑡 𝑗 (𝑧 ). (25) Assume that Δ𝑣 𝑐,𝑗 (𝑧 ) < 0 < Δ𝑡 𝑐,𝑗 (𝑧 ). For the convex fusion rule in Eq. (3), if 
+
+𝛼 𝜙 (𝑧 ) > Δ𝑡 𝑐,𝑗 (𝑧 )
+
+Δ𝑡 𝑐,𝑗 (𝑧 ) − Δ𝑣 𝑐,𝑗 (𝑧 ) , (26) then 𝑞 𝜙,𝑐 (𝑧 ) < 𝑞 𝜙,𝑗 (𝑧 ). In other words, if the gate places too much weight on the visually biased modality, the fused decision must flip to the wrong class. Proposition 3.5 explains why entropy minimization alone is in-sufficient in the multimodal setting. When one modality favors the correct class and the other favors a competing class, crossing the threshold in Eq. (26) guarantees a ranking reversal in the fused posterior. 
+
+## 4 Experiments 4.1 Experimental Setup 
+
+We evaluate MG-MTTA under three test regimes: visual shift, semantics-preserving textual shift, and joint shift. The visual setting serves to anchor the method to standard corruption benchmarks, while the textual and joint settings more directly test the multimodal fusion failures that motivate this paper. We further use diagnostic analy-ses and failure cases to examine whether the observed behavior is consistent with the proposed majorization-based view. 
+
+4.1.1 Benchmarks and shift construction. All main-text experiments are instantiated under a shared ImageNet label space, which allows visual, textual, and joint shift to be compared within a single proto-col. Visual robustness is evaluated on CIFAR-100C and ImageNet-C from the common-corruptions benchmark family [ 4]. Unless other-wise stated, we report mean top-1 accuracy over the 15 corruption types at severity level 5. This part mainly serves as a benchmark-anchoring comparison to existing CLIP test-time adaptation results. The textual setting is constructed differently. We keep the image fixed and perturb only the prompt bank, while preserving class iden-tity. The L1–L4 ladder is not built from arbitrary prompt rewrites. Instead, it is motivated by the input-processing mechanism of CLIP-style text encoders, whose representations are sensitive to token boundaries, character-level perturbations, and local prompt con-text. We therefore apply label-preserving token- and context-level perturbations that progressively destabilize the text representation without changing the underlying class semantics. The resulting perturbations include prompt-template drift, lexical substitution, and removal of non-essential modifiers, and are averaged into a unified textual-shift score over the same ImageNet label space. Joint shift combines image corruption with the semantics-preserving textual perturbations above. By contrast, prompt perturbations Lixian Chen, Mingxuan Huang, Yanhui Chen, Junyi Lin, and Yang Shi 
+
+that conflict with class semantics—such as negation, incorrect at-tributes, or class-inconsistent descriptions—are excluded from the main benchmark and reserved for failure analysis, because they probe the modality-dominance mechanism in Sec. 3.5 more directly than the main robustness protocol does. This separation keeps the visual benchmark comparable to prior work, while using the textual and joint settings to test whether adaptation can recover reliable multimodal fusion under asymmetric shift. Full perturbation rules and additional protocol details are deferred to Appendix F. 
+
+4.1.2 Compared methods. Our comparisons are organized around two baseline groups. The main comparisons in the textual and joint settings use matched internal baselines, so that backbone, prompt bank, update scope, and adaptation budget remain fixed across methods. In this group, Source-only evaluates the frozen vision-language backbone without test-time adaptation. Entropy-only up-dates the same parameter subset as MG-MTTA but optimizes only fused-posterior entropy. Entropy + Diversity adds the diversity reg-ularizer on top of fused entropy minimization. These baselines are compared against MG-MTTA , which uses fused entropy minimiza-tion together with proxy-guided gate regularization and diversity regularization. We also report representative external CLIP test-time adaptation baselines in the visual-shift setting, including TENT-Visual [ 22 ], SAR [ 12 ], TPT [ 19 ], VTE [ 2 ], and BATCLIP [ 9]. These methods were primarily introduced for visual corruption or prompt adaptation benchmarks, so we use them only in the visual comparison. For textual and joint shift, we restrict the comparison to the matched in-ternal baselines in order to keep the multimodal evaluation protocol controlled and directly comparable. 
+
+4.1.3 Implementation and fairness protocol. All main-text exper-iments use CLIP ViT-B/16 as the primary vision-language back-bone [ 16 ]. Unless noted otherwise, both modality encoders are frozen. Adaptation updates are restricted to a lightweight gate or adapter module and, when enabled, normalization-related pa-rameters selected by name pattern. In implementation, fusion is performed at the logit level: 
+
+𝑧 fuse (𝑧 ) = 𝛼 𝜙 (𝑧 )𝑧 𝑣 (𝑧 ) +  1 − 𝛼 𝜙 (𝑧 )𝑧 𝑡 (𝑧 ), (27) followed by 
+
+𝑞 𝜙 (𝑧 ) = softmax  𝑧 fuse (𝑧 ). (28) All main-text results are obtained under episodic test-time adap-tation, meaning that the model state is reset for each target-shift condition. Across methods, we keep the class vocabulary, clean and shifted prompt banks, and target ordering fixed. Unless a baseline explicitly requires otherwise, we also use the same optimizer family and the same adaptation-step budget. Hyperparameter search de-tails and prompt examples are provided in Appendix F–H. Results on ViT-B/32 are reported separately in Appendix L. 
+
+## 4.2 Main Results 
+
+4.2.1 Visual-shift anchoring results. We begin with the visual-only benchmark to position MG-MTTA relative to standard CLIP test-time adaptation results. This setting is included primarily as a benchmark-anchoring comparison rather than as the main test of multimodal fusion. 
+
+Table 1: Visual-shift anchoring results. Results are mean top-1 accuracy (%) over the 15 corruption types on CIFAR-100C and ImageNet-C at severity level 5. Detailed corruption-wise results are provided in Appendix F.1 and Table 6.                     
+
+> Method CIFAR-100C ImageNet-C Source-only 35.80 25.45 TENT-Visual 37.96 25.64 SAR 41.42 29.70 TPT 36.20 24.90 VTE 35.00 25.60 BATCLIP 42.21 30.70
+> Entropy-only 37.96 26.39 Entropy + Diversity 38.10 26.29 MG-MTTA 38.11 26.32
+
+Table 1 reports the visual-shift results on CIFAR-100C and ImageNet-C. To keep the main text compact, we report only the mean top-1 accuracy over the 15 corruption types at severity level 5. Detailed corruption-wise results are provided in Appendix F.1 in Table 6. On visual-only corruption, MG-MTTA remains aligned with the matched entropy-based internal baselines under the same light-weight adaptation protocol. This result anchors the method on standard CLIP corruption benchmarks. The stronger separation appears in the textual and joint regimes, where modality-specific perturbations directly affect fusion and reliability-aware adaptation becomes central. 
+
+4.2.2 Main multimodal results. We next turn to the central setting of this paper: multimodal test-time adaptation under semantics-preserving textual shift and joint shift, where modality-specific perturbations affect fusion more directly than in the visual-only benchmark. Here we focus on the matched internal baselines so that all compared methods share the same backbone, prompt bank, update scope, and adaptation budget. Table 2 reports the main multimodal results under textual shift and joint shift. The textual-shift column measures robustness to prompt-bank drift while holding the image fixed, whereas the joint-shift column evaluates the full modality-specific shift scenario stud-ied in this paper. Of the two, the joint-shift regime is the more demanding one, since it tests whether adaptation can recover reli-able fusion when both modalities are perturbed simultaneously. Under semantics-preserving textual shift, Entropy-only and En-tropy + Diversity both fall below Source-only. Lower fused entropy therefore does not by itself recover the correct multimodal decision when the text branch is perturbed. MG-MTTA instead improves over Source-only by +8.54 points. Joint shift gives the harder multimodal test. When image corrup-tion and textual perturbation are applied together, Entropy-only gives no gain over Source-only, and Entropy + Diversity improves by only +0.08 points. MG-MTTA improves by +4.59 points, indicat-ing that reliability-aware adaptation is most useful when fusion is strained by asymmetric perturbations. These results support the main empirical claim: lower fused en-tropy alone is not a sufficient criterion for multimodal test-time Majorization-Guided Test-Time Adaptation for Vision-Language Models under Modality-Specific Shift 
+
+Table 2: Main multimodal results under semantics-preserving textual shift and joint shift. Results are top-1 accuracy (%) on the unified ImageNet-based benchmark. Textual and Joint are averaged over token-level textual stress levels L1–L4; Joint additionally uses visual corruption at severity level 5. Δ denotes the absolute gain over Source-only. 
+
+Method Textual Shift Joint Shift Acc. ↑ Δ Acc. ↑ Δ
+
+Matched baselines 
+
+Source-only 57.97 0.00 21.68 0.00 Entropy-only 55.40 -2.57 21.68 0.00 Entropy + Diversity 55.38 -2.59 21.76 +0.08 
+
+Proposed method MG-MTTA (Ours) 66.51 +8.54 26.27 +4.59 0.01 0.02 0.03 0.04          
+
+> Entropy drop ΔH
+> 0
+> 10
+> 20
+> Accuracy gain (pp)
+> L4
+> L4
+> L4
+> L4
+> (a)
+> 0.24 0.26 0.28 0.30 0.32 0.34
+> Majorization ratio
+> L4
+> L4
+> L4
+> L4
+> (b)
+> Entropy-only MG-MTTA Textual Joint
+
+Figure 3: Mechanism diagnostics across textual stress levels. Each trajectory connects L1 →L4 for one method/setting pair. (a) Entropy drop versus accuracy gain. Entropy-only can re-duce entropy with little or negative gain, whereas MG-MTTA more often couples entropy reduction with improved accu-racy. (b) Majorization ratio versus accuracy gain. The gains of MG-MTTA are better aligned with theory-guided de-mixing than with entropy reduction alone. 
+
+adaptation. The strongest gains appear in the textual and joint regimes, where asymmetric perturbations directly affect fusion. Level-wise results in Appendix F.2 and Table 7 show the same pat-tern across L1–L4 rather than at a single stress level. Under the L5 strongest probe, MG-MTTA improves over Source-only from 25.48 to 65.88 in the textual setting and from 9.66 to 26.13 in the joint set-ting; full diagnostics are reported in Appendix J. The textual/joint advantage also transfers to CLIP ViT-B/32, where MG-MTTA im-proves from 52.26 to 65.61 under textual shift and from 37.61 to 46.16 under joint shift; see Appendix L. 
+
+## 4.3 Mechanism Analysis 
+
+The analysis in Sec. 3.5 separates entropy reduction from reliable recovery: sharpening is useful only when the fused posterior moves along a valid de-mixing direction and preserves the decisive ranking. We therefore examine the main results through entropy–accuracy trajectories, majorization diagnostics, reliability signals, and col-lapse statistics. L1 L2 L3 L4        
+
+> 0.00
+> 0.05
+> 0.10
+> 0.15
+> 0.20
+> Reliability gap  ̃  ρv −̃  ρt positive = text more anchor-consistent (a)
+> L1 L2 L3 L4
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> Conflict  κ (mean)
+> (b)
+> 0.0 0.5
+> visual
+> textual
+> (L1–L4 avg)
+> joint
+> (L1–L4 avg)
+> (c)
+> 0.261
+> 0.315
+> 0.665
+> 0.232
+> 0.263
+> 0.315
+> Textual stress Joint stress Accuracy Majorization ratio
+
+Figure 4: Reliability and conflict diagnostics under token-level textual stress. In (a) and (b), line plots trace stress levels L1 →L4 for the textual and joint settings. (a) Reliability gap 
+
+˜𝜌 𝑣 − ˜𝜌 𝑡 , where larger positive values indicate that the text branch is more anchor-consistent. (b) Mean cross-modality conflict. (c) Summary of MG-MTTA accuracy and majoriza-tion ratio under visual severity 5 and L1–L4 averages for the textual and joint settings. Table 3: Theory-aligned diagnostic metrics for MG-MTTA on the unified benchmark. Visual uses severity 5. Textual and joint are averaged over token-level textual stress levels L1–L4; the joint setting uses visual corruption at severity 5. Shift type Ranking consistency Dist. to perm. Collapse 
+
+𝑟 clean ≽shift 𝑟 adapt ≽shift 
+
+Visual 1.000 0.315 0.0137 0.2093 Textual 1.000 0.232 0.0021 0.0000 Joint 1.000 0.315 0.0134 0.1996 Table 3 reports four diagnostics. The ranking-consistency ratios measure how often the clean posterior majorizes the shifted pos-terior and how often the adapted posterior majorizes the shifted posterior. Dist. to perm. measures proximity to permutation vertices of the simplex, separating de-mixing from brittle sharpening toward nearly one-hot predictions. Collapse measures batch-level concen-tration and flags degenerate class concentration during entropy minimization. 
+
+Is entropy reduction sufficient? Fig. 3(a) compares entropy drop with accuracy gain across the L1–L4 textual ladder. Entropy-only can reduce entropy while giving little or negative accuracy gain. MG-MTTA shows a more stable relation between entropy decrease and accuracy improvement in both textual and joint settings. This agrees with the analysis: entropy reduction is helpful only when the update direction is constrained. 
+
+Does improvement align with de-mixing? Fig. 3(b) relates accu-racy gain to the majorization ratio. The gains of MG-MTTA are better aligned with de-mixing diagnostics than with entropy reduc-tion alone. We use this relation as mechanism-level evidence, not as a standalone predictor of accuracy across all methods and settings. 
+
+Do reliability signals track modality stress? Fig. 4 shows that both the reliability gap and cross-modality conflict increase as textual stress becomes stronger. The effect is more pronounced in the joint setting, where the visual branch is also corrupted. Since positive Lixian Chen, Mingxuan Huang, Yanhui Chen, Junyi Lin, and Yang Shi Pred. 
+
+> rifle
+> ->
+> crossword
+> conf.
+> 0.045
+> ->
+> 1.000
+> Ent
+> 5.873
+> ->
+> 0.000
+
+Source MG-MTTA 
+
+Case A: Success recovery 
+
+> GT crossword.
+> Clean
+> a photo of a
+> crossword
+> ->
+> Shifted
+> a ph0to of a
+> cors sword
+
+Case C: High-conflict recovery 
+
+> GT chainsaw.
+> Clean
+> a photo of a
+> chainsaw
+> ->
+> Shifted
+> a photo of a
+> cahinsaw
+
+Case B: Lower entropy, still wrong       
+
+> 00.5 1
+> GT go-kart.
+> Clean
+> a photo of a
+> go-kart
+> ->
+> Shifted
+> a ph0to of a
+> g-okart
+> Pred.
+> power drill
+> ->
+> chainsaw
+> conf.
+> 0.217
+> ->
+> 0.995
+> Ent
+> 4.746
+> ->
+> 0.041
+> Pred.
+> sombrero
+> ->
+> bobsle igh
+> conf.
+> 0.603
+> ->
+> 0.278
+> Ent
+> 2.959
+> ->
+> 2.573
+> 00.5 1
+> jigsaw puzzle
+> rifle
+> crossword
+> bobsleigh
+> sombrero
+> go-kart
+> paintbrush
+> power drill
+> chainsaw
+> 00.5 1
+
+Figure 5: Case-wise analysis under the L5 strongest probe. The examples show recovery under severe textual stress, a lower-entropy but still incorrect prediction, and recovery under high cross-modality conflict. They distinguish genuine recovery from confidence amplification in the modality-dominance regime described in Sec. 3.5. 
+
+reliability gap values indicate that the text branch remains more anchor-consistent, the gate prior changes in the direction suggested by modality imbalance rather than applying a fixed heuristic cor-rection. 
+
+Why is joint shift harder than textual shift? The textual and joint settings differ in their diagnostic profile. Under textual shift, Dist. to perm. is very small and Collapse is zero, suggesting that the main difficulty is recovering a stable text-side signal. Under joint shift, Collapse is much larger even though the ranking-consistency ratio is not lower than in the textual case. Joint shift therefore introduces an additional fusion-fragility component: the posterior is not only degraded, but also more prone to brittle concentration when both streams are perturbed. 
+
+## 4.4 Ablation and Failure Analysis 
+
+L1–L4 form the calibrated textual benchmark used in the main results. L5 is kept separate as the strongest text-side stress probe: it applies more severe perturbation and is used for objective ablation and case-level failure analysis. We do not merge L5 into the main benchmark average. Figure 5 shows three representative L5 cases: recovery from se-vere textual stress, a lower-entropy but still incorrect prediction, and recovery under high cross-modality conflict. These cases sepa-rate two outcomes that entropy alone cannot distinguish. In some samples, sharpening follows recovery; in others, it amplifies confi-dence in a wrong fused decision because the gate remains biased toward an unreliable modality. Table 4 gives a compact stress-test ablation. Entropy-only falls below Source-only in both textual L5 and joint L5, and adding batch diversity alone does not recover the drop. MG-MTTA instead improves by +40.40 points under textual L5 and by +16.47 points under joint L5. The result isolates the main role of reliability-aware adaptation: under severe modality-specific shift, the fused posterior should not merely be sharpened, but sharpened along a reliability-consistent direction. The complete L5 diagnostics, including majorization ratio and collapse statistics, are reported in Appendix J. Source-only sever-ity calibration for the textual ladder is provided in Table 10, and additional failure cases are deferred to the appendix. 
+
+Table 4: Objective ablation under the L5 strongest probe. Re-sults are global top-1 accuracy (%). Δ denotes the absolute gain over Source-only within each setting. Full diagnostic metrics, including majorization ratio and collapse statistics, are reported in Appendix J. 
+
+Method Textual L5 Joint L5 Acc. ↑ Δ Acc. ↑ Δ
+
+Source-only 25.48 0.00 9.66 0.00 Entropy-only 22.11 -3.37 9.40 -0.26 Entropy + Diversity 22.14 -3.34 9.39 -0.27 
+
+MG-MTTA (Ours) 65.88 +40.40 26.13 +16.47 
+
+## 5 Limitations 
+
+MG-MTTA is designed for modality-specific shift, especially textual and joint regimes where asymmetric fusion errors dominate. On visual-only corruption benchmarks, it is competitive with matched entropy-based variants but not the strongest external CLIP adapta-tion baseline. The method relies on running anchors and a calibrated semantics-preserving textual stress protocol. Runtime and memory overhead are not separately quantified in this version, so efficiency claims are limited to the small trainable parameter subset. 
+
+## 6 Conclusion 
+
+This paper studies test-time adaptation for vision-language models under modality-specific shift. We formulate multimodal adapta-tion as a de-mixing problem on the fused posterior and show that entropy reduction alone is insufficient: it is useful only when the adapted posterior follows a valid majorization-consistent direction while preserving the decisive ranking. MG-MTTA implements this view by keeping the CLIP ViT-B/16 backbone frozen and adapting a lightweight gate or adapter with fused-posterior entropy mini-mization, reliability-aware gate regularization, and batch diversity. The diagnostics and failure cases are consistent with the proposed explanation: entropy-only adaptation may sharpen the wrong fused decision, whereas reliability-aware adaptation more often aligns Majorization-Guided Test-Time Adaptation for Vision-Language Models under Modality-Specific Shift 
+
+entropy reduction with recovery. The main empirical advantage ap-pears in textual and joint regimes, where asymmetric perturbations make multimodal fusion the core test-time adaptation challenge. 
+
+## References 
+
+[1] Jean-Baptiste Alayrac, Jeff Donahue, Pauline Luc, Antoine Miech, Iain Barr, Yana Hasson, Karel Lenc, Arthur Mensch, Katie Millican, Malcolm Reynolds, Roman Ring, Eliza Rutherford, Serkan Cabi, Tengda Han, Zhitao Gong, Sina Samangooei, Marianne Monteiro, Jacob Menick, Sebastian Borgeaud, Andrew Brock, Aida Nematzadeh, Sahand Sharifzadeh, Mikolaj Binkowski, Ricardo Barreira, Oriol Vinyals, Andrew Zisserman, and Karen Simonyan. 2022. Flamingo: a Visual Language Model for Few-Shot Learning. doi:10.48550/ARXIV.2204.14198 [2] Mario Döbler, Robert A. Marsden, Tobias Raichle, and Bin Yang. 2024. A Lost Opportunity for Vision-Language Models: A Comparative Study of Online Test-Time Adaptation for Vision-Language Models. doi:10.48550/ARXIV.2405.14977 [3] Jindong Gu, Ahmad Beirami, Xuezhi Wang, Alex Beutel, Philip Torr, and Yao Qin. 2023. Towards Robust Prompts on Vision-Language Models. doi:10.48550/ ARXIV.2304.08479 [4] Dan Hendrycks and Thomas Dietterich. 2019. Benchmarking Neural Network Robustness to Common Corruptions and Perturbations. doi:10.48550/ARXIV. 1903.12261 [5] Adilbek Karmanov, Dayan Guan, Shijian Lu, Abdulmotaleb El Saddik, and Eric Xing. 2024. Efficient Test-Time Adaptation of Vision-Language Models. doi:10. 48550/ARXIV.2403.18293 [6] Songtao Li and Hao Tang. 2024. Multimodal Alignment and Fusion: A Survey. doi:10.48550/ARXIV.2411.17040 [7] Jian Liang, Ran He, and Tieniu Tan. 2024. A Comprehensive Survey on Test-Time Adaptation Under Distribution Shifts. International Journal of Computer Vision 
+
+133, 1 (July 2024), 31–64. doi:10.1007/s11263-024-02181-w [8] J. Lin. 1991. Divergence measures based on the Shannon entropy. IEEE Transac-tions on Information Theory 37, 1 (1991), 145–151. doi:10.1109/18.61115 [9] Sarthak Kumar Maharana, Baoming Zhang, Leonid Karlinsky, Rogerio Feris, and Yunhui Guo. 2024. BATCLIP : Bimodal Online Test-Time Adaptation for CLIP. doi:10.48550/ARXIV.2412.02837 [10] Albert W. Marshall, Ingram Olkin, and Barry C. Arnold. 2011. Inequalities: Theory of Majorization and Its Applications . Springer New York. doi:10.1007/978-0-387-68276-1 [11] Shuaicheng Niu, Jiaxiang Wu, Yifan Zhang, Yaofo Chen, Shijian Zheng, Peilin Zhao, and Mingkui Tan. 2022. Efficient Test-Time Model Adaptation without Forgetting. doi:10.48550/ARXIV.2204.02610 [12] Shuaicheng Niu, Jiaxiang Wu, Yifan Zhang, Zhiquan Wen, Yaofo Chen, Peilin Zhao, and Mingkui Tan. 2023. Towards Stable Test-Time Adaptation in Dynamic Wild World. doi:10.48550/ARXIV.2302.12400 [13] Changdae Oh, Mijoo Kim, Hyesu Lim, Junhyeok Park, Euiseog Jeong, Zhi-Qi Cheng, and Kyungwoo Song. 2024. Towards Calibrated Robust Fine-Tuning of Vision-Language Models. In NeurIPS 2023 Workshop on Distribution Shifts: New Frontiers with Foundation Models . https://openreview.net/forum?id=S9h0eLl71q [14] Changdae Oh, Hyesu Lim, Mijoo Kim, Dongyoon Han, Sangdoo Yun, Jaegul Choo, Alexander Hauptmann, Zhi-Qi Cheng, and Kyungwoo Song. 2023. Towards Calibrated Robust Fine-Tuning of Vision-Language Models. doi:10.48550/ARXIV. 2311.01723 [15] George Papandreou, Athanassios Katsamanis, Vassilis Pitsikalis, and Petros Maragos. 2009. Adaptive Multimodal Fusion by Uncertainty Compensation With Application to Audiovisual Speech Recognition. IEEE Transactions on Audio, Speech, and Language Processing 17, 3 (2009), 423–435. doi:10.1109/TASL.2008. 2011515 [16] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen Krueger, and Ilya Sutskever. 2021. Learning Transferable Visual Models From Natural Language Supervision. doi:10.48550/ARXIV.2103.00020 [17] Takahiro Sagawa. 2022. Entropy, Divergence, and Majorization in Classical and Quantum Thermodynamics . Springer Singapore. doi:10.1007/978-981-16-6644-5 [18] Manli Shu, Weili Nie, De-An Huang, Zhiding Yu, Tom Goldstein, Anima Anand-kumar, and Chaowei Xiao. 2022. Test-Time Prompt Tuning for Zero-Shot Gener-alization in Vision-Language Models. doi:10.48550/ARXIV.2209.07511 [19] Manli Shu, Weili Nie, De-An Huang, Zhiding Yu, Tom Goldstein, Anima Anand-kumar, and Chaowei Xiao. 2022. Test-Time Prompt Tuning for Zero-Shot Gener-alization in Vision-Language Models. doi:10.48550/ARXIV.2209.07511 [20] Sahil Sidheekh, Pranuthi Tenali, Saurabh Mathur, Erik Blasch, and Sriraam Natarajan. 2024. On the Robustness and Reliability of Late Multi-Modal Fusion using Probabilistic Circuits. In 2024 27th International Conference on Information Fusion (FUSION) . 1–8. doi:10.23919/FUSION59988.2024.10706372 [21] Jingchen Sun, Rohan Sharma, Vishnu Suresh Lokhande, and Changyou Chen. 2025. Cross-Modal Feature Alignment and MMD Improve Robustness of Prompt Tuning. In 2025 IEEE/CVF Winter Conference on Applications of Computer Vision (WACV) . 4714–4724. doi:10.1109/WACV61041.2025.00462 [22] Dequan Wang, Evan Shelhamer, Shaoteng Liu, Bruno Olshausen, and Trevor Darrell. 2020. Tent: Fully Test-time Adaptation by Entropy Minimization. doi:10. 48550/ARXIV.2006.10726 [23] Qin Wang, Olga Fink, Luc Van Gool, and Dengxin Dai. 2022. Continual Test-Time Domain Adaptation. doi:10.48550/ARXIV.2203.13591 [24] Zehao Xiao, Jiayi Shen, Mohammad Mahdi Derakhshani, Shengcai Liao, and Cees G. M. Snoek. 2024. Any-Shift Prompting for Generalization over Distributions. doi:10.48550/ARXIV.2402.10099 [25] Mouxing Yang, Yunfan Li, Changqing Zhang, Peng Hu, and Xi Peng. 2024. Test-time Adaptation against Multi-modal Reliability Bias. In The Twelfth Interna-tional Conference on Learning Representations . https://openreview.net/forum? id=TPZRq4FALB [26] Xiaohua Zhai, Basil Mustafa, Alexander Kolesnikov, and Lucas Beyer. 2023. Sigmoid Loss for Language Image Pre-Training. doi:10.48550/ARXIV.2303.15343 [27] Duoyi Zhang, Md Abul Bashar, and Richi Nayak. 2025. A novel multi-modal fusion method based on uncertainty-guided meta-learning. Pattern Recognition 
+
+158 (2025), 110993. doi:10.1016/j.patcog.2024.110993 [28] Qingyang Zhang, Haitao Wu, Changqing Zhang, Qinghua Hu, Huazhu Fu, Joey Tianyi Zhou, and Xi Peng. 2023. Provable Dynamic Fusion for Low-Quality Multimodal Data. doi:10.48550/ARXIV.2306.02050 [29] Yonggang Zhang and Xinmei Tian. 2025. Consistent prompt learning for vision-language models. Knowledge-Based Systems 310 (Feb. 2025), 112974. doi:10.1016/ j.knosys.2025.112974 Lixian Chen, Mingxuan Huang, Yanhui Chen, Junyi Lin, and Yang Shi 
+
+## A Additional Assumptions and Definitions 
+
+This appendix collects auxiliary definitions that are useful for proofs and implementation. The majorization relation 𝑢 ⪰ 𝑣 for 𝑢, 𝑣 ∈
+
+Δ𝐾 −1 means 
+
+> 𝑚
+
+∑︁ 
+
+> 𝑖 =1
+
+𝑢 [𝑖 ] ≥
+
+> 𝑚
+
+∑︁ 
+
+> 𝑖 =1
+
+𝑣 [𝑖 ] for all 𝑚 ∈ { 1, . . . , 𝐾 − 1}, (29) and equality holds automatically for 𝑚 = 𝐾 because both vectors lie on the simplex. The ranking disagreement score in Eq. (12) may be instantiated as the normalized Kendall distance between the rankings induced by 𝑝 𝑣 (𝑧 ) and 𝑝 𝑡 (𝑧 ). The ideal quantity in Eq. (7) is introduced for analysis only. The deployed implementation instead uses the anchor-based proxy ˜𝜌 𝑚 (𝑧 ) described in Sec. 3.3 and Appendix F. 
+
+## B Proof of Proposition 3.2 
+
+Let 𝑢 ∈ Δ𝐾 −1 and let 𝐷 be doubly stochastic. By the Hardy Little-wood Polya theorem, a vector 𝑣 satisfies 𝑢 ⪰ 𝑣 if and only if there exists a doubly stochastic matrix 𝐷 such that 𝑣 = 𝐷𝑢 . Therefore 
+
+𝑢 ⪰ 𝐷𝑢 . The Shannon entropy is Schur concave on the probabil-ity simplex. Hence 𝑢 ⪰ 𝐷𝑢 implies 𝐻 (𝐷𝑢 ) ≥ 𝐻 (𝑢 ). This proves Proposition 3.2. 
+
+## C Proof of Theorem 1 
+
+The first claim follows immediately from Condition 1 and the Schur concavity of Shannon entropy. Since 𝑞 𝜙 (𝑧 ) ⪰ 𝑝 𝑓 (𝑧 ), we obtain 
+
+𝐻  𝑞 𝜙 (𝑧 ) ≤ 𝐻  𝑝 𝑓 (𝑧 ). (30) It remains to prove the ranking statement. Let 𝑐 ★ = 𝑐 ★ (𝑧 ) =
+
+argmax 𝑘 𝜋 𝑓 𝑘 (𝑧 ). For any class 𝑗 ≠ 𝑐 ★,
+
+𝑞 𝜙,𝑐 ★ (𝑧 )− 𝑞 𝜙,𝑗 (𝑧 ) = 𝜋 𝑓 𝑐 ★ (𝑧 )− 𝜋 𝑓 𝑗 (𝑧 )+  𝑞 𝜙,𝑐 ★ (𝑧 )− 𝜋 𝑓 𝑐 ★ (𝑧 )− 𝑞 𝜙,𝑗 (𝑧 )− 𝜋 𝑓 𝑗 (𝑧 ),
+
+(31) 
+
+𝑞 𝜙,𝑐 ★ (𝑧 ) − 𝑞 𝜙,𝑗 (𝑧 ) ≥ 𝛾 (𝑧 ) − 2∥𝑞 𝜙 (𝑧 ) − 𝜋 𝑓 (𝑧 )∥ ∞, (32) 
+
+𝑞 𝜙,𝑐 ★ (𝑧 ) − 𝑞 𝜙,𝑗 (𝑧 ) > 0, (33) where the last inequality uses Condition 3. Therefore 𝑞 𝜙,𝑐 ★ (𝑧 ) >
+
+𝑞 𝜙,𝑗 (𝑧 ) for all 𝑗 ≠ 𝑐 ★, which implies argmax 𝑘 𝑞 𝜙,𝑘 (𝑧 ) = 𝑐 ★. Condi-tion 2 ensures that the decisive order of the largest coordinates is consistent with the clean fused posterior and rules out a tie induced by reordering near the top of the simplex. This completes the proof. 
+
+## D Proof of Corollary 3.4 
+
+If the clean fused classifier predicts the true label, then the true label is equal to 𝑐 ★ (𝑧 ) = argmax 𝑘 𝜋 𝑓 𝑘 (𝑧 ). By Theorem 1, the adapted fused classifier satisfies argmax 𝑘 𝑞 𝜙,𝑘 (𝑧 ) = 𝑐 ★ (𝑧 ). Hence it predicts the true label as well. 
+
+## E Proof of Proposition 3.5 
+
+For a fixed competing class 𝑗 , the fused margin between the correct class 𝑐 and class 𝑗 is 
+
+𝑞 𝜙,𝑐 (𝑧 )− 𝑞 𝜙,𝑗 (𝑧 ) = 𝛼 𝜙 (𝑧 )  𝑝 𝑣 𝑐 (𝑧 ) − 𝑝 𝑣 𝑗 (𝑧 ) +  1−𝛼 𝜙 (𝑧 )   𝑝 𝑡 𝑐 (𝑧 )− 𝑝 𝑡 𝑗 (𝑧 ),
+
+(34) 
+
+𝑞 𝜙,𝑐 (𝑧 ) − 𝑞 𝜙,𝑗 (𝑧 ) = 𝛼 𝜙 (𝑧 )Δ𝑣 𝑐,𝑗 (𝑧 ) +  1 − 𝛼 𝜙 (𝑧 )Δ𝑡 𝑐,𝑗 (𝑧 ). (35) 
+
+Table 5: Summary of the main evaluation settings.                 
+
+> Benchmark Shift Construction ImageNet Clean validation split CIFAR-100C Visual 15 corruptions ×5 severities ImageNet-C Visual 15 corruptions ×5 severities ImageNet prompt shift Textual benign prompt variation ImageNet-C + prompt shift Joint visual + benign prompt shift
+
+Under the assumption Δ𝑣 𝑐,𝑗 (𝑧 ) < 0 < Δ𝑡 𝑐,𝑗 (𝑧 ), the inequality 𝑞 𝜙,𝑐 (𝑧 )− 
+
+𝑞 𝜙,𝑗 (𝑧 ) < 0 is equivalent to 
+
+𝛼 𝜙 (𝑧 )Δ𝑣 𝑐,𝑗 (𝑧 ) +  1 − 𝛼 𝜙 (𝑧 )Δ𝑡 𝑐,𝑗 (𝑧 ) < 0. (36) Rearranging terms gives 
+
+𝛼 𝜙 (𝑧 ) > Δ𝑡 𝑐,𝑗 (𝑧 )
+
+Δ𝑡 𝑐,𝑗 (𝑧 ) − Δ𝑣 𝑐,𝑗 (𝑧 ) . (37) Therefore the fused posterior ranks class 𝑗 above the correct class 𝑐 
+
+whenever the gate crosses the stated threshold. This proves Propo-sition 3.5. 
+
+## F Implementation Details 
+
+Evaluation settings. Table 5 summarizes the evaluation settings used in the main paper. 
+
+Backbone and frozen components. We instantiate the main ex-periments with CLIP ViT-B/16 and keep both the visual encoder and the text encoder frozen throughout test-time adaptation un-less a compared baseline explicitly requires encoder updates. The adaptation update is restricted to a lightweight parameter subset, which may be instantiated as a scalar gate, a small fusion adapter, or normalization-related parameters in the fusion block. This design matches the formulation in the main text, where the adapted fused posterior is controlled by a lightweight parameter set while the backbone remains fixed. 
+
+Adaptation protocol. Unless otherwise stated, the main results follow an episodic test-time adaptation protocol. That is, the adapta-tion state is reset for each target-shift condition. Additional online adaptation results may be reported separately when the target stream is treated as a continuous deployment sequence. 
+
+Optimization. All adaptation methods use the same optimizer family and the same target-stream ordering. The learning rate, weight decay, and the number of update steps per batch are chosen from the ranges listed in Table 8. The source model, entropy-based baselines, and MG-MTTA share the same frozen backbone, class vocabulary, and prompt bank so that differences are attributable to the adaptation rule rather than to backbone or prompt changes. 
+
+Prompt bank sharing. For every dataset, all compared methods use the same clean prompt bank and the same shifted prompt bank. No method is allowed to use a task-specific or method-specific prompt set. This protocol ensures that prompt variation is treated as part of the target shift rather than as an extra source of tuning freedom. 
+
+Reliability proxies. The main experiments do not solve the inner minimization in Eq. (7) online. Instead, each modality maintains a running anchor posterior ¯𝑝 𝑚 from recent high-confidence samples, Majorization-Guided Test-Time Adaptation for Vision-Language Models under Modality-Specific Shift 
+
+Table 6: Main quantitative comparison under visual shift. Results are mean top-1 accuracy (%) over the 15 corruption types on CIFAR-100C and ImageNet-C, evaluated at severity level 5. Abbreviations are used for corruption types (e.g., Gaus. for Gaussian, Brit. for Brightness) to fit the page width. The best, second, and third results are highlighted with green , yellow , and blue backgrounds. Method Noise Blur Weather Digital Mean ↑                                                                                                                                                                                                                                                                                                              
+
+> Gaus. ↑Shot ↑Imp. ↑Def. ↑Glass ↑Mot. ↑Zoom ↑Snow ↑Frost ↑Fog ↑Brit. ↑Cont. ↑Elas. ↑Pix. ↑JPEG ↑
+> Part I: Evaluation on CIFAR-100C
+> Source-only 19.68 21.42 25.35 42.45 20.04 43.15 47.96 48.42 49.71 41.66 57.01 34.53 29.18 23.97 32.49 35.80 TENT-Visual 7.34 7.99 7.84 51.89 7.58 52.61 55.45 54.48 35.42 50.93 65.92 55.00 36.60 44.62 35.70 37.96 SAR 25.37 28.34 33.21 47.29 23.17 47.36 51.78 51.83 52.43 48.99 61.78 44.90 32.67 34.04 38.17 41.42 TPT 18.00 19.50 27.10 43.50 20.10 42.70 48.60 49.10 49.50 42.10 57.40 33.30 31.10 27.60 32.80 36.20 VTE 18.00 18.70 28.20 40.40 19.60 39.50 45.30 48.20 46.90 40.70 55.30 30.00 32.50 30.40 31.50 35.00 BATCLIP 25.00 28.00 33.91 50.10 26.27 48.66 54.87 52.44 51.54 48.49 63.44 45.46 34.97 32.68 37.32 42.21 Entropy-only 7.34 7.99 7.84 51.88 7.58 52.60 55.48 54.48 35.42 50.93 65.92 55.00 36.61 44.62 35.71 37.96 Entropy + Diversity 7.43 8.07 7.91 51.89 7.82 52.67 55.47 54.51 36.20 51.05 65.96 55.06 36.80 44.68 36.06 38.10
+> MG-MTTA (Ours) 7.43 8.07 7.91 51.89 7.82 52.68 55.47 54.51 36.21 51.05 65.96 55.06 36.81 44.68 36.06 38.11 Part II: Evaluation on ImageNet-C
+> Source-only 13.10 14.44 13.78 24.16 15.90 24.92 22.66 32.48 30.64 37.02 54.90 17.62 13.58 33.12 33.44 25.45 TENT-Visual 13.08 14.54 13.76 24.34 16.28 25.22 22.78 32.58 30.72 37.20 55.10 18.04 13.72 33.58 33.70 25.64 SAR 18.00 20.50 20.70 25.70 23.00 29.50 26.00 34.90 32.70 39.00 55.00 27.10 19.60 36.70 37.50 29.70 TPT 8.50 9.50 10.20 24.00 15.20 25.10 24.00 33.90 32.10 37.10 55.60 16.50 13.70 34.10 33.60 24.90 VTE 9.20 10.80 10.80 24.70 14.30 24.40 25.20 35.40 32.50 38.20 55.60 16.10 14.30 38.70 34.00 25.60 BATCLIP 19.30 21.40 19.60 26.60 21.90 30.90 29.00 36.50 32.00 41.00 56.70 26.10 23.70 37.70 38.30 30.70 Entropy-only 11.50 13.16 13.78 25.12 18.64 26.06 23.38 33.42 31.54 38.06 55.04 20.90 13.96 35.82 35.52 26.39 Entropy + Diversity 14.20 15.60 13.60 25.66 19.62 27.12 23.92 34.10 31.58 38.78 55.26 22.74 14.66 37.08 36.78 26.29
+> MG-MTTA (Ours) 14.20 15.60 13.60 24.20 17.20 24.60 22.40 34.40 29.40 38.60 59.20 17.60 15.00 34.40 34.40 26.32
+
+and MG-MTTA computes the practical reliability proxy 
+
+˜𝜌 𝑚 (𝑧 ) = sort ↓
+
+ 𝑝 𝑚 (𝑧 ) − sort ↓
+
+  ¯𝑝 𝑚  
+
+> 1
+
+. (38) This proxy is the implementation used throughout the main exper-iments, and it is the quantity that defines the gate prior in Eq. (18) .The ideal residual 𝜌 ★ 
+
+> 𝑚
+
+(𝑧 ) in Eq. (7) is retained only as an analysis ob-ject that motivates the modality-to-anchor structure of the practical method. We emphasize that the practical proxy is not introduced as a loose efficiency approximation to the ideal DS-fit quantity. Rather, it is a theory-guided practical instantiation: it preserves the modality-to-anchor reference, the sorted posterior geometry, and the relative reliability ordering required by the gate, while avoiding the cost and instability of solving a sample-wise doubly-stochastic optimization problem online. 
+
+## F.1 Visual-Shift Breakdown by Corruption Type 
+
+Table 6 provides the detailed visual-shift results corresponding to the main-text comparison in Table 1. While the main paper reports only the mean top-1 accuracy to keep the visual comparison compact, here we further break down the results by corruption type on CIFAR-100C and ImageNet-C at severity level 5. This appendix provides a complete corruption-wise view of the visual benchmark and does not change the role of the visual setting in the paper: the visual comparison serves as benchmark anchoring, whereas the main evidence for our core claim is the multimodal comparison under textual and joint shift in the main text. 
+
+## F.2 Level-wise Multimodal Results 
+
+Table 7 expands the main-text averages in Table 2 into level-wise results for textual and joint stress. This table checks that the gain of MG-MTTA is not concentrated on a single stress level. Rather, the method remains consistently stronger across the calibrated L1–L4 textual ladder and its joint counterpart. Table 7 shows that the main-text average gains are not driven by a single level. Under textual stress, Source-only and the entropy-based baselines degrade visibly from L1 to L4, whereas MG-MTTA remains stable around 66%. Under joint stress, MG-MTTA also remains consistently above the matched baselines across all four levels. These level-wise trends strengthen the interpretation of Table 2 as a robust multimodal result rather than a level-specific effect. 
+
+## G Hyperparameter Ranges and Selection Protocol 
+
+Table 8 summarizes the candidate values screened in pilot runs and the final values used in the reported ImageNet/ImageNet-C experiments. Unless otherwise stated, the same final configuration is used for both textual and joint stress settings. For methods that do not use gated multimodal fusion (e.g., Source-only and Entropy-only baselines), gate-related coefficients are inactive and set to 
+
+0.
+
+Selection protocol. We use a two-stage selection procedure. First, candidate ranges are screened in pilot runs under representative Lixian Chen, Mingxuan Huang, Yanhui Chen, Junyi Lin, and Yang Shi 
+
+Table 7: Level-wise results under textual and joint stress. Textual and Joint report level-wise top-1 accuracy (%) for L1–L4. Textual Avg. and Joint Avg. are arithmetic means over L1–L4, and Avg. is the mean of these two averages. The majorization columns report raw L1–L4 averages of the majorization ratio, rather than values normalized to Source-only. We do not report a unified L1–L4 conflict-error aggregate here, because conflict error is used only in the strongest-probe analysis.                                                                             
+
+> Method Textual Joint Avg. Maj.-T Maj.-J Coll.-T Coll.-J L1 L2 L3 L4 Avg. L1 L2 L3 L4 Avg. Source-only 65.24 62.75 58.72 45.17 57.97 24.53 23.12 21.73 17.33 21.68 39.82 1.000 1.000 0.000 0.000 Entropy-only 64.94 59.30 55.33 42.01 55.40 25.39 23.27 21.65 16.41 21.68 38.54 0.241 0.331 0.000 0.237 Entropy + Diversity 64.93 59.17 55.42 42.01 55.38 25.49 23.29 21.76 16.49 21.76 38.57 0.239 0.331 0.000 0.235 MG-MTTA 66.70 66.65 66.52 66.16 66.51 26.21 26.51 26.47 25.87 26.27 46.39 0.232 0.315 0.000 0.200
+
+Table 8: Hyperparameter ranges screened in pilot runs and final values used in the main experiments.                                                
+
+> Hyperparameter Candidate values screened Final value Learning rate lr {10 −5,10 −4,2.5×10 −4,5×10 −4,
+> 10 −3,2×10 −3,5×10 −3}
+> 10 −3
+> Weight decay wd {0,10 −6,10 −4}0
+> Gate coefficient 𝜆 𝑔
+> (MG-MTTA)
+> {0,0.1,1.0}0.1
+> Diversity coefficient
+> 𝜆 𝑑 (MG-MTTA)
+> {0,0.01 ,0.1}0.01
+> Conflict weight 𝜆 𝑐
+> (MG-MTTA)
+> {0,0.1,0.25 ,0.5}0.25
+> Reliability temperature 𝜏
+> (MG-MTTA)
+> {1.25 ,2.5,3.75 ,5.0}5.0
+> Batch size {32 ,64 ,512 }64
+> Adaptation steps / batch
+> {1,2,4}2
+> Anchor confidence threshold 𝜂
+> (MG-MTTA)
+> {0.5,0.7,0.9}0.7
+> EMA momentum 𝜇
+> (anchor update, MG-MTTA) fixed 0.9
+
+shift conditions. Second, one final configuration is chosen using held-out performance and stability criteria, including lower vari-ance across shift types and reduced batch-collapse tendency. No target labels are used inside the adaptation update loop. 
+
+Reported configuration. For the reported main experiments, MG-MTTA uses lr = 10 −3, wd = 0, steps = 2, 𝜆 𝑔 = 0.1, 𝜆 𝑑 = 0.01 ,
+
+𝜆 𝑐 = 0.25 , 𝜏 = 5.0, 𝜂 = 0.7, and 𝜇 = 0.9. A small nonzero conflict-correction weight is selected in the reported configuration based on held-out performance and stability under textual and joint stress. Accordingly, the main results reflect the combined effect of the anchor-based reliability prior, gate regularization, explicit conflict correction, and entropy/diversity objectives. 
+
+## H Prompt Construction and Textual Shift Protocol 
+
+Our textual-shift design is guided by the text-processing mechanism of CLIP-style vision–language models rather than by arbitrary prompt rewriting. In CLIP/OpenCLIP-style models, the text branch maps each prompt into a fixed-length token sequence and then into a single text representation used for image–text matching. This makes the model sensitive not only to prompt semantics, but also to token boundaries, character-level perturbations, and local prompt context. Motivated by this property, we construct a token-level textual stress protocol that perturbs the prompt in ways that remain largely label-preserving while progressively degrading the stability of the text representation. The textual-shift protocol is divided into two categories. 
+
+Semantics-preserving textual stress. This category is used in the main experiments. Its goal is not to change the class label, but to perturb the prompt at the token and local-context level in a con-trolled manner. Compared with purely semantic paraphrasing, this construction is more directly tied to how CLIP-style text encoders tokenize and represent prompts. Accordingly, the main protocol operates on token boundaries, character-level spelling noise, and mild context degradation while preserving the underlying class identity. We instantiate a five-level token-level textual stress ladder: 
+
+• L1: context-only typo. Mild character-level perturbation is applied to prompt-context words such as photo , image ,or picture , without modifying the class phrase itself. 
+
+• L2: context typo + class-boundary perturbation. In addition to the L1 context perturbation, the class phrase is modified at the boundary level, for example by replacing spaces with hyphens or underscores, while avoiding inner-token corruption. 
+
+• L3: partial mild class-token corruption. Based on L2, a deterministic subset of classes receives an additional mild inner-token perturbation on the class phrase. This increases difficulty while retaining approximate human readability. 
+
+• L4: expanded class-token corruption with mild con-text drop. Relative to L3, the subset of classes receiving class-token corruption is enlarged, and the local grammat-ical context is mildly degraded. This produces a stronger but still label-preserving prompt shift. Majorization-Guided Test-Time Adaptation for Vision-Language Models under Modality-Specific Shift 
+
+Table 9: Token-level textual stress protocol and representa-tive prompt transformations.                 
+
+> Category / level Representative form Clean a photo of a {class} ;an image of a {class}
+> L1 Context-only typo, e.g., a ph0to of a {class} ;an imgae of a {class}
+> L2 Context typo + class-boundary perturbation, e.g., a ph0to of a {class-hyphenated} or a ph0to of a {class_variant}
+> L3 L2-style perturbation + mild inner-token corruption on a deterministic subset of classes L4 Expanded L3-style class-token corruption + mild local context drop L5 Global mild class-token corruption with prompt-context perturbation Conflicting shift not a photo of a {class} ;a photo of a wrong-attribute {class} ;a photo of another class
+
+• L5: global mild class-token corruption. All classes re-ceive prompt-context perturbation together with mild cor-ruption of the class phrase. This defines the strongest level used in the main textual-stress benchmark. The severity ladder is calibrated under the frozen source-only model. This calibration step is important because the goal of the textual-stress protocol is to define an input-side perturbation scale, rather than to encode the behavior of a particular adaptation method. In the appendix, we therefore report the clean-to-L5 accuracy trend under the source-only model as an explicit severity check. 
+
+Conflicting textual shift. This category is used only in failure analysis and is not part of the main robustness comparison. Unlike the semantics-preserving protocol above, these perturbations may alter or conflict with the class semantics and are therefore reserved for studying failure modes such as harmful confidence amplification and modality-dominance errors. The allowed operations include: 
+
+• negation, 
+
+• incorrect attributes, 
+
+• class-inconsistent descriptions. Representative examples include: 
+
+• not a photo of a {class} ,
+
+• a photo of a wrong-attribute {class} ,
+
+• a photo of another class .
+
+Reason for the separation. The main comparison evaluates adapta-tion under controlled, label-preserving textual stress rather than un-der explicit semantic contradiction. Separating semantics-preserving stress from conflicting textual perturbations prevents the main benchmark from being confounded by prompts that directly alter the decision semantics. This separation also matches the theoretical narrative of the paper: the main protocol probes robustness under modality-specific but still semantically aligned shift, whereas the conflicting protocol is used to expose concrete failure regimes. 
+
+## I Additional Metrics and Reliability Proxies 
+
+In addition to task accuracy, we record the following theory-aligned auxiliary measurements. 
+
+Entropy change. For each sample, we record the entropy of the pre-adaptation fused posterior and the entropy of the adapted fused posterior. This quantity verifies that the deployed method is indeed performing entropy reduction, but it is not treated as sufficient evidence of successful adaptation on its own. 
+
+Majorization ratio. For each shift setting, we compute the pro-portion of samples for which the adapted fused posterior majorizes the pre-adaptation fused posterior, as well as the proportion of samples for which the adapted fused posterior moves closer to a clean proxy posterior in sorted partial sums. This metric is the most direct operational counterpart of the majorization-based de-mixing view in the main text. 
+
+Anchor-based reliability proxy. For each modality, we record the practical reliability quantity 
+
+˜𝜌 𝑚 (𝑧 ) = sort ↓
+
+ 𝑝 𝑚 (𝑧 ) − sort ↓
+
+  ¯𝑝 𝑚  
+
+> 1
+
+, (39) where ¯𝑝 𝑚 is the running anchor posterior. Smaller values indicate better consistency with the modality anchor and hence higher estimated reliability. This is the practical reliability quantity used in the main experiments. It should not be interpreted as an exact solution of the ideal doubly stochastic residual in Eq. (7) , but as a computable proxy that preserves the same modality-to-anchor structure and the sorted-profile geometry relevant to majorization. 
+
+Distance to permutation vertices. To measure whether adapta-tion pushes the posterior toward an extreme but potentially brittle decision, we compute a proxy distance from the posterior to permu-tation vertices of the simplex. This quantity helps distinguish useful de-mixing from degenerate sharpening toward unstable one-hot decisions. 
+
+Cross-modality conflict. We record the Jensen–Shannon diver-gence term, the ranking disagreement term, and the combined conflict score used in the gate prior. These quantities character-ize how strongly the visual and textual branches disagree under modality-specific shift. 
+
+Collapse statistics. At the batch level, we record the entropy of the batch marginal, class-frequency imbalance, and additional col-lapse indicators used in the implementation. These measurements are used to detect whether entropy reduction is accompanied by undesirable batch-level concentration. 
+
+Severity calibration for textual stress. Because the main textual-shift protocol is motivated by tokenization-level and local-context perturbations in the CLIP-style text branch, we additionally report the clean-to-L5 performance trend under the frozen source-only model. This calibration is included to verify that the textual-stress ladder is monotonic and severity-ordered before any test-time adap-tation is applied. In other words, the source-only calibration isolates the strength of the input-side textual perturbation itself, rather than conflating it with the behavior of a particular adaptation rule. 
+
+## J Additional Ablation Settings 
+
+This appendix reports compact ablations beyond the calibrated main-text benchmark. The goal is not to repeat the L1–L4 re-sults from the main paper, but to stress-test whether the proposed reliability-aware design remains effective under substantially stronger Lixian Chen, Mingxuan Huang, Yanhui Chen, Junyi Lin, and Yang Shi 
+
+Table 10: Source-only severity calibration of the token-level textual stress protocol. Results are top-1 accuracy (%) on the clean setting and on textual stress levels L1–L5. The mono-tonic drop verifies that the textual-stress ladder is severity-ordered before any test-time adaptation is applied.               
+
+> Level Accuracy (%) Drop from clean (%) Clean 66.73 0.00 L1 65.24 1.48 L2 62.75 3.97 L3 58.72 8.01 L4 45.17 21.56 L5 25.48 41.25
+
+Table 11: Failure-oriented objective ablation under the tex-tual and joint L5 strongest probes. Accuracy is reported as global top-1 accuracy (%). Majorization reports raw averaged majorization ratios; for Source-only, the value equals 1 be-cause no adaptation update is applied and the pre/post pos-terior is unchanged.                             
+
+> Setting Method Top-1 Acc. Maj. ratio Collapse Textual L5 Source-only 25.48 1.000 0.000 Entropy-only 22.11 0.244 0.000 Entropy + Diversity 22.14 0.248 0.000 MG-MTTA 65.88 0.227 0.000 Joint L5 Source-only 9.66 1.000 0.000 Entropy-only 9.40 0.322 0.207 Entropy + Diversity 9.39 0.321 0.192 MG-MTTA 26.13 0.317 0.194
+
+perturbations and whether the contribution of its components be-comes more visible outside the moderate setting. Following the main paper, the visual appendix setting uses corruption severity level 5, while the textual appendix setting is instantiated with the 
+
+L5 strongest textual probe . The joint strongest probe combines visual corruption at severity 5 with textual stress at L5. The L5 textual condition is treated as a strongest probe rather than as a direct extension of the calibrated L1–L4 textual benchmark. Its role is to stress-test robustness under a substantially harder text-side perturbation, not to serve as a directly comparable con-tinuation of the main textual ladder. This design is motivated by the text-processing mechanism of CLIP-style models, whose text encoder is sensitive to token boundaries, character-level perturba-tions, and local prompt context. Source-only severity calibration for this textual ladder is reported in Table 10. We report two complementary views. First, a strongest-probe objective ablation compares matched entropy-based baselines and the full method under textual and joint L5 stress. Second, a 
+
+compact three-mode ablation compares trainable-subset vari-ants and objective variants across visual, textual strongest-probe, and joint settings. 
+
+Table 12: Update-scope and constrained-adaptation variants under the strongest probe. Visual uses severity level 5; Tex-tual uses the L5 strongest textual probe; Joint combines visual severity 5 with textual L5.                      
+
+> Setting Visual Textual L5 Joint Adapter only 25.87 65.81 25.99 Gate only 25.91 65.86 26.00 Normalization only 25.94 65.87 25.98 Entropy + gate 25.90 65.85 25.99 MG-MTTA 26.01 65.79 26.17
+> Entropy + Diversity 26.06 22.18 9.39
+
+Table 11 shows that MG-MTTA remains substantially stronger than the entropy-based baselines under both textual and joint L5 stress. In particular, the strongest textual probe remains highly fa-vorable to MG-MTTA, indicating that the method remains effective not only under joint multimodal stress but also under severe text-only perturbation. At the same time, these strongest-probe results should not be interpreted as implying that any single diagnostic quantity explains performance on its own. In particular, the ma-jorization ratio does not vary monotonically with accuracy across methods and settings. This behavior is consistent with the main-text claim that lower entropy, or any single posterior-sharpening statis-tic, is not by itself a sufficient indicator of successful multimodal adaptation under severe modality-specific shift. We next compare both trainable-subset variants and objective variants in a compact three-mode stress test. The subset variants are: Gate only , which updates only the gate parameters; Adapter only , which updates only the adapter parameters; and Normaliza-tion only , which updates only normalization-related parameters. The objective variants are: Entropy + gate , which keeps the full trainable subset but removes the diversity term; Entropy + Di-versity , which performs entropy-based adaptation without the reliability-aware gate prior; and MG-MTTA , the full method with the complete trainable subset and all objective terms enabled. Table 12 compares lightweight update scopes and constrained-adaptation variants under the strongest probe. Under textual L5, the constrained variants form a near-tie around 65.8%, while Entropy + Diversity remains much lower at 22.18%. This indicates that the dominant factor under severe text-side stress is whether adaptation is constrained away from entropy-only sharpening, rather than which lightweight subset is uniquely updated. Under joint L5, the full MG-MTTA objective gives the strongest result among the compared variants. The gain over other con-strained variants is smaller than the gap to Entropy + Diversity, so we interpret it as evidence of robustness under joint stress rather than as a strict ranking of update scopes. The visual-only column shows small differences across variants, consistent with its role as a benchmark anchor rather than the primary test of asymmetric multimodal fusion. Majorization-Guided Test-Time Adaptation for Vision-Language Models under Modality-Specific Shift 
+
+Table 13: Additional case-level analysis under strongest-probe stress. The entropy columns report 𝐻 (𝑞 pre ) and 𝐻 (𝑞 post )
+
+within the MG-MTTA run before and after adaptation. Cases A and C recover from incorrect source-only predictions, whereas Case B shows that lower fused-posterior entropy alone does not guarantee correct multimodal adaptation.                             
+
+> Case Setting Src. pred. MG pred. 𝐻 (𝑞 pre )𝐻 (𝑞 post )
+> Atextual-L5 rifle crossword 2.33 ×10 −62.33 ×10 −6
+> Bjoint-L5 sombrero bobsleigh 2.6030 2.5735 Cjoint-L5 power drill chainsaw 0.0432 0.0414
+
+Table 14: Additional backbone results on ViT-B/32.                
+
+> Method Visual Textual Joint Source-only 24.29 52.26 37.61 Entropy-only 22.31 49.92 36.81 Entropy + Diversity 22.41 49.97 36.87 MG-MTTA 22.41 65.61 46.16
+
+## K Additional Failure Analysis 
+
+This appendix expands the case-wise analysis in Fig. 5 by providing a compact quantitative summary for three representative strongest-probe cases. These examples describe when entropy reduction is helpful and when it is not under severe textual and joint stress. 
+
+Case selection. We consider three representative cases from the strongest-probe setting. Case A is a textual-L5 recovery case in which the frozen source-only prediction is incorrect but MG-MTTA restores the correct class. Case B is a joint-L5 failure case in which the fused-posterior entropy decreases slightly after adaptation, yet the final prediction remains incorrect. Case C is a joint-L5 recov-ery case in which MG-MTTA corrects an incorrect source-only prediction under strong cross-modality disagreement. 
+
+Interpretation. Table 13 supports the same qualitative message as the main-text case analysis. Cases A and C show that MG-MTTA can recover from incorrect source-only predictions under severe textual or joint stress. By contrast, Case B shows that a decrease in fused-posterior entropy alone is not sufficient for successful multi-modal adaptation. These examples should therefore be interpreted as compact case-level evidence complementary to Fig. 5, rather than as a standalone mechanistic verification. 
+
+## L Additional Backbone Generalization 
+
+To examine whether the main empirical pattern observed in the main text is preserved beyond the primary backbone, we further evaluate the method on an additional CLIP variant. Since the goal of this experiment is to check cross-backbone consistency rather than to conduct a large-scale backbone study, we report a compact comparison on the main visual, textual, and joint settings. Table 14 summarizes the additional backbone results. We com-pare the same matched internal baselines under visual shift, semantics-preserving textual shift, and joint shift. The visual column reports mean corruption accuracy, while the textual and joint columns follow the same evaluation protocol as in the main paper. These results preserve the main multimodal pattern on an addi-tional CLIP backbone. On ViT-B/32, the gains of MG-MTTA are con-centrated in textual and joint shift, where it remains substantially stronger than the matched entropy-based baselines. The visual-only column is not the main target of this backbone check; it serves as the same corruption anchor used in the primary experiments.

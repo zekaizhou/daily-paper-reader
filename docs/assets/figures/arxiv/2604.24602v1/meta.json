@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.24602v1/fig-001.webp",
+      "caption": "Table 1: Visual-shift anchoring results. Results are mean top1 accuracy (%) over the 15 corruption types on CIFAR-100C and ImageNet-C at severity level 5. Detailed corruption-wise results are provided in Appendix F.1 and Table 6.",
+      "page": 6,
+      "index": 1,
+      "width": 506,
+      "height": 333
+    },
+    {
+      "url": "assets/figures/arxiv/2604.24602v1/fig-002.webp",
+      "caption": "Figure 1: Motivation. Under modality-specific shift, biased fusion can produce a sharper but less reliable posterior. Entropy-only adaptation may further amplify an incorrect fused decision, whereas MG-MTTA uses reliability and conflict cues to guide the fusion gate toward a more reliable adaptation direction.",
+      "page": 2,
+      "index": 2,
+      "width": 967,
+      "height": 521
+    },
+    {
+      "url": "assets/figures/arxiv/2604.24602v1/fig-003.webp",
+      "caption": "Figure 5: Case-wise analysis under the L5 strongest probe. The examples show recovery under severe textual stress, a lowerentropy but still incorrect prediction, and recovery under high cross-modality conflict. They distinguish genuine recovery from confidence amplification in the modality-dominance regime described in Sec. 3.5.",
+      "page": 8,
+      "index": 3,
+      "width": 1032,
+      "height": 320
+    },
+    {
+      "url": "assets/figures/arxiv/2604.24602v1/fig-004.webp",
+      "caption": "Table 8: Hyperparameter ranges screened in pilot runs and final values used in the main experiments.",
+      "page": 12,
+      "index": 4,
+      "width": 506,
+      "height": 594
+    },
+    {
+      "url": "assets/figures/arxiv/2604.24602v1/fig-005.webp",
+      "caption": "Figure 2: Overview of MG-MTTA. A frozen vision-language backbone produces modality-level predictions from shifted visual and textual inputs. Running anchors and cross-modality conflict define a reliability-aware prior for a lightweight gate or adapter. The fused prediction is obtained by logit-level convex fusion followed by softmax, and only the lightweight module is updated with entropy, gate regularization, and diversity objectives.",
+      "page": 5,
+      "index": 5,
+      "width": 1009,
+      "height": 363
+    }
+  ]
+}

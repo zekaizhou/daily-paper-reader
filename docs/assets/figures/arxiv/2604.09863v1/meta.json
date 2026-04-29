@@ -1,0 +1,78 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.09863v1/fig-001.webp",
+      "caption": "Figure 3: The correlation between the PAS score value and the target accuracy after the domain adaptation. Each box summarizes the target accuracy of different domain adaptation methods for a given source-target pair and a pre-trained feature extractor. Higher values for the PAS score are strongly correlated with higher target accuracy.",
+      "page": 6,
+      "index": 1,
+      "width": 826,
+      "height": 336
+    },
+    {
+      "url": "assets/figures/arxiv/2604.09863v1/fig-002.webp",
+      "caption": "Table 7: Target accuracy of domain adaptation methods and transferability scores for the Office-31 dataset. The highest values are highlighted. * Oracle baseline that considers the target labels.",
+      "page": 15,
+      "index": 2,
+      "width": 818,
+      "height": 771
+    },
+    {
+      "url": "assets/figures/arxiv/2604.09863v1/fig-003.webp",
+      "caption": "Figure 2: Source and target samples in the embedding space of a pre-trained model. (top left) Ideally, a target sample from a given class should be more similar, and hence closer in the embedding space of the pre-trained model, to a source sample from the same class. (top right) If new discriminative features need to be learned, the chances of overfitting on the source domain during adaptation increase. (bottom) Illustration of the distances from a target sample to all source class centroids. Our PAS score considers the relationship between distances d1 and d2, which correspond to the shortest and second shortest distances, respectively.",
+      "page": 2,
+      "index": 3,
+      "width": 396,
+      "height": 844
+    },
+    {
+      "url": "assets/figures/arxiv/2604.09863v1/fig-004.webp",
+      "caption": "Table 1: Average target accuracy of domain adaptation methods and transferability scores for different image classification benchmarks. The highest values are highlighted. Our PAS has a high correlation with the target accuracy and, for each target domain, attributes the highest value for the source domain that leads to the highest target accuracy in most scenarios. * Oracle baseline that considers the target labels.",
+      "page": 7,
+      "index": 4,
+      "width": 814,
+      "height": 1162
+    },
+    {
+      "url": "assets/figures/arxiv/2604.09863v1/fig-005.webp",
+      "caption": "Table 6: Target accuracy of domain adaptation methods and transferability scores for the OfficeHome dataset. The highest values are highlighted. * Oracle baseline that considers the target labels.",
+      "page": 14,
+      "index": 5,
+      "width": 826,
+      "height": 608
+    },
+    {
+      "url": "assets/figures/arxiv/2604.09863v1/fig-006.webp",
+      "caption": "Figure 6: Examples of images misclassified by the domain adaptation method DANN in the dataset P (Pascal VOC 2012) of the ImageCLEF benchmark",
+      "page": 17,
+      "index": 6,
+      "width": 849,
+      "height": 694
+    },
+    {
+      "url": "assets/figures/arxiv/2604.09863v1/fig-007.webp",
+      "caption": "Figure 5: The PAS value varying with the number of samples for the OfficeHome. The PAS values are quite robust to varying numbers of samples. Most importantly, the relative order of PAS values for different source domains remains unchanged.",
+      "page": 9,
+      "index": 7,
+      "width": 477,
+      "height": 455
+    },
+    {
+      "url": "assets/figures/arxiv/2604.09863v1/fig-008.webp",
+      "caption": "Table 8: Target accuracy of domain adaptation methods and transferability scores for the ImageCLEF dataset. The highest values are highlighted. * Oracle baseline that considers the target labels.",
+      "page": 16,
+      "index": 8,
+      "width": 818,
+      "height": 459
+    },
+    {
+      "url": "assets/figures/arxiv/2604.09863v1/fig-009.webp",
+      "caption": "Table 9: Target accuracy of domain adaptation methods and transferability scores for the DomainNet dataset. The highest values are highlighted. * Oracle baseline that considers the target labels.",
+      "page": 16,
+      "index": 9,
+      "width": 830,
+      "height": 385
+    }
+  ]
+}

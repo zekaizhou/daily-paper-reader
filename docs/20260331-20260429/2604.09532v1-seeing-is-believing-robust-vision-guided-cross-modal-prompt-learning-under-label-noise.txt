@@ -1,0 +1,644 @@
+Title: Seeing is Believing: Robust Vision-Guided Cross-Modal Prompt Learning under Label Noise
+
+URL Source: https://arxiv.org/pdf/2604.09532v1
+
+Published Time: Mon, 13 Apr 2026 01:14:59 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# Seeing is Believing: Robust Vision-Guided Cross-Modal Prompt Learning under Label Noise 
+
+# Zibin Geng ∗
+
+Institute of Computing Technology, Chinese Academy of Sciences University of Chinese Academy of Sciences Beijing, China gengzibin25z@ict.ac.cn 
+
+# Xuefeng Jiang ∗
+
+Institute of Computing Technology, Chinese Academy of Sciences University of Chinese Academy of Sciences Beijing, China jiangxuefeng21b@ict.ac.cn 
+
+# Jia Li 
+
+Institute of Information Engineering, Chinese Academy of Sciences University of Chinese Academy of Sciences Beijing, China lijia3000@foxmail.com 
+
+# Zheng Li 
+
+PCALab, VCIP, College of Computer Science, Nankai University Tianjin, China zhengli97@mail.nankai.edu.cn 
+
+# Tian Wen 
+
+Institute of Computing Technology, Chinese Academy of Sciences University of Chinese Academy of Sciences Beijing, China wentian24s@ict.ac.cn 
+
+# Lvhua Wu 
+
+Institute of Computing Technology, Chinese Academy of Sciences University of Chinese Academy of Sciences Beijing, China wulvhua24s@ict.ac.cn 
+
+# Sheng Sun 
+
+Institute of Computing Technology, Chinese Academy of Sciences Beijing, China sunsheng@ict.ac.cn 
+
+# Yuwei Wang 
+
+Institute of Computing Technology, Chinese Academy of Sciences Beijing, China ywwang@ict.ac.cn 
+
+# Min Liu †
+
+Institute of Computing Technology, Chinese Academy of Sciences Beijing, China liumin@ict.ac.cn 
+
+## Abstract 
+
+Prompt learning is a parameter-efficient approach for vision-language models, yet its robustness under label noise is less investigated. Vi-sual content contains richer and more reliable semantic information, which remains more robust under label noise. However, the prompt itself is highly susceptible to label noise. Motivated by this intu-ition, we propose VisPrompt, a lightweight and robust vision-guided prompt learning framework for noisy-label settings. Specifically, we exploit a cross-modal attention mechanism to reversely inject visual semantics into prompt representations. This enables the prompt tokens to selectively aggregate visual information relevant to the current sample, thereby improving robustness by anchoring prompt learning to stable instance-level visual evidence and reduc-ing the influence of noisy supervision. To address the instability caused by using the same way of injecting visual information for all samples, despite differences in the quality of their visual cues, we further introduce a lightweight conditional modulation mechanism to adaptively control the strength of visual information injection, which strikes a more robust balance between text-side semantic priors and image-side instance evidence. The proposed framework effectively suppresses the noise-induced disturbances, reduce insta-bility in prompt updates, and alleviate memorization of mislabeled samples. VisPrompt significantly improves robustness while keep-ing the pretrained VLM backbone frozen and introducing only a small amount of additional trainable parameters. Extensive exper-iments under synthetic and real-world label noise demonstrate 
+
+> ∗Both authors contributed equally to this research.
+> †Corresponding author.
+
+that VisPrompt generally outperforms existing baselines on seven benchmark datasets and achieves stronger robustness. Our code is publicly available at https://github.com/gezbww/Vis_Prompt. 
+
+## CCS Concepts 
+
+• Computing methodologies → Computer vision tasks ; Object recognition .
+
+## Keywords 
+
+Prompt Learning, Vision-Language Models, Label Noise 
+
+## 1 Introduction 
+
+Vision-language models (VLMs) [ 14 , 29 , 41 ] pretrained on large-scale image-text corpora have exhibited remarkable transferability, enabling strong zero-shot performance across a wide range of down-stream recognition and retrieval tasks. Adapting such pretrained VLMs to a specific task or domain still requires a lightweight in-terface that is both data-efficient and parameter-efficient. Prompt learning has therefore become a widely adopted paradigm: It keeps the pretrained backbone frozen and optimizes only a small set of learnable context tokens, often achieving competitive performance with minimal trainable overhead [15, 25, 27, 30, 44, 55]. Despite this efficiency, prompt learning remains highly sensitive to annotation quality in practice [ 55 ]. Real-world datasets often contain mislabeled samples, and such corrupted supervision can directly mislead the optimization of soft prompts.    
+
+> arXiv:2604.09532v1 [cs.CV] 10 Apr 2026 Conference’17, July 2017, Washington, DC, USA Trovato et al. This is a cat
+> This is a cat
+> Image
+> Encoder
+> Text
+> Encoder
+> Muti-head
+> Attention
+> FiLM
+> Hidden Layers
+> Dog
+> Cat
+> Dog
+> Cat
+> Image
+> Encoder
+> Text
+> Encoder
+> Wrong Feature
+> Right Feature
+> Wrong Feature
+> Right Feature
+> Ours
+> Prior methods
+> Output Layer  Hidden Layers
+> Output Layer
+> Cat
+> Dog
+> Noisy Label
+> Noisy Label
+
+Figure 1: Prior label-driven prompt methods can be misled by noisy supervision and produce incorrect predictions, while our method injects reliable image-grounded information to guide prompt learning toward the correct class. 
+
+This issue is especially pronounced in prompt learning: Since the image and language encoders are frozen, the burden of task adap-tation is concentrated on a small number of prompt embeddings, making them highly exposed to noisy gradients induced by incor-rect labels. As the noise rate increases, the learned prompts can gradually drift toward spurious class semantics, leading to unstable optimization and degraded generalization. Recent studies have shown that prompt learning with frozen VLM backbones exhibits a certain degree of tolerance to label noise, which has motivated a growing body of research on noise-robust prompt adaptation [ 9, 47 ]. Existing methods [ 9 ] mainly improve robustness from three directions, including confidence-based noise detection and trust estimation [ 46 , 52 ], robust objective design [ 13 , 35 ], and sample refinement strategies [ 35 ]. These approaches have achieved encouraging results, but most of them still tackle noisy supervision mainly through label-centric mechanisms, rather than rethinking prompt optimization from the perspective of vi-sual guidance. This design pattern leaves a more reliable source of information underexplored. In contrast, even under corrupted annotations, large-scale pretrained VLMs such as CLIP [ 41 ] can still provide rich instance-level semantic cues from images, offering a more stable source of guidance under label noise. However, current methods do not fully leverage such visual cues as a primary anchor for prompt optimization. Instead, they often rely on early-stage confidence estimation or sample discrimination to identify clean data under noisy supervision. Once these early decisions are inaccu-rate, the resulting confirmation bias can be inherited by subsequent optimization, causing prompt updates to be guided by increasingly unreliable supervision. Motivated by this intuition, we propose an instance-grounded semantic anchoring principle for prompt learning in the presence of label noise. Prompt adaptation should be anchored to the semantic content of the input image, rather than relying solely on the ob-served noisy label . This principle is based on a simple intuition that, although annotations may be corrupted, the image itself still pre-serves instance-specific semantic evidence that can provide a more stable guidance signal for prompt optimization. To instantiate this principle, we propose VisPrompt (Vision-Guided Cross-Modal Prompt Learning under Label Noise), a robust prompt learning framework that explicitly injects image-grounded semantics into prompt adaptation in noisy-label settings. VisPrompt first introduces cross-modal attention to inject visual evidence into the learnable prompts. Instead of updating prompts solely according to label supervision, our method allows prompt tokens to selec-tively aggregate semantically relevant information from the images. In this way, the prompt representation is no longer optimized only toward the observed noisy objective, but is also constrained by the semantics of the current instance. As illustrated in Fig. 1, such image-grounded conditioning helps steer the prediction toward the correct class even when the assigned label is corrupted. However, the usefulness of visual evidence is not uniform across samples. Applying the same fusion strength to all instances may underuse highly informative visual cues, while also introducing unstable or ir-relevant perturbations from low-quality ones. To address this issue, we further introduces FiLM (Feature-wise Linear Modulation) as an instance-adaptive control mechanism. Conditioned on the current visual representation, FiLM adaptively modulates how much visual evidence should be injected into the prompt and which feature dimensions should be emphasized or suppressed. This selective modulation enables a more controlled integration of image-side evidence, leading to more stable prompt updates under noisy su-pervision. From a robustness perspective, cross-modal attention and FiLM modulation selectively introduce and regulate visual ev-idence, thereby improving the stability of prompt optimization under noisy supervision. Importantly, VisPrompt improves robust-ness with minimal trainable overhead, introducing less than 1% additional parameters while keeping the pretrained VLM backbone frozen. Our main contributions are summarized as follows: 
+
+• We propose VisPrompt, a lightweight and robust prompt learn-ing framework for noisy-label settings. It reformulates prompt adaptation from a cross-modal perspective and exploits image-grounded semantics to guide prompt learning. This reduces the interference of corrupted labels during optimization. 
+
+• We introduce a vision-guided prompt modulation mechanism that combines cross-modal attention with FiLM gating. Cross-modal attention extracts visual evidence that is more informative and reliable. FiLM then adaptively controls how this evidence is injected into the prompt representation. This enables selective enhancement of reliable cues and suppression of unstable per-turbations. 
+
+• We validate the robustness of VisPrompt through theoretical anal-ysis. The analysis shows that cross-modal attention yields a de-noised approximation of clean semantics. It also shows that FiLM injects such evidence into prompts in a bounded and stable man-ner. Extensive experiments further demonstrate that VisPrompt achieves competitive or superior performance compared with representative robust prompt learning based methods on seven datasets with synthetic and real-world label noise. 
+
+## 2 Related Work 2.1 Prompt Learning 
+
+With the rapid advance of vision-language models, prompt learn-ing emerges as a pivotal research direction as a parameter-efficient Seeing is Believing: Robust Vision-Guided Cross-Modal Prompt Learning under Label Noise Conference’17, July 2017, Washington, DC, USA 
+
+learning approach. Numerous studies [ 1, 2 , 41 ] demonstrate its efficiency and scalability, with CLIP [ 41 ] being the most represen-tative work. Early prompt learning relies on manually designed templates, such that minor changes could result in significant per-formance variation. CoOP [ 55 ] introduces learnable continuous context on the text side and optimizes end to end with a frozen backbone, significantly improving adaptation efficiency. CoCoOp [54 ] leverages image conditioned context to enhance generalization to unseen classes, and MaPLe [ 20 ] extends prompt integration to deeper layers, coupling it along the entire vision-language path-way. KAPT [ 19 ] and ATPrompt [ 28 ] introduce external attribute knowledge and generic attribute tokens, respectively, to strengthen cross-domain generalization and class alignment. While these meth-ods improve accuracy and transferability given clean supervision, their capability to handle noisy labels remains rarely explored. 
+
+## 2.2 Noisy Label Learning 
+
+In real-world datasets, label noise is inevitable, and corrupted anno-tations can cause severe performance degradation. To address this issue, numerous previous works have been proposed from diverse aspects, including robust loss functions [ 7 , 8 , 18 , 31 ], robust regular-ization [ 12 , 17 , 32 , 48 ], sample selection [ 18 , 46 ] and meta-learning [ 26 , 38 , 43 ], loss correction [ 3, 49 , 51 ], and robust training frame-work design [ 16 , 23 , 50 ]. However, these works mainly focus on the unimodal tasks like image or text classification. In prompt learning, however, research on handling noisy labels remains limited. PTNL [ 47 ] opens this direction by revealing the robustness potential of prompt learning. GCE [ 53 ] enhances the robustness of prompt learning from the perspective of loss function design. JoAPR [ 9]fits a two-component Gaussian mixture to the loss distribution and uses adaptive thresholds for clean-sample selection and relabeling. NLPrompt [ 35 ] employs optimal transport to partition clean and noisy subsets, while TrustCLIP [ 52 ] estimates trustworthiness from the structural semantics learned during training. Although these methods achieve meaningful gains, they mostly rely on auxiliary confidence modeling or sample partition strategies, and largely optimize robustness from the text or label side. As a result, they do not fully exploit image content itself as a relatively stable and instance-specific source of supervision under label corruption. 
+
+## 2.3 Vision-guided prompt generation 
+
+Beyond text-only prompt learning methods such as CoOp [ 55 ], re-cent studies have explored incorporating visual cues into prompt learning for adapting vision-language models. CoCoOp [ 54 ] condi-tions prompts on individual input images, while subsequent meth-ods such as DPT [ 42 ], further strengthen cross-modal interaction by jointly leveraging visual and textual information. Other works, such as GalLoP [ 22 ] , exploit local visual evidence or attribute-level semantics to improve prompt quality and generalization. These studies collectively suggest that visual guidance can enrich prompt learning with instance-specific semantics and improve adaptation performance. While existing approaches have mitigated label noise to some extent, they predominantly focus on loss function design, noisy-sample detection, and data purification, often overlooking the potential of visually guided prompt generation. To bridge this gap, we propose VisPrompt, a vision-guided framework for few-shot learning under noisy label conditions. 
+
+## 3 Preliminary 
+
+We first introduce the standard prompt learning paradigm for vision-language pre-trained models. Given an input image, the image encoder and text encoder project visual and textual inputs into a shared embedding space, where classification is performed accord-ing to their similarity. For Vision Encoder, given an input image 𝐼 , the image encoder first divides it into 𝑀 patches and maps them into patch embeddings, denoted by 𝑉 0 = {𝑣 01, . . . , 𝑣 0 
+
+> 𝑀
+
+}. A learnable class token 𝑣 0cls is then appended to the patch sequence. The resulting tokens are fed into a stack of vision transformer layers: 
+
+[𝑉 𝑙 , 𝑣 𝑙 
+
+> cls
+
+] = Image 𝑙  [𝑉 𝑙 −1, 𝑣 𝑙 −1cls ], 𝑙 = 1, . . . , 𝐿 𝐼 . where 𝐿 𝐼 de-notes the number of layers in the visual encoder. The final image representation in the shared vision-language space is obtained by projecting the class token from the last layer: ℎ = 𝑓 Proj 
+
+ 𝑣 𝐿 𝐼 
+
+> cls
+
+.
+
+For Text Encoder, given a text prompt, the text encoder tok-enizes it into 𝑁 tokens, denoted by 𝐶 0 = {𝑐 01, . . . , 𝑐 0 
+
+> 𝑁
+
+}. These token embeddings are processed by a stack of text transformer layers: 
+
+𝑇 𝑙 = Text 𝑙 (𝐶 𝑙 −1), 𝑙 = 1, . . . , 𝐿 𝑇 , where 𝐿 𝑇 is the number of layers in the text encoder. The final text feature is produced by projecting the last token at the top layer into the shared vision-language space: 
+
+𝑔 = 𝑓 Proj 
+
+ 𝑐 𝐿 𝑇 
+
+> 𝑁
+
+. In standard prompt learning, the parameters of both the image encoder and the text encoder are kept frozen, and only a small set of learnable context tokens is optimized. For a class name represented by [CLASS ], the prompt is constructed by combining it with 𝑛 learnable context tokens, denoted by 𝑃 = {𝑝 1, . . . , 𝑝 𝑛 }. The resulting prompt can be formulated as 
+
+C𝑘 = [𝑝 1, 𝑝 2, . . . , 𝑝 𝑛 , class 𝑘 ], (1) where class 𝑘 denotes the tokenized name of the 𝑘 -th class. The prompt is then fed into the text encoder to obtain the corresponding class-level text feature: 
+
+𝑔 𝑘 = TextEncoder (C 𝑘 ), 𝑘 = 1, . . . , 𝐾, (2) where 𝐾 is the number of classes. Given an input image, the image encoder produces image feature 
+
+ℎ, while the text encoder generates a text prototype 𝑔 𝑘 for each class. Result is performed in the shared embedding space according to the similarity between ℎ and 𝑔 𝑘 :
+
+𝑝 (𝑦 = 𝑘 | 𝐼 ) = exp  sim (ℎ, 𝑔 𝑘 )/ 𝜏 Í𝐾 𝑗 =1 exp  sim (ℎ, 𝑔 𝑗 )/ 𝜏  , (3) where sim (· , ·) denotes cosine similarity and 𝜏 is a temperature parameter. The model is trained by updating the learnable prompt tokens such that the text representation of the correct class becomes better aligned with the visual representation of the input image. 
+
+## 4 Methodology 
+
+To improve the robustness of prompt learning under noisy super-vision, we propose VisPrompt , a visual-guided prompt learning framework for noise-robust adaptation. As illustrated in Fig. 2, the framework consists of two key components: (i) Cross-modal Visual Prompt Conditioning, which injects multiple local visual tokens Conference’17, July 2017, Washington, DC, USA Trovato et al. Image      
+
+> A photo of dog
+> Text Text
+> Encoder
+> Image
+> Encoder
+> 𝐀 1
+> 𝐀 2
+> 𝐀 3...
+> 𝐀 n
+> 𝐀 1
+> 𝐀 2
+> 𝐀 3...
+> 𝐀 n
+> 𝐀
+> 𝐀 𝐀
+> Layer Norm  Layer Norm
+> Linear
+> 𝐀
+> Cross-Modal Attention
+> 𝐀
+> 𝐀
+> Linear Linear Linear
+> 𝐀 𝐀
+> 𝐀 𝐀 ·
+> +1
+
++    
+
+> Sigmoid
+> 𝐀 𝐀 ·
+> 𝐀 𝐀 −𝐀
+> 𝐀 1
+> 𝐀 2
+> 𝐀 3...
+> 𝐀 n
+
++           
+
+> Layer Norm
+> FFN
+> 𝐀 1
+> 𝐀 2
+> 𝐀 3...
+> 𝐀 n
+> 𝐀 𝐀
+> OT
+> Module
+> 𝐀 𝐀𪠀 𝐀 𝐀𝐀𪠀
+> 𝐀 =𝐀 ∙𝐀 𝐀𪠀 + ( 𝐀 −𝐀 )∙𝐀 𝐀𝐀𪠀
+> ℬ𝐀 ℬ𝐀
+> Trainable Frozen
+
+⊙ multiplication Forward      
+
+> step 1:Initialization step 2:Cross-modal attention step 3:FiLM modulation step 4:Loss selection
+> 𝐀
+> Certain Uncertain
+
+Figure 2: The overall architecture of VisPrompt which consists of four steps. Step 2 and Step 3 denote the robust update process. 
+
+into the prompt context through cross-modal attention; (ii) FiLM-based Robust Modulation, which adaptively controls the injected visual guidance through conditional modulation and residual gating. By combining reliable image-grounded semantics with the generic prior of the text branch, VisPrompt mitigates noise-induced prompt drift and yields more stable and robust prompt optimization. 
+
+## 4.1 VisPrompt Framework 
+
+VisPrompt is instantiated through four sequential stages: Initializa-tion, cross-modal visual prompt conditioning, FiLM-based robust modulation, and robust loss selection. 
+
+4.1.1 Learnable Context Initialization. Within the prompt learning framework, we introduce 𝑛 ctx learnable context tokens as the op-timizable part of the prompt. Depending on the parameterization strategy, the context can be either class-shared or class-specific. For the class-shared setting, the learnable context is denoted as 
+
+C ∈ R𝑛 ctx ×𝑑 , (4) where 𝑑 is the dimensionality of the text embedding space. For the class-specific setting, the context can be extended as 
+
+C ∈ R𝑁 ×𝑛 ctx ×𝑑 , (5) where 𝑁 denotes the number of classes. 
+
+4.1.2 Visual Feature Projection. Unlike class labels, which may be corrupted at the sample level, local image content still preserves fine-grained semantic evidence from the underlying visual instance. To explicitly exploit such relatively reliable instance-level cues, we extract a set of local visual representations from the input image. Given an input image 𝑥 𝑖 , the image encoder produces 
+
+V𝑖 ∈ R𝑀 ×𝑑 𝑣 , (6) where 𝑀 is the number of visual tokens and 𝑑 𝑣 is the dimensionality of the visual feature space. Since the visual and textual branches generally reside in different representation spaces, we employ a learnable linear projection matrix 
+
+W𝑝 ∈ R𝑑 𝑣 ×𝑑 (7) to align visual features with the prompt embedding space, yielding 
+
+Z𝑖 = V𝑖 W𝑝 ∈ R𝑀 ×𝑑 . (8) Projecting these tokens into the text-aligned space allows the model to access image-grounded semantics that are less affected by annotation errors. As a result, the prompt is not forced to rely solely on potentially misleading supervision, but can instead condition on more reliable instance-level cues. 
+
+4.1.3 Cross-modal Visual Prompt Conditioning. To reduce the di-rect influence of noisy labels on prompt updates, this module is designed to introduce an instance-specific image-conditioned signal 
+
+into the learnable context. Instead of letting the prompt be updated solely by the supervisory signal of the assigned label, we explicitly establish cross-modal interactions between the context tokens and the projected visual tokens, so that the prompt can be conditioned on the semantic content of the current image. Let C denote the context tokens and Z𝑖 denote the projected visual token sequence associated with image 𝑥 𝑖 . The cross-modal conditioning feature is defined as 
+
+A𝑖 = MHA  LN (C), LN (Z𝑖 ), LN (Z𝑖 ), (9) where MHA (·) and LN (·) denote multi-head attention and layer normalization, respectively. Here, A𝑖 is constructed as the cross-modal conditioning repre-sentation for the current sample. Its role is to use the context tokens as queries to selectively retrieve semantically relevant local evi-dence from the visual tokens, and to organize such image-grounded information into a conditioning signal for subsequent prompt mod-ulation. 
+
+4.1.4 FiLM-based Robust Modulation. Although visual evidence is generally more reliable than noisy labels, its quality may still vary across instances. To incorporate such instance-dependent visual cues in a controlled manner, we employ a FiLM-based modulation mechanism together with token-wise gating. Based on the cross-modal feature A𝑖 , we first generate FiLM modulation parameters Seeing is Believing: Robust Vision-Guided Cross-Modal Prompt Learning under Label Noise Conference’17, July 2017, Washington, DC, USA 
+
+to perform feature-wise adjustment on the normalized context: 
+
+˜C𝑖 = LN (C) ⊙  1 + 𝜙 𝛾 (A𝑖 ) + 𝜙 𝛽 (A𝑖 ), (10) and further compute a token-wise gate as 
+
+G𝑖 = 𝜎  𝜙 𝑔 (A𝑖 ), (11) where 𝜙 𝛾 (·) , 𝜙 𝛽 (·) , and 𝜙 𝑔 (·) are learnable mappings for the scaling term, bias term, and gate generation, respectively, 𝜎 (·) denotes the sigmoid function, and ⊙ denotes element-wise multiplication. Given the modulated context ˜C𝑖 and the token-wise gate G𝑖 , we then perform a residual gated update: 
+
+C′ 
+
+> 𝑖
+
+= C + G𝑖 ⊙   ˜C𝑖 − C, (12) followed by a feed-forward refinement: 
+
+ˆC𝑖 = C′ 
+
+> 𝑖
+
++ FFN  LN (C′ 
+
+> 𝑖
+
+), (13) The resulting ˆC𝑖 is used as the image-conditioned prompt context for the current sample. 
+
+4.1.5 Robust Loss Design. The impact of label noise varies across samples. Clean samples usually provide relatively reliable super-vision, whereas noisy samples are more likely to be dominated by corrupted annotations. When all samples are optimized with the same loss function, the model may gradually overfit noisy labels and thus lose robustness. To alleviate this issue, this work introduces an Optimal Transport (OT) [ 5] mechanism to estimate sample reliability under noisy supervision. According to the estimated reliability, the training set is partitioned into a reliable subset and an unreliable subset. Different loss functions are then assigned to these two subsets. This strategy allows the optimization process to better adapt to the heterogeneous quality of supervisory signals. The central function of OT is to determine a global transport plan between two predefined distributions under a given trans-port cost and marginal constraints. By jointly modeling all sample class matching relationships, OT can suppress locally abnormal as-signments and produce a more globally consistent correspondence structure. Assume that the training set consists of 𝑁 samples and 𝐿 classes. The frozen image encoder extracts the image feature matrix 𝑉 ∈
+
+R𝑁 ×𝑑 , where 𝑑 denotes the feature dimension, while the text en-coder produces the class text feature matrix 𝑇 ∈ R𝐿 ×𝑑 .The similarity score between each sample and each class is then computed. The normalized similarity is further converted into the transport cost used in OT. Specifically, the normalized similarity between sample 𝑖 and class 𝑗 is defined as 
+
+𝑆 𝑗𝑖 = exp  sim (𝑡 𝑗 , 𝑣 𝑖 )/ 𝜏 Í𝐿 𝑘 =1 exp (sim (𝑡 𝑘 , 𝑣 𝑖 )/ 𝜏 ) , (14) where 𝜏 is the temperature coefficient and sim (· , ·) denotes the similarity function. The corresponding matching cost is defined by 
+
+𝐷 𝑗𝑖 = − log 𝑆 𝑗𝑖 . (15) The transport plan is obtained by solving the entropic OT problem 
+
+Π∗ = arg min   
+
+> Π∈ U ( 𝑎,𝑏 )
+
+⟨Π, 𝐷 ⟩ − 𝜀𝐻 (Π), (16) where U ( 𝑎, 𝑏 ) denotes the set of admissible transport plans with prescribed marginals 𝑎 and 𝑏 , 𝜀 is the entropic regularization coeffi-cient, and 𝐻 (Π) denotes the entropy term. The optimal transport plan Π∗ is efficiently computed by the Sinkhorn algorithm. Based on Π∗, a reliability score is assigned to each sample. For sample 𝑖 , the OT-induced pseudo-label is first defined as 
+
+ˆ𝑦 𝑖 = arg max  
+
+> 𝑗
+
+Π∗ 
+
+> 𝑗𝑖
+
+. (17) The corresponding confidence score is then defined as 
+
+𝑟 𝑖 = Π∗  
+
+> ˆ𝑦 𝑖 𝑖
+
+. (18) A sample is regarded as reliable if its OT assignment is consistent with the observed label and its confidence exceeds a predefined threshold 𝛿 . Accordingly, the reliable subset and unreliable subset are defined as 
+
+B𝑥 = {( 𝑥 𝑖 , 𝑦 𝑖 ) | ˆ𝑦 𝑖 = 𝑦 𝑖 , 𝑟 𝑖 ≥ 𝛿 } . (19) 
+
+B𝑢 = {( 𝑥 𝑖 , 𝑦 𝑖 ) | ˆ𝑦 𝑖 ≠ 𝑦 𝑖 or 𝑟 𝑖 < 𝛿 } . (20) The reliable subset is optimized with standard cross-entropy loss, 
+
+LCE = − 1
+
+|B 𝑥 |∑︁ (𝑥 𝑖 ,𝑦 𝑖 ) ∈ B 𝑥 
+
+log 𝑝 𝑖,𝑦 𝑖 , (21) where 𝑝 𝑖,𝑦 𝑖 denotes the predicted probability of sample 𝑖 on its annotated class 𝑦 𝑖 . For the unreliable subset, the generalized cross-entropy loss is adopted to reduce the adverse effect of corrupted labels: 
+
+LGCE = 1
+
+|B 𝑢 |∑︁ (𝑥 𝑖 ,𝑦 𝑖 ) ∈ B 𝑢 
+
+1 − 𝑝 𝑞 𝑖,𝑦 𝑖 
+
+𝑞 , 𝑞 ∈ ( 0, 1]. (22) The overall robust training objective is therefore formulated as 
+
+Lrobust = 𝛼 LCE + ( 1 − 𝛼 )L GCE , (23) where 𝛼 controls the extent of the unreliable subset for optimization. 
+
+Remark. The above design preserves parameter-efficient for prompt learning: The pre-trained image encoder and text encoder remain frozen, while only the learnable prompt context and the lightweight visual-guided modulation modules are optimized. 
+
+## 4.2 Theoretical Analysis 
+
+Herein we explain why VisPrompt is robust under corrupted super-vision from two aspects: Cross-modal attention can extract reliable semantic signals grounded in image content, while FiLM-based gated modulation injects this signal into the prompt in a controlled manner rather than uncontrolled prompt drift. 
+
+4.2.1 Basic assumptions. For each image 𝑥 𝑖 , let 𝑠 𝑖 denote the latent clean semantic representation of the instance in the shared vision-language space. Assume that: (i) among the 𝑀 visual tokens, there exists an informative subset whose elements are close to 𝑠 𝑖 ; (ii) cross-modal attention assigns larger scores to informative tokens than to irrelevant ones, with a positive margin Δ𝑖 ; (iii) the FiLM and gating mappings are Lipschitz continuous [ 45 ], and the residual gate is bounded in [0, 1]. These assumptions are consistent with the roles of shared image-text representation, instance-conditioned prompts, and feature-wise modulation in prior studies [40, 54]. Conference’17, July 2017, Washington, DC, USA Trovato et al. 
+
+4.2.2 Cross-modal semantic aggregation. The cross-modal atten-tion output is formulated as 
+
+𝐴 𝑖 =
+
+> 𝑀
+
+∑︁ 
+
+> 𝑚 =1
+
+𝛼 𝑖,𝑚 𝑧 𝑖,𝑚 , 𝛼 𝑖,𝑚 = exp (𝑎 𝑖,𝑚 )
+
+Í𝑀 𝑟 =1 exp (𝑎 𝑖,𝑟 ) , (24) where 𝑎 𝑖,𝑚 is the attention score between the prompt query and the 
+
+𝑚 -th visual token. Since informative tokens are assumed to have a score margin over irrelevant ones, the softmax weights concentrate on semantically relevant local evidence. As a result, the aggregated feature 𝐴 𝑖 serves as a denoised approximation of the clean instance semantics 𝑠 𝑖 , and the approximation error decreases as the attention margin increases. 
+
+4.2.3 Controlled prompt modulation. Let the FiLM-based robust modulation be denoted compactly by 
+
+ˆC𝑖 = F ( C, 𝐴 𝑖 ), (25) where F summarizes the FiLM transformation, token-wise gating, residual update, and FFN refinement defined in Eqs. (12)–(15). De-note by ˆC★ 
+
+> 𝑖
+
+= F ( C, 𝑠 𝑖 ) the ideal prompt that would be obtained if the clean semantic signal 𝑠 𝑖 were directly available. Because FiLM is feature-wise and the residual gate is bounded, F is a stable Lipschitz mapping with respect to its conditioning signal, which means that perturbations in 𝐴 𝑖 cannot be arbitrarily amplified during prompt modulation. 
+
+Theorem 1. Under the above assumptions, there exists a constant 
+
+𝐿 mod > 0 such that 
+
+∥ ˆC𝑖 − ˆC★ 
+
+> 𝑖
+
+∥ ≤ 𝐿 mod 
+
+
+
+𝜀 𝑣 + 𝑐 𝑖 𝑒 −Δ𝑖 
+
+
+
+, (26) 
+
+where 𝜀 𝑣 measures the approximation error between informative visual tokens and the clean instance semantics, and 𝑐 𝑖 𝑒 −Δ𝑖 is the residual distraction term induced by irrelevant tokens. 
+
+Proof The proof follows two steps. First, by the positive atten-tion margin, the softmax mass assigned to irrelevant visual tokens decays exponentially with Δ𝑖 , so the aggregated feature 𝐴 𝑖 remains close to the clean semantic signal 𝑠 𝑖 . Second, since FiLM and gate generation are Lipschitz [ 45 ] and the residual gate is bounded, the modulation map M transmits this perturbation in a controlled way rather than amplifying it, which directly yields Eq. (26). 
+
+4.2.4 Implication for robustness. Eq. (26) shows that the deviation of the image-conditioned prompt from its ideal clean-semantic coun-terpart is jointly controlled by two factors: the quality of informa-tive local visual evidence and the attention margin over irrelevant tokens. Therefore, compared with purely label-driven prompt up-dates, the proposed design is less sensitive to corrupted supervision: Cross-modal attention suppresses noisy or irrelevant evidence at the aggregation stage, while FiLM-based gated modulation prevents such perturbations from causing excessive prompt drift. Furthermore, if the clean-prompt logit margin is sufficiently large, the final prediction remains unchanged: 
+
+𝑚 ★ 
+
+> 𝑖
+
+> 2𝐿 ℎ𝐿 mod 
+
+
+
+𝜀 𝑣 + 𝑐 𝑖 𝑒 −Δ𝑖 
+
+
+
+, (27) where 𝑚 ★ 
+
+> 𝑖
+
+is the classification margin under the ideal prompt and 
+
+𝐿 ℎ is the Lipschitz constant of the frozen classifier with respect to the prompt representation. This condition indicates that the class decision is preserved as long as the perturbation induced by noisy supervision stays below the clean margin. 
+
+## 5 Experiments 5.1 Datasets with Noisy Labels 
+
+We evaluate our method on six benchmark datasets with synthetic symmetric label noise: EuroSAT [ 11 ], Flowers102 [ 34 ], OxfordPets [ 36 ], DTD [ 4 ], UCF101 [ 39 ], and Caltech101 [ 6 ]. These datasets cover diverse recognition objectives, and their statistics are summa-rized in Table 1. Owing to their reliable annotations, they provide a suitable testbed for controlled synthetic noise injection under the few-shot setting. Meanwhile, we further conduct evaluation on Food101N [ 24 ], a real-world noisy dataset collected from web sources. Unlike synthetic corruption, its label noise arises naturally from weak supervision and imperfect data collection. Regarding the synthetic label noise patterns, we introduce both symmetric and asymmetric label noise. For symmetric noise, each class label is flipped to any other class with equal probability. In contrast, asymmetric noise assigns different flip probabilities to each class, better mirroring real-world conditions. We consider six label noise rates at 12.5%, 25%, 37.5%, 50%, 62.5%, and 75% to provide broad coverage of plausible noise rates.                                         
+
+> Table 1: Dataset Statistics.
+> Dataset Classes Train Test Noise Type Objective Caltech101 [6] 100 4,128 2,465 Synthetic Objects Flowers102 [34] 102 4,093 2,463 Synthetic Flowers OxfordPets [36] 37 2,944 3,669 Synthetic Pets UCF101 [39] 101 7,639 3,783 Synthetic Human actions DTD [4] 47 2,820 1,692 Synthetic Textures EuroSAT [11] 10 13,500 8,100 Synthetic Satellite scenes Food101N [24] 101 310,009 30,300 Real-world Food categories
+
+## 5.2 Baselines and Implementation Details 
+
+In this study, our baselines for comparison include CoOP [ 55 ], GCE [ 53 ], JoAPR [ 9], and NLPrompt [ 35 ], which are representative methods for robust prompt learning under noisy labels. We adopt the ResNet-50 (RN50) [ 10 ] and ViT-B/16 [ 21 ] as the image encoders. Unless otherwise clarified, we report the evaluation results with RN50 by default. For the fair comparison with baselines, we adopt the same hyperparameter settings as CoOP [ 55 ], JoAPR [ 9], and NLPrompt [ 35 ] with the SGD optimizer with a learning rate of 0.002 under a cosine annealing scheduler. All main experiments are conducted on an Nvidia RTX 4090 GPU and PyTorch framework [ 37 ]. We use accuracy as the main evaluation metric. Results are averaged over 3 different random seeds to ensure the fairness. Mixed precision training [ 33 ] is used to accelerate the training process. By default, the prompt length is 16, the number of attention heads is 8, no class-specific initialization is applied, and the number of shots is 16. The training batch size is 16 for all methods. We perform 200 training epochs to ensure the convergence. Seeing is Believing: Robust Vision-Guided Cross-Modal Prompt Learning under Label Noise Conference’17, July 2017, Washington, DC, USA 
+
+Table 2: Performance (%) over different datasets with varying noise rates. The bold denotes the best performance. 
+
+Dataset Method Symmetric Label Noise avg. Asymmetric Label Noise avg. 
+
+12.5% 25.0% 37.5% 50.0% 62.5% 75.0% 12.5% 25.0% 37.5% 50.0% 62.5% 75.0% Flowers102 [34] CoOp [55] 88.93 83.50 77.93 70.10 55.60 37.17 68.87 86.97 74.70 60.43 42.60 26.53 12.60 50.64 GCE [53] 88.80 88.33 86.73 84.07 78.37 70.37 82.78 88.40 86.37 80.33 69.93 61.50 39.23 70.96 JoAPR [9] 85.57 81.23 74.60 70.23 67.90 66.93 74.41 85.17 79.63 73.97 73.83 53.37 13.27 63.21 NLPrompt [35] 93.87 92.57 92.73 89.90 84.77 76.80 88.44 93.80 93.40 91.77 81.10 73.63 55.33 81.51 
+
+VisPrompt 95.57 95.29 93.99 92.37 89.77 77.73 90.79 95.33 93.87 89.61 83.84 77.69 55.63 82.66 
+
+DTD [4] CoOp [55] 56.00 49.57 43.30 34.37 27.83 17.27 38.06 55.60 47.75 38.07 29.63 20.53 11.70 33.88 GCE [53] 61.00 59.83 56.80 50.73 43.60 33.67 50.94 60.70 57.57 52.70 43.97 33.40 18.23 44.43 JoAPR [9] 58.07 57.70 56.33 53.03 48.05 29.90 50.51 52.40 56.63 53.10 48.93 40.20 28.26 46.59 NLPrompt [35] 62.97 61.23 59.17 55.17 49.03 39.80 54.56 62.30 60.60 56.47 50.80 40.27 28.37 49.80 
+
+VisPrompt 66.55 62.71 62.47 56.32 53.55 36.89 56.42 66.49 59.83 57.21 52.07 43.20 33.22 52.00 
+
+EuroSAT [11] CoOp [55] 76.50 69.23 61.67 52.33 37.63 26.70 54.01 76.00 66.27 53.83 41.17 28.00 17.43 47.12 GCE [53] 82.13 78.60 74.67 63.13 49.67 31.40 63.27 78.23 72.70 63.63 45.30 22.90 12.10 49.14 JoAPR [9] 75.13 61.10 60.90 63.63 38.97 27.33 54.51 69.37 67.30 59.40 47.60 33.93 17.50 49.18 NLPrompt [35] 81.4 76.51 75.58 65.02 58.40 31.00 64.65 80.01 77.4 70.50 54.30 23.93 13.01 53.19 VisPrompt 82.83 80.58 76.90 67.70 63.49 36.35 67.98 81.95 80.43 69.16 54.52 34.78 30.72 58.59 
+
+OxfordPets [36] CoOp [55] 76.50 66.73 60.33 47.03 35.77 24.60 51.83 76.10 66.20 52.53 38.73 26.63 14.90 45.85 GCE [53] 85.63 84.60 83.67 79.23 71.40 53.17 76.28 85.50 83.03 76.73 68.07 50.70 31.97 66.00 JoAPR [9] 84.00 83.26 83.20 83.10 82.40 74.40 81.73 82.90 83.40 79.07 75.84 52.74 43.57 69.59 NLPrompt [35] 86.13 83.53 83.51 81.51 78.74 59.41 78.81 85.93 84.22 79.31 77.62 61.94 36.71 70.96 VisPrompt 89.94 89.56 89.78 89.75 88.80 87.14 89.16 90.00 89.67 89.59 89.48 88.74 86.75 89.04 
+
+UCF101 [39] CoOp [55] 69.03 63.40 58.23 49.73 40.83 26.30 51.25 67.23 58.07 46.47 34.43 23.67 13.17 40.51 GCE [53] 74.00 73.63 72.57 69.37 66.00 57.07 68.77 73.90 71.87 67.97 62.23 52.50 36.37 60.81 JoAPR [9] 72.83 71.17 70.37 67.63 65.30 57.67 67.50 72.07 69.80 64.10 59.17 56.07 47.46 61.45 NLPrompt [35] 74.83 73.40 72.83 70.33 68.10 60.53 70.00 74.90 73.53 71.03 65.97 58.97 49.27 65.61 VisPrompt 78.72 78.88 76.98 74.99 70.34 65.40 74.22 78.80 77.43 72.93 67.43 56.73 48.96 67.05 
+
+Caltech101 [6] CoOp [55] 86.43 81.03 76.73 70.90 61.33 46.90 70.55 84.93 75.23 62.87 49.43 33.57 20.33 54.39 GCE [53] 92.00 90.90 90.80 89.30 86.70 79.03 88.12 91.27 91.20 89.73 85.80 78.20 62.07 83.05 JoAPR [9] 90.30 90.45 89.90 88.27 86.93 83.93 88.30 90.30 89.30 88.30 88.73 85.80 81.90 87.39 NLPrompt [35] 91.73 91.13 90.77 89.93 88.30 86.70 89.76 91.60 91.17 90.20 89.27 86.17 81.07 88.25 
+
+VisPrompt 93.14 92.49 91.68 91.16 90.18 89.49 91.36 92.62 92.33 90.79 88.72 89.37 80.85 89.11 4 8 16 32 
+
+> Context Length
+
+70 
+
+80 
+
+90 
+
+> Accuracy (%)
+> Noise Rate = 0.125
+
+4 8 16 32 
+
+> Context Length
+
+70 
+
+80 
+
+90 
+
+> Accuracy (%)
+> Noise Rate = 0.25
+
+4 8 16 32 
+
+> Context Length
+
+60 
+
+70 
+
+80 
+
+90 
+
+> Accuracy (%)
+> Noise Rate = 0.375
+
+4 8 16 32 
+
+> Context Length
+
+60 
+
+70 
+
+80 
+
+> Accuracy (%)
+> Noise Rate = 0.5
+
+4 8 16 32 
+
+> Context Length
+
+40 
+
+50 
+
+60 
+
+70 
+
+> Accuracy (%)
+> Noise Rate = 0.625
+
+4 8 16 32 
+
+> Context Length
+
+30 
+
+40 
+
+50 
+
+> Accuracy (%)
+> Noise Rate = 0.75
+
+Figure 3: Test accuracy (%) under different context token lengths 
+
+Table 3: Performance on Food101N dataset. 
+
+Method CoOp [55] GCE [53] JoAPR [9] NLPrompt [35] VisPrompt 
+
+Accuracy (%) 69.50 71.32 72.57 76.46 79.20 
+
+## 5.3 Main Experiments 
+
+Table 2 summarizes the classification accuracy of VisPrompt and four strong baselines on six benchmarks under both symmetric and asymmetric label noise. Overall, VisPrompt achieves the best performance in all datasets and in almost all noise settings. Av-eraged over all noise rates, our method outperforms the strong baseline NLPrompt on every dataset for both noise types. The gains are particularly clear on Caltech101. On Flowers102, where the Conference’17, July 2017, Washington, DC, USA Trovato et al. 
+
+underlying task is relatively easier, VisPrompt still delivers con-sistent improvements and maintains high accuracy even at very large noise rates. As shown at Table 3, on the real-world Food101N dataset, our framework further delivers a 2.74% improvement. An-other important observation is that VisPrompt degrades much more gracefully as the noise rate increases. Under 75% asymmetric noise, text-only prompt learning (CoOp) and loss-based robust methods (GCE, JoAPR) suffer large drops on several datasets, while Vis-Prompt preserves significantly higher accuracy. On EuroSAT, for instance, VisPrompt improves the average accuracy under asym-metric noise from about 53% with NLPrompt to about 59%, and at the most challenging 75% noise rate, it yields more than 15 points gain over loss-based baselines. These results indicate that coupling prompt learning with image–guided FiLM gating provides robust-ness not only at moderate noise rates but also in the extremely noisy regime, supporting our claim that instance level visual guidance is an effective way to combat label noise. 
+
+## 5.4 Scalability on Diverse Image Encoders 
+
+We evaluate the scalability of the proposed model on the EuroSAT dataset under symmetric label noise with a noise rate of 0.125. We consider several CLIP visual backbones, including Vision Transformer-Base/16 (ViT-B/16), Vision Transformer-Base/32 (ViT-B/32), ResNet-50x16 (RN50x16), ResNet-50x4 (RN50x4), ResNet-50 (RN50), and ResNet-101 (RN101). As reported in Table 4, the performance re-mains relatively stable across architectures, suggesting that our approach is not sensitive to the specific backbone choice. More importantly, the consistent gains across both transformer-based and ResNet-based encoders indicate the scalability of the proposed method: it can be seamlessly transferred to backbones with dif-ferent model capacities and architectural biases without requiring backbone-specific redesign. This result shows that our framework is compatible with a wide spectrum of CLIP variants, from relatively compact models to stronger visual encoders. 
+
+Table 4: Accuracy (%) over vision backbones on EuroSAT dataset. 
+
+Backbones ViT-B/16 ViT-B/32 RN50x16 RN50x4 RN50 RN101 
+
+Accuracy (%) 83.62 82.83 82.78 83.67 82.83 82.69 
+
+## 5.5 Ablation Study 
+
+To evaluate the role of image information in guiding prompt gen-eration and the effect of the FiLM [ 40 ] gate in mitigating data drift, we conduct ablation experiments on the EuroSAT dataset, as reported in Fig. 4. With the CLIP backbone frozen, we compare three variants: w/o vision refers a text-only baseline without visual guidance, w/ vision(no FiLM) refers an image-guided variant that introduces cross-modal residuals but disables the FiLM gate, and the full VisPrompt model that enables both image guidance and the FiLM gate. EuroSAT mainly consists of aerial remote-sensing images, where language priors are relatively weak while visual textures and structural cues are more prominent, which makes it well suited for examining the effectiveness of the vision-to-text pathway and the gating mechanism. The results show that adding image guidance without gating yields only limited improvements over the text-only counterpart, and its advantage quickly vanishes as the noise rate increases, par-ticularly under asymmetric noise. In contrast, VisPrompt consis-tently outperforms the other two variants across all noise rates and obtains larger gains in high-noise regimes. Without the gating mechanism, cross-modal residuals integrate image evidence into all context tokens without distinction, so incorrect labels or spurious visual patterns can amplify their interference on prompt learning. The FiLM gate parameterizes the injection strength as a learnable trust coefficient: It increases the degree of integration when visual cues are consistent with textual or class semantics, and reduces it when labels conflict with images or visual evidence is ambiguous. It is worth noting that the parameters introduced by FiLM account for only 0.3% of the total model parameters, making it lightweight and efficient. Overall, image guidance provides additional information beyond text priors, and the FiLM gate transforms this information into stable generalization under noisy supervision. 12.5 25.0 37.5 50.0 62.5 75.0                       
+
+> Noise rate (%)
+> 30
+> 50
+> 70
+> Top-1 accuracy (%)
+> Symmetric noise
+> 12.5 25.0 37.5 50.0 62.5 75.0
+> Noise rate (%)
+> 10
+> 30
+> 50
+> 70
+> Asymmetric noise
+> 12.5 25.0 37.5 50.0 62.5 75.0
+> Noise rate (%)
+> 0
+> 5
+> 10
+> 15
+> Accuracy gain (%)
+> 1.5 2.2
+> 6.3
+> 4.7
+> 0.8
+> 5.6
+> 2.2
+> 3.6
+> 7.0 7.3
+> 0.1
+> 5.3
+> Symmetric noise
+> 12.5 25.0 37.5 50.0 62.5 75.0
+> Noise rate (%)
+> 0
+> 5
+> 10
+> 15
+> 2.2
+> 7.8
+> 10.0
+> 8.3 9.0
+> 16.3
+> 2.0
+> 8.9 8.9
+> 12.2
+> 7.0
+> 11.6
+> Asymmetric noise
+> (a) Comparison under different noise types
+> (b) Improvement over baselines
+> w/o vision w/ vision (no FiLM) VisPrompt
+> vs w/o vision vs w/ vision (no FiLM)
+
+Figure 4: Ablation performance comparison. 
+
+## 5.6 Sensitivity on Different Shots 
+
+To illustrate the impact of the different number of shots within our framework, we conduct experiments on the EuroSAT dataset under the symmetric noise, using training sample counts of [1, 2, 4, 8, 16]. The results are shown in Table 5, which reflects that our method can steadily benefit from additional shots and maintain the relatively stable performance as the noise rate increases, indicating strong robustness against label noise and high sample efficiency across a wide range of noise rates. 
+
+## 5.7 Sensitivity on the Context Length 
+
+To examine the effect of the context token length under varying noise conditions, we conduct experiments on the EuroSAT dataset with context lengths of [4, 8, 16, 32] under symmetric label noise rates ranging from 12.5% to 75.0%. The results are shown in Fig. 3. The performance remains relatively stable across different context lengths, particularly under low and moderate noise rates. Although some fluctuations appear as the noise rate increases, no consistent Seeing is Believing: Robust Vision-Guided Cross-Modal Prompt Learning under Label Noise Conference’17, July 2017, Washington, DC, USA 
+
+Table 5: Accuracy (%) under symmetric noise at different noise rates and shot settings. 
+
+Shots Noise Rates 12.5% 25.0% 37.5% 50.0% 62.5% 75.0% 1 43.15 42.74 33.84 28.31 27.11 19.36 2 57.00 45.52 37.17 27.13 26.60 20.18 4 72.59 62.37 55.36 54.63 42.37 24.23 8 76.12 75.89 67.38 58.46 38.53 29.77 16 82.83 80.58 75.50 67.70 59.16 36.35 
+
+monotonic relationship is observed between context length and final accuracy. These results indicate that the robustness of our framework does not rely on a narrowly tuned token length and remains effective across a broad range of context configurations. 
+
+## 6 Discussion 
+
+For limitations, though VisPrompt demonstrates strong robustness to label noise across multiple benchmarks, several limitations still remain. First, the current study is mainly conducted on image clas-sification tasks based on CLIP-style vision-language backbones, which means the generality of the framework beyond this setting has not yet been fully validated. Second, our experiments primarily consider synthetic symmetric and asymmetric label noise, together with only one real-world noisy dataset. As a result, the current evaluation does not yet cover a sufficiently broad range of realistic noise conditions. Third, compared with text-only prompt learning methods, the introduced cross-modal FiLM block brings a moderate amount of additional computational cost. While this overhead is rel-atively limited in our experiments, it may still become a constraint in highly resource-restricted deployment scenarios. Regarding future research, there are several directions. First, it would be valuable to extend VisPrompt beyond image classification to more challenging vision tasks, such as object detection, semantic segmentation, and video understanding, in order to assess its effec-tiveness in broader multimodal learning settings. Second, future work could investigate more diverse and realistic noise patterns, in-cluding instance-dependent noise and open-set noise, which would enable a more comprehensive evaluation of the robustness of the proposed framework. Third, further efforts can be devoted to im-proving the computational efficiency of the cross-modal FiLM block, making the method more suitable for deployment in extremely resource-constrained environments. 
+
+## 7 Conclusion 
+
+We present VisPrompt, a noise robust prompt learning framework that exploits cross-modal interaction to more fully leverage im-age information and align image and prompt representations. By utilizing visual features as instance-level guidance, VisPrompt en-ables more accurate prompt generation than relying on text la-bels alone. The FiLM gating module adaptively regulates visual injection at both token and instance levels, mitigating the adverse effect caused by label noise. Extensive experiments on multiple benchmark datasets with both synthetic and real-world label noise, demonstrate that VisPrompt consistently outperforms existing prompt learning based baselines while remaining parameter efficient. 
+
+## References 
+
+[1] Chengyi Cai, Zesheng Ye, Lei Feng, Jianzhong Qi, and Feng Liu. 2024. Sample-specific Masks for Visual Reprogramming-based Prompting. arXiv:2406.03150 [cs.LG] https://arxiv.org/abs/2406.03150 [2] Chengyi Cai, Zesheng Ye, Lei Feng, Jianzhong Qi, and Feng Liu. 2025. Attribute-based Visual Reprogramming for Vision-Language Models. arXiv:2501.13982 [cs.CV] https://arxiv.org/abs/2501.13982 [3] Haw-Shiuan Chang, Erik Learned-Miller, and Andrew McCallum. 2017. Active Bias: Training More Accurate Neural Networks by Emphasizing High Variance Samples. Advances in Neural Information Processing Systems 30 (2017). [4] Mircea Cimpoi, Subhransu Maji, Iasonas Kokkinos, Sammy Mohamed, and An-drea Vedaldi. 2014. Describing Textures in the Wild. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition . 3606–3613. [5] Marco Cuturi. 2013. Sinkhorn Distances: Lightspeed Computation of Optimal Transport. In Advances in Neural Information Processing Systems , C.J. Burges, L. Bottou, M. Welling, Z. Ghahramani, and K.Q. Weinberger (Eds.), Vol. 26. Cur-ran Associates, Inc. https://proceedings.neurips.cc/paper_files/paper/2013/file/ af21d0c97db2e27e13572cbf59eb343d-Paper.pdf [6] Li Fei-Fei, Rob Fergus, and Pietro Perona. 2004. Learning Generative Visual Models from Few Training Examples: An Incremental Bayesian Approach Tested on 101 Object Categories. In 2004 Conference on Computer Vision and Pattern Recognition Workshop . IEEE, 178–178. [7] Lei Feng, Senlin Shu, Zhuoyi Lin, Fengmao Lv, Li Li, and Bo An. 2021. Can Cross Entropy Loss Be Robust to Label Noise?. In Proceedings of the Twenty-Ninth International Conference on International Joint Conferences on Artificial Intelligence .2206–2212. [8] Aritra Ghosh, Himanshu Kumar, and P. Shanti Sastry. 2017. Robust Loss Func-tions under Label Noise for Deep Neural Networks. In Proceedings of the AAAI Conference on Artificial Intelligence , Vol. 31. [9] Y. Guo et al . 2024. JoAPR: Cleaning the Lens of Prompt Learning for Vision-Language Models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) .[10] Kaiming He, X. Zhang, Shaoqing Ren, and Jian Sun. 2015. Deep Residual Learning for Image Recognition. 2016 IEEE Conference on Computer Vision and Pattern Recognition (CVPR) (2015), 770–778. https://api.semanticscholar.org/CorpusID: 206594692 [11] Patrick Helber, Benjamin Bischke, Andreas Dengel, and Damian Borth. 2019. Eurosat: A Novel Dataset and Deep Learning Benchmark for Land Use and Land Cover Classification. IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing 12, 7 (2019), 2217–2226. [12] Dan Hendrycks, Kimin Lee, and Mantas Mazeika. 2019. Using Pre-Training Can Improve Model Robustness and Uncertainty. In International Conference on Machine Learning . PMLR, 2712–2721. [13] Changhui Hu, Bhalaji Nagarajan, Ricardo Marques, and Petia Radeva Ivanova. 2025. Dual Polarity Prompts with Stochastic Entropy Perturbation for Label Noise. In 36th British Machine Vision Conference 2025, BMVC 2025, Sheffield, UK, November 24-27, 2025 . BMVA. https://bmva-archive.org.uk/bmvc/2025/assets/ papers/Paper_992/paper.pdf [14] Chao Jia, Yinfei Yang, Ye Xia, Yi-Ting Chen, Zarana Parekh, Hieu Pham, Quoc Le, Yun-Hsuan Sung, Zhen Li, and Tom Duerig. 2021. Scaling up visual and vision-language representation learning with noisy text supervision. In ICML .PMLR, 4904–4916. [15] Menglin Jia, Luming Tang, Bor-Chun Chen, Claire Cardie, Serge Belongie, Bharath Hariharan, and Ser-Nam Lim. 2022. Visual Prompt Tuning. In European Conference on Computer Vision (ECCV) .[16] Xuefeng Jiang, Sheng Sun, Jia Li, Jingjing Xue, Runhan Li, Zhiyuan Wu, Gang Xu, Yuwei Wang, and Min Liu. 2024. Tackling Noisy Clients in Federated Learning with End-to-end Label Correction. arXiv preprint arXiv:2408.04301 (2024). [17] Xuefeng Jiang, Sheng Sun, Yuwei Wang, and Min Liu. 2022. Towards federated learning against noisy labels via local self-regularization. In Proceedings of the 31st ACM International Conference on Information & Knowledge Management .862–873. [18] Xuefeng Jiang, Tian Wen, Sheng Sun, Jinliang Yuan, Huashuo Liu, Peng Li, Lihua Wu, Yuwei Wang, and Min Liu. 2025. Representation Optimal Matching for Federated Learning with Noisy Labels in Remote Sensing. IEEE Transactions on Mobile Computing (2025). doi:10.1109/TMC.2025.3649179 [19] Baoshuo Kan, Teng Wang, Wenpeng Lu, Xiantong Zhen, Weili Guan, and Feng Zheng. 2023. Knowledge-Aware Prompt Tuning for Generalizable Vision-Language Models. 2023 IEEE/CVF International Conference on Computer Vision (ICCV) (2023), 15624–15634. https://api.semanticscholar.org/CorpusID:261064889 [20] Muhammad Uzair Khattak, Hanoona Rasheed, Muhammad Maaz, Salman Khan, and Fahad Shahbaz Khan. 2023. Maple: Multi-modal Prompt Learning. In Pro-ceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition .Conference’17, July 2017, Washington, DC, USA Trovato et al. 
+
+19113–19122. [21] Alexander Kolesnikov, Alexey Dosovitskiy, Dirk Weissenborn, Georg Heigold, Jakob Uszkoreit, Lucas Beyer, Matthias Minderer, Mostafa Dehghani, Neil Houlsby, Sylvain Gelly, Thomas Unterthiner, and Xiaohua Zhai. 2021. An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale. [22] Marc Lafon, Elias Ramzi, Clément Rambour, Nicolas Audebert, and Nicolas Thome. 2024. Gallop: Learning global and local prompts for vision-language models. In 
+
+European Conference on Computer Vision . Springer, 264–282. [23] Kimin Lee, Sukmin Yun, Kibok Lee, Honglak Lee, Bo Li, and Jinwoo Shin. 2019. Robust Inference via Generative Classifiers for Handling Noisy Labels. In Inter-national Conference on Machine Learning . PMLR, 3763–3772. [24] Kuang-Huei Lee, Xiaodong He, Lei Zhang, and Linjun Yang. 2018. Cleannet: Transfer Learning for Scalable Image Classifier Training with Label Noise. In 
+
+Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition .5447–5456. [25] Brian Lester, Rami Al-Rfou, and Noah Constant. 2021. The Power of Scale for Parameter-Efficient Prompt Tuning. In Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing . Association for Computational Linguistics, Online and Punta Cana, Dominican Republic, 3045–3059. doi:10. 18653/v1/2021.emnlp-main.243 [26] Junnan Li, Richard Socher, and Steven CH Hoi. 2020. DivideMix: Learning with Noisy Labels as Semi-supervised Learning. In International Conference on Learning Representations .[27] Xiang Lisa Li and Percy Liang. 2021. Prefix-Tuning: Optimizing Continuous Prompts for Generation. In Proceedings of the 59th Annual Meeting of the Associa-tion for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing (Volume 1: Long Papers) , Chengqing Zong, Fei Xia, Wenjie Li, and Roberto Navigli (Eds.). Association for Computational Linguistics, Online, 4582–4597. doi:10.18653/v1/2021.acl-long.353 [28] Zheng Li, Yibing Song, Ming-Ming Cheng, Xiang Li, and Jian Yang. 2025. Ad-vancing textual prompt learning with anchored attributes. In Proceedings of the IEEE/CVF International Conference on Computer Vision . 3618–3627. [29] Zongxia Li, Xiyang Wu, Hongyang Du, Fuxiao Liu, Huy Nghiem, and Guangyao Shi. 2025. A Survey of State of the Art Large Vision Language Models: Alignment, Benchmark, Evaluations and Challenges. arXiv:2501.02189 [cs.CV] https://arxiv. org/abs/2501.02189 [30] Xiao Liu, Kaixuan Ji, Yicheng Fu, Zhengxiao Du, Zhilin Yang, and Jie Tang. 2021. P-Tuning v2: Prompt Tuning Can Be Comparable to Fine-tuning Universally Across Scales and Tasks. CoRR abs/2110.07602 (2021). arXiv:2110.07602 https: //arxiv.org/abs/2110.07602 [31] Yueming Lyu and Ivor W. Tsang. 2019. Curriculum Loss: Robust Learning and Generalization against Label Corruption. arXiv preprint arXiv:1905.10045 (2019). arXiv:1905.10045 [32] Aditya Krishna Menon, Ankit Singh Rawat, Sashank J. Reddi, and Sanjiv Kumar. 2020. Can Gradient Clipping Mitigate Label Noise?. In International Conference on Learning Representations .[33] Paulius Micikevicius, Sharan Narang, Jonah Alben, Gregory F. Diamos, Erich Elsen, David García, Boris Ginsburg, Michael Houston, Oleksii Kuchaiev, Ganesh Venkatesh, and Hao Wu. 2018. Mixed Precision Training. In 6th International Conference on Learning Representations, ICLR 2018, Vancouver, BC, Canada, April 30 - May 3, 2018, Conference Track Proceedings . OpenReview.net. https://openreview. net/forum?id=r1gs9JgRZ [34] Maria-Elena Nilsback and Andrew Zisserman. 2008. Automated Flower Clas-sification over a Large Number of Classes. In 2008 Sixth Indian Conference on Computer Vision, Graphics & Image Processing . IEEE, 722–729. [35] B. Pan et al . 2025. NLPrompt: Noise-Label Prompt Learning for Vision-Language Models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) .[36] Omkar M. Parkhi, Andrea Vedaldi, Andrew Zisserman, and C. V. Jawahar. 2012. Cats and Dogs. In 2012 IEEE Conference on Computer Vision and Pattern Recogni-tion . IEEE, 3498–3505. [37] Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer, James Bradbury, Gre-gory Chanan, Trevor Killeen, Zeming Lin, Natalia Gimelshein, and Luca Antiga. 2019. Pytorch: An Imperative Style, High-Performance Deep Learning Library. 
+
+Advances in neural information processing systems 32 (2019). [38] Deep Patel and P. S. Sastry. 2023. Adaptive Sample Selection for Robust Learn-ing under Label Noise. In Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision . 3932–3942. [39] Yuxin Peng, Yunzhen Zhao, and Junchao Zhang. 2018. Two-Stream Collabora-tive Learning with Spatial-Temporal Attention for Video Classification. IEEE Transactions on Circuits and Systems for Video Technology 29, 3 (2018), 773–786. [40] Ethan Perez, Florian Strub, Harm de Vries, Vincent Dumoulin, and Aaron C. Courville. 2018. FiLM: Visual Reasoning with a General Conditioning Layer. In 
+
+AAAI .[41] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, and Jack Clark. 2021. Learning transferable visual models from natural language supervision. In 
+
+International conference on machine learning . PMLR, 8748–8763. [42] René Ranftl, Alexey Bochkovskiy, and Vladlen Koltun. 2021. Vision Transformers for Dense Prediction. ArXiv preprint (2021). [43] Hwanjun Song, Minseok Kim, and Jae-Gil Lee. 2019. Selfie: Refurbishing Un-clean Samples for Robust Deep Learning. In International Conference on Machine Learning . PMLR, 5907–5915. [44] Jie Tan, Yu Rong, Kangfei Zhao, Tian Bian, Tingyang Xu, Junzhou Huang, Hong Cheng, and Helen Meng. 2024. Natural Language-Assisted Multi-modal Med-ication Recommendation. In Proceedings of the 33rd ACM International Con-ference on Information and Knowledge Management (Boise, ID, USA) (CIKM ’24) . Association for Computing Machinery, New York, NY, USA, 2200–2209. doi:10.1145/3627673.3679529 [45] Yusuke Tsuzuku, Issei Sato, and Masashi Sugiyama. 2018. Lipschitz-Margin Train-ing: Scalable Certification of Perturbation Invariance for Deep Neural Networks. In Advances in Neural Information Processing Systems , S. Bengio, H. Wallach, H. Larochelle, K. Grauman, N. Cesa-Bianchi, and R. Garnett (Eds.), Vol. 31. Cur-ran Associates, Inc. https://proceedings.neurips.cc/paper_files/paper/2018/file/ 485843481a7edacbfce101ecb1e4d2a8-Paper.pdf [46] Tong Wei, Hao-Tian Li, Chun-Shu Li, Jiang-Xin Shi, Yu-Feng Li, and Min-Ling Zhang. 2024. Vision-Language Models are Strong Noisy Label Detectors. In 
+
+Advances in Neural Information Processing Systems 37 .[47] Cheng-En Wu, Yu Tian, Haichao Yu, Heng Wang, Pedro Morgado, Yu Hen Hu, and Linjie Yang. 2023. Why Is Prompt Tuning for Vision-Language Models Robust to Noisy Labels?. In Proceedings of the IEEE/CVF International Conference on Computer Vision . 15488–15497. [48] Xiaobo Xia, Tongliang Liu, Bo Han, Chen Gong, Nannan Wang, Zongyuan Ge, and Yi Chang. 2020. Robust Early-Learning: Hindering the Memorization of Noisy Labels. In International Conference on Learning Representations .[49] Xiaobo Xia, Tongliang Liu, Nannan Wang, Bo Han, Chen Gong, Gang Niu, and Masashi Sugiyama. 2019. Are Anchor Points Really Indispensable in Label-Noise Learning? Advances in neural information processing systems 32 (2019). [50] Jiangchao Yao, Jiajie Wang, Ivor W. Tsang, Ya Zhang, Jun Sun, Chengqi Zhang, and Rui Zhang. 2018. Deep Learning from Noisy Image Labels with Quality Embedding. IEEE Transactions on Image Processing 28, 4 (2018), 1909–1922. [51] Yu Yao, Tongliang Liu, Bo Han, Mingming Gong, Jiankang Deng, Gang Niu, and Masashi Sugiyama. 2020. Dual T: Reducing Estimation Error for Transition Matrix in Label-Noise Learning. Advances in neural information processing systems 33 (2020), 7260–7271. [52] Xueyi Zhang, Peiyin Zhu, Yuan Liao, Xiyu Wang, Mingrui Lao, Siqi Cai, Yanming Guo, and Haizhou Li. 2025. TrustCLIP: Learning from Noisy Labels via Semantic Label Verification and Trust-aligned Gradient Projection. In Proceedings of the 33rd ACM International Conference on Multimedia (Dublin, Ireland) (MM ’25) .Association for Computing Machinery, New York, NY, USA, 4388–4397. doi:10. 1145/3746027.3755415 [53] Zhilu Zhang and Mert R. Sabuncu. 2018. Generalized cross entropy loss for training deep neural networks with noisy labels. In Proceedings of the 32nd International Conference on Neural Information Processing Systems (Montréal, Canada) (NIPS’18) . Curran Associates Inc., Red Hook, NY, USA, 8792–8802. [54] Kaiyang Zhou, Jingkang Yang, Chen Change Loy, and Ziwei Liu. 2022. Conditional Prompt Learning for Vision-Language Models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition . 16816–16825. [55] Kaiyang Zhou, Jingkang Yang, Chen Change Loy, and Ziwei Liu. 2022. Learning to prompt for vision-language models. International Journal of Computer Vision 
+
+130, 9 (2022), 2337–2348. ISBN: 0920-5691 Publisher: Springer.

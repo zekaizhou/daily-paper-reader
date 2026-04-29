@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.12813v1/fig-001.webp",
+      "caption": "Table 1: Comparison with representative supervised and few-shot methods on five VQA benchmarks spanning both UGC and AIGC scenarios. Methods marked with ∗ are designed for AIGC-VQA and are therefore reported only on AIGC benchmarks.",
+      "page": 6,
+      "index": 1,
+      "width": 1044,
+      "height": 669
+    },
+    {
+      "url": "assets/figures/arxiv/2604.12813v1/fig-002.webp",
+      "caption": "Figure 2: Motivation for decoupling quality perception and residual calibration. (a) Frozen MLLM quality predictions are already correlated with MOS, indicating a useful base quality prior. (b) The residual error shows a clear dependency on the base score, suggesting that the remaining discrepancy is structured and learnable. (c) Residual errors are concentrated around zero, implying that most samples require only limited correction. These results motivate calibrating a perceptually grounded base score rather than relearning video quality prediction end-to-end. All results are computed on the KoNViD-1k dataset for analysis.",
+      "page": 2,
+      "index": 2,
+      "width": 1031,
+      "height": 329
+    },
+    {
+      "url": "assets/figures/arxiv/2604.12813v1/fig-003.webp",
+      "caption": "Figure 4: Data efficiency comparison under different training ratios on KoNViD-1k and YouTube-UGC.",
+      "page": 8,
+      "index": 3,
+      "width": 496,
+      "height": 247
+    },
+    {
+      "url": "assets/figures/arxiv/2604.12813v1/fig-004.webp",
+      "caption": "Figure 3: Overview of the proposed DPC-VQA framework. A frozen MLLM first produces a base quality estimate and perceptual representations as a quality prior. A lightweight base-aware residual calibration branch then predicts token-wise corrections conditioned on the base estimate and aggregates them into a residual adjustment. The final quality score is obtained by combining the base estimate with the aggregated residual, enabling efficient adaptation under limited MOS supervision.",
+      "page": 4,
+      "index": 4,
+      "width": 1040,
+      "height": 406
+    }
+  ]
+}

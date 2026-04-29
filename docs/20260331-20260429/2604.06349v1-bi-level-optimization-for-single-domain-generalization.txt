@@ -1,0 +1,463 @@
+Title: Bi-Level Optimization for Single Domain Generalization
+
+URL Source: https://arxiv.org/pdf/2604.06349v1
+
+Published Time: Thu, 09 Apr 2026 00:10:40 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# Bi-Level Optimization for Single Domain Generalization 
+
+# Marzi Heidari ∗, Hanping Zhang ∗, Hao Yan ∗, Yuhong Guo ∗† ∗School of Computer Science, Carleton University, Ottawa, Canada 
+
+> †
+
+# Canada CIFAR AI Chair, Amii, Canada 
+
+# Abstract 
+
+Generalizing from a single labeled source domain to un-seen target domains, without access to any target data during training, remains a fundamental challenge in ro-bust machine learning. We address this underexplored setting, known as Single Domain Generalization (SDG), by proposing BiSDG, a bi-level optimization framework that explicitly decouples task learning from domain mod-eling. BiSDG simulates distribution shifts through sur-rogate domains constructed via label-preserving transfor-mations of the source data. To capture domain-specific context, we propose a domain prompt encoder that gener-ates lightweight modulation signals to produce augmenting features via feature-wise linear modulation. The learning process is formulated as a bi-level optimization problem: the inner objective optimizes task performance under fixed prompts, while the outer objective maximizes generaliza-tion across the surrogate domains by updating the domain prompt encoder. We further develop a practical gradient ap-proximation scheme that enables efficient bi-level training without second-order derivatives. Extensive experiments on various SGD benchmarks demonstrate that BiSDG consis-tently outperforms prior methods, setting new state-of-the-art performance in the SDG setting. 
+
+# 1. Introduction 
+
+Traditional deep learning methods typically assume that training and testing data share the same distribution, re-sulting in limited generalization to out-of-domain scenar-ios. Domain Generalization (DG) addresses this limitation by training models that can generalize to unseen target do-mains. Recent DG approaches either aim to learn domain-invariant representations via feature alignment [21, 23], simulate train-test splits through meta-learning [10, 19], or seek flat minima of empirical risk to improve robustness [3, 38]. However, conventional DG assumes access to data from multiple source domains, which restricts its applicabil-ity in data-sparse scenarios. Additionally, the typical evalu-ation setting involves testing on a single target domain, lim-iting assessment of generalization to diverse out-of-domain scenarios. Single Domain Generalization (SDG) addresses these limitations by training on a single source domain while evaluating on multiple unseen target domains, thus pos-ing a more challenging and realistic setting. Since stan-dard DG approaches often rely on multi-domain data, they are not directly applicable to SDG. Early SDG methods [5, 6, 9] introduce various data augmentation techniques to enhance in-domain generalization and robustness to corrup-tions. Other methods [33, 40, 41] adopt adversarial data augmentation to improve out-of-domain generalization per-formance. Additionally, generative approaches [4, 20, 30] synthesize auxiliary data to aid generalization from a sin-gle domain. To date, most existing SDG methods adopt target-agnostic strategies, due to the constraint of not ac-cessing target domains. Such strategies face a “lottery ticket” dilemma: models tend to perform well on target do-mains similar to the augmented source domain, but poorly on dissimilar ones. This motivates us to propose a domain-aware method for SDG that respects the constraint of non-access to target do-mains, while achieving improved self-adaptability. We ex-plicitly extract domain knowledge using a domain prompt encoder and inject this knowledge into the feature represen-tations. The prediction model is trained to process these fused features effectively. Since a single domain cannot support training a generalizable domain prompt encoder alone, we simulate a diverse set of surrogate domains by applying groups of semantically coherent data transforma-tions to the source domain data. Inspired by FiLM [29], we modulate features using domain-specific prompts via feature-wise linear modulation. A key challenge is that joint optimization of the task model and the domain prompt encoder does not guaran-tee meaningful domain knowledge extraction or effective feature fusion to support generalization. This often leads to a trivial solution where both components collapse into a naive data-augmentation-based model. In practice, the task model benefits from a well-trained domain prompt en-coder, while the encoder’s effectiveness also depends on 
+
+> arXiv:2604.06349v1 [cs.LG] 7 Apr 2026
+
+a well-optimized task model. To address this interdepen-dence, we formulate SDG as a bi-level optimization prob-lem. The inner objective optimizes the task model using the original data from the training domain, while the outer objective optimizes the domain prompt encoder using data from the synthetic surrogate domains. We solve this bi-level objective using gradient estimation via implicit differentia-tion and gradient approximation. We evaluate our proposed method, Bi-level Optimization for Single Domain General-ization (BiSDG), under the standard SDG setting and com-pare it with existing baselines. Experimental results demon-strate that BiSDG achieves state-of-the-art performance on widely used SDG benchmarks. 
+
+# 2. Related Works 
+
+2.1. Single-Domain Generalization 
+
+Single Domain Generalization (SDG) aims to train mod-els that can generalize to unseen test domains using data from only a single training domain. This setting is more challenging than traditional multi-source domain general-ization, which assumes access to data from multiple train-ing domains. Existing SDG approaches generally fall into three main groups. The first group focuses on traditional data augmenta-tion techniques to enhance in-domain generalization and ro-bustness to corruptions. For instance, CutOut [9] improves regularization by randomly masking square regions in in-put images, encouraging robust feature learning. MixUp [37] improves generalization by training on convex combi-nations of input pairs and their labels. AugMix [13] en-hances robustness and uncertainty estimation by stochas-tically mixing multiple augmentations of an image and applying a consistency loss. AutoAugment [5] learns optimal augmentation policies by exploring combinations of transformations with different probabilities and magni-tudes, while RandAugment [6] simplifies the process by re-moving the search phase and using a reduced, interpretable space of augmentations. Although these techniques im-prove robustness and in-domain performance, they do not explicitly address out-of-domain generalization. A more re-cent approach, ACVC [7], applies traditional visual corrup-tions and enforces attention consistency between original and corrupted versions to improve domain generalization. A second line of research introduces adversarial data augmentation methods aimed at out-of-domain generaliza-tion. ADA [33] proposes an iterative strategy that generates hard adversarial examples from fictitious target domains, using only single-source training data. ME-ADA [40] in-corporates a regularization term derived from the informa-tion bottleneck principle to encourage high-entropy pertur-bations, improving robustness to domain shifts. Zhang et al. [39] propose adversarial perturbations applied to feature statistics, enabling models to learn representations that are robust to style variations. AdvST [41] treats standard aug-mentations as learnable semantic transformations and uses adversarial training to create diverse semantic variants, op-timizing a distributionally robust objective to enhance gen-eralization to unseen domains. A third group of methods leverages generative model-ing to synthesize auxiliary training data that simulate do-main shifts. M-ADA [30] generates challenging fictitious domains through adversarial training in a meta-learning framework, guided by a Wasserstein Auto-Encoder. L2D [34] introduces a style-complement module that diversifies training data by synthesizing style-varied but semantically consistent images using mutual information. PDEN [20] expands the training domain through photometric and ge-ometric transformations, guided by contrastive learning to enforce class separation and improve generalization. MCL [4] applies meta-causal learning to infer and align causal factors underlying domain shifts by simulating auxiliary do-mains. Xu et al. [35] generate low-confidence samples by maximizing entropy and minimizing cross-entropy, using dual-view generators guided by a classifier. Despite their differences, most existing SDG methods adopt a target-agnostic design philosophy due to the con-straint of non-access to target domains. This results in what we call the “lottery dilemma”: models tend to perform bet-ter on target domains that are similar to the augmented train-ing data, and worse on dissimilar ones. To address this limitation, we propose a domain-aware approach to SDG that explicitly extracts domain knowledge and injects it into the learning process to enhance adaptation and generaliza-tion. Our method uses a bi-level optimization framework, where a domain prompt encoder captures domain-specific knowledge, and the task model learns to effectively process the fused representation. This approach allows us to simu-late domain shifts and enforce knowledge transfer, while re-specting the constraint of not accessing target domain data. 
+
+2.2. Bi-Level Optimization 
+
+Bi-level optimization is a powerful framework that enables the joint optimization of a nested pair of objectives, where the outer (upper-level) objective depends implicitly on the solution of the inner (lower-level) problem. This approach has been widely adopted across a range of tasks, such as hyperparameter tuning [26], neural architecture search [22], and semi-supervised learning [12], due to its ability to model hierarchical dependencies in learning systems. Re-cent works leverage bi-level optimization to tackle domain generalization across practical scenarios. Jia and Zhang [14] introduce a meta-learning algorithm with inner-loop and outer-loop objectives on a discrepancy measure to learn invariant representations. By adversarially minimizing both covariate and conditional shifts between source and simu-lated target domains in a bi-level setup, their method im-proves out-of-domain feature alignment and model robust-ness. To address data scarcity, Qin et al. [31] propose a two-tier meta-learning approach for few-shot domain gener-alization: an inner loop learns domain-specific embedding subspaces while an outer loop learns a shared base space, jointly optimized in a bi-level manner. Beyond closed-set shifts, Peng et al. [27] tackle open-set domain generaliza-tion with an evidential bi-level domain scheduler. Collec-tively, these studies demonstrate that integrating bi-level op-timization into domain generalization pipelines can address a spectrum of practical challenges, leading to improved per-formance on unseen domains. 
+
+# 3. Method 
+
+3.1. Problem Setup 
+
+We study the task of Single Domain Generalization (SDG), where the objective is to train a model using labeled data from a single source domain and achieve robust perfor-mance on unseen target domains. Formally, let the source domain dataset be denoted by D = {(xi, yi)}Ni=1 , where each input-label pair (xi, yi) is drawn i.i.d. from a distri-bution Ps over X × Y . Our goal is to learn a prediction function hϕ ◦ fθ : X → Y that generalizes well to samples from an unknown target distribution Pt̸ = Ps, which re-mains inaccessible during training. The prediction model is composed of a feature extractor fθ : X → Z , parameterized by θ, and a classifier sub-network hϕ : Z → Y , parameter-ized by ϕ. The primary challenge of SDG is that no domain alignment, calibration, or adaptation is possible using target data; instead, the model must learn domain-invariant repre-sentations solely from the available source domain data. 
+
+3.2. Approach 
+
+We propose Bi-Level Optimization for Single-Domain Gen-eralisation (BiSDG), a principled framework designed to tackle the challenge of generalizing from a single labeled domain to unseen target distributions. The core idea is to simulate plausible domain shifts during training and ex-plicitly disentangle the learning of semantic representations from the modeling of domain-specific variations. To sim-ulate distribution shifts, BiSDG constructs a diverse set of surrogate domains via stochastic, label-preserving transfor-mations applied to source data. These synthetic domains expose the model to a controlled spectrum of low-level per-turbations without requiring access to target samples. To capture domain-specific context, BiSDG introduces a do-main prompt module that extracts a compact latent embed-ding from each domain. This embedding is used to condi-tion the feature extractor via FiLM-based modulation, en-abling adaptive feature normalization tailored to each do-main’s characteristics. Crucially, BiSDG formulates the learning process as a bi-level optimization problem. The lower-level objective updates the feature extractor and clas-sifier to minimize task loss under fixed domain prompts, while the upper-level objective updates the prompt encoder to maximize generalization across the surrogate domains. This separation allows the backbone to focus on learning robust task-relevant features, while the prompt encoder is guided to emphasize variations that challenge generaliza-tion. The overall framework in shown in Figure 1. 
+
+3.2.1. Surrogate-Domain Synthesis 
+
+In the single-domain generalization setting, the absence of target-domain samples prohibits direct exposure to distribu-tion shift. To mitigate this, we construct a diverse collec-tion of surrogate domains that serve as plausible stand-ins for unknown target environments. These surrogate domains are derived by applying label-preserving image transforma-tions to source data, thereby inducing systematic low-level variations while preserving semantic content. Specifically, we define a transformation pool {A i}N aug 
+
+> i=1
+
+containing a diverse set of photometric and geometric aug-mentations, such as Gaussian blur, color jitter, and his-togram equalization. Rather than selecting augmentations at random, we group them into semantically coherent trans-formation pipelines, where each surrogate domain D(k) is associated with a specific type of shift, e.g., texture, photo-metric, or geometric. Each pipeline T (k), composed of m
+
+augmentations, is applied consistently to all source samples to construct the k-th surrogate domain. Formally, we define: 
+
+D(k) = (x(k) 
+
+> i
+
+, yi) : x(k) 
+
+> i
+
+= T (k)(xi), (xi, yi) ∈ D . (1) By deploying K such transformation pipelines, we obtain a family of surrogate domains {D (k)}Kk=1 that span a broad spectrum of visual attributes. This augmentation-driven di-versification compels the model to learn features that are stable under a variety of appearance shifts, thereby simulat-ing the challenge of generalizing to unseen domains. 
+
+3.2.2. Domain Prompt Encoder 
+
+A major challenge in training a shared feature extractor across multiple domains lies in the risk of representation collapse, wherein the network converges to features that reflect an average over all domains, thereby suppressing meaningful domain-specific variations. To retain sensitiv-ity to these variations while preserving parameter efficiency, we introduce a domain prompt encoder Mω that learns to generate domain-aware modulation signals. For each surrogate domain D(k), we associate a latent prompt instantiated through a pair of modulation vectors: a scaling vector γ(k) and a shifting vector β(k). These are in-ferred from a mini-batch X(k) 
+
+> b
+
+= {x(k) 
+
+> j
+
+}N B 
+
+> j=1
+
+sampled from 
+
+D(k). To encode the domain-level distributional context in a Bi-Level Optimization  
+
+> Domain Encoder
+> Prediction sub-network Feature Extractor
+> Outer Optimization
+> Inner Optimization
+> Augmentations
+> K Surrogate Domains
+> Source Domain
+> (Real)
+> Target Domain
+> (Clipart)
+> (Sketch)
+> (Painting)
+
+Figure 1. Overview of the BiSDG framework for Single Domain Generalization (SDG). Starting from a labeled source dataset, BiSDG constructs multiple surrogate domains via semantically coherent, label-preserving transformation pipelines to simulate unseen distribution shifts. A domain prompt encoder is introduced to capture domain-specific knowledge, which is deployed to perform FiLM-based feature modulation, supporting generalizable prediction. BiSDG formulates SGD as a bi-level optimization problem: the inner objective updates the model parameters Θ = ( θ, ϕ ) using the source domain, combining supervised cross-entropy loss Lcl in and adversarial consistency loss 
+
+Ladv in . The outer objective updates the prompt encoder parameters ω to maximize generalization across surrogate domains. 
+
+permutation-invariant manner, we apply a domain encoder 
+
+Mω over frozen features extracted by a stop-gradient copy of the backbone, denoted f¯θ :
+
+(γ(k), β(k)) = Mω
+
+ f¯θ (X(k) 
+
+> b
+
+). (2) Here, Mω is implemented as a Set Transformer [17], which naturally handles unordered inputs and enables the prompt to summarize the aggregate style of the domain batch. Given an input x(k) 
+
+> i
+
+from the surrogate domain k, we ex-tract its features z(k) 
+
+> i
+
+= fθ (x(k) 
+
+> i
+
+) and apply feature-wise linear modulation (FiLM) [29] using the prompt-specific parameters, while the features are standardized using batch-wise statistics (μ(k), σ(k)) before modulation: 
+
+˜z(k) 
+
+> i
+
+= γ(k) ⊙ z(k) 
+
+> i
+
+− μ(k)
+
+σ(k)
+
+!
+
++ β(k), (3) where ⊙ denotes element-wise multiplication. The result-ing modulated features ˜z(k) 
+
+> i
+
+are then fed into a domain-aware prediction head that conditions jointly on the orig-inal instance features and the domain prompt modulated features. We denote this modulated prediction sub-network as hϕ that includes both the modulation process in Eq. (3) and the prediction head, yielding predictions of the form 
+
+ˆy(k) 
+
+> i
+
+= hϕ(fθ (x(k) 
+
+> i
+
+), Mω (f¯θ (X(k) 
+
+> b
+
+))) .This FiLM-based strategy equips the model with lightweight, domain-adaptive behavior while keeping the shared backbone fixed across domains. Importantly, the modulation is global (feature-wise) rather than spatial, en-suring parameter efficiency and compatibility with standard architectures. By conditioning the model on learned do-main prompts, we enable domain-informative inference to enhance adaptation and generalization. 
+
+3.2.3. Bi-Level Optimization for SDG 
+
+We formulate Single-Domain Generalization (SDG) as a bi-level optimization problem, in which the goal is to simul-taneously learn a robust prediction model that generalizes well across domain shifts, and a domain prompt encoder that tackles domain variability via feature modulation. To decouple these two objectives, we introduce a bi-level for-mulation where the prediction model parameters are opti-mized at the inner level for task performance, while the prompt encoder is optimized at the outer level to maximize cross-domain generalization. In this setting, the prediction model is parameterized by Θ = {θ, ϕ }, where fθ is the shared feature extractor and hϕ is the domain-aware prediction sub-network. At each iteration, we draw a batch with N B labeled instances 
+
+(Xb, Y b) = {(xi, yi)}N B 
+
+> i=1
+
+from the source domain and gen-erate K surrogate domains {X(k) 
+
+> b
+
+}Kk=1 via semantically co-herent transformation pipelines. 
+
+Inner objective. Given fixed prompt parameters ω, we update the model parameters Θ by minimizing a loss that combines standard cross-entropy with an adversarial reg-ularizer that promotes local smoothness under input per-turbations. The inner supervised loss on a training batch (Xb, Y b) = {(xi, yi)}N B 
+
+> i=1
+
+is defined as: 
+
+Lcl in (Θ) = 1
+
+N B 
+
+> NB
+
+X
+
+> i=1
+
+ℓCE 
+
+ hϕ(fθ (xi), Mω (f¯θ (Xb))) , yi
+
+,
+
+(4) where ℓCE is the cross-entropy loss and Mω (Xb) denotes the domain prompts derived from the batch. To improve ro-bustness, we further include an adversarial KL term that en-courages consistency under worst-case perturbations: 
+
+Ladv in (Θ) = 1
+
+N B 
+
+> NB
+
+X
+
+> i=1
+
+max 
+
+> ∥ϵ∥2≤ρ
+
+KL 
+
+hϕ(fθ (xi), Mω (f¯θ (Xb))) ,hϕ(fθ (xi+ϵ), Mω (f¯θ (Xb))) 
+
+
+
+,
+
+(5) where ρ controls the strength of the perturbation ϵ added to input xi. The total inner objective is: 
+
+Lin (Θ , ω ) = Lcl in + λLadv in , (6) where λ balances classification accuracy and adversarial ro-bustness. Minimizing the inner loss in Eq. (6) over Θ yields an updated model Θ∗(ω) given the current prompt encoder. 
+
+Outer objective. Given model parameters Θ∗(ω), the outer objective updates ω by optimizing generalization per-formance across all the surrogate domains. Specifically, for each surrogate domain k, we sample a batch (X(k) 
+
+> b
+
+, Y b) = 
+
+{(x(k) 
+
+> i
+
+, yi)}N B
+
+> i=1
+
+, and compute the outer objective as the cross-entropy loss on all the K surrogate domains: 
+
+Lout (ω, Θ∗(ω)) = 1
+
+K ·N B
+
+> K
+
+X 
+
+> k=1
+> NB
+
+X
+
+> i=1
+
+ℓCE 
+
+
+
+ˆy(k) 
+
+> i
+
+, yi
+
+
+
+, (7) where ˆy(k) 
+
+> i
+
+= hϕ∗ (fθ∗ (x(k) 
+
+> i
+
+), Mω (f ¯θ∗ (X(k) 
+
+> b
+
+))) .
+
+Here, Θ∗(ω) = {θ∗, ϕ ∗} denote the inner-optimal param-eters that can be treated as functions of the outer parame-ters ω. By minimizing this loss, the prompt encoder learns to automatically adapt the prediction model to enhance its generalization performance. 
+
+Bi-level formulation. Combining the inner and outer ob-jectives, BiSDG is formulated as the following bi-level op-timization problem: 
+
+min  
+
+> ω
+
+Lout (ω, Θ∗(ω)) (8) s.t. Θ∗(ω) = arg min  
+
+> Θ
+
+Lin (Θ , ω ).
+
+This training scheme enables the model to learn generaliz-able representations, while encouraging the prompt encoder to expose informative cross-domain variability to enhance adaptation. The optimization procedure will be illustrated in the following section and the bi-level training algorithm in presented in Algorithm 1. 
+
+Algorithm 1 Training Algorithm for BiSDG 
+
+Input : training dataset D; initialized parameters Θ = (θ, ϕ ) and ω; K transformation pipelines {T k}Kk=1 ; and hyperparameters. 
+
+Output : learned model parameters Θ∗ and ω∗
+
+Generate K surrogate domains {D (k)}Kk=1 via Eq. (1). Set t = 1 , Θ1 = Θ .
+
+for iter = 1 to maxiters do for minibatch Xb ∈ D do 
+
+Sample K surrogate variants {X(k) 
+
+> b
+
+}Kk=1 of Xb from surrogate domains {D (k)}Kk=1 .Compute inner loss Lin on Xb via Eqs. (4), (5), (6) Calculate Θt+1 using Eq. (10) Compute Lout (ω, Θt+1 ) on surrogate batches 
+
+{X(k) 
+
+> b
+
+}Kk=1 via Eq. (7) Calculate δ(Θ t+1 ) using Eq. (11) Calculate gradient ∇ω Lout on Xb and {X(k) 
+
+> b
+
+}Kk=1 
+
+via Eq. (14) Update ω ← ω − αω ∇ω Lout 
+
+Update Θt+1 ← Θt − αΘ∇ΘLin (Θ t, ω )
+
+t ← t + 1 
+
+end for end for 
+
+Θ∗ = Θ t, ω∗ = ω
+
+3.3. Optimization Procedure 
+
+The bi-level optimization problem in Eq. (8) can be solved by minimizing the outer objective with respect to the outer parameters ω, while the inner-level parameters Θ∗ are im-plicit functions of ω determined by the inner minimization. In each iteration of the minimization, we compute the gradient of the outer loss with respect to ω and account for the bi-level structure using the chain rule as follows: 
+
+∇ω Lout = ∇Θ∗ Lout · ∇ ω Θ∗ + ∇ω Lout (ω, ¯Θ∗), (9) where ¯Θ∗ denotes the stop gradient version of Θ∗. Here, the first term represents the indirect gradient path through 
+
+Θ∗ using the chain rule, while the second term captures the direct dependence of the outer loss on ω.For simplicity, at the t-th iteration, the inner-optimal pa-rameters Θ∗ can be approximated using a single-step gradi-ent descent update over the inner loss: 
+
+Θ∗ = Θ t+1 = Θ t − αΘ∇ΘLin (Θ t, ω ), (10) where αΘ is the learning rate for the respective update. Moreover, we denote the outer gradient over Θ as δ(Θ) ,such that 
+
+δ(Θ t+1 ) = ∇ΘLout (ω, Θt+1 ). (11) The full gradient computation can then be expressed through the following propositions. Proposition 1. Using the chain rule, at the t-th iteration, the total gradient of Lout with respect to ω is given by: 
+
+∇ω Lout = − αΘ · δ(Θ t+1 ) · ∇ ω ∇ΘLin (Θ t, ω )+ ∇ω Lout (ω, ¯Θt+1 ) (12) 
+
+Proof. From Eq. (10), the gradient of Θ∗ with respect to ω
+
+can be computed as: 
+
+∇ω Θ∗ = ∇ω Θt+1 = ∇ω
+
+ Θt − αΘ∇ΘLin (Θ t, ω )
+
+= −αΘ · ∇ ω ∇ΘLin (Θ t, ω ). (13) Substituting this expression into Eq. (9), we obtain Eq.(12). Considering the difficulty of computing the second-order derivative ∇ω ∇ΘLin (Θ t, ω ), we propose using a finite dif-ference approximation to avoid the expensive computation while retaining the influence of second-order terms. This is summarized in the following proposition. 
+
+Proposition 2. Let ϵΘ be a very small positive constant. The total gradient ∇ω Lout can be approximated as follows without directly computing second-order derivatives: 
+
+∇ω Lout ≈ ∇ ω Lout (ω, ¯Θ∗)−
+
+αΘ
+
+2ϵΘ
+
+ ∇ω Lin (Θ +, ω ) − ∇ ω Lin (Θ −, ω ) , (14) 
+
+where the perturbed variables Θ+ and Θ− are defined as: 
+
+Θ+ = Θ t + ϵΘ · δ(Θ t+1 ),
+
+Θ− = Θ t − ϵΘ · δ(Θ t+1 ). (15) 
+
+Proof. We approximate the second-order term ∇ω ∇θ Lin 
+
+using symmetric finite differences [1]. Specifically, using the small perturbation ϵΘ · δ(Θ t+1 ), we write: 
+
+∇ΘLin (Θ t, ω ) ≈ Lin (Θ +, ω ) − L in (Θ −, ω )2ϵΘ · δ(Θ t+1 ) (16) Therefore, the chain rule term in the total gradient becomes: 
+
+∇Θ∗ Lout · ∇ ω Θ∗
+
+= − αΘ · δ(Θ t+1 ) · ∇ ω ∇ΘLin (Θ t, , ω )
+
+≈ − αΘ · δ(Θ t+1 ) · ∇ω Lin (Θ +; ω) − ∇ ω Lin (Θ −, ω )2ϵΘ · δ(Θ t+1 )= − αΘ
+
+2ϵΘ
+
+ ∇ω Lin (Θ +, ω ) − ∇ ω Lin (Θ −, ω ) (17) Substituting this approximation into Eq. (9), we obtain the approximated total gradient in Eq.(14). 
+
+# 4. Experiments 
+
+4.1. Experimental Setup 
+
+Datasets. We evaluate our approach on three widely-used domain generalization benchmarks: Digits, PACS, and Do-mainNet. The Digits benchmark consists of five digit classi-fication datasets, MNIST [16], MNIST-M [11], SVHN [25], SYN [11], and USPS [8], all sharing the same 10 digit classes (0–9). Following standard practice, we use MNIST as the source domain and evaluate generalization on the re-maining four datasets, each exhibiting distinct visual styles and acquisition conditions. The PACS dataset [18] contains images from four distinct domains, Art, Cartoon, Photo, and Sketch, featuring seven shared object categories. We desig-nate the Photo domain as the source and test generalization to the remaining three domains, which differ substantially in terms of texture, abstraction, and visual style. The Domain-Net dataset [28] is the most challenging benchmark in our study, comprising six highly diverse domains: Real, Info-graph, Clipart, Painting, Quickdraw, and Sketch, spanning 345 object categories. We use the Real domain for train-ing and evaluate performance on the remaining five, which exhibit large domain shifts and high intra-class variability. 
+
+Implementation Details. We follow established proto-cols for architecture and training across all datasets, con-sistent with prior work [34]. For the Digits benchmark, we employ LeNet as the backbone and train on the first 10,000 images from MNIST, with all samples resized to 32 ×32 and converted to RGB. The model is trained for 50 epochs using a batch size of 32 and initial learning rates of αΘ = 10 −4
+
+and αω = 10 −5, which are reduced by a factor of 10 after 25 epochs. For PACS, we fine-tune a ResNet-18 model pre-trained on ImageNet, using images resized to 224 × 224 .Training is conducted for 50 epochs with a batch size of 32 and learning rates of αΘ = 10 −3 and αω = 10 −4, de-cayed using a cosine annealing schedule. For the Domain-Net benchmark, we again use ResNet-18 and train for 200 epochs with a batch size of 128, also using cosine learn-ing rate scheduling. We use the following hyperparame-ters for BiSDG: adversarial loss weight λ = 0 .5, number of surrogate domains K = 5 , number of augmentations per surrogate domain m = 3 , gradient approximation scale 
+
+ϵΘ = 0 .01 , and perturbation strength ρ = 1 . To simulate diverse domain shifts during training, we construct five sur-rogate domains by composing distinct triplets of augmenta-tions from a shared transformation pool. The Color-Shifted Domain applies HSV shift, contrast adjustment, and solar-ization to simulate lighting and sensor variation. The Ge-ometric Distortion Domain introduces rotation, translation, and shear to capture spatial deformations. The Photomet-ric Degradation Domain uses inversion, posterization, and histogram equalization to mimic degraded imaging condi-Table 1. Classification accuracy and standard deviation results (%) on the PACS dataset. Best results are in bold font. Target MixUp CutOut ADA ME-ADA AugMix RandAug ACVC L2D AdvST BiSDG (Ours) Art 52.8 59.8 58.0 60.7 63.9 67.8 67.8 67.6 69 .2(1 .4) 70 .5(1 .4) 
+
+Cartoon 17.0 21.6 25.3 28.5 27.7 28.9 30.3 42.6 55 .3(2 .0) 55 .9(1 .7) 
+
+Sketch 23.2 28.8 30.1 29.6 30.9 37.0 46.4 47.1 67 .7(1 .5) 69 .5(1 .9) 
+
+Avg. 31.0 36.7 37.8 39.6 40.8 44.6 48.2 52.5 64.1 65 .3
+
+Table 2. Classification accuracy and standard deviation results (%) on the four target domains (SVHN, MNIST-M, SYN, and USPS) of the Digits benchmark, with MNIST as the source domain. Best results are in bold font. Method SVHN MNIST-M SYN USPS Avg. ERM [15] 27.8 52.7 39.7 76.9 49.3 CCSA [24] 25.9 49.3 37.3 83.7 49.1 JiGen [2] 33.8 57.8 43.8 77.2 53.1 ADA [33] 35.5 60.4 45.3 77.3 54.6 ME-ADA [40] 42.6 63.3 50.4 81.0 59.3 M-ADA [30] 42.6 67.9 49.0 78.5 59.5 AutoAug [5] 45.2 60.5 64.5 80.6 62.7 RandAug [6] 54.8 74.0 59.6 77.3 66.4 PDEN [20] 62.2 82.2 69.4 85.3 74.8 MCL[4] 69.9 78.3 78.4 88.5 78.8 RSDA [32] 47 .7(4 .8) 81 .5(1 .6) 62 .0(1 .2) 83 .1(1 .2) 68.5 AdvST [41] 67 .5(0 .7) 79 .8(0 .7) 78 .1(0 .9) 94 .8(0 .4) 80.1 BiSDG (Ours) 70 .1(0 .6) 85 .2(0 .3) 79 .8(0 .5) 96 .0(0 .2) 82 .7
+
+tions. The Texture Alteration Domain perturbs fine textures via sharpening, cutout, and contrast changes. Lastly, the Scale and Shape Variation Domain applies scaling, rota-tion, and cutout to model geometric variation and partial occlusion. These curated domains introduce controlled but substantial variability, promoting generalization to unseen distributions. All experiments are repeated five times with different random seeds, and we report the mean accuracy and standard deviation to ensure statistical robustness. 
+
+4.2. Comparison Results 
+
+We evaluate our method against a broad spectrum of base-lines, including MixUp [37], CutOut [9], CutMix [36], AutoAugment [5], RandAugment [6], and AugMix [13], ACVC [7], ERM [15], CCSA [24], JiGen [2], ADA [33], ME-ADA [40], RSDA [32], L2D [34], PDEN [20], MCL [4], and AdvST [41]. Table 1 reports the test classification accuracy on the three target domains of the PACS dataset using ResNet-18 as the backbone. This benchmark features significant do-main shifts between the Photo source domain and the tar-get domains of Art, Cartoon, and Sketch. BiSDG achieves the highest accuracy on all three target domains and the best overall average accuracy of 65.3%, outperforming the strongest baseline, AdvST (64.1%), by 1.2%. Notably, BiSDG achieves an accuracy of 55.9% on the most chal-lenging domain, Cartoon, compared to 55.3% by AdvST. These results highlight the effectiveness of our method in learning semantically meaningful features that generalize across domains with diverse visuals. In Table 2, we report generalization results on a digit recognition benchmark, Digits, using MNIST as the source domain and SVHN, MNIST-M, SYN, and USPS as target domains. BiSDG significantly outperforms all prior meth-ods, achieving an average accuracy of 82.7%, surpassing the second-best method (AdvST at 80.1%) by a substantial margin. BiSDG obtains the best results on all four target domains, including 70.1% on SVHN, 85.2% on MNIST-M, 79.8% on SYN, and 96.0% on USPS. Table 3 presents results on the challenging DomainNet benchmark, which involves large-scale classification across multiple domains with significant visual diversity. BiSDG achieves the best performance on all five target domains, with an average accuracy of 28.3%, outperforming AdvST (27.1%) by 1.2%. The improvements are especially notable on Infograph (15.9% vs. 14.8%) and Quickdraw (7.1% vs. 5.9%). These results confirm that BiSDG effectively cap-tures core features that generalize across unseen domains despite substantial distribution shifts. 
+
+4.3. Ablation Studies 
+
+To evaluate the effectiveness of key components in our framework, we design two ablation variants of BiSDG: (1) 
+
+−w/o Ladv in , which removes the adversarial regularizer from the inner objective to assess its contribution to robust feature learning; and (2) −w/o standardization, which disables the feature standardization step applied before domain-aware modulation, in order to examine the role of normalization Table 3. Classification accuracy and standard deviation results (%) on the DomainNet dataset. Target MixUp CutOut CutMix ADA ME-ADA RandAug AugMix ACVC AdvST BiSDG (Ours) Painting 38.6 38.3 38.3 38.2 39.0 41.3 40.8 41.3 42 .3(0 .1) 43 .1(0 .3) 
+
+Infograph 13.9 13.7 13.5 13.8 14.0 13.6 13.9 12.9 14 .8(0 .1) 15 .9(0 .3) 
+
+Clipart 38.0 38.4 38.7 40.2 41.0 41.1 41.7 42 .8 41 .5(0 .4) 43 .5(0 .4) 
+
+Sketch 26.0 26.2 26.9 24.8 25.3 30.4 29.8 30.9 30 .8(0 .3) 31 .9(0 .4) 
+
+Quickdraw 3.7 3.7 3.6 4.3 4.3 5.3 6.3 6.6 5.9(0 .2) 7.1(0 .2) 
+
+Avg. 24.0 24.1 24.2 24.3 24.7 26.3 26.5 26.9 27 .1(0 .2) 28 .3
+
+Table 4. Ablation study results (%) on the four target domains of the Digits benchmark, with MNIST as the source domain. Method SVHN MNIST-M SYN USPS Avg. BiSDG (Ours) 70 .1(0 .6) 85 .2(0 .3) 79 .8(0 .5) 96 .0(0 .2) 82 .7
+
+−w/o Ladv in 68 .1(1 .4) 80 .1(0 .6) 75 .3(0 .3) 93 .3(0 .5) 79 .2
+
+−w/o standardization 69 .8(0 .9) 83 .5(0 .7) 77 .0(0 .4) 94 .7(0 .2) 81 .2      
+
+> (a) K(b) λ
+> (c) ϵΘ(d) m
+
+Figure 2. Sensitivity analysis for four hyper-parameters K, λ, ϵΘ
+
+and m on test domain SYN of the Digits benchmark. 
+
+in stabilizing prompt-guided adaptation. As shown in Ta-ble 4, both components play a crucial role in the final per-formance. Removing the adversarial loss Ladv in results in a significant drop in average accuracy from 82.7% to 79.2%, confirming that enforcing consistency under perturbations is essential for improving robustness to domain shifts. Simi-larly, omitting the standardization step reduces performance to 81.2%, with particularly noticeable declines on SVHN and SYN, two domains that exhibit large visual disparities from MNIST. These findings demonstrate that both adver-sarial consistency and standardized feature modulation are critical to BiSDG’s strong generalization performance. 
+
+4.4. Hyper-parameter Sensitivity Analysis 
+
+We perform a comprehensive sensitivity analysis to assess the robustness of BiSDG with respect to key hyperparame-ters. Specifically, we investigate the impact of the number of surrogate domains K, the trade-off weight λ for the ad-versarial loss in the inner objective, the perturbation mag-nitude ϵΘ used in the finite difference gradient approxima-tion, and the number of augmentations m used to construct each surrogate domain. All experiments are conducted on the Digits benchmark, using classification accuracy on the SYN domain as the evaluation metric. As shown in Figure 2, BiSDG exhibits relatively stable performance across a wide range of hyperparameter set-tings. Increasing the number of surrogate domains K (Fig-ure 2a) and the number of augmentations m (Figure 2d) initially improves performance, reaching optimal values at 
+
+K = 5 and m = 3 , respectively. Beyond these points, performance shows a slight decline as the hyperparameter values increase, but the overall drop is marginal, indicat-ing that BiSDG maintains strong generalization capability without requiring precise tuning of these parameters. The trade-off weight λ and perturbation magnitude ϵΘ exhibit a similar trend (Figures 2b and 2c), though performance de-grades more rapidly after reaching their optimal values at 
+
+λ = 0 .5 and ϵΘ = 0 .01 . This suggests that these two hyper-parameters are more sensitive and play a more critical role in determining model performance. 
+
+# 5. Conclusion 
+
+We have introduced BiSDG, a bi-level optimization frame-work designed for the challenging setting of Single Do-main Generalization (SDG). By simulating domain shifts through curated surrogate domains and decoupling domain-specific modulation from task learning, BiSDG effectively exposes the model to distributional variability while main-taining semantic consistency. The proposed domain prompt encoder enables lightweight yet expressive domain-aware adaptation. Our bi-level formulation ensures that the back-bone focuses on robust representation learning while the prompt encoder is optimized to induce generalization over domain shifts. Extensive experiments on multiple bench-marks demonstrate that BiSDG consistently outperforms existing state-of-the-art approaches. References 
+
+[1] L´ eon Bottou. Stochastic gradient descent tricks. Neural Net-works: Tricks of the Trade: Second Edition , page 421–436, 2012. 6 [2] Fabio M Carlucci, Antonio D’Innocente, Silvia Bucci, Bar-bara Caputo, and Tatiana Tommasi. Domain generalization by solving jigsaw puzzles. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2019. 7 [3] Junbum Cha, Sanghyuk Chun, Kyungjae Lee, Han-Cheol Cho, Seunghyun Park, Yunsung Lee, and Sungrae Park. Swad: Domain generalization by seeking flat minima. In Ad-vances in Neural Information Processing Systems (NeurIPS) ,2021. 1 [4] Jin Chen, Zhi Gao, Xinxiao Wu, and Jiebo Luo. Meta-causal learning for single domain generalization. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2023. 1, 2, 7 [5] Ekin D Cubuk, Barret Zoph, Dandelion Mane, Vijay Vasude-van, and Quoc V Le. Autoaugment: Learning augmentation strategies from data. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2019. 1, 2, 7 [6] Ekin Dogus Cubuk, Barret Zoph, Jon Shlens, and Quoc Le. Randaugment: Practical automated data augmentation with a reduced search space. In Advances in Neural Information Processing Systems (NeurIPS) , 2020. 1, 2, 7 [7] Ilke Cugu, Massimiliano Mancini, Yanbei Chen, and Zeynep Akata. Attention consistency on visual corruptions for single-source domain generalization. In IEEE/CVF Con-ference on Computer Vision and Pattern Recognition Work-shops (CVPRW) , 2022. 2, 7 [8] John S Denker, WR Gardner, Hans Peter Graf, Donnie Hen-derson, Richard E Howard, W Hubbard, Lawrence D Jackel, Henry S Baird, and Isabelle Guyon. Neural network recog-nizer for hand-written zip code digits. In Advances in Neural Information Processing Systems (NeurIPS) , 1989. 6 [9] Terrance DeVries and Graham W Taylor. Improved regular-ization of convolutional neural networks with cutout. arXiv preprint arXiv:1708.04552 , 2017. 1, 2, 7 [10] Yingjun Du, Jun Xu, Huan Xiong, Qiang Qiu, Xiantong Zhen, Cees GM Snoek, and Ling Shao. Learning to learn with variational information bottleneck for domain gener-alization. In European Conference on Computer Vision (ECCV) , 2020. 1 [11] Yaroslav Ganin and Victor Lempitsky. Unsupervised domain adaptation by backpropagation. In International Conference on Machine Learning (ICML) , 2015. 6 [12] Marzi Heidari and Yuhong Guo. Bi-level optimization for semi-supervised learning with pseudo-labeling. In AAAI conference on artificial intelligence (AAAI) , 2025. 2 [13] Dan Hendrycks, Norman Mu, Ekin Dogus Cubuk, Barret Zoph, Justin Gilmer, and Balaji Lakshminarayanan. Aug-mix: A simple data processing method to improve robustness and uncertainty. In International Conference on Learning Representations (ICLR) , 2019. 2, 7 [14] Chen Jia and Yue Zhang. Meta-learning the invariant repre-sentation for domain generalization. Machine Learning , 113: 1661–1681, 2024. 2 [15] Vladimir Koltchinskii. Oracle inequalities in empirical risk minimization and sparse recovery problems: ´ Ecole D’ ´ Et´ e de Probabilit´ es de Saint-Flour XXXVIII-2008 . Springer, 2011. 7[16] Yann LeCun, L´ eon Bottou, Yoshua Bengio, and Patrick Haffner. Gradient-based learning applied to document recog-nition. Proceedings of the IEEE , 86, no, 11:2278–2324, 1998. 6 [17] Juho Lee, Yoonho Lee, Jungtaek Kim, Adam Kosiorek, Se-ungjin Choi, and Yee Whye Teh. Set transformer: A frame-work for attention-based permutation-invariant neural net-works. In International conference on machine learning (ICML) . PMLR, 2019. 4 [18] Da Li, Yongxin Yang, Yi-Zhe Song, and Timothy MHospedales. Deeper, broader and artier domain general-ization. In International Conference on Computer Vision (ICCV) , 2017. 6 [19] Da Li, Yongxin Yang, Yi-Zhe Song, and Timothy MHospedales. Learning to generalize: Meta-learning for do-main generalization. In AAAI Conference on Artificial Intel-ligence (AAAI) , 2018. 1 [20] Lei Li, Ke Gao, Juan Cao, Ziyao Huang, Yepeng Weng, Xi-aoyue Mi, Zhengze Yu, Xiaoya Li, and Boyang Xia. Pro-gressive domain expansion network for single domain gen-eralization. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2021. 1, 2, 7 [21] Ya Li, Xinmei Tian, Mingming Gong, Yajing Liu, Tongliang Liu, Kun Zhang, and Dacheng Tao. Deep domain gener-alization via conditional invariant adversarial networks. In 
+
+European Conference on Computer Vision (ECCV) , 2018. 1 [22] Hanxiao Liu, Karen Simonyan, and Yiming Yang. DARTS: Differentiable architecture search. In International Confer-ence on Learning Representations (ICLR) , 2019. 2 [23] Divyat Mahajan, Shruti Tople, and Amit Sharma. Domain generalization using causal matching. In International Con-ference on Machine Learning (ICML) , 2021. 1 [24] Saeid Motiian, Marco Piccirilli, Donald A Adjeroh, and Gi-anfranco Doretto. Unified deep supervised domain adap-tation and generalization. In International Conference on Computer Vision (ICCV) , 2017. 7 [25] Yuval Netzer, Tao Wang, Adam Coates, Alessandro Bis-sacco, Bo Wu, and Andrew Y Ng. Reading digits in natural images with unsupervised feature learning. NeurIPS work-shop on deep learning and unsupervised feature learning ,2011. 6 [26] Fabian Pedregosa. Hyperparameter optimization with ap-proximate gradient. In International conference on machine learning (ICML) , 2016. 2 [27] Kunyu Peng, Di Wen, Kailun Yang, Ao Luo, Yufan Chen, Jia Fu, M Saquib Sarfraz, Alina Roitberg, and Rainer Stiefelha-gen. Advancing open-set domain generalization using ev-idential bi-level hardest domain scheduler. In Advances in Neural Information Processing Systems (NeurIPS) , 2024. 3 [28] Xingchao Peng, Qinxun Bai, Xide Xia, Zijun Huang, Kate Saenko, and Bo Wang. Moment matching for multi-source domain adaptation. In International Conference on Com-puter Vision (ICCV) , 2019. 6 [29] Ethan Perez, Florian Strub, Harm De Vries, Vincent Du-moulin, and Aaron Courville. Film: Visual reasoning with a general conditioning layer. In AAAI conference on artificial intelligence (AAAI) , 2018. 1, 4 [30] Fengchun Qiao, Long Zhao, and Xi Peng. Learning to learn single domain generalization. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2020. 1, 2, 7 [31] Xiaorong Qin, Xinhang Song, and Shuqiang Jiang. Bi-level meta-learning for few-shot domain generalization. In IEEE/CVF conference on computer vision and pattern recognition (CVPR) , 2023. 3 [32] Riccardo Volpi and Vittorio Murino. Addressing model vulnerability to distributional shifts over image transforma-tion sets. In International Conference on Computer Vision (ICCV) , 2019. 7 [33] Riccardo Volpi, Hongseok Namkoong, Ozan Sener, John C Duchi, Vittorio Murino, and Silvio Savarese. Generalizing to unseen domains via adversarial data augmentation. In Ad-vances in Neural Information Processing Systems (NeurIPS) ,2018. 1, 2, 7 [34] Zijian Wang, Yadan Luo, Ruihong Qiu, Zi Huang, and Mahsa Baktashmotlagh. Learning to diversify for single do-main generalization. In International Conference on Com-puter Vision (ICCV) , 2021. 2, 6, 7 [35] Qinwei Xu, Ruipeng Zhang, Yi-Yan Wu, Ya Zhang, Ning Liu, and Yanfeng Wang. Simde: A simple domain ex-pansion approach for single-source domain generalization. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2023. 2 [36] Sangdoo Yun, Dongyoon Han, Seong Joon Oh, Sanghyuk Chun, Junsuk Choe, and Youngjoon Yoo. Cutmix: Regu-larization strategy to train strong classifiers with localizable features. In International Conference on Computer Vision (ICCV) , 2019. 7 [37] Hongyi Zhang, Moustapha Cisse, Yann N Dauphin, and David Lopez-Paz. mixup: Beyond empirical risk minimiza-tion. In International Conference on Learning Representa-tions (ICLR) , 2018. 2, 7 [38] Xingxuan Zhang, Renzhe Xu, Han Yu, Yancheng Dong, Pengfei Tian, and Peng Cui. Flatness-aware minimization for domain generalization. In International Conference on Computer Vision (ICCV) , 2023. 1 [39] Yabin Zhang, Bin Deng, Ruihuang Li, Kui Jia, and Lei Zhang. Adversarial style augmentation for domain gener-alization. In arXiv preprint arXiv:2301.12643 , 2023. 2 [40] Long Zhao, Ting Liu, Xi Peng, and Dimitris Metaxas. Maximum-entropy adversarial data augmentation for im-proved generalization and robustness. In Advances in Neural Information Processing Systems (NeurIPS) , 2020. 1, 2, 7 [41] Guangtao Zheng, Mengdi Huai, and Aidong Zhang. AdvST: revisiting data augmentations for single domain generaliza-tion. In AAAI conference on artificial intelligence (AAAI) ,2024. 1, 2, 7

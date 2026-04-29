@@ -1,0 +1,118 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.21360v1/fig-001.webp",
+      "caption": "Table 2. Comparison of PTA in OOD Generalization using ViT-B/16 (Dosovitskiy, 2020) as the backbone. Bold values indicate the best performance on backpropagation-free TTA methods. For a fair comparison, we unify the handcrafted prompts used by all backpropagation-free TTA methods by adopting the prompt templates described in CLIP (Radford et al., 2021a), where † denotes results reproduced using the officially released code. Average and OOD Average denote the mean accuracy over all 5 datasets and the 4 OOD datasets (excluding ImageNet), respectively.",
+      "page": 6,
+      "index": 1,
+      "width": 1017,
+      "height": 350
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21360v1/fig-002.webp",
+      "caption": "Table 7. Performance enhancement of existing TTA methods when integrated with our PTA. We evaluate the orthogonality of PTA by incorporating it into various TTA frameworks, including backpropagation-based (GS-Bias (Huang et al., 2025)), backpropagation-free (MTA (Zanella & Ben Ayed, 2024)), and cache-based (TDA (Karmanov et al., 2024)) methods.",
+      "page": 11,
+      "index": 2,
+      "width": 1006,
+      "height": 198
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21360v1/fig-003.webp",
+      "caption": "Table 6. Comparison of PTA in Cross-Datasets Generalization using ResNet50 (He et al., 2016) as the backbone. Bold values indicate the best performance on backpropagation-free TTA methods. For a fair comparison, we unify the handcrafted prompts used by all backpropagation-free TTA methods by adopting the prompt templates described in CLIP (Radford et al., 2021a), where † denotes results reproduced using the officially released code. Other results are reported directly from the original papers.",
+      "page": 11,
+      "index": 3,
+      "width": 1008,
+      "height": 296
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21360v1/fig-004.webp",
+      "caption": "Table 15. Comparison of recognition accuracy on ModelNet-C (Ren et al., 2022) and 3 corrupted variants of ScanObjectNN-C (Uy et al., 2019) that includes 7 types of corruptions. Results are reported for a corruption severity level of 4. Each clean point cloud contains 1024 points. The last column is the average across the 7 types of corruptions.",
+      "page": 15,
+      "index": 4,
+      "width": 991,
+      "height": 379
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21360v1/fig-005.webp",
+      "caption": "Table 14. Comparison of recognition accuracy on ModelNet-C (Ren et al., 2022) and 3 corrupted variants of ScanObjectNN-C (Uy et al., 2019) that includes 7 types of corruptions. Results are reported for a corruption severity level of 3. Each clean point cloud contains 1024 points. The last column is the average across the 7 types of corruptions.",
+      "page": 15,
+      "index": 5,
+      "width": 991,
+      "height": 379
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21360v1/fig-006.webp",
+      "caption": "Figure 2. Illustration of (a) Cache-Based Test-Time Adaptation and (b) our proposed Prototype-based Test-Time Adaptation (PTA). Unlike cache-based methods that maintain and query a confidence-filtered subset of test samples, PTA introduces a set of class-specific knowledge prototypes to continuously accumulate information from all test samples. By performing adaptation directly at the prototype level, PTA avoids the loss of informative samples and the sparsity issue at early stages, while remaining highly efficient in large-scale settings.",
+      "page": 2,
+      "index": 6,
+      "width": 1006,
+      "height": 315
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21360v1/fig-007.webp",
+      "caption": "Table 3. Comparison of recognition accuracy on ModelNet-C (Ren et al., 2022) and 3 corrupted variants of ScanObjectNN-C (Uy et al., 2019) that includes 7 types of corruptions. Results are reported for a corruption severity level of 2. Each clean point cloud contains 1024 points. The last column is the average across the 7 types of corruptions.",
+      "page": 7,
+      "index": 7,
+      "width": 991,
+      "height": 379
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21360v1/fig-008.webp",
+      "caption": "Figure 4. Comparison of recognition accuracy on ModelNet-C (Ren et al., 2022) and 3 corrupted variants of ScanObjectNN (SONN) (Uy et al., 2019), across 7 corruption types at 5 severity levels. Each clean point cloud contains 1024 points. Results are averaged over the 7 corruption types.",
+      "page": 7,
+      "index": 8,
+      "width": 1000,
+      "height": 209
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21360v1/fig-009.webp",
+      "caption": "Table 13. Comparison of recognition accuracy on ModelNet-C (Ren et al., 2022) and 3 corrupted variants of ScanObjectNN-C (Uy et al., 2019) that includes 7 types of corruptions. Results are reported for a corruption severity level of 1. Each clean point cloud contains 1024 points. The last column is the average across the 7 types of corruptions.",
+      "page": 14,
+      "index": 9,
+      "width": 991,
+      "height": 379
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21360v1/fig-010.webp",
+      "caption": "Table 12. Comparison of recognition accuracy on ModelNet-C (Ren et al., 2022) and 3 corrupted variants of ScanObjectNN-C (Uy et al., 2019) that includes 7 types of corruptions. Results are reported for a corruption severity level of 0. Each clean point cloud contains 1024 points. The last column is the average across the 7 types of corruptions.",
+      "page": 14,
+      "index": 10,
+      "width": 991,
+      "height": 379
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21360v1/fig-011.webp",
+      "caption": "Figure 3. Online accuracy of different methods on 4 cross-domain benchmarks (Fei-Fei et al., 2004; Maji et al., 2013; Nilsback & Zisserman, 2008; Parkhi et al., 2012). The x-axis represents the cumulative number of test samples encountered in the data stream. To account for the initial cold-start period, online accuracy is computed after the first 100 samples. Notably, all methods adopt the same hand-crafted prompts from CLIP (Radford et al., 2021a) for fair comparison.",
+      "page": 3,
+      "index": 11,
+      "width": 1000,
+      "height": 252
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21360v1/fig-012.webp",
+      "caption": "Table 11. Comprehensive comparison across different prompt templates. We evaluate PTA and competitive methods under 3 levels of prompt complexity: (i) Vanilla (a single fixed template), (ii) CLIP Template (average of multiple hand-crafted templates), and (iii) GPT (fine-grained class descriptions). † denotes results reproduced using the officially released code. Other results are reported directly from the original papers.",
+      "page": 13,
+      "index": 12,
+      "width": 1008,
+      "height": 550
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21360v1/fig-013.webp",
+      "caption": "Table 4. A comparison of efficiency on ImageNet-1K (Deng et al., 2009) is shown, with all results reproduced from the officially released code. All experiments were conducted on a single NVIDIA RTX 3090 GPU.",
+      "page": 8,
+      "index": 13,
+      "width": 481,
+      "height": 296
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21360v1/fig-014.webp",
+      "caption": "Table 1. Comparison of PTA in Cross-Datasets Generalization using ViT-B/16 (Dosovitskiy, 2020) as the backbone. Bold values indicate the best performance on backpropagation-free TTA methods. For a fair comparison, we unify the handcrafted prompts used by all backpropagation-free TTA methods by adopting the prompt templates described in CLIP (Radford et al., 2021a), where † denotes results reproduced using the officially released code. Other results are taken from the original papers, using consistent prompt templates.",
+      "page": 5,
+      "index": 14,
+      "width": 1008,
+      "height": 412
+    }
+  ]
+}

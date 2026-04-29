@@ -1,0 +1,110 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.21728v2/fig-001.webp",
+      "caption": "Table 1. Mean accuracy (%) on corruption benchmarks under mixture of 15 corruptions. Best and second-best results are shown in bold and underlined, respectively. Error bars are reported in Appendix C.2.",
+      "page": 6,
+      "index": 1,
+      "width": 1027,
+      "height": 1035
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21728v2/fig-002.webp",
+      "caption": "Table 2. Mean accuracy (%) on DomainNet under mixture of six domains. Best and second-best results are shown in bold and underlined, respectively. Error bars are reported in Appendix C.2.",
+      "page": 7,
+      "index": 2,
+      "width": 496,
+      "height": 331
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21728v2/fig-003.webp",
+      "caption": "Figure 3. Visualization of active sample selection on CIFAR-100C. Each entry (i, j) indicates the average proportion (%) of support samples from domain j when the test sample comes from domain i. On average, 40.9% of the support samples come from the same domain as the test sample, which is substantially higher than random selection (6.7%). Results on other datasets are provided in Appendix C.4.",
+      "page": 7,
+      "index": 3,
+      "width": 427,
+      "height": 363
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21728v2/fig-004.webp",
+      "caption": "Figure 8. Hyperparameter sensitivity. (EntMin refers to entropy minimization without Ramen.)",
+      "page": 22,
+      "index": 4,
+      "width": 1018,
+      "height": 944
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21728v2/fig-005.webp",
+      "caption": "Figure 1. Overview of Ramen. For each test sample, (1) compute its image embedding, pseudo-label, and sample-level gradient; (2) update the class-specific memory with these entries; (3) retrieve a support set from the memory; (4) aggregate the cached gradients for model update; and (5) perform inference and reset the model parameters.",
+      "page": 3,
+      "index": 5,
+      "width": 862,
+      "height": 326
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21728v2/fig-006.webp",
+      "caption": "Table 5. Accuracy (mean (s.d.) %) on corruption benchmarks under mixture of 15 corruptions. Best and second-best results are shown in bold and underlined, respectively.",
+      "page": 18,
+      "index": 6,
+      "width": 1022,
+      "height": 835
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21728v2/fig-007.webp",
+      "caption": "Table 6. Mean accuracy (%) on DomainNet under mixture of six domains. Best and second-best results are shown in bold and underlined, respectively.",
+      "page": 18,
+      "index": 7,
+      "width": 556,
+      "height": 258
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21728v2/fig-008.webp",
+      "caption": "Figure 9. Effect of learning rate. (EntMin refers to entropy minimization without Ramen.)",
+      "page": 23,
+      "index": 8,
+      "width": 1021,
+      "height": 507
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21728v2/fig-009.webp",
+      "caption": "Figure 4. Hyperparameter sensitivity on CIFAR-100-C. (EntMin refers to entropy minimization without Ramen.)",
+      "page": 8,
+      "index": 9,
+      "width": 1018,
+      "height": 196
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21728v2/fig-010.webp",
+      "caption": "Table 3. Comparison of testing time on CIFAR-100-C.",
+      "page": 8,
+      "index": 10,
+      "width": 475,
+      "height": 292
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21728v2/fig-011.webp",
+      "caption": "Figure 6. Performance comparison of TTA methods under single-domain and mixed-domain shifts.",
+      "page": 19,
+      "index": 11,
+      "width": 1021,
+      "height": 514
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21728v2/fig-012.webp",
+      "caption": "Table 9. Accuracy (mean (s.d.) %) of RN101 on CIFAR-100-C under mixture of 15 corruptions. Best and second-best results are shown in bold and underlined, respectively.",
+      "page": 24,
+      "index": 12,
+      "width": 1022,
+      "height": 275
+    },
+    {
+      "url": "assets/figures/arxiv/2604.21728v2/fig-013.webp",
+      "caption": "Figure 7. Visualization of active sample selection. Each entry (i, j) indicates the average proportion (%) of support samples from domain j when the test sample comes from domain i. Numbers in the parentheses indicate the proportion of support samples that come from the same domain as the test sample.",
+      "page": 20,
+      "index": 13,
+      "width": 1012,
+      "height": 910
+    }
+  ]
+}

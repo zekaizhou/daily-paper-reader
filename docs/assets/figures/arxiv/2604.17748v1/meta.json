@@ -1,0 +1,110 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.17748v1/fig-001.webp",
+      "caption": "Fig. 3: An illustrative idea of gap region reduction. (a) The gap region refers to the transitional area between class-consistent clusters, detected by the proposed metric of referenced entropy. (b) Through a gap regiondriven knowledge adaptation, features within the gap region are properly consolidated, reducing its extent. (c) A snapshot of this progressive adaptation, in which Lrc guides the movement of features within the gap region Rt, ultimately resulting in gap region compression.",
+      "page": 6,
+      "index": 1,
+      "width": 473,
+      "height": 364
+    },
+    {
+      "url": "assets/figures/arxiv/2604.17748v1/fig-002.webp",
+      "caption": "Table 4: Closed-set SFDA result (%) on the DomainNet-126 dataset. ViL means whether using ViL model; the best result is highlighted in blue.",
+      "page": 11,
+      "index": 2,
+      "width": 1029,
+      "height": 316
+    },
+    {
+      "url": "assets/figures/arxiv/2604.17748v1/fig-003.webp",
+      "caption": "Table 3: Closed-set SFDA result (%) on the VisDA dataset. ViL means whether using ViL model; the best result is highlighted in blue.",
+      "page": 11,
+      "index": 3,
+      "width": 1025,
+      "height": 381
+    },
+    {
+      "url": "assets/figures/arxiv/2604.17748v1/fig-004.webp",
+      "caption": "Fig. 8: Visualization of six classes from VisDA.",
+      "page": 15,
+      "index": 4,
+      "width": 450,
+      "height": 375
+    },
+    {
+      "url": "assets/figures/arxiv/2604.17748v1/fig-005.webp",
+      "caption": "Fig. 1: We expand beyond traditional SFDA methods that rely solely on a pretrained source model and unlabeled target data. Instead, we innovate by exploring offthe-shelf multimodal foundation models, such as CLIP, in an unsupervised manner (marked by the box with blue background).",
+      "page": 2,
+      "index": 5,
+      "width": 486,
+      "height": 316
+    },
+    {
+      "url": "assets/figures/arxiv/2604.17748v1/fig-006.webp",
+      "caption": "Table 1: Closed-set SFDA accuracies (%) on the Office-31 dataset. SF means source-data-free; the best result is highlighted in blue.",
+      "page": 10,
+      "index": 6,
+      "width": 1025,
+      "height": 431
+    },
+    {
+      "url": "assets/figures/arxiv/2604.17748v1/fig-007.webp",
+      "caption": "Table 2: Closed-set SFDA result (%) on the Office-Home dataset. ViL means whether using ViL model; the best result is highlighted in blue.",
+      "page": 10,
+      "index": 7,
+      "width": 1019,
+      "height": 397
+    },
+    {
+      "url": "assets/figures/arxiv/2604.17748v1/fig-008.webp",
+      "caption": "Table 10: Ablation study in Closed-set setting (%).",
+      "page": 14,
+      "index": 8,
+      "width": 468,
+      "height": 326
+    },
+    {
+      "url": "assets/figures/arxiv/2604.17748v1/fig-009.webp",
+      "caption": "Fig. 4: Illustration of the design of category attention calibration. In contrast to the conventional approach that assigns equal importance to all categories (depicted by the gray line), our approach (represented by the black line) introduces additional supervision by incorporating extra knowledge about the two most likely categories.",
+      "page": 8,
+      "index": 9,
+      "width": 486,
+      "height": 260
+    },
+    {
+      "url": "assets/figures/arxiv/2604.17748v1/fig-010.webp",
+      "caption": "Fig. 2: Overview of DIFO++: Our method alternates between two steps. First, we perform (a) task-specific customization (Sec.3.1) of a ViL model through task-specific prompt learning (LS-I). This is achieved under soft predictive guidance using mutual information maximization. Second, we perform (b) gap region-driven knowledge adaptation (Sec.3.2), which recasts knowledge transfer as the task of shrinking the gap region, in which feature samples are entangled and exhibit high class ambiguity. To this end, we first identify the gap region using referenced entropy, and then label the gap region by fusing the predictions of the target and ViL models that are stored in a memory bank. Finally, we reduce the gap region by incorporating regularizations: Category attention calibration (Lcac), Predictive consistency (Lpc), and Gap region compression (Lrc). This pipeline is structured into three functional modules: (1) Gap region discovery (Sec.3.2.1), (2) Gap region labeling (Sec.3.2.2), and (3) Gap region reduction (Sec.3.2.3).",
+      "page": 4,
+      "index": 10,
+      "width": 1031,
+      "height": 327
+    },
+    {
+      "url": "assets/figures/arxiv/2604.17748v1/fig-011.webp",
+      "caption": "Table 5: Results (%) of Partial-set SFDA (Top) and Open-set SFDA (Bottom) on the Office-Home dataset.",
+      "page": 12,
+      "index": 11,
+      "width": 1029,
+      "height": 382
+    },
+    {
+      "url": "assets/figures/arxiv/2604.17748v1/fig-012.webp",
+      "caption": "Table 6: Adaptation results (%) on Office-Home under the Continual SFDA setting. The first column of each sub-table indicates the adaptation sequence. ↓ denotes the Relative Average Accuracy Drop (RDAcc) of a test domain on the adaptation path compared with the performance when the domain is first seen. Formally, consider a sequence of accuracy results ai, ai+1, . . . , ai+K along an adaptation path. Here, ai represents the initial accuracy when a domain is first encountered, and ai+k denotes the test accuracy after the model has adapted to k subsequent domains; RDAcc = 1/K ∑K k=1(ai − ai+k)/ai × 100%. In each sub-table, the final value in each row marked with ↓ represents the average of the three preceding values. Blue font indicates the best mean of RDAcc, while purple font denotes cases where the DIFO++ is outperformed by DIFO within the same adaptation flow.",
+      "page": 12,
+      "index": 12,
+      "width": 1017,
+      "height": 279
+    },
+    {
+      "url": "assets/figures/arxiv/2604.17748v1/fig-013.webp",
+      "caption": "Fig. 9: Feature distribution visualization on transfer task Ar→Cl in Office-Home. Oracle: the model trained on target domain Cl using ground-truth labels. Different colors stand for different categories. Top: t-SNE feature distribution over 65 categories. Bottom: The corresponding 3D density charts. For clarity, the first 10 categories were used in this plot.",
+      "page": 16,
+      "index": 13,
+      "width": 1031,
+      "height": 312
+    }
+  ]
+}

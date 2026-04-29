@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.08956v1/fig-001.webp",
+      "caption": "Figure 4. Row-normalized confusion matrices for (a) zero-shot, (b) LoRA, and (c) FFT at 100% training data. Diagonal entries represent per-class correct classification rates.",
+      "page": 6,
+      "index": 1,
+      "width": 1036,
+      "height": 337
+    },
+    {
+      "url": "assets/figures/arxiv/2604.08956v1/fig-002.webp",
+      "caption": "Figure 5. Per-class IoU as a function of training data percentage for LoRA and FFT. Dashed lines indicate per-class zero-shot baselines.",
+      "page": 7,
+      "index": 2,
+      "width": 1036,
+      "height": 516
+    },
+    {
+      "url": "assets/figures/arxiv/2604.08956v1/fig-003.webp",
+      "caption": "Figure 6. Qualitative segmentation results across five test samples. Columns show zero-shot (ZS), LoRA at 2.5%/10%/100%, FFT at 2.5%/10%/100%, ground truth (GT), and input RGB image (IMG).",
+      "page": 8,
+      "index": 3,
+      "width": 1036,
+      "height": 631
+    },
+    {
+      "url": "assets/figures/arxiv/2604.08956v1/fig-004.webp",
+      "caption": "Figure 1. Mean IoU across 15 prompt variant combinations. The dashed line indicates the zero-shot baseline (0.255 mIoU). Every engineered variant falls below the baseline.",
+      "page": 5,
+      "index": 4,
+      "width": 496,
+      "height": 245
+    },
+    {
+      "url": "assets/figures/arxiv/2604.08956v1/fig-005.webp",
+      "caption": "Figure 2. Mean IoU as a function of training data percentage for LoRA and FFT. The dashed line indicates the zero-shot baseline (0.255 mIoU). Shaded regions indicate standard deviation across 10 independent runs.",
+      "page": 5,
+      "index": 5,
+      "width": 496,
+      "height": 249
+    },
+    {
+      "url": "assets/figures/arxiv/2604.08956v1/fig-006.webp",
+      "caption": "Figure 3. Marginal mIoU improvement at each data increment relative to the previous checkpoint. Peak efficiency occurs at 2.5% data. LoRA exhibits instability at 0.5% (negative improvement).",
+      "page": 5,
+      "index": 6,
+      "width": 496,
+      "height": 247
+    }
+  ]
+}
