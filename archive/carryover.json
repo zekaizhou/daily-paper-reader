@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-05-31T20:50:48.594726+00:00",
-  "updated_date": "20260531",
+  "generated_at": "2026-06-01T23:00:48.399245+00:00",
+  "updated_date": "20260601",
   "carryover_days": 9,
   "tag_states": {
     "VLM DA": {
-      "updated_date": "20260531",
+      "updated_date": "20260601",
       "carryover_days": 9,
       "items": []
     }
