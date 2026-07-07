@@ -1,0 +1,166 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-001.webp",
+      "caption": "Figure 2: Performance of standalone SFT and RLVF. RLVF improves performance for 3B and 8B models but not for 1B, suggesting that reasoning-oriented training benefits models with sufficient capacity while preserving CoT behavior.",
+      "page": 6,
+      "index": 1,
+      "width": 458,
+      "height": 375
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-002.webp",
+      "caption": "Table 8: Full per-task baseline comparison with RLVF-trained experts. Results are reported for LLaMA-3B and LLaMA-8B. Hard-Routed MoR-LoRA achieves the best average performance for both model sizes and outperforms the other composition baselines on most tasks.",
+      "page": 15,
+      "index": 2,
+      "width": 779,
+      "height": 427
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-003.webp",
+      "caption": "Figure 5: Reward mean during RLVF training. We report the mean verifiable reward obtained by the sampled trajectories during RLVF training. Rows correspond to model scales and columns correspond to datasets. The light curves show the per-step mean, while the darker curves show a bias-corrected exponential moving average with decay 0.95. Across most datasets, the smoothed reward increases during training, indicating that the experts progressively improve with respect to the automatic verifier. The fluctuations are expected because trajectories are sampled with high-temperature exploration on a few samples. These are training reward statistics, not final benchmark accuracies.",
+      "page": 22,
+      "index": 3,
+      "width": 902,
+      "height": 442
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-004.webp",
+      "caption": "Figure 6: Completion length during RLVF training. We report the mean generated completion length for each RLVF-trained expert across training steps. Rows correspond to model scales and columns correspond to datasets. The light curves show the per-step mean, while the darker curves show a bias-corrected exponential moving average with decay 0.95. Completion length varies substantially across datasets and model sizes, reflecting differences in task format, reasoning behavior, and exploration under high-temperature sampling. These curves are used only to characterize training dynamics and should not be interpreted as the final benchmark performance.",
+      "page": 22,
+      "index": 4,
+      "width": 902,
+      "height": 442
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-005.webp",
+      "caption": "Table 7: Stage II. Integration using RLVF-trained reasoning experts. Hard-Routed MoR-LoRA preserves expert behavior while requiring far fewer trainable parameters, outperforming soft routing methods that retrain experts and modify their learned reasoning patterns.",
+      "page": 14,
+      "index": 5,
+      "width": 883,
+      "height": 269
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-006.webp",
+      "caption": "Table 5: Performance of SFT and RLVF. The Baseline row corresponds to the original model. RLVF improves reasoning performance for capable models (3B and 8B) while preserving chain-of-thought behavior, whereas fine-tuning can degrade CoT ability in large instruction-tuned models by overriding existing reasoning patterns. Smaller models (1B) benefit less from RLVF due to limited reasoning trajectory diversity.",
+      "page": 14,
+      "index": 6,
+      "width": 621,
+      "height": 373
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-007.webp",
+      "caption": "Table 6: Stage II. Integration using fine-tuning experts. LoRAMixer retrains experts and requires substantially more trainable parameters, while Hard-Routed MoR-LoRA freezes experts and learns only routing and attention adaptation. Despite using fewer parameters, hard routing achieves comparable or better performance, showing that correct expert selection is more important than modifying expert weights.",
+      "page": 14,
+      "index": 7,
+      "width": 883,
+      "height": 270
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-008.webp",
+      "caption": "Table 13: Effect of Stage II data budget on deterministic STE and Gumbel-Softmax routing for LLaMA-3B. With 1000 samples per dataset, Gumbel-Softmax is close to deterministic STE. With 750 samples per dataset, the gap increases, suggesting that stochastic routing is less stable when routing supervision is limited.",
+      "page": 18,
+      "index": 8,
+      "width": 696,
+      "height": 221
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-009.webp",
+      "caption": "Table 12: Comparison with alternative hard-routing approximations. All methods use frozen RLVF-trained experts and train only the shared router and attention LoRA during Stage II. Gumbel-Softmax is competitive but does not improve over deterministic STE. Soft-train/hard-inference performs worse, showing that unit-scale hard routing should be used during training as well as inference.",
+      "page": 18,
+      "index": 9,
+      "width": 783,
+      "height": 261
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-010.webp",
+      "caption": "Figure 7: Stop rate during RLVF training. We report the fraction of sampled completions that satisfy the stopping criterion during RLVF training. Rows correspond to model scales and columns correspond to datasets. The light curves show the per-step stop rate, while the darker curves show a bias-corrected exponential moving average with decay 0.95. For most experts, the stop rate increases or remains high as training progresses, suggesting that the models learn to produce complete outputs under the required generation format. Temporary drops and fluctuations reflect continued exploration during sampling and should be interpreted together with the reward and completion-length curves.",
+      "page": 23,
+      "index": 10,
+      "width": 902,
+      "height": 442
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-011.webp",
+      "caption": "Table 19: Full prompt-level routing results on clean single-domain inputs. Prompt-level routing selects one frozen expert for the whole input, while Hard-Routed MoR-LoRA routes at the token level.",
+      "page": 23,
+      "index": 11,
+      "width": 766,
+      "height": 221
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-012.webp",
+      "caption": "Table 20: Mixed-domain evaluation setup. The setting tests whether one expert is sufficient when a single input contains questions from two different domains.",
+      "page": 23,
+      "index": 12,
+      "width": 933,
+      "height": 195
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-013.webp",
+      "caption": "Figure 3: Hard routing vs. soft routing for LoRA composition. Fully saturated bars denote RLVF experts, whereas lighter bars denote SFT experts. Across model scales and expert types, Hard-Routed MoR-LoRA achieves comparable or better performance than soft routing despite not retraining experts, indicating that routing quality dominates expert adaptation.",
+      "page": 8,
+      "index": 13,
+      "width": 950,
+      "height": 423
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-014.webp",
+      "caption": "Table 15: RLVF configuration. Rewards are computed using automatically verifiable final answers. The formatting bonuses are used only to stabilize reasoning and answer extraction format.",
+      "page": 19,
+      "index": 14,
+      "width": 452,
+      "height": 342
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-015.webp",
+      "caption": "Table 14: Datasets and evaluation split sizes. The main five-domain experiments use GSM8K, ARC-Challenge, MedQA, BoolQ, and CoLA. SVAMP and SST-2 are used only for the unseen-dataset evaluation.",
+      "page": 19,
+      "index": 15,
+      "width": 988,
+      "height": 184
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-016.webp",
+      "caption": "Table 11: Stage II integration results on additional model families. We compare LoRAMixer and Hard-Routed MoR-LoRA when integrating pretrained experts. For Qwen-2.5-7B, the mixer is trained with LoRA rank r = 64.",
+      "page": 17,
+      "index": 16,
+      "width": 883,
+      "height": 271
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-017.webp",
+      "caption": "Table 10: Performance of standalone experts on additional model families. We report results for Gemma-3-4B and Qwen-2.5-7B across five tasks. As in the LLaMA experiments, RLVF improves reasoning performance compared to the baseline models.",
+      "page": 17,
+      "index": 17,
+      "width": 617,
+      "height": 261
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-018.webp",
+      "caption": "Table 16: Training configuration for Stage I and Stage II. Stage I trains standalone dataset-specific experts while keeping the backbone frozen. Stage II freezes all pretrained experts and trains only the shared router and attention LoRA. The same configuration is used across model families unless otherwise stated.",
+      "page": 20,
+      "index": 18,
+      "width": 950,
+      "height": 713
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-019.webp",
+      "caption": "Figure 1: Overview of the proposed Hard-Routed MoR-LoRA framework. The method follows a two-stage training pipeline. Stage I (left): Each LoRA adapter is independently trained on a specific domain using RLVF, producing a set of reasoning experts. Stage II (right): All pretrained experts are integrated into a shared model and kept frozen. A shared lightweight router and a small attention LoRA are trained using supervised fine-tuning on distilled reasoning traces collected from the experts. During inference, the router selects a single expert per token, enforcing unit scaling and preserving the original LoRA assumption. STE enables gradients to propagate through the discrete routing decision by following the soft probabilities during the backward pass (dashed arrow).",
+      "page": 5,
+      "index": 19,
+      "width": 950,
+      "height": 567
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31413v1/fig-020.webp",
+      "caption": "Table 9: Effect of attention LoRA rank during Stage II integration using RLVF-trained experts. The configuration of No LoRA trains only the shared router while keeping the backbone unchanged. Small ranks improve performance, but gains quickly saturate, indicating that integration mainly depends on routing rather than relearning expert knowledge.",
+      "page": 16,
+      "index": 20,
+      "width": 758,
+      "height": 344
+    }
+  ]
+}

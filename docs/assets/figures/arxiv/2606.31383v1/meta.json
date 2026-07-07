@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2606.31383v1/fig-001.webp",
+      "caption": "Table 3: Performance comparison on Qwen2.5-3B.",
+      "page": 11,
+      "index": 1,
+      "width": 688,
+      "height": 200
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31383v1/fig-002.webp",
+      "caption": "Fig. 1: Comparison of visual projectors in MLLMs. (a) MLP maps patch tokens independently, leading to redundant inputs. (b) Global resampler aggregates with a single global scope, which may dilute local evidence. (c) MS-Resampler uses multiple scoped resamplers and fuses their outputs to capture local-to-global semantics under a fixed token budget.",
+      "page": 2,
+      "index": 2,
+      "width": 681,
+      "height": 365
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31383v1/fig-003.webp",
+      "caption": "Fig. 3: Illustration of spatial attention bias construction for scoped resampling. Each query corresponds to an anchor position on the visual token grid. For branch e, a window of size k(e) defines its preferred spatial scope.",
+      "page": 7,
+      "index": 3,
+      "width": 668,
+      "height": 281
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31383v1/fig-004.webp",
+      "caption": "Table 2: Performance comparison with intra-LLM visual token compression methods on LLaVA-1.5-7B.",
+      "page": 10,
+      "index": 4,
+      "width": 702,
+      "height": 266
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31383v1/fig-005.webp",
+      "caption": "Table 4: Ablation study of the multi-scope design on LLaVA-1.5-7B.",
+      "page": 12,
+      "index": 5,
+      "width": 719,
+      "height": 183
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31383v1/fig-006.webp",
+      "caption": "Table 1: Performance comparison with pre-LLM compression methods on LLaVA-1.5. The best and second-best results are highlighted in bold and underlined.",
+      "page": 9,
+      "index": 6,
+      "width": 723,
+      "height": 714
+    },
+    {
+      "url": "assets/figures/arxiv/2606.31383v1/fig-007.webp",
+      "caption": "Fig. 2: Overview of MS-Resampler. Dense visual tokens extracted by the vision encoder are processed by multiple scoped resampling branches, each operating with a different spatial aggregation scope. The outputs from these branches are fused to produce the final compact visual tokens for the language model.",
+      "page": 5,
+      "index": 7,
+      "width": 675,
+      "height": 242
+    }
+  ]
+}

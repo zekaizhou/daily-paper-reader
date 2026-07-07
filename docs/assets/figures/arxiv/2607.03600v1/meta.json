@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.03600v1/fig-001.webp",
+      "caption": "Figure 1: Adversarial domain alignment challenge: Clean source samples (blue), clean target samples (green), and adversarial target samples (red) tend to form indistinguishable clusters in CLIPs embedding space.",
+      "page": 1,
+      "index": 1,
+      "width": 535,
+      "height": 266
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03600v1/fig-002.webp",
+      "caption": "Table 2: Comparison on PGD 20 attack at ϵ = 2/255 using OfficeHome. Avg accuracy calculated using tables (a) and (b). (a)",
+      "page": 6,
+      "index": 2,
+      "width": 985,
+      "height": 427
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03600v1/fig-003.webp",
+      "caption": "Figure 2: Schematic representation of the SFT+RL framework: (a) In this stage, the model is fine-tuned by updating only the CLIP Vision Projection (CVP) layer (partially trainable) and the Linear Classifier (fully trainable), while keeping the Image Encoder (IE), Text Encoder (TE) and CLIP Text Projection (CTP) layer completely frozen. (b) This stage builds on the fine-tuned model to perform adversarial training on the target domain. It utilizes Clean Labels from the source domain and Pseudo Labels (PL) from the target domain. During this stage, both the CVP and Linear Classifier are fully trainable, while the IE, TE and CTP remain frozen. (BP: Backpropagation, SFT: Supervised Fine Tuning, CL: Clean, PGD: Projected Gradient Descent, ADV: Adversarial)",
+      "page": 3,
+      "index": 3,
+      "width": 829,
+      "height": 417
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03600v1/fig-004.webp",
+      "caption": "Table 1: Comparison on PGD 20 attack at ϵ = 2/255 using PACS dataset. Avg accuracy calculated using tables (a) and (b). (a)",
+      "page": 5,
+      "index": 4,
+      "width": 987,
+      "height": 423
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.05180v1/fig-001.webp",
+      "caption": "Table 4: Constant-lead experimental results by visibility condition and controller. ↓ means lower is better; the best result is in bold.",
+      "page": 21,
+      "index": 1,
+      "width": 978,
+      "height": 573
+    },
+    {
+      "url": "assets/figures/arxiv/2607.05180v1/fig-002.webp",
+      "caption": "Figure 8: Following gap versus route completion under varying visibility.",
+      "page": 21,
+      "index": 2,
+      "width": 963,
+      "height": 385
+    },
+    {
+      "url": "assets/figures/arxiv/2607.05180v1/fig-003.webp",
+      "caption": "Figure 2: Overview of the VLM context inference pipeline.",
+      "page": 7,
+      "index": 3,
+      "width": 976,
+      "height": 552
+    },
+    {
+      "url": "assets/figures/arxiv/2607.05180v1/fig-004.webp",
+      "caption": "Table 5: Ablation of the proposed controller on the lead-braking task. ↑ means higher is better, ↓ means lower is better; the best result is in bold.",
+      "page": 22,
+      "index": 4,
+      "width": 978,
+      "height": 353
+    },
+    {
+      "url": "assets/figures/arxiv/2607.05180v1/fig-005.webp",
+      "caption": "Figure 4: Front-camera frames for the evaluated conditions (road surface, weather, time of day, illumination).",
+      "page": 14,
+      "index": 5,
+      "width": 960,
+      "height": 603
+    },
+    {
+      "url": "assets/figures/arxiv/2607.05180v1/fig-006.webp",
+      "caption": "Figure 1: Overview of VLM-CASE, an anticipatory, safety-guaranteed autonomous driving framework.",
+      "page": 3,
+      "index": 6,
+      "width": 976,
+      "height": 500
+    },
+    {
+      "url": "assets/figures/arxiv/2607.05180v1/fig-007.webp",
+      "caption": "Figure 5: Run outcomes in lead-braking experiments by condition and controller.",
+      "page": 18,
+      "index": 7,
+      "width": 810,
+      "height": 465
+    },
+    {
+      "url": "assets/figures/arxiv/2607.05180v1/fig-008.webp",
+      "caption": "Figure 6: Trajectories under the snow condition (C3) in lead-braking experiments.",
+      "page": 18,
+      "index": 8,
+      "width": 910,
+      "height": 569
+    },
+    {
+      "url": "assets/figures/arxiv/2607.05180v1/fig-009.webp",
+      "caption": "Figure 3: Structure of the context-classification prompt P .",
+      "page": 8,
+      "index": 9,
+      "width": 894,
+      "height": 335
+    },
+    {
+      "url": "assets/figures/arxiv/2607.05180v1/fig-010.webp",
+      "caption": "Table 3: No-lead experimental results by road surface and controller. ↓ means lower is better; the best result is in bold.",
+      "page": 19,
+      "index": 10,
+      "width": 977,
+      "height": 285
+    },
+    {
+      "url": "assets/figures/arxiv/2607.05180v1/fig-011.webp",
+      "caption": "Table 2: Lead-braking experimental results by condition and controller. ↑ means higher is better, ↓ means lower is better; the best result is in bold.",
+      "page": 17,
+      "index": 11,
+      "width": 978,
+      "height": 357
+    },
+    {
+      "url": "assets/figures/arxiv/2607.05180v1/fig-012.webp",
+      "caption": "Figure 7: Ego speed profiles in no-lead experiments on the snow surface.",
+      "page": 20,
+      "index": 12,
+      "width": 666,
+      "height": 581
+    }
+  ]
+}

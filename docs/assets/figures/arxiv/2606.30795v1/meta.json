@@ -1,0 +1,86 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2606.30795v1/fig-001.webp",
+      "caption": "Fig. 2: Sparse label feedback for target self-training. RTSM uses the randomly labeled target subset through the direct supervised detection loss. Plugin modules use the same sparse annotations as feedback to the unlabeled branch through pseudo-label selection, object completion, or optimization control.",
+      "page": 6,
+      "index": 1,
+      "width": 636,
+      "height": 498
+    },
+    {
+      "url": "assets/figures/arxiv/2606.30795v1/fig-002.webp",
+      "caption": "Table 9: Results on Cityscapes → Foggy Cityscapes with DINO and DDT under 1%, 5%, and 10% random target-label budget. We report the mean AP50 with standard deviation. For plugin rows, ∆ reports the AP50 difference from the matched RTSM anchor. The final row averages the AP50 means and ∆ values of all ten plugin variants for each budget.",
+      "page": 29,
+      "index": 2,
+      "width": 737,
+      "height": 435
+    },
+    {
+      "url": "assets/figures/arxiv/2606.30795v1/fig-003.webp",
+      "caption": "Table 4: Results on Cityscapes → Foggy Cityscapes with the DETA detector under the 5% random target-label budget. We report the mean AP50 with standard deviation. For plugin rows, ∆ reports the AP50 difference from the matched RTSM anchor.",
+      "page": 14,
+      "index": 3,
+      "width": 721,
+      "height": 328
+    },
+    {
+      "url": "assets/figures/arxiv/2606.30795v1/fig-004.webp",
+      "caption": "Table 8: Hyperparameters for optimization control plugins.",
+      "page": 28,
+      "index": 4,
+      "width": 608,
+      "height": 299
+    },
+    {
+      "url": "assets/figures/arxiv/2606.30795v1/fig-005.webp",
+      "caption": "Table 3: Results on Cityscapes → BDD100K with DINO under the 5% random targetlabel budget. We report the mean AP50 with standard deviation over three seeds. For plugin rows, ∆ reports the AP50 difference from the matched RTSM anchor.",
+      "page": 13,
+      "index": 5,
+      "width": 721,
+      "height": 329
+    },
+    {
+      "url": "assets/figures/arxiv/2606.30795v1/fig-006.webp",
+      "caption": "Table 1: Results on Cityscapes → Foggy Cityscapes with DINO under the 5% random target-label budget. We report the mean AP50 with standard deviation. For plugin rows, ∆ column reports the AP50 difference from the matched RTSM anchor, while Green and red cells indicate corresponding improvement or degradation.",
+      "page": 12,
+      "index": 6,
+      "width": 721,
+      "height": 329
+    },
+    {
+      "url": "assets/figures/arxiv/2606.30795v1/fig-007.webp",
+      "caption": "Table 2: Class-wise AP50 on Cityscapes → Foggy Cityscapes with DINO and DDT under the 5% random target-label budget. For plugin rows, green and red cells indicate per-class improvement and degradation relative to RTSM, respectively.",
+      "page": 12,
+      "index": 7,
+      "width": 716,
+      "height": 296
+    },
+    {
+      "url": "assets/figures/arxiv/2606.30795v1/fig-008.webp",
+      "caption": "Table 7: Hyperparameters for object completion plugins.",
+      "page": 27,
+      "index": 8,
+      "width": 719,
+      "height": 394
+    },
+    {
+      "url": "assets/figures/arxiv/2606.30795v1/fig-009.webp",
+      "caption": "Table 6: Hyperparameters for pseudo-label selection plugins.",
+      "page": 27,
+      "index": 9,
+      "width": 540,
+      "height": 290
+    },
+    {
+      "url": "assets/figures/arxiv/2606.30795v1/fig-010.webp",
+      "caption": "Table 5: Basic notation used by the sparse-label feedback plugins.",
+      "page": 20,
+      "index": 10,
+      "width": 716,
+      "height": 375
+    }
+  ]
+}

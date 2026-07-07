@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.02402v1/fig-001.webp",
+      "caption": "Fig. 1: Visual Context Inference from Sets (VICIS). (left) We introduce VICIS, a task aimed at evaluating the visual reasoning capabilities of vision models. Inspired by human capabilities, the model needs to infer a shared visual concept from a small set of example images and extract it from a query image to generate new images that preserve only this concept. (right) Our model adapts to different contexts for the same query (e.g., vehicles vs. animals), demonstrating visual reasoning over context and query. In contrast, Nano Banana largely ignores the visual context and instead defaults to reproducing a dominant concept from the query.",
+      "page": 2,
+      "index": 1,
+      "width": 725,
+      "height": 203
+    },
+    {
+      "url": "assets/figures/arxiv/2607.02402v1/fig-002.webp",
+      "caption": "Table 1: Quantitative comparison of models on VICIS tasks. Correctly solving the VICIS task entails generating correct and diverse images. We investigate the models’ ability to generalize to sketches from the ImageNet Sketch dataset [39] and to unseen classes from ImageNet21k [16]. We additionally visualize the results for the hierarchy dataset on the right to showcase the trade-off between accuracy and diversity that our model strikes best, significantly outperforming the pareto front.",
+      "page": 10,
+      "index": 2,
+      "width": 712,
+      "height": 300
+    },
+    {
+      "url": "assets/figures/arxiv/2607.02402v1/fig-003.webp",
+      "caption": "Fig. 7: When a query does not fully match the concept space defined by the context set, it aligns with the closest point on the learned manifold. Although trained only on ImageNet, the model generalizes to sketch inputs by extrapolating semantically. This applies to both query and context images. In the last two rows, we show how different hierarchy levels affect generation: projecting a tiger onto the feline space yields tiger-like samples, while projection onto the broader animal space results in more generic felines.",
+      "page": 13,
+      "index": 3,
+      "width": 575,
+      "height": 378
+    },
+    {
+      "url": "assets/figures/arxiv/2607.02402v1/fig-004.webp",
+      "caption": "Fig. 2: Typical VLM failure cases on our VICIS task: The model largely ignores the visual context and fixates on a single concept of the query image, in this case the dog. While the first row may suggest that it has understood the task, the second row reveals a bias toward specific concepts rather than genuine task comprehension.",
+      "page": 4,
+      "index": 4,
+      "width": 573,
+      "height": 241
+    }
+  ]
+}

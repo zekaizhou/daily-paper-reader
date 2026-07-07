@@ -1,0 +1,174 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-001.webp",
+      "caption": "Table 1. Classification accuracy (%) on ImageNet and OOD variants datasets using the ViT-B/16 backbone. Bold indicates the best results.",
+      "page": 6,
+      "index": 1,
+      "width": 758,
+      "height": 283
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-002.webp",
+      "caption": "Table 2. Classification accuracy (%) on fine-grained datasets using the ViT-B/16 backbone.",
+      "page": 6,
+      "index": 2,
+      "width": 1012,
+      "height": 292
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-003.webp",
+      "caption": "Table 16. Standard deviations on ImageNet and OOD variants datasets using the RN-50 backbone.",
+      "page": 15,
+      "index": 3,
+      "width": 758,
+      "height": 292
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-004.webp",
+      "caption": "Table 15. Standard deviations on ImageNet and OOD variants datasets using the ViT-B/16 backbone.",
+      "page": 15,
+      "index": 4,
+      "width": 758,
+      "height": 315
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-005.webp",
+      "caption": "Table 4. Classification accuracy (%) on fine-grained datasets using the ResNet50 backbone.",
+      "page": 7,
+      "index": 5,
+      "width": 1012,
+      "height": 273
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-006.webp",
+      "caption": "Table 5. Classification accuracy (%) with CoOp initialization on the ViT-B/16 backbone.",
+      "page": 7,
+      "index": 6,
+      "width": 506,
+      "height": 329
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-007.webp",
+      "caption": "Table 3. Classification accuracy (%) on ImageNet and OOD variants datasets using the ResNet50 backbone.",
+      "page": 7,
+      "index": 7,
+      "width": 758,
+      "height": 264
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-008.webp",
+      "caption": "Figure 6. Classification accuracy (%) with different TTA steps on ViT-B/16.",
+      "page": 14,
+      "index": 8,
+      "width": 974,
+      "height": 265
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-009.webp",
+      "caption": "Figure 7. Classification accuracy (%) under different rescaling factor γ ∈ {0.2, 0.4, 0.6, 0.8, 1.0} on different backbones.",
+      "page": 14,
+      "index": 9,
+      "width": 970,
+      "height": 299
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-010.webp",
+      "caption": "Figure 1. The pipeline of the proposed framework. During optimization, we use reverse cross-entropy to optimize the textual prompt. Specifically, the pseudo-label is estimated via the proposed SE strategy, which prioritizes the weak augmentation and adaptively incorporates strong augmentations. By applying the same SE strategy to generate the final prediction during inference, USE ensures consistency between the two stages. Notably, SE can also function independently as an optimization-free TTA method.",
+      "page": 3,
+      "index": 10,
+      "width": 1002,
+      "height": 367
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-011.webp",
+      "caption": "Table 24. Classification accuracy (%) on fine-grained datasets with the ViT-B/16 backbone for representative TTA methods, with and without the proposed Self-Ensembling (SE) strategy.",
+      "page": 18,
+      "index": 11,
+      "width": 1002,
+      "height": 239
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-012.webp",
+      "caption": "Table 11. Summary of evaluation datasets. We report the detailed information for each dataset.",
+      "page": 13,
+      "index": 12,
+      "width": 1012,
+      "height": 400
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-013.webp",
+      "caption": "Figure 3. Classification accuracy (%) under different ensembling strategies using the ViT-B/16 backbone. Specifically, “Adaptive” refers to SE strategy, which adjusts weights dynamically.",
+      "page": 8,
+      "index": 13,
+      "width": 483,
+      "height": 269
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-014.webp",
+      "caption": "Table 19. Classification Accuracy (%) on ImageNet and OOD variants datasets using CoOp with the ViT-B/16 backbone.",
+      "page": 17,
+      "index": 14,
+      "width": 658,
+      "height": 334
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-015.webp",
+      "caption": "Table 20. Classification Accuracy (%) on fine-grained datasets using the CoOp with ViT-B/16 backbone.",
+      "page": 17,
+      "index": 15,
+      "width": 1012,
+      "height": 302
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-016.webp",
+      "caption": "Table 22. Ablation study on ViT-B/16 evaluating the impact of different optimization and inference components.",
+      "page": 17,
+      "index": 16,
+      "width": 1017,
+      "height": 247
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-017.webp",
+      "caption": "Figure 5. Visualization of the differences between weak and strong augmentations. Column (a) presents the weak augmentation, while Columns (b)–(d) display the top-3 strong augmentations sorted by entropy. Predictions are obtained using a ViT-B/16 backbone.",
+      "page": 9,
+      "index": 17,
+      "width": 486,
+      "height": 566
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-018.webp",
+      "caption": "Table 10. Efficiency comparison of various TTA methods. “CLIP64” refers to the computational overhead of 64 forward passes.",
+      "page": 9,
+      "index": 18,
+      "width": 483,
+      "height": 338
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-019.webp",
+      "caption": "Figure 4. Skipping ratio and classification accuracy (%) before/ after using the skip technique on the ViT-B/16 backbone. Numbers in gray / black denote accuracies before / after skipping.",
+      "page": 9,
+      "index": 19,
+      "width": 481,
+      "height": 278
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-020.webp",
+      "caption": "Table 18. Standard deviations on fine-grained datasets using the RN-50 backbone.",
+      "page": 16,
+      "index": 20,
+      "width": 1012,
+      "height": 259
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03900v1/fig-021.webp",
+      "caption": "Table 17. Standard deviations on fine-grained datasets using the ViT-B/16 backbone.",
+      "page": 16,
+      "index": 21,
+      "width": 1012,
+      "height": 281
+    }
+  ]
+}

@@ -1,0 +1,182 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-001.webp",
+      "caption": "Fig. 3: Additive task-domain directions in update-vectors. (a) Prototypes are computed by 16 update-vectors from 4 tasks and 4 domains. Strong alignment by additive composition suggests orthogonal, linearly combinable task and domain components. (b) View is viewpoint shift, Noise is camera noise, Light is light change. Alignment among similar domain shifts shows that domain components are structured and correlated with semantic of domain shifts.",
+      "page": 6,
+      "index": 1,
+      "width": 712,
+      "height": 291
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-002.webp",
+      "caption": "Table 1: Performance on LIBERO across novel viewpoints using π0.5. We report average success rates of total 40 tasks for three trials of one-shot adaptation with different adaptation tasks, with the best in bold.",
+      "page": 11,
+      "index": 2,
+      "width": 725,
+      "height": 196
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-003.webp",
+      "caption": "Table 2: Performance on LIBERO under combined visual shifts using π0.5. We evaluate under the Medium viewpoint shift (View) and two combined settings: View+Noise (camera noise) and View+Noise+Light (camera noise with illumination).",
+      "page": 11,
+      "index": 3,
+      "width": 725,
+      "height": 194
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-004.webp",
+      "caption": "Table 25: Suite-wise performance under combined visual shifts on LIBERO using π0-FAST. We report suite-wise success rates (%) (Spatial/Object/Goal/Long) for each viewpoint setting, with the best in bold.",
+      "page": 43,
+      "index": 4,
+      "width": 662,
+      "height": 544
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-005.webp",
+      "caption": "Fig. 9: Example rollouts on MimicGen. Top: Example rollout of the Stack task with UR5e. Bottom: Example rollout of the Stack Three task with UR5e.",
+      "page": 30,
+      "index": 5,
+      "width": 725,
+      "height": 240
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-006.webp",
+      "caption": "Fig. 1: One-shot VLA adaptation under environmental shifts. Environmental shifts can cause a source-trained VLA policy to fail in the novel target domain. (a) Fulldata fine-tuning adapts successfully but requires task-wise demonstrations, incurring expensive data collection costs. (b) One-shot fine-tuning is data-light but often fails to adapt across tasks. (c) Our one-shot adaptation extracts domain-specific directions from fine-tuned weights and adapts the policy via weight arithmetic.",
+      "page": 2,
+      "index": 6,
+      "width": 725,
+      "height": 246
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-007.webp",
+      "caption": "Table 13: Adaptation task combinations in LIBERO used for one-shot finetuning. For LIBERO experiments, we use one demonstration from a single task in each of the five scenes. Success rates are averaged across the three combinations.",
+      "page": 29,
+      "index": 7,
+      "width": 652,
+      "height": 986
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-008.webp",
+      "caption": "Fig. 13: Impact of choice of layers to adapt. Vis is vision encoder, LLM is language model, and Action is action expert in the VLA model, π0.5. We report the average success rate (%) on LIBERO in three novel viewpoint shifts (Small, Medium, Large) (Left). We also measure the average absolute value of the domain vectors across the chosen layers (Right).",
+      "page": 39,
+      "index": 8,
+      "width": 711,
+      "height": 219
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-009.webp",
+      "caption": "Fig. 5: Overview of experimental setups. We experiment on four setups: simulation setups with novel viewpoints (top-left) and combined visual perturbations (bottom-left) on LIBERO [37], a cross-embodiment transfer setup on MimicGen [42] (middle), and a real-world setup on two third-person camera viewpoints (right).",
+      "page": 10,
+      "index": 9,
+      "width": 725,
+      "height": 256
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-010.webp",
+      "caption": "Table 24: Suite-wise performance under combined visual shifts on LIBERO using π0.5. We report suite-wise success rates (%) (Spatial/Object/Goal/Long) for each shift setting, with the best in bold.",
+      "page": 42,
+      "index": 10,
+      "width": 662,
+      "height": 544
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-011.webp",
+      "caption": "Table 17: Upper bound performance across experimental settings using π0-FAST. We report success rate (%) on LIBERO for a full fine-tuning upper bound, where the adapted policy θ∗ is obtained by fully fine-tuning the base policy θ0 using all available target demonstrations.",
+      "page": 33,
+      "index": 11,
+      "width": 725,
+      "height": 215
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-012.webp",
+      "caption": "Table 20: Performance on source domain after adaptation in LIBERO using π0.5. We report the success rate (%) for each LIBERO task suite on the source domain after adapting the model to each target domain. Zero-shot refers to the base policy θ0.",
+      "page": 35,
+      "index": 12,
+      "width": 600,
+      "height": 339
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-013.webp",
+      "caption": "Table 5: Performance on real-world UR10e robot using π0.5. We use a single Stack Cube demonstration to adapt models to the target domain (novel viewpoint).",
+      "page": 13,
+      "index": 13,
+      "width": 725,
+      "height": 211
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-014.webp",
+      "caption": "Fig. 4: Overview of the proposed VLA adaptation approach. (a) We compute update-vectors ∆m,src and ∆m,tgt by fine-tuning a base policy θ0 on a single task Tm using source and target data. (b) A domain vector δ̃tgt is extracted by subtracting task directions, with subspace filtering to suppress misaligned components. Adding δ̃tgt back to θ0 yields a multi-task policy θ∗ adapted to the target domain.",
+      "page": 8,
+      "index": 14,
+      "width": 725,
+      "height": 200
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-015.webp",
+      "caption": "Fig. 14: Per-layer statistics of DART on LIBERO across novel viewpoints in π0.5. We plot the mean and standard deviation across three novel viewpoints (Small, Medium, Large) and three different adaptation tasks Tm,m ∈ {1, 2, 3}. VIS is a vision encoder, LLM is a language model, ACTION is an action expert in the VLA model.",
+      "page": 40,
+      "index": 15,
+      "width": 709,
+      "height": 781
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-016.webp",
+      "caption": "Table 21: Performance of merging domain vectors δ̃tgt from each novel viewpoint domain into a single adapted model in LIBERO using π0.5. We report average success rates of total 40 tasks for three trials of one-shot adaptation with different adaptation tasks, with the best in bold and the second best underlined. Merging domain vectors into a single domain vector can adapt the base model to all the target domains. In practice, this property can be used to store only a single composed domain vector across multiple target domains, reducing the memory overhead of storing each domain vector.",
+      "page": 36,
+      "index": 16,
+      "width": 623,
+      "height": 364
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-017.webp",
+      "caption": "Table 3: Performance on LIBERO across novel viewpoints using π0-FAST. We report average success rates of total 40 tasks for three trials of one-shot adaptation with different adaptation tasks, with the best in bold.",
+      "page": 12,
+      "index": 17,
+      "width": 725,
+      "height": 196
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-018.webp",
+      "caption": "Table 23: Suite-wise performance under viewpoint shifts on LIBERO using π0.5. We report success rates (%) averaged over the tasks in each suite (Spatial/Object/Goal/Long) for each viewpoint (Small/Medium/Large), with the best in bold. Our method achieves consistent gains across most suites, especially under larger viewpoint shifts.",
+      "page": 41,
+      "index": 18,
+      "width": 662,
+      "height": 543
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-019.webp",
+      "caption": "Fig. 8: Images of each LIBERO scene under different viewpoints. Columns represent viewpoint shift levels, and rows correspond to scenes.",
+      "page": 27,
+      "index": 19,
+      "width": 633,
+      "height": 681
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-020.webp",
+      "caption": "Table 22: Performance of using different adaptation tasks for source and target domain on LIBERO Medium viewpoint using π0.5. We report average success rates (%) of total 40 tasks on each target-domain adaptation task Tm and its corresponding source-domain adaptation task Tm′ to extract domain vector δtgt = ∆m,tgt−∆m′,src. m ∈ {1, 2, 3} is the scene-wise adaptation task combination in Tab. 13. For Cosine-Sim, we find the most and the second-most similar tasks per each m using Eq. (8). For Random, we randomly choose tasks twice per each m. Despite small task set of LIBERO and simple retrieval heuristic we used, the trend suggests that task similarity is a useful signal for domain vector extraction.",
+      "page": 37,
+      "index": 20,
+      "width": 688,
+      "height": 197
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-021.webp",
+      "caption": "Fig. 10: Real-world setup and example rollouts. Left: Viewpoint configuration for real-world experiments, using one wrist-mounted camera and a third-person camera (source or target viewpoint). Right: Example rollout of the Lemon task from the source viewpoint (top) and the target viewpoint (bottom).",
+      "page": 31,
+      "index": 21,
+      "width": 723,
+      "height": 223
+    },
+    {
+      "url": "assets/figures/arxiv/2607.00666v1/fig-022.webp",
+      "caption": "Fig. 2: Properties of one-shot fine-tuning. (a) The model is fine-tuned on adaptation tasks in target (Medium) camera viewpoint. Performance remains high in adaptation tasks but generalizes poorly to other held-out tasks. (b) Subspace alignment γ(·, ·) among update-vectors ∆m,tgt = θm,tgt − θ0 on m ∈ {1, 2, 3} and tgt ∈ {Source, Medium}. Vectors align for the same task and domain, showing task- and domain-shared directions.",
+      "page": 5,
+      "index": 22,
+      "width": 709,
+      "height": 246
+    }
+  ]
+}

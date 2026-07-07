@@ -1,0 +1,1168 @@
+Title: Simple Supervision Is Hard to Beat: A Bitter Lesson from Sparse Target Labels in Domain-Adaptive Object Detection
+
+URL Source: https://arxiv.org/pdf/2606.30795v1
+
+Published Time: Wed, 01 Jul 2026 00:05:50 GMT
+
+Number of Pages: 29
+
+Markdown Content:
+# Simple Supervision Is Hard to Beat: A Bitter Lesson from Sparse Target Labels in Domain-Adaptive Object Detection 
+
+Lijun Zhang 1 , Ruinian Xu 1, and Mudit Agrawal 1
+
+Amazon Robotics, Seattle, USA 
+
+{ljzhang,ruinianx,muditagr}@amazon.com 
+
+Abstract. Source-free domain adaptive object detection adapts a source-trained detector to an unlabeled target domain, typically through teacher-student self-training with pseudo-labels. We revisit this setting when a small, uniformly sampled subset of target images is labeled. We intro-duce Random-Target Supervised Mixing (RTSM), a simple anchor that incorporates these annotations through a supervised detection loss while leaving the original unlabeled adaptation branch unchanged. Across eval-uations spanning four SFDA-OD methods, two object detectors, multi-ple adaptation tasks, and target-label budgets from 1% to 10% , RTSM consistently improves pure SFDA by 1.7 to 18 .3 AP50. We then exam-ine whether the same annotations can provide further gains by steering unlabeled self-training. To this end, we evaluate ten sparse-label feed-back plugins covering pseudo-label selection, object completion, and op-timization control, which yield limited and method-dependent gains over RTSM. These results reveal a bitter lesson for sparse-label SFDA-OD: simple supervision is hard to beat. RTSM therefore provides a simple yet effective anchor for sparse-label SFDA-OD. 
+
+Keywords: Domain Adaptation · Object Detection · Empirical Study 
+
+1 Introduction 
+
+Object detectors are often trained once and then deployed in environments whose visual statistics may differ from the training data. In autonomous driving and surveillance scenarios, for example, shifts in weather, illumination, camera hard-ware, and geographic layout can substantially degrade a detector trained on a labeled source domain [2, 21]. Source-free domain adaptive object detection (SFDA-OD) addresses this problem by adapting a source-trained detector to an unlabeled target domain without accessing the source data [8]. Recent SFDA-OD methods adapt the detector through self-training. A teacher model predicts pseudo labels for unlabeled target images, and a student model is optimized to match those pseudo labels, often within a Mean Teacher framework that stabilizes training through exponential moving average updates [25]. This paradigm underlies many strong SFDA-OD methods, such as SED [8], LPU [3], PETS [10], LPLD [28], and DDT [6]. 
+
+> arXiv:2606.30795v1 [cs.CV] 29 Jun 2026
+
+2 Lijun Zhang, Ruinian Xu, et al. 
+
+However, the pseudo-label dependence also creates a bottleneck. Under target-domain shift, pseudo labels can include false positives, miss hard target objects, and provide unstable optimization signals. Existing methods address parts of this problem by refining confidence thresholds, exploiting low-confidence pro-posals, stabilizing teacher updates, or exchanging teacher and student mod-els [3,6,10,28]. Active domain adaptation studies a related question by selecting a small subset of target samples to annotate as more reliable signals for domain adaptation [14, 15]. These strategies are valuable to select the most important samples for annotation, but their performance can depend on which proxy is chosen and how well it transfers under domain shift. We therefore study a simpler protocol where the labeled target subset is selected uniformly at random. Random selection is not meant to be the most label-efficient annotation strategy. Instead, it removes the active-selection proxy from the problem and lets us isolate a different question. Once a small set of human target labels is given, how should those labels be used to improve existing SFDA-OD methods? Pure    
+
+> SFDA
+> RTSM
+> (+5% labels)
+> 30
+> 40
+> 50
+> 60
+> AP50
+> Source-Only
+> Full-Target Oracle
+> +6.365
+> +4.725
+> +8.278
+> +5.026
+> PETS LPU LPLD DDT
+
+Fig. 1: RTSM gives a strong supervised-mixing anchor across the evaluated SFDA-OD methods. Dashed lines mark the source-only and full-target oracle references. 
+
+The most direct answer is to add asupervised detection loss on the randomly labeled target images while keeping the original SFDA-OD training procedure un-changed. We call this baseline Random-Target Supervised Mixing (RTSM), which treats sparse target labels as ordinary su-pervised examples and mixes them with the unlabeled self-training branch of an exist-ing SFDA-OD method. RTSM is algorith-mically simple, but it is not a weak con-trol. As shown in Figure 1, RTSM substan-tially improves the source-free baseline de-tectors. For instance, for DDT [6], adding 5% randomly labeled target data improves AP50 (average precision at IoU 0.5) from 53.669 to 58.695. Therefore, rather than ask-ing whether sparse labels help at all, we ask whether they can help beyond RTSM by improving the unlabeled self-training branch. To systematically study this research question, we consider three ways sparse target labels may interact with pseudo supervision. Pseudo-label selection treats the labeled subset as a target-domain reliability probe and adjusts which pseudo labels should be trusted. Its main target is the false-positive side of pseudo-label noise, including unreliable confidence estimates. Object completion instead focuses on what the teacher fails to predict. It uses the labeled subset to charac-terize missed objects and guide the revival of candidate pseudo labels, targeting false negatives and under-activated detector queries. Optimization control does not directly change the pseudo labels. It uses sparse labels to regulate how super-Random Target Labels for SFDA-OD 3
+
+vised and pseudo-label losses jointly update the detector, targeting the training dynamics between trusted human labels and noisy pseudo labels. Our study reveals a bitter lesson for sparse-label SFDA-OD: simple super-vision is remarkably hard to beat. Across various SFDA-OD settings, sparse target annotations consistently improve adaptation when used directly through supervised mixing. Yet the same annotations provide much less reliable guid-ance when used to calibrate pseudo-labels, recover missed objects, or regulate optimization, with gains that remain fragmented and method-dependent. This distinction is particularly important for the emerging sparse-label SFDA-OD setting, which lies at the intersection of semi-supervised domain adaptation and active domain adaptive object detection [14,15,20]. Once target annotations are available, improvement over pure SFDA alone is no longer sufficient evidence of effective label utilization. RTSM therefore serves as the minimal and necessary anchor, isolating the benefit obtained from direct target supervision. Our main findings are summarized as follows. 
+
+– Direct supervision provides a remarkably strong use of sparse target annota-tions. Across evaluations spanning four SFDA-OD methods, two object de-tectors, multiple adaptation tasks, and target-label budgets from 1% to 10% ,RTSM consistently improves pure SFDA by 1.7 to 18 .3 AP50. 
+
+– The same annotations are considerably less reliable when used to steer self-training. Across ten plugins covering pseudo-label selection, object completion, and optimization control, no approach consistently outperforms RTSM. 
+
+– The inconsistency is systematic rather than confined to a particular exper-imental setting. Plugin gains vary across object categories and adaptation pipelines, while their marginal benefit generally decreases as the labeled bud-get grows. 
+
+2 Preliminary 
+
+We first introduce the object detection and source-free domain adaptive object detection (SFDA-OD) required by our study. We then define the RTSM anchor used throughout the paper. Detailed related work is provided in Appendix A. 
+
+Transformer-based Object Detector. Object detection maps an image to a set of object instances, each specified by a semantic category and a bound-ing box. Classical neural detectors implement this mapping with proposal-based or dense prediction pipelines, such as Faster R-CNN and RetinaNet [9, 19]. Transformer-based detectors further cast detection as end-to-end set prediction, where a fixed set of object queries represents candidate objects and interacts with global image features [1, 31]. Formally, given an image x, we denote the detector output as M object-query predictions 
+
+fθ (x) = {(pj , bj , qj )}Mj=1 , (1) Here the three terms denote the class probability vector, the predicted bounding box, and the corresponding query representation. For a labeled image (x, y )
+
+with annotations y = {(ck, bk)}Kk=1 , DETR-style detectors match predictions 4 Lijun Zhang, Ruinian Xu, et al. 
+
+to ground-truth objects with bipartite matching. The supervised detection loss after matching is denoted as Ldet (fθ (x), y ), which consists of a classification term for category prediction and localization terms for box regression, such as 
+
+ℓ1 and generalized IoU losses. In Section 3, pj , bj , qj , and Ldet serve as the common detector interface for defining pseudo-label selection, object completion, and optimization control. 
+
+Mean Teacher Self-Training in SFDA-OD. SFDA-OD aims to obtain a target-adapted detector when the source data are no longer accessible during adaptation. Let fθs denote the detector trained on the source domain, and let 
+
+Dut = {xti}Nt 
+
+> i=1
+
+denote the unlabeled target training set. Starting from fθs , the adaptation procedure optimizes a detector on Dut and returns the target detector 
+
+fθt .As a widely-used framework, Mean Teacher Self-Training [6, 25] instantiates this adaptation by using a temporally averaged model to generate pseudo super-vision for unlabeled target images. It maintains a student detector fstu and an EMA teacher detector ftea respectively. Both networks are initialized from the source detector fθs . The student is updated by gradient descent, and the teacher averages the student over training steps to suppress instantaneous optimization noise. After adaptation, the trained student becomes the target detector fθt .For a target image xti, the teacher first predicts candidate detections on a weakly augmented view, 
+
+Ri = ftea (aw(xti)) = {(ˆ cij , ˆbij , s ij , zij )}Mi
+
+> j=1
+
+, (2) where aw denotes a weak augmentation that preserves the image content with mild transformations [11, 24], and Mi denotes the number of candidate pre-dictions within the image, and the prediction outputs are the predicted class, predicted box, confidence score, and query representation, respectively. A pseudo-label rule maps these candidates to accepted pseudo-labels, i.e., 
+
+ˆyi = Γ (Ri), where Γ denotes the pseudo-label generation rule, such as confidence thresholds, non-maximum suppression, and low-confidence proposal handling [6, 10, 24]. The pseudo-labels then supervise the student on a strongly augmented target view as(xti), where as applies stronger photometric, geometric, or masking perturbations [5, 11, 24]. The full unlabeled branch is denoted by 
+
+Lu = 1
+
+|B u|
+
+X 
+
+> xti∈B u
+
+Ldet 
+
+ fstu (as(xti)) , ˆyi
+
+ + Laux . (3) where Bu is an unlabeled target mini-batch. Here the auxiliary term Laux rep-resents any additional unlabeled loss used by the SFDA-OD baseline. Different SFDA-OD methods instantiate the pseudo-label rule, augmentation views, aux-iliary losses, and teacher update rules differently, but this notation captures the shared unlabeled self-training branch. 
+
+Random-Target Supervised Mixing (RTSM). RTSM measures the di-rect benefit of sparse target labels before introducing any additional label-guided mechanism. It treats labeled target images as ordinary supervised examples while Random Target Labels for SFDA-OD 5
+
+preserving the original SFDA-OD self-training branch. Let Dlt = {(xli, y li)}Nl 
+
+> i=1
+
+be a uniformly random subset of target images annotated with human labels. The remaining target images form the unlabeled set Dut . Given an SFDA-OD baseline with unlabeled objective Lu, RTSM optimizes 
+
+LRTSM = Lu + 1
+
+|B l|
+
+X
+
+> (xli,y li)∈B l
+
+Ldet 
+
+ fθt (xli), y li
+
+ , (4) where Bl is a labeled target mini-batch. The pseudo-label rule, the unlabeled objective, and the teacher-student update remain those of the original SFDA-OD baseline. RTSM therefore measures the gain from direct target supervision before any additional method attempts to use the same labels to improve unlabeled self-training. 
+
+3 Sparse Label Feedback for Target Self-Training 
+
+RTSM extends a SFDA-OD baseline by adding a supervised loss on a randomly labeled target subset, while preserving the original self-training pipeline as de-scribed in Section 2. This section studies whether the same sparse annotations provide useful feedback to the unlabeled branch beyond this direct supervised loss. We therefore keep the RTSM as the anchor and evaluate a set of modular feedback mechanisms that intervene in different parts of target self-training. The mean teacher pipeline offers three natural intervention points, as il-lustrated in Figure 2. Pseudo-Label Selection acts before teacher predic-tions become pseudo-labels and tests whether sparse annotations can make confidence-based pseudo-label construction more target-aware. Object Com-pletion acts on predictions rejected by the baseline pseudo-label construction and tests whether sparse annotations can identify target objects that the teacher localizes but fails to keep. Optimization Control leaves pseudo-labels un-changed and instead uses sparse annotations to regulate the interaction between the supervised target loss, the unlabeled objective, and the teacher update. In all cases, the supervised sparse target branch is unchanged, and each plugin modifies only one interface in the unlabeled branch. 
+
+3.1 Pseudo-Label Selection 
+
+Pseudo-label selection examines whether sparse annotations can improve the way teacher predictions are converted into pseudo-labels on the target domain. For each target image xi, the teacher produces candidates Ri = {rij }Mi
+
+> j=1
+
+, where 
+
+rij = (ˆ cij , ˆbij , s ij , zij ) contains the predicted class, box, confidence score, and candidate feature. The SFDA-OD baseline then applies its pseudo-label construc-tion rule Γ to obtain ˆyi = Γ (Ri). Since teacher confidence can be miscalibrated after domain shift, the following three plugins keep the candidate pool fixed and change only the scores or thresholds used by Γ .6 Lijun Zhang, Ruinian Xu, et al. 𝒟 𝑙 
+
+> 𝑡
+
+(randomly labeled 
+
+target subset) 
+
+Sparse Labels (GT) 
+
+𝑌 𝑖 𝑙 = {(𝑐 𝑖𝑘 , 𝑏 𝑖𝑘 )}
+
+> car
+> truck
+> ped.
+
+Supervised 
+
+Objective 
+
+ℒ𝑠𝑢𝑝 
+
+2 Random Target Supervised Mixing (RTSM) 
+
+1 Mean -Teacher Self -Training (Unlabeled Target Branch) 
+
+𝑥 𝑖 
+
+> 𝑢
+
+(unlabeled target) 
+
+Teacher 
+
+𝜃 𝑡 
+
+Candidate Set 
+
+𝑅 𝑖 = {( Ƹ𝑐 𝑖𝑗 , ෠𝑏 𝑖𝑗 , 𝑠 𝑖𝑗 , 𝑧 𝑖𝑗 )}      
+
+> Ƹ
+> 𝑐 𝑖𝑗 predicted class
+> ෠𝑏 𝑖𝑗 bounding box
+> 𝑠 𝑖𝑗 confidence score
+> 𝑧 𝑖𝑗 features
+> …
+> Reject Set 𝑅 𝑖
+> −
+> …
+> Accept Set ො𝑦 𝑖
+
+Pseudo -Label 
+
+Construction  Γ
+
+Student 
+
+𝜃 𝑠  Unlabeled 
+
+Objective 
+
+ℒ𝑢        
+
+> EMA Teacher Update
+> 𝜃 𝑡 =𝜇 𝜃 𝑡 +1−𝜇 𝜃 𝑠
+
+A Pseudo -Label Selection 
+
+(Precision -Oriented)              
+
+> Score
+> Calibration
+> Class -Wise
+> Threshold
+> Adjustment
+> Ƹ
+> 𝑠 𝑖𝑗 =𝑤 Ƹ𝑐 𝑖𝑗 ⋅𝑠 𝑖𝑗
+> Accept if Ƹ𝑠 𝑖𝑗 ≥𝜏 Ƹ𝑐 𝑖𝑗
+> 𝜏 𝑐
+> 𝑏𝑎𝑠𝑒 →𝜏 𝑐
+> 𝑛𝑒𝑤
+> car
+> truck
+> ped.
+
+B Object Completion 
+
+(Recall -Oriented)    
+
+> Recover missing objects
+> from rejected candidates
+> Rejected 𝑅 𝑖
+> −Recovered 𝑉 𝑖 𝑟𝑒𝑐
+
+C Optimization Control 
+
+(Training -Dynamic -Oriented)               
+
+> Loss Weight Balancing
+> ℒ=ℒ𝑠𝑢𝑝 +𝜆 𝑢 ℒ𝑢
+> Gradient Conflict Handling
+> 𝑔 =PCGrad (𝑔 𝑠 ,𝑔 𝑝 )
+> 𝑔 𝑠
+> 𝑔 𝑝
+> Label -Guided Teacher Update
+> 𝜃 𝑡 ,𝑝 =𝜇 𝜃 𝑡 ,𝑝 +1−𝜇 𝑝 𝜃 𝑠 ,𝑝
+> T
+> T
+> fast
+> T
+> slow
+
+3
+
+Sparse -Label 
+
+Feedback 
+
+Plugins 
+
+(Intervene at 
+
+One Interface) 
+
+Fig. 2: Sparse label feedback for target self-training. RTSM uses the randomly labeled target subset through the direct supervised detection loss. Plugin modules use the same sparse annotations as feedback to the unlabeled branch through pseudo-label selection, object completion, or optimization control. 
+
+Prior-Mapped Thresholding. This plugin uses the sparse target anno-tations to correct class-level imbalance in the pseudo-label set. Its premise is that, although a small random labeled subset cannot provide exact target pri-ors, large discrepancies between the class distribution of sparse ground truth and that of baseline pseudo-labels can still indicate systematic over-selection or under-selection. Let πlc and πpc denote the smoothed prior for class c estimated from sparse ground truth objects and baseline pseudo-labels on the same sparse images. The prior discrepancy is mapped to a bounded threshold direction, 
+
+dc = tanh 
+
+
+
+β log πlc + ϵπpc + ϵ
+
+
+
+, (5) where β controls sensitivity and ϵ is used for numerical stability. When πlc > π pc ,the positive value of dc lowers the threshold for class c and allows more teacher candidates to enter the pseudo-label set. When πlc < π pc , the negative value of 
+
+dc raises the threshold and suppresses over-represented pseudo-labels. Therefore given the baseline threshold τ 0
+
+c , the adjusted class threshold is 
+
+τ prior 
+
+c = clip  τ 0
+
+c − δ↓[dc]+ + δ↑[−dc]+, τ min , τ max 
+
+ . (6) Here [x]+ = max( x, 0) , δ↓ and δ↑ bound the largest downward and upward shifts, and τmin and τmax define the valid threshold range. The adjusted threshold Random Target Labels for SFDA-OD 7
+
+replaces τ 0 
+
+> c
+
+when Γ is applied to unlabeled target images. The prior estimation and threshold mapping details are provided in Appendix B.2. 
+
+Precision-Calibrated Thresholding. Prior-mapped thresholding uses class counts but does not verify candidate correctness. Precision-calibrated thresh-olding uses sparse annotations as a small target validation set for the teacher candidates. For each class, it tests a grid of alternative confidence thresholds and asks which threshold retains the largest number of correct candidates while satisfying a required empirical precision. For class c, let Tc denote the threshold grid, Pc(τ ) denote the empirical precision of class c candidates retained at threshold τ on sparse labeled images, and Rc(τ ) denote the retained coverage of correct teacher candidates for that class. Subject to a target precision pmin and a minimum support requirement 
+
+nmin , the calibrated threshold is 
+
+τ prec  
+
+> c
+
+= arg max  
+
+> τ∈T c
+
+Rc(τ ) s.t. Pc(τ ) ≥ pmin , |A c(τ )| ≥ nmin , (7) where Ac(τ ) is the set of sparse-image teacher candidates of class c whose confi-dence is at least τ . If the sparse subset does not provide a feasible threshold, the method falls back to the baseline threshold τ 0 
+
+> c
+
+. The threshold grid, candidate matching, and tie-breaking rule are described in Appendix B.2. 
+
+Reliability Score Rescaling. The previous two plugins replace class-specific thresholds. Reliability rescaling keeps the baseline thresholds intact and instead suppresses scores for classes whose accepted pseudo-labels are unreliable on sparse labeled images. It is therefore a conservative variant of selection, since it can remove doubtful candidates but does not explicitly increase recall. Let qc = Pc(τ 0 
+
+> c
+
+) be the empirical precision of class c at the baseline threshold. When class c satisfies the support requirements defined in Appendix B.2, its score multiplier is 
+
+wc = wmin + (1 − wmin )
+
+
+
+clip 
+
+ qc
+
+pmin 
+
+, 0, 1
+
+ γ
+
+. (8) If support is insufficient, wc is set to one so that the class is left unchanged. During pseudo-label construction, each teacher score is replaced by ˜sij = wˆcij sij 
+
+before applying the baseline rule Γ .
+
+3.2 Object Completion 
+
+Object completion targets a different failure mode from pseudo-label selection. Selection is precision-oriented because it changes which teacher candidates are trusted. Completion is recall-oriented because it asks whether rejected teacher candidates can recover target objects missing from the accepted pseudo-label set. This distinction is important for query-based detectors, where low-confidence object queries can still localize real objects but are removed before supervising the student. Sparse labeled images provide supervision for identifying such rejected candi-dates. On a sparse image, the baseline pseudo-label set ˆyi = Γ (Ri) is compared 8 Lijun Zhang, Ruinian Xu, et al. 
+
+with ground truth annotations. A ground truth object is considered missed if no accepted pseudo-label of the same class overlaps it above a coverage threshold. A teacher candidate rejected by Γ is then labeled as a recovery positive if it matches a missed object of the same class. These labels train candidate scor-ers that are later applied to unlabeled images. The missed-object definition and recovery-label construction are given in Appendix B.3. 
+
+Hard Query Recovery. Hard query recovery directly expands the pseudo-label set. The sparse subset is used to train a binary scorer hψ that predicts whether a rejected candidate corresponds to a missed object. The input feature 
+
+ϕij includes information from the detector outputs as detailed in Appendix B.3. The scorer is trained with the constructed binary labels. During domain adaptation, rejected candidates in R− 
+
+> i
+
+= Ri \ ˆyi with recovery score at least ρ are appended to the baseline pseudo-label set after duplicate removal, 
+
+ˆyrec  
+
+> i
+
+= ˆ yi ∪
+
+n
+
+(ˆ cij , ˆbij ) | rij ∈ R − 
+
+> i
+
+, h ψ (ϕij ) ≥ ρ, dup( rij , ˆyi) = 0 
+
+o
+
+. (9) The student is then trained on ˆyrec  
+
+> i
+
+in place of the baseline pseudo-label set ˆyi.The scorer training objective, recovery thresholding, and duplicate removal rule are described in Appendix B.3. 
+
+Multi-View Hard Recovery. Multi-view hard recovery augments the same recovery scorer with cross-view stability. The teacher is evaluated on multi-ple weak augmentations of the same image, following the common consistency-training convention of producing pseudo-labels from content-preserving views [11, 24], and predictions are mapped back to the original coordinates. A rejected can-didate receives higher support when candidates with the same predicted class and similar box locations appear in other views. This support is concatenated with the single-view feature ϕij before scorer training and inference. The final action is unchanged from hard query recovery, namely high-scoring recovered candidates are appended to the pseudo-label set after duplicate removal. The multi-view candidate construction and cross-view support features are detailed in Appendix B.3. 
+
+Foreground Query Revival. Hard recovery treats each selected candidate as a full pseudo-label, which can propagate errors in both class and localiza-tion. Foreground query revival uses the same recovered candidates as weaker supervision. It does not insert them into ˆyi. Instead, it identifies the student prediction on the strong view that best corresponds to each recovered candidate and encourages that prediction to remain foreground-like. Let Vi be the recovered candidate set for image i, let μ(i, j ) denote the matched student prediction for candidate rij , and let ℓμ(i,j ) be its class logits. A foreground aggregation operator fg( ·) converts foreground-class logits into one scalar logit. The revival loss is 
+
+Lrev = 1
+
+|V i| + ϵ
+
+X 
+
+> rij ∈V i
+
+BCEWithLogits  fg( ℓμ(i,j )), 1 , (10) Random Target Labels for SFDA-OD 9
+
+The unlabeled objective becomes Lu + λrev Lrev . We also evaluate Multi-View Foreground Revival , which constructs Vi using the multi-view recovery scorer and applies the same foreground revival loss. Additional details of foreground revival are provided in Appendix B.3. 
+
+3.3 Optimization Control 
+
+Optimization control uses sparse annotations after pseudo-labels have already been constructed. Instead of changing candidate selection or recovering missed objects, this family treats the sparse supervised loss as a trusted target signal for controlling how the student and teacher are updated. 
+
+Sparse Loss Balancing. Sparse loss balancing adjusts the strength of the unlabeled branch according to its magnitude relative to the sparse supervised loss. This is useful because different SFDA-OD baselines define Lu differently, ranging from a hard pseudo-label detection loss to a combination of pseudo-label, consistency, distillation, and auxiliary terms. A fixed coefficient can there-fore make the unlabeled branch either dominate sparse target supervision or contribute too weakly to adaptation. Let ¯Lsup and ¯Lu be exponential moving averages of supervised objective 
+
+Lsup and self-training unlabeled objective Lu. The scale applied to the unlabeled branch is 
+
+λt = clip 
+
+ κ ¯Lsup 
+
+¯Lu + ϵ
+
+α
+
+, λ min , λ max 
+
+
+
+, (11) where κ is the desired relative magnitude, α controls the adaptation rate, and the clipping range prevents unstable loss scaling. The student objective becomes 
+
+L = Lsup + λtLu. (12) 
+
+Target-Anchored PCGrad. Inspired by multi-task learning [32], target-anchored PCGrad asks whether the pseudo-label detection loss updates the model in directions that conflict with sparse target supervision. Let gs = ∇θ Lsup 
+
+be the supervised sparse-label gradient and let gp = ∇θ Lp be the gradient of the hard pseudo-label detection loss inside Lu. Following PCGrad [30], when gp
+
+is negatively aligned with gs, the pseudo-label update would move parameters against the trusted target supervision. We therefore project the pseudo-label gradient to remove the component that opposes the supervised gradient, 
+
+g′ 
+
+> p
+
+= gp − 1[g⊤ 
+
+> p
+
+gs < 0] g⊤ 
+
+> p
+
+gs
+
+∥gs∥22 + ϵ gs. (13) The optimizer uses the supervised gradient together with the projected pseudo-label gradient. Auxiliary unlabeled terms are left unchanged. 
+
+Label-Guided Teacher Update. Instead of affecting the student training directly, sparse annotations can also be used to guide the teacher update, which affects future pseudo-label generation and student training in an indirect way. Specifically, the standard EMA updates all teacher parameters with a shared 10 Lijun Zhang, Ruinian Xu, et al. 
+
+momentum, while sparse labels provide an additional criterion for identifying parameter groups that are important for target-domain supervision. For a teacher parameter group p, let Il(p) be the normalized gradient magni-tude induced by Lsup on a sparse labeled batch. Let I(p) denote the merged im-portance score obtained from sparse supervision and any baseline-specific unla-beled importance signal, and let ζq be the cutoff value for the top qimp fraction of 
+
+I(p). Parameters with high merged importance receive a more target-responsive EMA momentum, 
+
+μp =
+
+(
+
+μfast , I(p) ≥ ζq ,μbase , otherwise . (14) The optimization control together with pseudo-label selection and object completion cover the principal ways in which sparse target labels can interact with mean teacher SFDA-OD. We provide the full details and hyperparameter summary in Appendix B. The experiments in Section 4 evaluate whether any of these feedback routes consistently improves over the RTSM anchor. 
+
+4 Experiments 
+
+4.1 Experimental Setup Datasets. Following existing SFDA-OD evaluations [6], we conduct experi-ments on two target-shift settings constructed from three detection datasets. 
+
+Cityscapes contains real urban driving scenes with eight common object cat-egories [4]. Foggy Cityscapes is derived from Cityscapes by rendering syn-thetic fog at multiple density levels, and we use the standard fog density of 
+
+0.02 as the target domain [22]. BDD100K provides real-world driving images collected under diverse scene, weather, and camera conditions [29]. Following prior SFDA-OD work, we use its daytime subset for adaptation and evalua-tion. Based on these datasets, we evaluate the adaptation tasks of Cityscapes →
+
+Foggy Cityscapes for normal-to-foggy adaptation and Cityscapes → BDD100K for cross-scene adaptation. 
+
+Detectors and Metrics. We conduct experiments with two transformer-based object detectors, DINO [31] and DETA [16] with a ResNet-50 backbone. We report AP50 as the evaluation metric, which is the mean average precision over categories at an IoU threshold of 0.5. Since our experiments involve different random labeled subsets and training seeds, we report the mean and standard deviation of AP50 across runs. 
+
+SFDA-OD Methods. We instantiate RTSM and all sparse-label feedback plugins on top of four representative SFDA-OD methods. 
+
+– PETS: PETS [10] (ICCV 2023) improves teacher-student self-training by periodically exchanging the roles of teacher and student detectors. 
+
+– LPU: LPU [3] (ACM MM 2023) further studies the use of low-confidence predictions through proposal-level soft training and local contrastive learning. 
+
+– LPLD: LPLD [28] (ECCV 2024) exploits low-confidence pseudo-labels to reduce the information loss caused by high-confidence filtering. Random Target Labels for SFDA-OD 11 
+
+– DDT: DDT [6] (ICCV 2025) uses a dual-rate dynamic teacher to improve source-free teacher-student adaptation. These methods cover different pseudo-label construction and teacher-student adaptation strategies, allowing us to evaluate whether sparse-label feedback be-haves consistently across SFDA-OD designs. 
+
+Baselines and Compared Variants. Our evaluation asks whether sparse target annotations can improve unlabeled target self-training beyond their direct supervised use. For each SFDA-OD method, the primary comparison is against RTSM, which adds a supervised detection loss on a uniformly random labeled target subset while keeping the original unlabeled branch unchanged. We com-pare RTSM with ten plugin variants from Section 3 and all plugin variants use the same labeled subset as RTSM. We also include three reference baselines. 
+
+– Source-only: evaluates the source-trained detector on the target validation set without target adaptation. 
+
+– Full-target oracle: trains with all target training annotations and serves as an upper reference for the remaining target-domain headroom. 
+
+– Pure SFDA: applies the original source-free adaptation method without labeled target images. 
+
+Other Settings. The default sparse-label budget is 5% of the target training images. We evaluate 1% and 10% budgets in Section 4.3. For each experimental run, the randomly labeled target subset is sampled with multiple seeds and is shared by RTSM and all plugin variants under the same run. More plugin hyperparameters are reported in Appendix B.5. 
+
+4.2 Main Results 
+
+Table 1 reports the main results on Cityscapes → Foggy Cityscapes with DINO under the 5% random target-label budget. For each SFDA-OD method, we com-pare each plugin against its matched RTSM anchor as shown in the ∆ column. 
+
+Sparse target supervision is a strong anchor. RTSM consistently im-proves all four SFDA-OD methods over their pure source-free adaptation base-lines. The gains are substantial, increasing AP50 by 6.365 for PETS, 4.725 for LPU, 5.026 for DDT, and 8.278 for LPLD. This confirms that a small random subset of target annotations provides a strong and reliable adaptation signal when used directly as supervised target data. 
+
+Sparse-label feedback gives inconsistent improvement over RTSM. 
+
+The plugin results show no consistent winner across SFDA-OD methods. The best-performing variant changes with the underlying method, with precision-calibrated thresholding performing best on PETS, reliability score rescaling on LPU, multi-view foreground revival on LPLD, and target-anchored PCGrad on DDT. The signs of improvement are also inconsistent within each plugin fam-ily. For example, selection plugins improve several RTSM anchors but degrade LPLD in most cases. This method-dependent behavior indicates that sparse-label feedback does not transfer as a stable plug-in improvement across different SFDA-OD pipelines. 12 Lijun Zhang, Ruinian Xu, et al. 
+
+Table 1: Results on Cityscapes → Foggy Cityscapes with DINO under the 5% random target-label budget. We report the mean AP50 with standard deviation. For plugin rows, ∆ column reports the AP50 difference from the matched RTSM anchor, while Green and red cells indicate corresponding improvement or degradation. 
+
+Protocol / Plugin PETS LPU LPLD DDT AP50 ∆ AP50 ∆ AP50 ∆ AP50 ∆
+
+Source-Only 32.608 Full-Target Oracle 62.507 Pure SFDA 46.520 ±1.299 48.695 ±1.266 47.043 ±2.896 53.669 ±0.350 
+
+RTSM 52.885 ±0.959 53.420 ±1.871 55.321 ±1.558 58.695 ±0.644 
+
+Pseudo-Label Selection 
+
+Prior-Mapped Thresholding 53.467 ±2.033 +0.582 55.076 ±1.615 +1.656 54.957 ±0.902 -0.364 59.005 ±1.068 +0.311 Precision-Calibrated Thresholding 56.611 ±1.126 +3.726 54.338 ±3.117 +0.919 54.806 ±0.718 -0.515 58.631 ±0.938 -0.064 Reliability Score Rescaling 55.008 ±1.171 +2.123 56.009 ±0.784 +2.590 55.182 ±2.274 -0.139 59.112 ±0.242 +0.418 
+
+Object Completion 
+
+Hard Query Recovery 56.012 ±1.638 +3.127 48.170 ±2.510 -5.249 48.385 ±0.303 -6.936 53.742 ±0.764 -4.953 Multi-View Hard Recovery 50.607 ±1.079 -2.278 46.512 ±2.403 -6.907 48.188 ±1.336 -7.133 53.393 ±1.851 -5.302 Foreground Query Revival 54.516 ±1.197 +1.631 54.293 ±1.812 +0.873 53.975 ±1.045 -1.346 59.012 ±1.353 +0.317 Multi-View Foreground Revival 54.678 ±0.748 +1.793 55.759 ±1.161 +2.339 55.863 ±0.853 +0.542 58.954 ±0.830 +0.259 
+
+Optimization Control 
+
+Sparse Loss Balancing 55.102 ±1.221 +2.217 55.655 ±0.926 +2.236 55.264 ±1.077 -0.057 58.820 ±1.017 +0.125 Target-Anchored PCGrad 54.953 ±1.308 +2.068 55.229 ±2.283 +1.810 54.463 ±2.116 -0.858 59.147 ±0.770 +0.452 Label-Guided Teacher Update 54.138 ±2.108 +1.252 52.611 ±2.725 -0.808 55.247 ±1.028 -0.073 58.577 ±1.387 -0.118 
+
+Table 2: Class-wise AP50 on Cityscapes → Foggy Cityscapes with DINO and DDT under the 5% random target-label budget. For plugin rows, green and red cells indicate per-class improvement and degradation relative to RTSM, respectively. 
+
+Protocol / Plugin Class-Wise AP50 Person Rider Car Truck Bus Train Motor Bicycle Pure SFDA 59.255 65.057 73.441 32.533 56.956 41.660 43.097 58.379 RTSM 62.605 65.954 78.052 40.583 63.706 49.402 46.489 59.599 
+
+Pseudo-Label Selection 
+
+Prior-Mapped Thresholding 62.345 65.631 78.282 42.229 63.170 50.897 46.109 59.425 Precision-Calibrated Thresholding 61.739 65.355 78.185 39.170 65.055 51.832 45.115 60.126 
+
+Reliability Score Rescaling 62.227 65.470 78.415 41.023 62.683 51.271 45.956 59.538 
+
+Object Completion 
+
+Hard Query Recovery 60.469 63.937 74.915 40.556 50.666 20.429 44.301 59.057 Multi-View Hard Recovery 60.805 64.367 75.134 39.860 52.887 17.052 45.996 59.078 Foreground Query Revival 62.524 66.135 78.411 40.917 62.543 49.832 46.768 59.481 Multi-View Foreground Revival 62.183 65.322 78.489 39.696 62.737 46.868 46.931 59.422 
+
+Optimization Control 
+
+Sparse Loss Balancing 61.771 65.489 78.125 40.139 63.616 51.239 45.656 59.228 Target-Anchored PCGrad 62.660 66.080 78.464 39.086 65.416 50.915 45.707 59.204 Label-Guided Teacher Update 62.590 65.479 78.368 39.226 64.147 51.326 46.098 59.941 
+
+Class-wise results expose the instability of sparse-label feedback. 
+
+Table 2 shows that the gains of individual plugins are fragmented across cate-gories rather than systematic. Improvements on some categories are often offset by degradation on others. For example, target-anchored PCGrad achieves the strongest plugin result for person and bus, while reducing AP50 for truck, Motor, and bicycle. Precision-calibrated thresholding improves car, bus, train, and bicy-cle, but degrades person, rider, truck, and Motor. Together with Table 1, these results indicate that sparse labels are effective as direct supervised target exam-ples, but do not provide a uniformly reliable signal for calibrating pseudo-labels or steering unlabeled self-training. Overall, Random target labels are most reliably beneficial through direct super-vised loss, while their additional use for pseudo-label selection, object completion, or optimization control yields limited and method-dependent gains. Random Target Labels for SFDA-OD 13 
+
+4.3 Ablation Study 
+
+To assess the robustness of our main finding, we vary the adaptation task, detec-tor, and sparse-label budget while keeping the remaining settings fixed. These experiments examine whether the strength of direct sparse supervision and the inconsistency of label-guided feedback persist. 
+
+Varying the Adaptation Task. Table 3 extends the evaluation to Cityscapes 
+
+→ BDD100K, replacing synthetic fog with heterogeneous real-world variation in scenes, weather, and camera conditions. RTSM again provides a substantial im-provement over every pure SFDA-OD baseline, with gains ranging from 4.380 
+
+to 18 .289 AP50. In contrast, no feedback plugin consistently outperforms all four RTSM anchors. The strongest variant changes from hard query recovery for PETS and LPLD, to multi-view hard recovery for LPU, and multi-view fore-ground revival for DDT. Several plugins also reverse their effects across methods, most notably hard recovery and precision-calibrated thresholding. To sum up, direct sparse supervision remains robust, whereas additional feedback is strongly coupled to the underlying SFDA-OD method. 
+
+Table 3: Results on Cityscapes → BDD100K with DINO under the 5% random target-label budget. We report the mean AP50 with standard deviation over three seeds. For plugin rows, ∆ reports the AP50 difference from the matched RTSM anchor.                                                                                                     
+
+> Protocol / Plugin PETS LPU LPLD DDT AP50 ∆AP50 ∆AP50 ∆AP50 ∆
+> Source-Only 26.225 Full-Target Oracle 58.003 Pure SFDA 36.153 ±0.179 21.067 ±2.746 28.465 ±1.533 34.770 ±0.400
+> RTSM 40.533 ±0.187 39.356 ±0.610 38.055 ±0.377 48.413 ±1.699
+> Pseudo-Label Selection
+> Prior-Mapped Thresholding 40.227 ±0.080 -0.306 40.988 ±1.518 +1.632 38.894 ±1.505 +0.839 49.195 ±2.024 +0.783 Precision-Calibrated Thresholding 40.053 ±0.291 -0.480 40.305 ±0.314 +0.949 39.064 ±0.961 +1.009 44.814 ±0.828 -3.598 Reliability Score Rescaling 40.136 ±0.083 -0.397 38.585 ±0.766 -0.772 37.980 ±0.539 -0.075 44.015 ±0.662 -4.398
+> Object Completion
+> Hard Query Recovery 41.164 ±0.399 +0.631 41.000 ±0.799 +1.644 40.128 ±0.603 +2.072 46.628 ±0.543 -1.784 Multi-View Hard Recovery 26.974 ±1.602 -13.560 41.578 ±0.546 +2.221 37.792 ±1.426 -0.263 45.834 ±0.445 -2.578 Foreground Query Revival 39.614 ±0.094 -0.919 38.403 ±0.333 -0.953 37.637 ±0.122 -0.418 48.526 ±1.858 +0.114 Multi-View Foreground Revival 39.828 ±0.227 -0.705 39.232 ±0.407 -0.125 38.068 ±0.536 +0.013 50.462 ±1.004 +2.049
+> Optimization Control
+> Sparse Loss Balancing 40.324 ±0.513 -0.209 38.724 ±0.543 -0.632 36.678 ±0.938 -1.378 49.213 ±0.499 +0.800 Target-Anchored PCGrad 40.287 ±0.418 -0.246 39.743 ±1.110 +0.387 38.910 ±0.837 +0.855 50.252 ±0.124 +1.840 Label-Guided Teacher Update 40.140 ±0.261 -0.394 38.679 ±0.807 -0.677 38.000 ±1.203 -0.055 49.788 ±1.362 +1.375
+
+Varying the Detector. Table 4 replaces DINO with DETA under the 5% 
+
+random target-label budget. RTSM remains a strong reference across SFDA-OD methods, improving AP50 over pure SFDA by 2.464 to 10 .380 AP50. The plugin results, however, remain method-dependent. For instance, precision-calibrated thresholding improves PETS by 3.494 AP50 but offers little benefit elsewhere, while hard recovery improves PETS yet severely degrades LPU, LPLD, and DDT. Multi-view foreground revival is more stable and improves all four meth-ods, although only by 0.168 to 0.818 AP50. Thus, changing the detector pre-serves the central conclusion: sparse annotations transfer reliably through direct supervision, but not through a universally effective feedback mechanism. 
+
+Varying the Sparse-Label Budget. Table 9 in Appendix C evaluates DDT with DINO under 1% , 5% , and 10% random target-label budgets. Increas-14 Lijun Zhang, Ruinian Xu, et al. 
+
+Table 4: Results on Cityscapes → Foggy Cityscapes with the DETA detector under the 5% random target-label budget. We report the mean AP50 with standard deviation. For plugin rows, ∆ reports the AP50 difference from the matched RTSM anchor.                                                                                                     
+
+> Protocol / Plugin PETS LPU LPLD DDT AP50 ∆AP50 ∆AP50 ∆AP50 ∆
+> Source-Only 28.506 Full-Target Oracle 61.333 Pure SFDA 42.660 ±1.129 47.716 ±2.650 48.504 ±3.179 55.526 ±0.524
+> RTSM 53.040 ±1.500 55.001 ±0.802 55.838 ±0.796 57.990 ±0.326
+> Pseudo-Label Selection
+> Prior-Mapped Thresholding 53.491 ±1.754 +0.451 54.991 ±1.086 -0.010 55.494 ±0.822 -0.344 58.725 ±0.566 +0.735 Precision-Calibrated Thresholding 56.535 ±0.656 +3.494 55.049 ±0.551 +0.048 55.634 ±0.865 -0.204 58.225 ±0.328 +0.235 Reliability Score Rescaling 53.229 ±1.105 +0.188 55.018 ±0.667 +0.017 55.886 ±0.502 +0.048 58.759 ±0.299 +0.769
+> Object Completion
+> Hard Query Recovery 54.893 ±1.046 +1.852 46.345 ±2.454 -8.656 46.297 ±3.240 -9.542 52.468 ±2.565 -5.522 Multi-View Hard Recovery 45.546 ±2.675 -7.495 44.140 ±2.117 -10.861 44.983 ±2.142 -10.856 50.700 ±2.211 -7.290 Foreground Query Revival 53.622 ±1.323 +0.582 55.177 ±1.844 +0.176 55.259 ±0.319 -0.580 58.617 ±0.586 +0.627 Multi-View Foreground Revival 53.209 ±0.337 +0.168 55.819 ±1.192 +0.818 56.136 ±0.283 +0.297 58.582 ±0.650 +0.592
+> Optimization Control
+> Sparse Loss Balancing 53.635 ±1.319 +0.595 55.366 ±0.957 +0.365 55.509 ±1.173 -0.329 58.445 ±0.365 +0.455 Target-Anchored PCGrad 53.649 ±1.327 +0.609 55.431 ±0.440 +0.430 55.156 ±1.145 -0.683 58.618 ±1.042 +0.629 Label-Guided Teacher Update 53.433 ±1.351 +0.393 53.623 ±2.203 -1.378 54.592 ±1.910 -1.247 59.043 ±0.810 +1.053
+
+ing the budget steadily strengthens RTSM, from 55 .415 AP50 at 1% to 58 .695 
+
+at 5% and 59 .910 at 10% . Nevertheless, the conclusion drawn from the main results remains unchanged. No plugin performs consistently across budgets, and several variants switch from positive gains at 1% to neutral or negative effects at larger budgets. A notable secondary trend is the diminishing marginal value of plugin feed-back as more target annotations become available. The average plugin difference from RTSM decreases from +0 .097 AP50 at 1% to −0.856 and −0.816 at 5% and 
+
+10% , respectively. Under an extremely limited budget, the supervised anchor re-mains weak enough that feedback through the unlabeled branch can occasionally provide complementary information. As the labeled subset grows, direct super-vision captures a larger fraction of the available target-domain signal, leaving less room for noisier and less stable interventions. 
+
+5 Conclusion 
+
+This paper systematically examines how sparse target annotations should be used in source-free domain adaptive object detection. We establish RTSM as a simple anchor that introduces direct target supervision while preserving the original adaptation pipeline. Across four SFDA-OD methods, two detectors, mul-tiple domain shifts, and different label budgets, RTSM consistently improves pure source-free adaptation. In contrast, plugins for pseudo-label selection, ob-ject completion, and optimization control yield gains that remain method- and setting-dependent. These results reveal a bitter lesson: sparse labels are highly effective as direct supervision, but substantially less reliable as control signals for noisy self-training. RTSM should therefore serve as a necessary benchmark for future methods in this setting. Our study focuses on transformer-based object detection and future work may investigate whether the same pattern extends to other detector families and vision tasks. Random Target Labels for SFDA-OD 15 
+
+References 
+
+1. Carion, N., Massa, F., Synnaeve, G., Usunier, N., Kirillov, A., Zagoruyko, S.: End-to-end object detection with transformers. In: European conference on computer vision. pp. 213–229. Springer (2020) 3 2. Chen, Y., Li, W., Sakaridis, C., Dai, D., Van Gool, L.: Domain adaptive faster r-cnn for object detection in the wild. In: Proceedings of the IEEE conference on computer vision and pattern recognition. pp. 3339–3348 (2018) 1, 18 3. Chen, Z., Wang, Z., Zhang, Y.: Exploiting low-confidence pseudo-labels for source-free object detection. In: Proceedings of the 31st ACM International Conference on Multimedia. pp. 5370–5379 (2023) 1, 2, 10, 18 4. Cordts, M., Omran, M., Ramos, S., Rehfeld, T., Enzweiler, M., Benenson, R., Franke, U., Roth, S., Schiele, B.: The cityscapes dataset for semantic urban scene understanding. In: Proceedings of the IEEE conference on computer vision and pattern recognition. pp. 3213–3223 (2016) 10 5. Cubuk, E.D., Zoph, B., Shlens, J., Le, Q.V.: Randaugment: Practical automated data augmentation with a reduced search space. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recognition workshops. pp. 702–703 (2020) 4 6. He, Q., Wu, X., He, J.Y., Li, S.: Dual-rate dynamic teacher for source-free do-main adaptive object detection. In: Proceedings of the IEEE/CVF International Conference on Computer Vision. pp. 2067–2076 (2025) 1, 2, 4, 10, 11, 18, 26 7. He, Z., Zhang, L.: Domain adaptive object detection via asymmetric tri-way faster-rcnn. In: European conference on computer vision. pp. 309–324. Springer (2020) 18 8. Li, X., Chen, W., Xie, D., Yang, S., Yuan, P., Pu, S., Zhuang, Y.: A free lunch for unsupervised domain adaptive object detection without source data. In: Pro-ceedings of the AAAI conference on artificial intelligence. vol. 35, pp. 8474–8481 (2021) 1, 18 9. Lin, T.Y., Goyal, P., Girshick, R., He, K., Dollár, P.: Focal loss for dense object detection. In: Proceedings of the IEEE international conference on computer vision. pp. 2980–2988 (2017) 3 10. Liu, Q., Lin, L., Shen, Z., Yang, Z.: Periodically exchange teacher-student for source-free object detection. In: Proceedings of the IEEE/CVF international con-ference on computer vision. pp. 6414–6424 (2023) 1, 2, 4, 10, 18 11. Liu, Y.C., Ma, C.Y., He, Z., Kuo, C.W., Chen, K., Zhang, P., Wu, B., Kira, Z., Vajda, P.: Unbiased teacher for semi-supervised object detection. arXiv preprint arXiv:2102.09480 (2021) 4, 8, 19, 24 12. Liu, Y.C., Ma, C.Y., Kira, Z.: Unbiased teacher v2: Semi-supervised object detec-tion for anchor-free and anchor-based detectors. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. pp. 9819–9828 (2022) 19 13. Lyu, M., Hao, T., Xu, X., Chen, H., Lin, Z., Han, J., Ding, G.: Learn from the learnt: Source-free active domain adaptation via contrastive sampling and visual persistence. In: European Conference on Computer Vision. pp. 228–246. Springer (2024) 18 14. Menke, M., Wenzel, T., Schwung, A.: Bridging the gap: Active learning for efficient domain adaptation in object detection. Expert Systems with Applications 254 ,124403 (2024) 2, 3, 18 16 Lijun Zhang, Ruinian Xu, et al. 15. Nakamura, Y., Ishii, Y., Yamashita, T.: Active domain adaptation with false nega-tive prediction for object detection. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. pp. 28782–28792 (2024) 2, 3, 18 16. Ouyang-Zhang, J., Cho, J.H., Zhou, X., Krähenbühl, P.: Nms strikes back. arXiv preprint arXiv:2212.06137 (2022) 10 17. Prabhu, V., Chandrasekaran, A., Saenko, K., Hoffman, J.: Active domain adap-tation via clustering uncertainty-weighted embeddings. In: Proceedings of the IEEE/CVF international conference on computer vision. pp. 8505–8514 (2021) 18 18. Ren, P., Xiao, Y., Chang, X., Huang, P.Y., Li, Z., Gupta, B.B., Chen, X., Wang, X.: A survey of deep active learning. ACM computing surveys (CSUR) 54 (9), 1–40 (2021) 23 19. Ren, S., He, K., Girshick, R., Sun, J.: Faster r-cnn: Towards real-time object de-tection with region proposal networks. Advances in neural information processing systems 28 (2015) 3 20. Saito, K., Kim, D., Sclaroff, S., Darrell, T., Saenko, K.: Semi-supervised domain adaptation via minimax entropy. In: Proceedings of the IEEE/CVF international conference on computer vision. pp. 8050–8058 (2019) 3 21. Saito, K., Ushiku, Y., Harada, T., Saenko, K.: Strong-weak distribution alignment for adaptive object detection. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. pp. 6956–6965 (2019) 1, 18 22. Sakaridis, C., Dai, D., Van Gool, L.: Semantic foggy scene understanding with synthetic data. International Journal of Computer Vision 126 (9), 973–992 (2018) 10 23. Shi, W., Zhang, L., Chen, W., Pu, S.: Universal domain adaptive object detector. In: Proceedings of the 30th ACM international conference on multimedia. pp. 2258– 2266 (2022) 18 24. Sohn, K., Berthelot, D., Carlini, N., Zhang, Z., Zhang, H., Raffel, C., Cubuk, E.D., Kurakin, A., Li, C.L.: Fixmatch: Simplifying semi-supervised learning with consistency and confidence. Advances in neural information processing systems 33 ,596–608 (2020) 4, 8, 19, 24 25. Tarvainen, A., Valpola, H.: Mean teachers are better role models: Weight-averaged consistency targets improve semi-supervised deep learning results. Advances in neural information processing systems 30 (2017) 1, 4, 18 26. Wang, F., Han, Z., Zhang, Z., Yin, Y.: Active source free domain adaptation. arXiv preprint arXiv:2205.10711 (2022) 18 27. Xu, M., Zhang, Z., Hu, H., Wang, J., Wang, L., Wei, F., Bai, X., Liu, Z.: End-to-end semi-supervised object detection with soft teacher. In: Proceedings of the IEEE/CVF international conference on computer vision. pp. 3060–3069 (2021) 19 28. Yoon, I., Kwon, H., Kim, J., Park, J., Jang, H., Sohn, K.: Enhancing source-free domain adaptive object detection with low-confidence pseudo label distillation. In: European Conference on Computer Vision. pp. 337–353. Springer (2024) 1, 2, 10, 18 29. Yu, F., Chen, H., Wang, X., Xian, W., Chen, Y., Liu, F., Madhavan, V., Darrell, T.: Bdd100k: A diverse driving dataset for heterogeneous multitask learning. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recog-nition. pp. 2636–2645 (2020) 10 30. Yu, T., Kumar, S., Gupta, A., Levine, S., Hausman, K., Finn, C.: Gradient surgery for multi-task learning. Advances in neural information processing systems 33 ,5824–5836 (2020) 9 Random Target Labels for SFDA-OD 17 31. Zhang, H., Li, F., Liu, S., Zhang, L., Su, H., Zhu, J., Ni, L.M., Shum, H.Y.: Dino: Detr with improved denoising anchor boxes for end-to-end object detection. arXiv preprint arXiv:2203.03605 (2022) 3, 10 32. Zhang, Y., Yang, Q.: A survey on multi-task learning. IEEE transactions on knowl-edge and data engineering 34 (12), 5586–5609 (2021) 9 33. Zhou, H., Ge, Z., Liu, S., Mao, W., Li, Z., Yu, H., Sun, J.: Dense teacher: Dense pseudo-labels for semi-supervised object detection. In: European conference on computer vision. pp. 35–50. Springer (2022) 19 18 Lijun Zhang, Ruinian Xu, et al. 
+
+A Additional Related Work 
+
+Our study lies at the intersection of domain adaptive object detection, sparse-label target adaptation, and semi-supervised pseudo-label self-training. 
+
+Source-Free Domain Adaptive Object Detection. Domain adaptive object detection studies how to transfer a detector trained on a labeled source do-main to a target domain whose visual distribution differs from the source. Early and widely used DAOD methods assume access to source images during adap-tation, and reduce the domain gap through image-level or instance-level feature alignment, adversarial training, asymmetric adaptation, scale-aware adaptation, or pseudo-label refinement [2,7,21,23]. However, the source-available assumption is often restrictive in practice because source data may be inaccessible due to storage, privacy, or licensing constraints. Source-free domain adaptive object detection removes source images from the adaptation stage and relies on a source-trained detector and unlabeled tar-get images. Recent SFDA-OD methods are largely built around self-training. A teacher detector generates pseudo-labels on target images, while a student detec-tor is optimized using those pseudo-labels and is often stabilized through Mean Teacher updates [25]. Existing methods improve this framework from different angles. SED [8] studies source-free adaptation without source data. PETS [10] periodically exchanges teacher and student roles to improve self-training dy-namics. LPU [3] and LPLD [28] exploit low-confidence predictions to reduce the information loss caused by high-confidence pseudo-label filtering. DDT [6] intro-duces a dynamic teacher update to better balance target adaptation and teacher stability. These methods improve the unlabeled self-training branch, while our work asks a complementary question. When a small random subset of target images is labeled, the direct supervised use of these labels already provides a strong anchor, and stronger sparse-label methods should demonstrate gains beyond this anchor rather than only over pure SFDA. 
+
+Active and Sparse-Label Domain Adaptation. Active domain adap-tation assumes an annotation budget and studies which target samples should be labeled to maximize adaptation performance. Existing work has explored uncertainty, diversity, domainness, representativeness, and task-specific criteria for selecting informative target images [13, 17, 26]. In object detection, active selection is more challenging than in classification because the utility of an im-age depends on object categories, localization quality, missing objects, and the reliability of predicted boxes [15]. Recent active DAOD methods therefore incor-porate detection-specific cues, including false-negative prediction and box-level uncertainty, to account for objects that are not captured by the current detec-tor [14, 15]. Our setting is related to active and sparse-label domain adaptation, but it isolates a different question. Instead of optimizing the acquisition rule, we label a uniformly random subset of target images and focus on how these labels should be used after annotation. This protocol removes the confounding effect of sample-selection heuristics and exposes a minimal sparse-label baseline. The Random Target Labels for SFDA-OD 19 
+
+resulting RTSM anchor measures the benefit of simply mixing random target labels into the supervised detection loss of an existing SFDA-OD method. Our study then evaluates whether the same labels can provide additional feedback to the unlabeled branch. 
+
+Semi-Supervised Object Detection and Pseudo-Label Self-Training. 
+
+Semi-supervised object detection provide the broader self-training background for our study. FixMatch and related methods first combine weak and strong augmentations with confidence-based pseudo-labeling [24]. Then in object de-tection, methods such as Unbiased Teacher, Unbiased Teacher v2, Soft Teacher, Dense Teacher, and related teacher-student frameworks address pseudo-label noise, class imbalance, and localization uncertainty in semi-supervised train-ing [11, 12, 27, 33]. These works motivate the three feedback routes examined in this paper. Pseudo-label selection is related to confidence calibration and thresholding, since teacher confidence may not reflect target-domain correctness under distribu-tion shift. Object completion is related to low-confidence prediction usage and missed-object recovery, since discarded candidates may contain objects that are useful for target self-training. Optimization control is related to loss balancing and gradient-conflict handling, since trusted labels and noisy pseudo-labels may produce different training signals. However, standard semi-supervised detection typically assumes that labeled and unlabeled images are sampled from the same target distribution. Our setting starts from a source-trained detector under target-domain shift and evaluates whether sparse target labels provide useful feedback beyond the direct RTSM supervised anchor. 
+
+B Full Plugin Design Details 
+
+This section provides the full details for all plugin designs. As mentioned in Sec-tion 3, we build ten modular plugins on top of the RTSM anchor to investigate the sparse-label feedback for the target self-training branch. The sparse labeled target subset is used by the supervised detection loss in the main training ob-jective, while the plugins reuse the same annotations to modify one component of the unlabeled self-training branch. Specifically, pseudo-label selection changes how teacher candidates are retained. Object completion revisits candidates re-jected by the baseline pseudo-label generator. Optimization control keeps the pseudo-label set fixed and changes the student or teacher update. This taxon-omy ensures that each plugin tests a specific route through which sparse labels could influence unlabeled target adaptation. 
+
+B.1 Shared Setup and Notation 
+
+All plugins operate on the same target split. Let Dtl denote the sparse labeled target subset and Dtu denote the remaining unlabeled target subset. For a target image xi, the teacher detector produces a candidate set Ri = {rij }Mi
+
+> j=1
+
+. Each 20 Lijun Zhang, Ruinian Xu, et al. 
+
+Table 5: Basic notation used by the sparse-label feedback plugins. Symbol Meaning 
+
+Dtl Sparse labeled target subset 
+
+Dtu Unlabeled target subset 
+
+Ri Teacher candidate set for image xi
+
+rij Candidate j in image xi
+
+ˆcij Predicted class of rij 
+
+ˆbij Predicted bounding box of rij 
+
+sij Confidence score of rij 
+
+zij Optional candidate-level feature 
+
+Γ Baseline pseudo-label construction rule 
+
+ˆyi Pseudo-label set accepted by Γ
+
+R− 
+
+> i
+
+Teacher candidates rejected by Γ
+
+Gi Ground truth object set for sparse labeled image xi
+
+mij (η) Correctness indicator for candidate rij under IoU threshold η
+
+candidate is represented as rij = (ˆ cij , ˆbij , s ij , zij ), where ˆcij is the predicted class, ˆbij is the predicted box, sij is the confidence score, and zij is an optional candidate-level feature. For query-based detectors, zij is the object-query fea-ture. For proposal-based detectors, it can be the proposal or RoI feature. The baseline pseudo-label construction rule is denoted by Γ , which maps teacher candidates to the accepted pseudo-label set ˆyi = Γ (Ri). The rejected candidate set is R− 
+
+> i
+
+= Ri \ ˆyi.Sparse annotations make it possible to verify teacher candidates on target-domain images. For xi ∈ D tl , let Gi = {gik }Ni 
+
+> k=1
+
+denote the ground truth object set, with gik = ( cik , bik ). A candidate rij is considered correct at IoU threshold η
+
+if it can be assigned to an unmatched ground truth object of the same class whose box overlap is at least η. When a one-to-one assignment is needed, candidates are processed in decreasing confidence order and each ground truth object can be matched at most once. We denote the resulting correctness indicator by mij (η) ∈{0, 1}. This verification procedure is used to estimate pseudo-label precision in the selection plugins and to construct recovery labels in the completion plugins. The full notations are summarized in Table 5. 
+
+B.2 Pseudo-Label Selection Details 
+
+Pseudo-label selection modifies the candidate acceptance step of self-training. The teacher predictions themselves are unchanged. Each plugin either replaces the class-specific confidence thresholds used by Γ or rescales the confidence scores before the original thresholds are applied. This family evaluates whether sparse target labels can provide a reliable precision-oriented signal for deciding which teacher predictions should supervise the student. Random Target Labels for SFDA-OD 21 
+
+For class c, let τ 0 
+
+> c
+
+denote the baseline confidence threshold. For any tested threshold τ , we define the retained class-c candidates on sparse images as 
+
+Ac(τ ) = (i, j ) xi ∈ D tl , ˆcij = c, s ij ≥ τ . (15) Using mij (ηsel ) to verify candidate correctness, the empirical precision at thresh-old τ is 
+
+Pc(τ ) = 
+
+P  
+
+> (i,j )∈A c(τ)
+
+mij (ηsel )
+
+|A c(τ )| + ϵ . (16) We also define the retained correct-candidate coverage as 
+
+Rc(τ ) = 
+
+P  
+
+> (i,j )∈A c(τ)
+
+mij (ηsel )
+
+P   
+
+> (i,j ): xi∈D tl,ˆcij =c
+
+mij (ηsel ) + ϵ . (17) 
+
+Pc(τ ) measures how many retained candidates are correct. Rc(τ ) measures how many correct teacher candidates of class c remain after thresholding. The de-nominator of Rc(τ ) is defined over teacher candidates rather than ground truth objects, so this quantity evaluates threshold retention rather than object recall. 
+
+Prior-Mapped Thresholding. Prior-mapped thresholding uses the sparse labeled subset to correct class-level imbalance in pseudo-label production. The method compares the class distribution of sparse ground truth objects with the class distribution of baseline pseudo-labels on the same images. A class that appears less frequently in pseudo-labels than in sparse annotations is treated as under-produced and receives a lower threshold. A class that appears more frequently in pseudo-labels is treated as over-produced and receives a higher threshold. Let nlc be the number of sparse ground truth objects of class c, and let npc
+
+be the number of baseline pseudo-labels of class c on the sparse images. With smoothing constant απ and number of classes C, the class priors are 
+
+πlc = nlc + απ
+
+P 
+
+> c′
+
+nlc′ + Cα π
+
+, πpc = npc + απ
+
+P 
+
+> c′
+
+npc′ + Cα π
+
+. (18) The log prior ratio is mapped to a bounded adjustment direction, 
+
+dc = tanh 
+
+
+
+β log πlc + ϵπpc + ϵ
+
+
+
+, (19) where β controls the sensitivity of the mapping and ϵ prevents numerical insta-bility. Positive values of dc indicate that class c is under-produced by the baseline pseudo-labels, while negative values indicate over-production. The adjusted threshold is 
+
+τ prior  
+
+> c
+
+= clip  τ 0 
+
+> c
+
+− δ↓[dc]+ + δ↑[−dc]+, τ min , τ max 
+
+ , (20) where [x]+ = max( x, 0) . The constants δ↓ and δ↑ bound the largest threshold decrease and increase, and [τmin , τ max ] defines the valid threshold range. During unlabeled training, Γ uses τ prior  
+
+> c
+
+instead of τ 0 
+
+> c
+
+for class c.22 Lijun Zhang, Ruinian Xu, et al. 
+
+Precision-Calibrated Thresholding. Precision-calibrated thresholding uses sparse annotations to evaluate teacher candidates directly. It searches for a class-specific threshold that retains as many correct teacher candidates as possible while meeting a target precision on sparse labeled images. This plugin therefore uses object-level verification rather than class-prior mismatch. For each class c, let Tc be the set of tested thresholds around τ 0 
+
+> c
+
+. A threshold is feasible if it satisfies both a precision requirement and a minimum support requirement, 
+
+Fc = {τ ∈ T c|Pc(τ ) ≥ pmin , |A c(τ )| ≥ nmin } . (21) Here pmin is the required empirical precision, and nmin is the minimum number of retained candidates required for the estimate to be used. When Fc is nonempty, the selected threshold maximizes retained correct-candidate coverage, 
+
+τ prec  
+
+> c
+
+= arg max  
+
+> τ∈F c
+
+Rc(τ ). (22) If several thresholds achieve the same coverage, the implementation selects the one closest to τ 0 
+
+> c
+
+. If no feasible threshold exists, the class falls back to τ 0 
+
+> c
+
+. The resulting threshold τ prec  
+
+> c
+
+replaces the baseline threshold when pseudo-labels are constructed on unlabeled target images. 
+
+Reliability Rescaling. Reliability rescaling preserves the baseline thresh-olds but changes the confidence scores that enter Γ . The method estimates how reliable each class is at its baseline threshold and suppresses candidate scores for classes whose accepted pseudo-labels are unreliable. Since the maximum multi-plier is one, this plugin can remove doubtful predictions but cannot increase the number of accepted candidates. The class reliability estimate is the empirical precision at the baseline thresh-old, qc = Pc(τ 0 
+
+> c
+
+). This estimate is used only when class c has sufficient sparse evidence, 
+
+|A c(τ 0 
+
+> c
+
+)| ≥ nmin , X  
+
+> (i,j )∈A c(τ0
+> c)
+
+mij (ηsel ) ≥ mmin . (23) The first condition requires enough retained candidates, and the second requires enough verified correct candidates. If either condition fails, the class multiplier is set to wc = 1 , which leaves the baseline scores unchanged. When the support conditions hold, the multiplier is 
+
+wc = wmin + (1 − wmin )
+
+
+
+clip 
+
+ qc
+
+pmin 
+
+, 0, 1
+
+ γ
+
+. (24) 
+
+wmin is the smallest allowed score multiplier, and γ controls how sharply the multiplier decreases when qc falls below pmin . For a candidate rij , the score used by Γ becomes ˜sij = wˆcij sij .
+
+B.3 Object Completion Details 
+
+Object completion addresses a recall-oriented failure mode of pseudo-label self-training. A teacher candidate may correspond to a real target object but remain Random Target Labels for SFDA-OD 23 
+
+below the confidence threshold, so the student never receives supervision for that object. Completion plugins use sparse annotations to learn from such rejected candidates and then apply the learned recovery rule to unlabeled target images. 
+
+Missed Objects and Recovery Labels. The recovery signal is defined by comparing accepted pseudo-labels with sparse ground truth objects. For a sparse image xi, a ground truth object gik = ( cik , bik ) is considered covered if at least one accepted pseudo-label of the same class overlaps it above ηcov ,
+
+covered( gik ) = 1
+
+"
+
+max 
+
+> (ˆ c, ˆb)∈ˆyi:ˆ c=cik
+
+IoU( ˆb, bik ) ≥ ηcov 
+
+#
+
+. (25) The maximum over an empty set is zero. Objects not covered by accepted pseudo-labels form the missed-object set, 
+
+Mi = {gik ∈ G i|covered( gik ) = 0 } . (26) A rejected candidate rij ∈ R − 
+
+> i
+
+receives a positive recovery label if it matches one of these missed objects with the same class and IoU at least ηrec ,
+
+yrec  
+
+> ij
+
+= 1
+
+
+
+max   
+
+> gik ∈M i:cik =ˆ cij
+
+IoU( ˆbij , bik ) ≥ ηrec 
+
+
+
+. (27) Candidates that duplicate already covered objects are treated as negatives or ignored according to the duplicate policy. This construction focuses the recov-ery task on teacher predictions that could add missing supervision rather than redundant detections. 
+
+Candidate Features. Each rejected candidate is represented by a feature vector ϕij . The default vector includes the teacher confidence score sij , the margin sij − τ 0ˆcij to the class threshold, class identity ˆcij , predictive entropy and margin uncertainty measures [18], and normalized box center and box area. When the detector exposes candidate-level representations, the feature zij is appended. The same feature map is used for scorer training on sparse images and for scorer inference on unlabeled images. 
+
+Hard Query Recovery. Hard query recovery inserts selected rejected can-didates into the pseudo-label set. A binary scorer hψ is trained on sparse images to predict yrec  
+
+> ij
+
+from ϕij . The training set is 
+
+Srec = (ϕij , y rec  
+
+> ij
+
+) xi ∈ D tl , r ij ∈ R − 
+
+> i
+
+. (28) The scorer is optimized with the standard binary cross entropy, 
+
+Lrec = 1
+
+|S rec |
+
+X
+
+> (ϕ,y )∈S rec
+
+BCE ( hψ (ϕ), y ) . (29) On an unlabeled image, the baseline first obtains ˆyi = Γ (Ri). The trained scorer is then applied to R− 
+
+> i
+
+. A rejected candidate is inserted when hψ (ϕij ) ≥ ρ24 Lijun Zhang, Ruinian Xu, et al. 
+
+and it is not a duplicate of an accepted pseudo-label under the same-class IoU threshold ηdup . Let Vrec  
+
+> i
+
+denote the recovered candidate set, 
+
+Vrec  
+
+> i
+
+= {(ˆ cij , ˆbij ) |rij ∈ R − 
+
+> i
+
+, h ψ (ϕij ) ≥ ρ, 
+
+dup( rij , ˆyi) = 0 }. (30) The pseudo-label set used for student training becomes 
+
+ˆyrec  
+
+> i
+
+= ˆ yi ∪ V rec  
+
+> i
+
+. (31) The unlabeled detection loss is then computed with ˆyrec  
+
+> i
+
+instead of ˆyi.
+
+Multi-View Hard Recovery. Multi-view hard recovery adds a stabil-ity signal to the hard recovery scorer. The teacher is evaluated on V content-preserving weak augmentations of the same image, following consistency-based teacher-student training [11, 24], and all predicted boxes are mapped back to the original image coordinates. In our implementation, each weak view aw ap-plies only random horizontal flipping with probability 0.5; if a flip is applied, predicted boxes are inverted back to the original image coordinates before cross-view matching. A rejected candidate gains support if candidates of the same predicted class appear at similar locations in other weak views. Let rvij be candidate j from weak view v after coordinate inversion. Its cross-view support is 
+
+uvij = 1
+
+V − 1
+
+X 
+
+> v′̸=v
+
+1
+
+"
+
+max  
+
+> j′:ˆ cv′
+> ij ′=ˆ cvij
+
+IoU( ˆbvij , ˆbv′ 
+
+> ij ′
+
+) ≥ ηmv 
+
+#
+
+. (32) The maximum over an empty set is zero. The support value is appended to 
+
+ϕij . The scorer is trained with the same recovery labels as in hard recovery. At inference time, selected candidates are inserted into the pseudo-label set after duplicate removal. 
+
+Foreground Query Revival. Foreground query revival uses recovered can-didates as weak foreground evidence rather than hard pseudo-labels. This variant keeps the pseudo-label set unchanged and adds a loss on the corresponding stu-dent predictions. It is designed to test whether rejected candidates can provide useful objectness supervision without requiring their class and box predictions to be trusted as full targets. Let Vi be the selected recovery candidate set for image i. For each rij ∈ V i,
+
+μ(i, j ) denotes the corresponding student prediction on the strong view as(xi). In our implementation, as is a photometric-only target view: brightness, contrast, and saturation are jittered in [0 .6, 1.4] , hue is jittered in [−0.1, 0.1] , grayscale is applied with probability 0.2, and Gaussian blur uses kernel size 5 with σ ∈
+
+[0 .1, 2.0] . No geometric perturbation is used in this strong view, so the image co-ordinate system is unchanged. The reported revival experiments match recovery candidates to student predictions by class-agnostic box overlap on this strong view, using IoU threshold 0.4.Let ℓμ(i,j ) be the class logits of the matched student prediction, and let fg( ·)
+
+aggregate foreground-class logits into a scalar foreground logit. Although the Random Target Labels for SFDA-OD 25 
+
+code supports maximum, top-2 mean, and normalized log-sum-exp pooling, all reported experiments use normalized log-sum-exp, 
+
+fg( ℓ) = T log 
+
+> C
+
+X
+
+> c=1
+
+exp( ℓc/T )
+
+!
+
+− T log C,  (33) with temperature T = 1 .The revival loss is 
+
+Lrev = 1
+
+|V i| + ϵ
+
+X 
+
+> rij ∈V i
+
+BCE logit 
+
+ fg( ℓμ(i,j )), a fg 
+
+ , (34) where BCE logit denotes binary cross entropy applied to a logit. The target value is afg = 0 .7 in all reported revival runs. The unlabeled objective becomes 
+
+Lrev u = Lu + λrev Lrev . (35) The accepted pseudo-label set ˆyi remains unchanged. 
+
+Multi-View Foreground Revival. Multi-view foreground revival com-bines the multi-view candidate scorer with the foreground revival loss. The can-didate set Vi is selected using cross-view features, but the selected candidates are not inserted as full pseudo-labels. They only determine which student pre-dictions receive the foreground revival loss. This variant separates the effect of multi-view candidate discovery from the risk of hard pseudo-label insertion. 
+
+B.4 Optimization Control Details 
+
+Optimization control uses sparse annotations after pseudo-labels have been con-structed. The pseudo-label set remains unchanged. The three plugins instead regulate the relative scale of the unlabeled objective, the gradient interaction between sparse supervision and pseudo-label learning, or the teacher update that determines future pseudo-labels. 
+
+Sparse Loss Balancing. Sparse loss balancing rescales the unlabeled branch according to its magnitude relative to sparse supervised learning. Let 
+
+¯Lsup and ¯Lu be exponential moving averages of Lsup and Lu. For a generic scalar loss Lt, the moving average is 
+
+¯Lt = ω ¯Lt−1 + (1 − ω)Lt. (36) The same update is applied separately to the supervised and unlabeled losses. The unlabeled scale is defined as 
+
+λt = clip 
+
+ κ ¯Lsup 
+
+¯Lu + ϵ
+
+α
+
+, λ min , λ max 
+
+
+
+. (37) 
+
+κ specifies the target ratio between unlabeled and supervised magnitudes, α
+
+controls the update strength, and the clipping range prevents unstable rescaling. The student objective becomes 
+
+L = Lsup + λtLu. (38) 26 Lijun Zhang, Ruinian Xu, et al. 
+
+The default setting scales the full unlabeled branch. 
+
+Target-Anchored PCGrad. Target-anchored PCGrad treats the sparse supervised gradient as the trusted target direction. Let gs = ∇θ Lsup be the gradient from sparse labeled target data and gp = ∇θ Lp be the gradient from the hard pseudo-label detection loss inside the unlabeled branch. If g⊤ 
+
+> p
+
+gs < 0,the pseudo-label gradient contains a component that opposes sparse supervised learning. The plugin removes this component while leaving the supervised gra-dient unchanged, 
+
+g′ 
+
+> p
+
+= gp − 1[g⊤ 
+
+> p
+
+gs < 0] g⊤ 
+
+> p
+
+gs
+
+∥gs∥22 + ϵ gs. (39) The final update direction is 
+
+g = gs + g′ 
+
+> p
+
++ gaux , (40) where gaux denotes gradients from auxiliary unlabeled objectives and is zero when no such objectives exist. If ∥gs∥2 is numerically too small, the projection is skipped. 
+
+Label-Guided Teacher Update. Label-guided teacher update uses sparse supervision to identify teacher parameters that should follow the student more quickly. Let ¯θ and θ denote teacher and student parameters. Let P index the parameter entries considered by the teacher update. For a sparse labeled batch 
+
+Bl, the target-supervised importance of parameter entry p ∈ P is 
+
+Il(p) = ∇¯θp Lsup (f¯θ , Bl) . (41) The importance values are normalized by their global mean magnitude. If the SFDA-OD baseline such as DDT [6] provides an unlabeled importance estimate 
+
+Iu(p), the two signals are merged as 
+
+I(p) = max (norm( Il(p)) , norm( Iu(p))) . (42) If no unlabeled importance is available, I(p) = norm( Il(p)) .Let ζq denote the cutoff value for the top qimp fraction of merged importance scores. Parameter entries with importance above this cutoff use the faster EMA momentum μfast , while the remaining entries use the baseline momentum μbase ,
+
+θt,p ← μpθt,p + (1 − μp)θs,p , μp =
+
+(
+
+μfast , I(p) ≥ ζq ,μbase , otherwise . (43) The condition μfast < μ base makes selected entries follow the student more quickly. This plugin changes only the teacher update. The student loss and pseudo-label set remain unchanged. 
+
+B.5 Hyperparameter Summary 
+
+Tables 6, 7, and 8 list the hyperparameters introduced by the plugin families. Unless otherwise stated, the values are shared across datasets, detectors, SFDA-OD baselines, and random seeds. The tables report the experimental values, while the preceding subsections define the corresponding quantities. Random Target Labels for SFDA-OD 27 
+
+Table 6: Hyperparameters for pseudo-label selection plugins. 
+
+Plugin Paper variable Value Shared Verification IoU ηsel 0.50 
+
+Threshold range [τmin , τ max ] [0 .25 , 0.55] 
+
+Prior mapping Prior smoothing απ 1.0
+
+Ratio sensitivity β 0.75 
+
+Offset bounds (δ↓, δ ↑) (0 .10 , 0.10) 
+
+Precision calibration Precision target pmin 0.75 
+
+Support requirements (nmin , m min ) (2 , 1) 
+
+Offset bounds (δ↓, δ ↑) (0 .10 , 0.15) 
+
+Reliability rescaling Precision target pmin 0.75 
+
+Support requirements (nmin , m min ) (3 , 1) 
+
+Score-weight range [wmin , 1] [0 .50 , 1.00] 
+
+Reliability exponent γ 1.0
+
+Table 7: Hyperparameters for object completion plugins. 
+
+Plugin Paper variable / design choice Value Shared Coverage IoU ηcov 0.50 
+
+Recovery-label IoU ηrec 0.50 
+
+Duplicate-removal IoU ηdup 0.70 
+
+Recovery threshold ρ sparse-label precision estimate Strong student view as photometric only Hard recovery Recovery precision floor for ρ 0.55 
+
+Weak teacher views V 1
+
+Multi-view hard recovery Recovery precision floor for ρ 0.50 
+
+Weak teacher views V 2
+
+Additional weak view aw hflip, p = 0 .5
+
+Cross-view support IoU ηmv 0.50 
+
+Foreground revival Recovery setting Hard Query Recovery Foreground target afg 0.70 
+
+Revival loss weight λrev 0.02 
+
+Foreground aggregation fg( ·) mean-logsum-exp, T = 1 .0
+
+Student matching class-agnostic IoU ≥ 0.40 on as(x)
+
+Multi-view foreground revival Recovery setting same as Multi-View Hard Recovery Revival setting same as Foreground Query Revival 28 Lijun Zhang, Ruinian Xu, et al. 
+
+Table 8: Hyperparameters for optimization control plugins.                               
+
+> Plugin Paper variable / design choice Value Loss balancing Loss EMA momentum ω0.95
+> Target ratio κ1.0
+> Scale exponent α0.5
+> Scale range [λmin , λ max ][0 .5,1.5]
+> PCGrad Anchor gradient gsSparse supervised target loss Projected gradient gpHard pseudo-label loss only Auxiliary gradient gaux unchanged Numerical ϵ10 −12
+> Teacher update Importance merge I(p)max(norm( Il),norm( Iu))
+> Importance index set Pparameter entries Importance fraction qimp 0.10
+> Faster EMA momentum μfast 0.997
+> Baseline EMA momentum μbase 0.999
+
+C Additional Results 
+
+Additional Budget Results. Table 9 reports the sparse-label budget ablation on Cityscapes → Foggy Cityscapes using DINO and DDT. The table compares 
+
+1% , 5% , and 10% random target-label budgets under the same RTSM and plu-gin protocol used in the main experiments. It also reports the average plugin change over RTSM for each budget. Overall, increasing the budget consistently strengthens the RTSM anchor, while sparse-label feedback does not produce a stable improvement over the anchor across budgets. Random Target Labels for SFDA-OD 29 
+
+Table 9: Results on Cityscapes → Foggy Cityscapes with DINO and DDT under 1%, 5%, and 10% random target-label budget . We report the mean AP50 with standard deviation. For plugin rows, ∆ reports the AP50 difference from the matched RTSM anchor. The final row averages the AP50 means and ∆ values of all ten plugin variants for each budget. 
+
+Protocol / Plugin 1% Labels 5% Labels 10% Labels AP50 ∆ AP50 ∆ AP50 ∆
+
+Source-Only 32.608 Full-Target Oracle 62.507 Pure SFDA 53.669 ±0.350 
+
+RTSM 55.415 ±1.754 58.695 ±0.644 59.910 ±0.672 
+
+Pseudo-Label Selection 
+
+Prior-Mapped Thresholding 55.918 ±0.414 +0.503 59.005 ±1.068 +0.311 59.471 ±0.587 -0.439 Precision-Calibrated Thresholding 56.674 ±0.439 +1.259 58.631 ±0.938 -0.064 59.745 ±0.460 -0.165 Reliability Score Rescaling 56.652 ±0.648 +1.237 59.112 ±0.242 +0.418 60.435 ±0.336 +0.525 
+
+Object Completion 
+
+Hard Query Recovery 50.995 ±4.348 -4.420 53.742 ±0.764 -4.953 56.155 ±1.289 -3.755 Multi-View Hard Recovery 51.322 ±0.866 -4.093 53.393 ±1.851 -5.302 55.129 ±1.222 -4.781 Foreground Query Revival 56.593 ±0.522 +1.178 59.012 ±1.353 +0.317 59.527 ±0.869 -0.383 Multi-View Foreground Revival 56.742 ±0.667 +1.327 58.954 ±0.830 +0.259 60.696 ±0.272 +0.786 
+
+Optimization Control 
+
+Sparse Loss Balancing 56.527 ±0.420 +1.112 58.820 ±1.017 +0.125 59.716 ±0.518 -0.194 Target-Anchored PCGrad 56.409 ±0.379 +0.994 59.147 ±0.770 +0.452 60.285 ±0.629 +0.375 Label-Guided Teacher Update 57.290 ±0.787 +1.875 58.577 ±1.387 -0.118 59.779 ±0.273 -0.132 
+
+Average of Plugins 55.512 +0.097 57.839 -0.856 59.094 -0.816

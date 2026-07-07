@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.00479v1/fig-001.webp",
+      "caption": "Figure 1: Fast Eigendecay of Qwen3-8B (Ghost in the Kernel)",
+      "page": 13,
+      "index": 1,
+      "width": 904,
+      "height": 373
+    }
+  ]
+}
