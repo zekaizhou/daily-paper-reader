@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.02299v1/fig-001.webp",
+      "caption": "Fig. 1. Comparison between standard incremental learning and DICD (a) Standard incremental learning: both feature and label spaces expand with new classes. (b) DICD: fixed binary label space with shifting feature domains.",
+      "page": 2,
+      "index": 1,
+      "width": 725,
+      "height": 185
+    },
+    {
+      "url": "assets/figures/arxiv/2607.02299v1/fig-002.webp",
+      "caption": "Table 1. Accuracy Assessment for Two-Stage Incremental Change Detection. In this and other tables, C indicates CNN-based models, T indicates Transformer-based models, M indicates Mamba-based models, and IL indicates incremental learning baselines. We highlight the highest values in red and the second-highest results in blue.",
+      "page": 8,
+      "index": 2,
+      "width": 712,
+      "height": 373
+    },
+    {
+      "url": "assets/figures/arxiv/2607.02299v1/fig-003.webp",
+      "caption": "Fig. 2. Overview of the proposed DSINet. Designed for long domain sequences, DSINet maintains step-wise stability through two selection mechanisms.",
+      "page": 4,
+      "index": 3,
+      "width": 725,
+      "height": 375
+    },
+    {
+      "url": "assets/figures/arxiv/2607.02299v1/fig-004.webp",
+      "caption": "Table 2. Accuracy Assessment for Three-Stage Incremental Change Detection.",
+      "page": 9,
+      "index": 4,
+      "width": 712,
+      "height": 335
+    },
+    {
+      "url": "assets/figures/arxiv/2607.02299v1/fig-005.webp",
+      "caption": "Fig. 3. Structure of the S3U. The input feature map is dynamically disentangled into two parallel pathways. The domain-shared pathway utilizes the 2D cross-scan mechanism of SSMs to capture global domain-agnostic structures. Simultaneously, the domain-specific pathway extracts localized variations using a lightweight convolution. The concatenated features are calibrated via channel-wise affine transformations, projected back to the original dimension, and fused via a residual connection.",
+      "page": 5,
+      "index": 5,
+      "width": 725,
+      "height": 223
+    }
+  ]
+}

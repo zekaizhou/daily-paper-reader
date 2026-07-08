@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.03522v1/fig-001.webp",
+      "caption": "Table 1: Main results across five heterogeneous domains on two backbones. All controllers use a 50% data budget; “Full data” uses 100%. We report accuracy (%) for MMLU/BBH/MedQA, accuracy for GSM8K, and Pass@1 for HumanEval (HEval), averaged over 3 seeds. Best per column in bold, second best underlined. CODA co-adapts domain participation; the data-mixture baselines (Uniform/Proportional/Temperature/DoReMi) fix or learn a static mixture, PCGrad/GradNorm balance gradients, and GREATS selects over the pooled stream.",
+      "page": 7,
+      "index": 1,
+      "width": 1052,
+      "height": 276
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03522v1/fig-002.webp",
+      "caption": "Table 2: Component ablations (average accuracy over the five domains). (a) varies the participation rule with the within-domain selector fixed; (b) varies the within-domain selector with participation fixed to CODA. Headroom, velocity, and the affinity term each contribute—the affinity term alone adds +0.7/+1.0—and CODA nearly matches the label-using oracle.",
+      "page": 7,
+      "index": 2,
+      "width": 460,
+      "height": 315
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03522v1/fig-003.webp",
+      "caption": "Table 3: Default hyperparameters for CODA.",
+      "page": 13,
+      "index": 3,
+      "width": 396,
+      "height": 337
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03522v1/fig-004.webp",
+      "caption": "Figure 4: (a) Data efficiency on QWEN-2.5-7B: CODA exceeds full-data accuracy with∼20–30% of the data. (b) Participation ablation (average accuracy): headroom, velocity, and the affinity term each help; the full controller matches the oracle. (c) Robustness to affinity weight η and temperature τ . (d) Negative controls: CODA’s gain is large across domains but vanishes within a single domain, and the affinity benefit disappears when affinities are shuffled.",
+      "page": 8,
+      "index": 4,
+      "width": 1047,
+      "height": 223
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03522v1/fig-005.webp",
+      "caption": "Figure 3: Mechanism. (a) The forward-only affinity predicts oracle leave-one-out transfer over (domain, domain, round) triples (r=0.94). (b) Per-domain participation π under CODA over training: participation migrates out of the early-saturating Code domain toward Knowledge/Reasoning, and synergistic Math/Reasoning rise together. (c) Fraction of conflicting cross-domain gradient pairs; CODA lowers conflict from 0.41 (uniform) to 0.24, below gradient-surgery baselines.",
+      "page": 8,
+      "index": 5,
+      "width": 1039,
+      "height": 296
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03522v1/fig-006.webp",
+      "caption": "Figure 1: Co-learning a shared adapter is governed by two things, both readable without labels. (a) Per-domain accuracy under uniform mixing on QWEN-2.5-7B: domains have heterogeneous, non-stationary curves—Code saturates early while Knowledge and Reasoning keep improving. (b) Across domains and checkpoints, the label-free competence ck is strongly correlated with per-domain accuracy (r≈ 0.9), so its complement is a headroom proxy. (c) Domains transfer unevenly: leaveone-out transfer (% change in a domain’s accuracy when a second domain is co-trained) is signed and heterogeneous—some pairs are synergistic (Math↔Reasoning), others interfere.",
+      "page": 4,
+      "index": 6,
+      "width": 1044,
+      "height": 287
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03522v1/fig-007.webp",
+      "caption": "Figure 2: Overview of CODA. At each round the current shared adapter is run forward (no labels, no backprop) over a small unlabeled probe per domain to read two signals: a per-domain competence ck (its level is headroom, its rise is learning speed) and a cross-domain affinity A from the drift of probe representations (which domains pull the adapter compatibly). A coadaptive controller solves an entropy-regularized quadratic program on the simplex, turning a marginal-learnability term gk and the affinity coupling into a participation vector π. Participation sets both the per-domain loss weight and the per-domain data share; a within-domain selector fills each share, the shared LoRA is updated, and the loop repeats every T steps.",
+      "page": 5,
+      "index": 7,
+      "width": 1052,
+      "height": 454
+    }
+  ]
+}

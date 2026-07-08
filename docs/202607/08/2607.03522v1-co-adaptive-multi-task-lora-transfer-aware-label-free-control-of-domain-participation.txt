@@ -1,0 +1,790 @@
+Title: Co-Adaptive Multi-Task LoRA: Transfer-Aware, Label-Free Control of Domain Participation
+
+URL Source: https://arxiv.org/pdf/2607.03522v1
+
+Published Time: Tue, 07 Jul 2026 01:14:21 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+# Co-Adaptive Multi-Task LoRA: Transfer-Aware, Label-Free Control of Domain Participation 
+
+# Wei Zhang 1, Lin Tang 1, Ming Zhao 2, Yuxuan Wang 2
+
+> 1
+
+Sichuan University, Chengdu, China 
+
+> 2
+
+University of Electronic Science and Technology of China, Chengdu, China 
+
+Abstract 
+
+Fine-tuning a single low-rank adapter on many domains at once is multi-task learning: the domains must be co-learned ,and how they share the adapter decides whether they help or hurt one another. Most efficient fine-tuning pipelines ignore this and train on a fixed, uniform mixture, leaving two cou-pled questions unanswered: how much should each domain participate, and which domains should be co-trained given that some transfer positively and others interfere? We show that both answers can be read off cheaply and without labels. A forward pass of the current shared adapter over a small un-labeled probe yields, per domain, a competence signal whose level tracks remaining headroom and whose trajectory tracks learning speed; the drift of these probe representations yields a signed cross-domain affinity that predicts pairwise trans-fer. We fold both into C ODA, a co-adaptive controller that solves a small entropy-regularized quadratic program on the simplex to set each domain’s participation —jointly its loss weight and its share of the sampled data—rewarding high-headroom, still-learning, mutually synergistic domains and damping interfering ones. The controller is forward-only, adds no trainable parameters, and wraps any multi-task LoRA pipeline. Across five heterogeneous domains and two back-bones, C ODA improves the average over uniform mixing, learned mixtures, gradient-surgery multi-task optimizers, and online data selection while using half the data, and lowers cross-domain gradient conflict. We prove that the competence signal tracks domain risk, that the participation program has a unique fixed point reached by a contraction, and that its solu-tion performs transfer-aware water-filling; analysis, ablations, and controls corroborate each claim. 
+
+# 1 Introduction 
+
+Adapting a pretrained large language model (LLM) to many downstream domains at once—knowledge, mathematics, code, reasoning, medicine—is now routine, and low-rank adaptation (LoRA) (Hu et al. 2022) makes it cheap by training a single small adapter on top of frozen weights. When one shared adapter must serve all domains, fine-tuning is inherently multi-task learning (MTL): the domains are co-learned through a common set of parameters, and the classic MTL phenomena appear—some domains reinforce each other while others compete, so training them together can help or hurt (Crawshaw 2020; Standley et al. 2020; Fifty et al. 2021). How the shared adapter is divided among the domains therefore determines the outcome. Yet most efficient fine-tuning pipelines sidestep this. Data-selection methods score individual examples and keep a high-value subset (Albalak et al. 2024; Xia et al. 2024; Mindermann et al. 2022; Wang et al. 2024), but they operate on a single pooled stream and inherit a fixed, usually uni-form or size-proportional, domain mixture. This leaves two 
+
+coupled questions unanswered: (i) how much should each domain participate —how much of the shared capacity and the finite data-and-compute budget it should claim—and (ii) 
+
+which domains should be co-trained , given that co-training synergistic domains transfers positively while co-training conflicting ones injects interference (Standley et al. 2020; Fifty et al. 2021; Yu et al. 2020). Treating the mixture as fixed answers neither, and answering them well is exactly the MTL problem of balancing tasks and choosing task groupings, now posed inside a single LoRA under a budget. Both questions have moving targets. First, domains have strongly heterogeneous and non-stationary learning curves (Figure 1a): a domain the base model already handles well saturates after a few steps, while others keep improving, so the right amount of participation drifts during training. Sec-ond, transfer between domains is uneven and signed : some pairs share structure and should be learned together, oth-ers interfere and should be kept apart (Figure 1c). A con-troller must read both the per-domain state and the between-domain relationships, and it must do so continually. The apparent obstacle is that measuring a domain’s re-maining headroom or its transfer to others seems to require labeled held-out evaluation at every step. Our key observa-tion is that it does not—both are visible in the forward pass. Running the current shared adapter over a small unlabeled 
+
+probe set per domain yields a competence statistic whose level tracks the domain’s error (its headroom) and whose tra-jectory tracks whether it is still learning; Figure 1(b) shows the level correlates with per-domain accuracy at r ≈ 0.9. The 
+
+drift of these probe representations between rounds yields a signed cross-domain affinity that predicts pairwise transfer measured by leave-one-out retraining (Figure 3a, r ≈ 0.94 ). Neither signal uses labels, reference models, or extra back-propagation. Building on this, we propose C ODA (Co-adaptive Do-main Adaptation), a forward-only controller for multi-task LoRA. Every T steps C ODA probes each domain to estimate its headroom and learning speed, estimates 
+
+> arXiv:2607.03522v1 [cs.LG] 3 Jul 2026
+
+the between-domain affinity from representation drift, and solves a small entropy-regularized quadratic program on the simplex to set each domain’s participation . The participa-tion vector simultaneously sets the per-domain loss weight and the per-domain share of the sampled data, so a domain that is high-headroom, still improving, and synergistic with other active domains is co-trained more, while a saturated or interfering domain is damped. The controller adds no train-able parameters, needs only forward passes over a few hun-dred unlabeled examples per domain, and composes with any within-domain example selector. Our contributions are: • We frame budget-constrained multi-domain LoRA tuning as co-adaptive multi-task learning : jointly deciding how much each domain participates and which domains to co-train, rather than selecting examples over a fixed mixture (Section 4). • We introduce two label-free, forward-only signals—a per-domain competence that estimates headroom and learning speed, and a cross-domain affinity from probe-representation drift that estimates signed transfer—and validate them against per-domain accuracy and leave-one-out transfer. • We propose C ODA, which couples both signals in an entropy-regularized quadratic program whose solution sets domain participation (loss weight and data share); we prove competence tracks risk, the program has a unique fixed point reached by a contraction, and its solution is transfer-aware water-filling (Section 5). • Across five heterogeneous domains and two backbones, CODA beats uniform mixing, learned static mixtures, gradient-surgery multi-task optimizers, and online data selectors at half the data, with mechanism analysis, ab-lations isolating the transfer term, negative controls, and efficiency studies (Section 6). 
+
+# 2 Related Work 
+
+Multi-task learning: balancing and task grouping. 
+
+Training one model on several tasks can improve data ef-ficiency and generalization but also causes negative transfer when objectives compete (Crawshaw 2020). Two levers re-cur. Task balancing reweights the joint objective so no task dominates: uncertainty weighting (Kendall, Gal, and Cipolla 2018), gradient normalization (Chen et al. 2018), and multi-objective formulations (Sener and Koltun 2018) adjust per-task loss weights, while data-side balancing over- or under-samples tasks, as in temperature-based sampling for mas-sively multilingual training (Arivazhagan et al. 2019). Task grouping instead asks which tasks to learn together: coop-eration and competition can be measured and used to as-sign tasks to networks (Standley et al. 2020), and inter-task affinity—how one task’s update changes another’s loss— identifies good groupings in a single run (Fifty et al. 2021). CODA unifies both levers inside one shared LoRA and drives them from label-free signals: competence sets how much each domain participates, and an affinity estimate de-cides which domains should be co-trained, updated online as the model changes. 
+
+Data selection and domain mixtures. Selecting high-value training data is a long-standing idea, from online batch selection by loss (Loshchilov and Hutter 2015) and im-portance sampling by gradient norm (Katharopoulos and Fleuret 2018) to coreset and pruning methods (Paul, Gan-guli, and Dziugaite 2021; Coleman et al. 2020; Sorscher et al. 2022). For instruction tuning, quality- and influence-based curation reduces data by orders of magnitude with lit-tle loss (Zhou et al. 2023; Chen et al. 2024; Xia et al. 2024; Liu et al. 2024; Wettig et al. 2024). Online selection adapts to the evolving model, keeping points that are learnable and not yet learnt via a held-out reference model (Mindermann et al. 2022), greedily maximizing a Taylor-approximated batch quality (Wang et al. 2024), or scoring examples by utility and diversity without a reference model (Zou et al. 2025a). These operate at the sample level over a pooled stream and leave the domain mixture fixed, with lasting downstream effects (Yang, Zeng, and Yang 2026). A complementary line optimizes the mixture itself, but mostly for pretrain-ing language-modeling loss and with static or proxy-model-derived weights (Xie et al. 2023; Ye et al. 2024; Chen et al. 2023). C ODA is orthogonal to sample selection—it can wrap any of the above as a within-domain step—and differs from mixture optimization by adapting participation online 
+
+for downstream multi-task accuracy under a shared adapter, with an explicit transfer term. 
+
+Label-free signals from model outputs. Estimating a model’s accuracy without labels is possible from its own predictions: softmax confidence and margin (Hendrycks and Gimpel 2017), prediction entropy and agreement across per-turbations (Guillory et al. 2021; Garg et al. 2022), the pro-jection norm of features (Yu et al. 2022), energy-based scores over the prediction distribution (Peng et al. 2024), and semantic-space confidence for uncertainty (Qiu and Miikku-lainen 2024). This literature uses such statistics to report an accuracy estimate. We instead turn a normalized confidence statistic into a training-time control signal and, crucially, add a second statistic—the drift of probe representations across rounds—to estimate between -domain transfer, which single-model accuracy proxies do not address. 
+
+Model merging and multi-task optimization. When domains are trained separately, their adapters can be recombined by model merging : weight averaging and soups (Wortsman et al. 2022), task arithmetic (Ilharco et al. 2023; Ortiz-Jimenez, Favero, and Frossard 2023), Fisher- and regression-weighted merging (Matena and Raf-fel 2022; Jin et al. 2023), and interference-aware schemes such as TIES-merging and DARE (Yadav et al. 2023; Yu et al. 2024a). LoRA-specific composition includes Lo-RAHub (Huang et al. 2024), partial linearization (Tang et al. 2023), and SVD-based tying (Stoica et al. 2025), whose mergeability can even be predicted in advance (Tang et al. 2026). A recent thread reduces cross-task interference through orthogonal parameter/subspace decoupling: orthog-onal continual subspaces (Wang et al. 2023), orthogonal sub-spaces for robust merging (Zhang and Zhou 2025), data-free decouple-and-orthogonalize merging (Zheng et al. 2025), and interference reduction in multi-task low-rank adapta-tion (Zou et al. 2025b). On the training side, multi-task optimization tackles conflicting gradients directly—PCGrad projects away conflicting components (Yu et al. 2020), and conflict-averse and multi-objective methods rebalance task gradients (Liu et al. 2021; Sener and Koltun 2018). Merg-ing composes after separate training and gradient surgery acts inside each step; C ODA instead reduces interference 
+
+upstream , by choosing which domains co-train and how strongly, and composes with all of the above at infer-ence. Mixture-of-experts LoRA variants (Dou et al. 2023; Li et al. 2024; Wu, Huang, and Wei 2024; Tian et al. 2024) and near-orthogonal random-projection experts (Zou et al. 2025b) add multi-domain capacity but do not schedule par-ticipation or data. 
+
+# 3 Preliminaries 
+
+Multi-task LoRA with domain participation. We fine-tune a frozen model with weights W0 on K domains, each a pool Dk = {(x, y )} of instruction–response pairs. A single shared LoRA adapter θ reparameterizes each adapted linear map as W0 + αr BA with B ∈ Rd×r , A ∈ Rr×d, r ≪ d; only 
+
+θ = {A, B } is trained. We control the domains through a 
+
+participation vector π ∈ ∆K−1 on the simplex, which plays the two roles that MTL balances separately—loss weighting and data sampling—at once. Given π, the weighted multi-task objective is 
+
+min 
+
+> θK
+
+X
+
+> k=1
+
+πk Lk(θ; Sk), |S k| = ⌊N π k⌋, Sk ⊆ D k,
+
+(1) where Lk is the token-level cross-entropy and N is the per-round data budget. Thus πk both scales domain k’s gradient and sets how many of its examples enter the round. Fixing 
+
+πk ∝ |D k| (or uniform) recovers standard pooled training; we instead co-adapt π during training from label-free sig-nals. 
+
+Competence: a label-free headroom signal. For an input 
+
+x, let p(x; θ) ∈ ∆V −1 be the model’s next-token distribu-tion averaged over response positions. Its normalized pre-dictive entropy ˜H(x; θ) = H p(x; θ)/ log V ∈ [0 , 1] mea-sures how unsure the adapter is on x. We define the compe-tence of domain k on an unlabeled probe set Pk ⊂ D k as its mean confidence, 
+
+ck(θ) = 1
+
+|P k|
+
+X
+
+> x∈P k
+
+ 1 − ˜H(x; θ) ∈ [0 , 1] , (2) with headroom hk = 1 − ck. Because the entropy is normal-ized by log V , competence is comparable across domains with different formats (multiple-choice vs. open generation), which raw loss is not. It needs only forward passes and no labels; Section 4 shows ck tracks per-domain accuracy. 
+
+Affinity: a label-free transfer signal. Let ϕ(x; θ) ∈
+
+Rd be the adapter’s mean hidden representation of x and 
+
+¯ϕk(θ) = Ex∈P k [ϕ(x; θ)] the domain-k probe centroid. Over one round the centroid shifts by δk = ¯ϕk(θ(r))− ¯ϕk(θ(r−1) ).The (symmetrized) cross-domain affinity is the cosine align-ment of these shifts, 
+
+Akj = cos  δk, δ j
+
+ ∈ [−1, 1] , A = 12 (A + A⊤), (3) a forward-only surrogate for whether updates driven by the two domains pull the shared adapter in compatible direc-tions; Akj > 0 signals positive transfer, Akj < 0 interference. Section 4 shows A predicts leave-one-out transfer. 
+
+Desiderata. A co-learning controller for a shared adapter should be (D1) label-free ; (D2) cheap , adding only forward passes and no reference model or extra backpropagation; (D3) adaptive , tracking the moving optimum rather than a mixture fixed in advance; and (D4) relational , accounting for how domains help or hurt one another rather than treat-ing them independently. C ODA meets all four: competence and affinity are label-free (D1) and forward-only (D2), re-estimation every T steps makes it adaptive (D3), and the affinity term makes it relational (D4). 
+
+# 4 Analysis: What Governs Co-Learning 
+
+We motivate C ODA with four observations on Q WEN -2.5-7B and LL AMA-3.1-8B fine-tuned jointly on the five do-mains (setup in Section 6). Diagnostics use a held-out probe per domain; “oracle” quantities use labels only for analysis, never by C ODA. 
+
+Diagnostic protocol. We train a shared adapter with uni-form mixing and, every 100 steps, record per-domain test accuracy, the forward-only competence ck (Eq. 2) and cen-troids for A (Eq. 3), and an oracle transfer Θkj measured by forking the run, adding a fixed increment of domain j,and recording the accuracy change on domain k. This yields matched tuples for the correlations below. 
+
+Observation 1: learning curves are heterogeneous and non-stationary. Figure 1(a) tracks per-domain accuracy of a single shared adapter trained with uniform mixing. The curves differ sharply: Code starts high and saturates within 
+
+∼30% of training, whereas Knowledge and Reasoning start lower and keep climbing to the end. A fixed mixture there-fore over-serves domains that have stopped improving and under-serves those that have not—and which domain is “sat-urated” changes during training, so any static participation is stale by mid-training. 
+
+Observation 2: competence tracks headroom. Estimat-ing headroom without labels is the difficulty. Figure 1(b) shows the competence ck (Eq. 2) rises monotonically as a domain saturates and is strongly correlated with per-domain accuracy across all domains and checkpoints (Pearson r =0.91 , Spearman 0.92 ). A low ck marks a domain the current adapter still handles poorly—i.e., with headroom—using forward passes only, and its increase over rounds marks how fast the domain is still learning. 0 25 50 75 100 
+
+> training progress (%)
+> 50
+> 60
+> 70
+> 80
+> per-domain accuracy (%)
+> Code
+> saturates
+
+(a) Heterogeneous, non-stationary 
+
+learning curves      
+
+> Knowledge
+> Math
+> Code
+> Reasoning
+> Biomed.
+> 0.3 0.4 0.5
+> competence ck(label-free)
+> 50
+> 60
+> 70
+> 80
+> per-domain accuracy (%)  r= 0.91
+
+(b) Competence tracks 
+
+headroom                         
+
+> Kn Ma Co Re Bi
+> Kn
+> Ma
+> Co
+> Re
+> Bi
+> +1.0 +0.1 -0.3 +0.3 +0.4
+> +0.1 +1.0 +0.2 +0.6 -0.1
+> -0.3 +0.2 +1.0 +0.1 -0.2
+> +0.3 +0.6 +0.1 +1.0 +0.1
+> +0.4 -0.1 -0.2 +0.1 +1.0
+
+(c) Transfer is uneven 
+
+and signed 
+
+> −1.00
+> −0.75
+> −0.50
+> −0.25
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> 1.00
+> transfer
+
+Figure 1: Co-learning a shared adapter is governed by two things, both readable without labels. (a) Per-domain accuracy under uniform mixing on Q WEN -2.5-7B: domains have heterogeneous, non-stationary curves—Code saturates early while Knowledge and Reasoning keep improving. (b) Across domains and checkpoints, the label-free competence ck is strongly correlated with per-domain accuracy ( r ≈ 0.9), so its complement is a headroom proxy. (c) Domains transfer unevenly: leave-one-out transfer (% change in a domain’s accuracy when a second domain is co-trained) is signed and heterogeneous—some pairs are synergistic (Math ↔Reasoning), others interfere. 
+
+Observation 3: transfer is uneven, and affinity pre-dicts it. Co-learning is not separable across domains. Fig-ure 1(c) shows oracle transfer Θkj is signed and heteroge-neous: Math and Reasoning reinforce each other, whereas Code and Knowledge mildly interfere. Crucially this is visi-ble without labels—the forward-only affinity A (Eq. 3) pre-dicts oracle transfer across (domain, domain, round) triples with Pearson r = 0 .94 (Figure 3a). Representation-drift alignment is thus a faithful, label-free surrogate for which domains should be co-trained. 
+
+Observation 4: ignoring transfer drives gradient con-flict. Balancing domains only by headroom, without re-gard to their relationships, leaves interference on the ta-ble. Measuring the cosine between per-domain gradients of the shared adapter, we find that under uniform mixing 41% 
+
+of domain pairs are in conflict (negative cosine); an over-served, interfering domain pulls the shared update toward directions that hurt others. Damping participation of do-mains with negative affinity reduces conflicting pairs to 24% 
+
+(Figure 3c), connecting participation control to the inter-ference addressed post-hoc by merging (Yadav et al. 2023; Zheng et al. 2025) and gradient surgery (Yu et al. 2020). 
+
+Why confidence rather than loss? A natural alternative weights domains by training loss, but loss needs labels and is a poor cross-domain comparator: its scale differs across for-mats, so a high-loss domain need not have high headroom. Normalized confidence is label-free, comparable, and ranks domains by accuracy far better (Spearman 0.91 vs. 0.60 ; ap-pendix), which is why C ODA’s headroom term uses compe-tence (cf. Table 2). These observations motivate a controller that (i) reads each domain’s competence level and trajectory, (ii) reads the between-domain affinity, and (iii) sets participation to fa-vor high-headroom, still-learning, mutually synergistic do-mains. 
+
+# 5 Method 
+
+CODA wraps standard multi-task LoRA training in an outer loop that runs every T optimizer steps (a round ). Each round reads the two label-free signals, solves a small program for the participation vector π, and trains for T steps under the induced loss weights and data shares. Figure 2 gives an overview; Algorithm 1 states it precisely. 
+
+Marginal-learnability term. At round r we compute competence c(r) 
+
+> k
+
+from Eq. 2 using the current adapter θ(r)
+
+and probe Pk. Its complement gives headroom hk = 1 −
+
+c(r) 
+
+> k
+
+, and its smoothed rise gives learning speed vk =max(0 , c (r) 
+
+> k
+
+− ¯c(r−1)  
+
+> k
+
+), where ¯c(r−1) is an exponential mov-ing average. The per-domain marginal learnability multi-plies the two, 
+
+gk = hk ·  β + vk
+
+, (4) with a floor β > 0 so no domain is ever starved. A domain that is both far from saturated (high hk) and still improving (high vk) has the largest marginal learnability; a saturated domain ( hk → 0 or vk → 0) has the least. 
+
+Co-adaptive participation program. Balancing domains by gk alone ignores how they interact. We therefore choose the participation vector π ∈ ∆K−1 to maximize an objective that rewards marginal learnability and co-training of syner-gistic domains: 
+
+J (π) = P 
+
+> k
+
+gkπk
+
+| {z }
+
+> learnability
+
++ η π ⊤A π
+
+| {z }
+
+> co-learning synergy
+
+− τ P 
+
+> k
+
+πk log πk
+
+| {z }
+
+> smoothing
+
+,
+
+(5) with π ∈ ∆K−1. The quadratic term is large when domains that receive participation are mutually aligned ( Akj > 0) and Figure 2: Overview of C ODA. At each round the current shared adapter is run forward (no labels, no backprop) over a small unlabeled probe per domain to read two signals: a per-domain competence ck (its level is headroom, its rise is learning speed) and a cross-domain affinity A from the drift of probe representations (which domains pull the adapter compatibly). A co-adaptive controller solves an entropy-regularized quadratic program on the simplex, turning a marginal-learnability term gk and the affinity coupling into a participation vector π. Participation sets both the per-domain loss weight and the per-domain data share; a within-domain selector fills each share, the shared LoRA is updated, and the loop repeats every T steps. is penalized when interfering domains ( Akj < 0) are co-trained, so η ≥ 0 trades synergy against per-domain learn-ability; the entropy term (temperature τ ) keeps π smooth and exploratory. Setting ∂J /∂π = 0 on the simplex gives the fixed-point condition 
+
+πk = exp  (gk + 2 η (Aπ)k)/τ P 
+
+> j
+
+exp  (gj + 2 η (Aπ)j )/τ  , (6) which we solve by a few mirror-descent iterations of Eq. 6, warm-started from the previous round. Section 5.1 shows this iteration is a contraction (so π is unique and reached linearly) and that π performs transfer-aware water-filling : it equalizes an affinity-augmented marginal gain across active domains. With η = 0 the program reduces to a plain soft-max over gk; the affinity term is what makes participation relational. 
+
+Participation, sampling, and within-domain selection. 
+
+The solution π plays both MTL roles at once: it is the loss weight in Eq. 1 and sets the data share nk = ⌊N π k⌋. Each share is filled by a forward-only within-domain selector; by default we keep a middle-difficulty band, discarding exam-ples the adapter already answers with near-certainty (noth-ing to learn) and the most uncertain tail (often noisy), which needs only the confidences already computed for Eq. 2. Any sample-level selector can be substituted; we ablate this choice in Section 6. 
+
+Cost. Per round, C ODA adds K forward passes over |P k|
+
+unlabeled probe examples (a few hundred each) plus a for-ward pass to score candidates for selection—no reference model, no validation labels, and no extra backpropagation. The controller solves a K-dimensional program with K tiny (O(K2)) iterations, negligible for the handful of domains typical in practice. With T on the order of hundreds of steps the overhead is a few percent of training time (Section 6), and because C ODA trains on a fraction of the data it is typ-ically faster than full-data SFT. 
+
+5.1 Why the controller works 
+
+We state the three properties that justify C ODA; full state-ments and proofs are in the appendix. 
+
+Proposition 1 (Competence tracks domain risk) . Let Rk(θ)
+
+be the expected 0/1 risk on domain k. If the adapter is κk-calibrated on Pk, there exist constants a > 0, b with Rk(θ) = 
+
+a  1 − ck(θ) + b + ϵk and |ϵk| controlled by the calibration error κk and probe dispersion. Hence headroom hk = 1 −ck
+
+estimates risk (up to affine scaling), and vk estimates the per-round risk reduction. 
+
+Proposition 2 (Well-posedness and convergence) . If 
+
+2η ∥A∥2 < τ , the map defined by Eq. 6 is a contraction on the simplex, so J is strictly concave with a unique max-imizer π⋆, and the mirror-descent iteration converges to it linearly at rate 2η∥A∥2/τ .
+
+Proposition 3 (Transfer-aware water-filling) . At π⋆ ev-ery active domain shares a common affinity-augmented marginal value gk + 2 η(Aπ⋆)k − τ (1 + log π⋆k) = ν, while inactive domains have smaller value. As τ → 0 this becomes water-filling on the coupled gains gk + 2 η(Aπ⋆)k: budget Algorithm 1: CODA: co-adaptive multi-task LoRA 
+
+Input: domains {D k}Kk=1 , frozen W0, init adapter θ,probes {P k}, per-round budget N , period T ,weights η, τ, β 
+
+Output: fine-tuned shared adapter θ
+
+initialize EMA ¯ck, centroids ¯ϕk, and π ← uniform 
+
+while budget remains do 
+
+// --- controller round (forward only) ---
+
+for k = 1 , . . . , K do 
+
+ck ← competence (Pk; θ) // Eq. 2 
+
+vk ← max(0 , c k − ¯ck); ¯ck ← EMA (¯ ck, c k)
+
+gk ← (1 − ck) ( β + vk) // Eq. 4 
+
+δk ← ¯ϕk(θ) − ¯ϕprev  
+
+> k
+
+; update ¯ϕprev 
+
+> k
+
+A ← 12 (A + A⊤), A kj = cos( δk, δ j )
+
+// Eq. 3 
+
+solve π ← arg max π∈∆ J (π) by Eq. 6 
+
+// warm-started 
+
+for k = 1 , . . . , K do 
+
+Sk ← SELECT (Dk, ⌊N π k⌋)
+
+// forward-only // --- inner training ---
+
+train θ on {S k}, weighting domain k by πk, for T
+
+steps // Eq. 1 
+
+return θ
+
+is poured into domains that are both learnable and synergis-tic with other funded domains, and withheld from interfering ones. 
+
+Proposition 3 generalizes classical single-resource water-filling to the coupled multi-task case: the affinity term shifts budget toward mutually reinforcing domains, which is exactly the task-grouping intuition (Standley et al. 2020; Fifty et al. 2021) made continuous and label-free. Section 6 confirms π⋆ nearly matches an oracle that uses true transfer and marginal gains. 
+
+5.2 Connections and design choices 
+
+CODA can be read as a co-adaptive controller that, each round, plays a one-shot potential game whose potential is 
+
+J : domains “bid” for participation, the affinity term couples their bids, and the entropy term guarantees a smooth inte-rior solution rather than a winner-take-all collapse. Unlike static task grouping (Standley et al. 2020; Fifty et al. 2021), the grouping here is soft (a continuous π) and re-solved 
+
+every T steps because both signals are non-stationary—a domain saturates, and affinities shift as the shared adapter moves. From a curriculum standpoint (Bengio et al. 2009; Kumar, Packer, and Koller 2010), C ODA induces an emer-gent domain curriculum: early rounds spread participation while every domain is learnable, and participation con-centrates on the domains that remain learnable and syner-gistic late in training (Figure 3b). We keep the controller minimal—two forward statistics per domain, a K×K affin-ity, and a tiny program—so it adds no trainable parameters and wraps any existing multi-task LoRA pipeline. 
+
+Practical considerations. Three details matter. (i) 
+
+Warmup : one round of uniform participation before en-abling the controller lets the first competences reflect a partially adapted model, tightening the calibration behind Proposition 1. (ii) Smoothing : the EMA on ¯ck and centroids stabilizes vk and A. (iii) Scaling : Eq. 6 is unchanged for large K at O(K2) per iteration, and the entropy floor keeps every domain periodically re-probed. Reading only forward outputs, the controller is agnostic to the optimizer, schedule, and LoRA variant. 
+
+# 6 Experiments 
+
+Setup. We fine-tune LL AMA-3.1-8B (Grattafiori et al. 2024) and QWEN -2.5-7B (Yang et al. 2024) with ashared LoRA (rank 8, α = 16 , applied to atten-tion and MLP projections) jointly on five heteroge-neous domains chosen to span distinct skills and for-mats: knowledge (MMLU (Hendrycks et al. 2021)), math (MetaMathQA →GSM8K (Yu et al. 2024b; Cobbe et al. 2021)), code (Magicoder →HumanEval (Wei et al. 2024; Chen et al. 2021)), multi-step reasoning (FLAN-CoT →BBH (Wei et al. 2022; Suzgun et al. 2023)), and biomedical QA (MedQA (Jin et al. 2021)). Unless noted, the total data budget is 50% of the pooled data; C ODA uses a per-domain probe of |P k| = 256 unlabeled ex-amples, period T = 100 steps, affinity weight η = 0 .5,temperature τ = 0 .5, floor β = 0 .1. We report accuracy for MMLU/GSM8K/BBH/MedQA and Pass@1 for Hu-manEval, averaged over 3 seeds. Full hyperparameters and prompts are in the appendix. 
+
+Baselines. We compare against full-data SFT ( 100% )and, at the same 50% budget, four families. Data-mixture baselines set the domain proportions: Uniform , size-
+
+Proportional , Temperature sampling ( T = 2 ) (Arivazhagan et al. 2019), and a DoReMi -style learned static mixture (Xie et al. 2023). Multi-task optimizers balance gradients: PC-Grad (Yu et al. 2020) and GradNorm (Chen et al. 2018). A data selector keeps high-value examples over the pooled stream: GREATS (Wang et al. 2024). Every baseline sees the same budget; C ODA co-adapts participation with the trans-fer term added. 
+
+Main results. Table 1 reports per-domain and average performance. CODA attains the best average on both backbones— 68 .0 on Q WEN -2.5-7B and 57 .2 on LL AMA-3.1-8B—improving over the strongest baseline (Grad-Norm) by +1 .2 on each and over full-data SFT by +1 .8
+
+and +1 .8 while using half the data. Gains are largest on the domains with the most headroom (Knowledge, Reasoning, Code) and smallest where the base model is already strong, exactly the behavior the competence signal predicts. Static-mixture baselines improve modestly over uniform but can-not track the moving optimum, and gradient-balancing opti-mizers help without addressing which domains to co-train; Qwen-2.5-7B LLaMA-3.1-8B                                                                                                               
+
+> Method MMLU GSM8K HEval BBH MedQA Avg. MMLU GSM8K HEval BBH MedQA Avg. Full data ( 100% )70.1 79.2 61.5 62.8 57.4 66.2 63.8 65.5 43.5 54.2 50.0 55.4 Uniform mixing 69.5 78.6 60.7 62.0 56.9 65.5 63.0 64.6 42.4 53.2 49.2 54.5 Proportional 69.7 78.8 60.9 62.3 57.0 65.7 63.2 64.8 42.6 53.5 49.4 54.7 Temperature (Arivazhagan et al. 2019) 70.0 79.0 61.2 62.7 57.2 66.0 63.6 65.2 43.1 54.0 49.8 55.1 DoReMi (Xie et al. 2023) 70.3 79.3 61.6 63.1 57.5 66.4 63.9 65.6 43.6 54.4 50.1 55.5 GREATS (Wang et al. 2024) 70.6 79.6 62.2 63.4 57.8 66.7 64.2 65.9 44.0 54.7 50.4 55.8 PCGrad (Yu et al. 2020) 70.4 79.5 61.8 63.6 57.6 66.6 64.0 65.8 43.8 54.9 50.2 55.7 GradNorm (Chen et al. 2018) 70.7 79.7 62.1 63.8 57.9 66.8 64.3 66.0 44.1 55.1 50.5 56.0
+> CODA (ours) 71.9 80.8 63.5 65.0 59.0 68.0 65.4 67.1 45.4 56.3 51.6 57.2
+
+Table 1: Main results across five heterogeneous domains on two backbones. All controllers use a 50% data budget; “Full data” uses 100% . We report accuracy (%) for MMLU/BBH/MedQA, accuracy for GSM8K, and Pass@1 for HumanEval (HEval), av-eraged over 3 seeds. Best per column in bold , second best underlined. C ODA co-adapts domain participation; the data-mixture baselines (Uniform/Proportional/Temperature/DoReMi) fix or learn a static mixture, PCGrad/GradNorm balance gradients, and GREATS selects over the pooled stream. CODA adds a consistent margin on top of both by schedul-ing participation and transfer jointly. 
+
+Mechanism. Figure 3 inspects why CODA helps. Panel (a) validates the transfer signal: the label-free affinity pre-dicts oracle leave-one-out transfer closely, so the controller couples the right domains. Panel (c) shows the down-stream effect: by damping over-served and interfering do-mains, C ODA cuts conflicting gradient pairs from 0.41 to 
+
+0.24 —below PCGrad and GradNorm—mitigating interfer-ence through participation rather than gradient surgery or post-hoc merging. 
+
+Where does participation go? Figure 3(b) traces the learned per-domain share: a near-uniform split early, then once Code saturates its share falls from ∼20% to under 10% 
+
+and is redistributed to the high-headroom Knowledge and Reasoning domains. The affinity term visibly co-moves syn-ergistic domains—Math and Reasoning rise and fall together rather than competing—and the trajectory is non-monotone, behavior no static mixture can express. 
+
+Ablations. Table 2 isolates the pieces of C ODA. Fixing the within-domain selector and building up the participation 
+
+rule (panel a), each ingredient helps: headroom beats uni-form and loss-based participation, multiplying by velocity adds more, and—most tellingly—adding the transfer term lifts the average from 67 .3 to 68 .0 on Q WEN and 56 .2 to 57 .2
+
+on LL AMA. This affinity gain is the distinctive contribu-tion over methods that balance domains independently, and it brings C ODA to within 0.3 of the label-using oracle . Fix-ing participation to C ODA and varying the within-domain 
+
+selector (panel b), the mid-difficulty band beats random and confidence-only, but even a random within-domain selector retains most of the gain—confirming that participation, not the specific sample scorer, is the primary lever. Figure 4(b) visualizes panel (a).                                 
+
+> Avg. accuracy (%) Variant Qwen LLaMA
+> (a) Participation rule (within-domain selector fixed) Uniform participation 65.5 54.5 Loss-based 66.1 55.1 Headroom only ( hk)66.7 55.6 Headroom ×velocity ( gk, no affinity) 67.3 56.2
+> CODA ( gk+affinity) 68.0 57.2
+> Oracle (true transfer +gain) 68.3 57.5
+> (b) Within-domain selector (participation =CODA) Random 67.4 56.6 High-confidence only 67.5 56.7
+> Difficulty band (ours) 68.0 57.2
+
+Table 2: Component ablations (average accuracy over the five domains). (a) varies the participation rule with the within-domain selector fixed; (b) varies the within-domain selector with participation fixed to C ODA. Headroom, ve-locity, and the affinity term each contribute—the affinity term alone adds +0 .7/+1 .0—and C ODA nearly matches the label-using oracle. 
+
+Sensitivity, efficiency, and negative controls. Figure 4(a) shows C ODA dominates the baselines across budgets and surpasses full-data accuracy using only ∼20 –30% of the data. Panel (c) shows robustness to the affinity weight η and temperature τ (<0.5 points over a wide range, broad opti-mum near η = τ = 0 .5; η = 0 , no transfer term, is weakest). Panel (d) reports two negative controls : applied to a sin-gle domain (participation vacuous), the gain over uniform collapses to noise ( +0 .1) versus +2 .5 in the multi-domain setting; and shuffling the affinity matrix removes the entire affinity gain, confirming the transfer term exploits real do-main relationships rather than a generic regularizer. 
+
+Further comparisons. Three alternatives fall short of co-adaptive control (appendix). A tuned static mixture (grid −1 0 1 2 
+
+> oracle transfer (%)
+> −1.0
+> −0.5
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> affinity-predicted (%)  r= 0.97
+
+(a) Affinity predicts 
+
+transfer      
+
+> 020 40 60 80 100
+> training progress (%)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> participation  πk
+
+(b) Participation adapts 
+
+and groups 
+
+> Knowledge
+> Math
+> Code
+> Reasoning
+> Biomed.
+> Uniform
+> GradNorm
+> PCGrad
+> CoDA
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> conflicting grad. pairs
+
+(c) Participation lowers 
+
+gradient conflict Figure 3: Mechanism. (a) The forward-only affinity predicts oracle leave-one-out transfer over (domain, domain, round) triples (r = 0 .94 ). (b) Per-domain participation π under C ODA over training: participation migrates out of the early-saturating Code domain toward Knowledge/Reasoning, and synergistic Math/Reasoning rise together. (c) Fraction of conflicting cross-domain gradient pairs; C ODA lowers conflict from 0.41 (uniform) to 0.24 , below gradient-surgery baselines. 25 50 75 100 
+
+> data budget (%)
+> 64
+> 66
+> 68
+> avg. accuracy (%)
+> full data
+
+(a) Data efficiency 
+
+> Uniform
+> GradNorm
+> CoDA
+> Uniform
+> Headroom
+> +Velocity
+> CoDA
+> Oracle
+> 65
+> 66
+> 67
+> 68
+> avg. accuracy (%)
+
+(b) Participation ablation       
+
+> 0.0 0.25 0.5 1.0 2.0
+> η/τ
+> 67.0
+> 67.5
+> 68.0
+> avg. accuracy (%)
+
+(c) Sensitivity    
+
+> ητ
+> Multi-
+> domain Single-
+> domain
+> True
+> affinity Shuffled
+> affinity
+> 0
+> 1
+> 2
+> 3
+> gain over baseline (%)
+
+(d) Negative controls 
+
+Figure 4: (a) Data efficiency on Q WEN -2.5-7B: C ODA exceeds full-data accuracy with ∼20 –30% of the data. (b) Participation ablation (average accuracy): headroom, velocity, and the affinity term each help; the full controller matches the oracle. (c) Robustness to affinity weight η and temperature τ . (d) Negative controls: C ODA’s gain is large across domains but vanishes within a single domain, and the affinity benefit disappears when affinities are shuffled. search plus a DoReMi-style proxy (Xie et al. 2023)) reaches only 66 .5 vs. C ODA’s 68 .0: no scalar mixture tracks the moving optimum (Figure 3b) or encodes which domains to co-train. Hand-designed curricula top out at 66 .4, unable to react to when a domain saturates. Train-then-merge , fitting five separate adapters and combining them with TIES (Ya-dav et al. 2023), reaches 65 .9, and C ODA’s reduced conflict also makes such merges cleaner (Zheng et al. 2025). Gains hold across scale (Q WEN -2.5-3B, M ISTRAL -7B (Jiang et al. 2023), G EMMA -2-9B (Team et al. 2024)), largest where headroom is greatest. 
+
+Where the gains come from, and at what cost. The headroom reweighting and the transfer term contribute CODA’s +1 .8 improvement in roughly 2:1 proportion (Ta-ble 2), with the largest per-domain gains on Knowledge and Reasoning. The controller adds ≈4% step-time overhead, no auxiliary model, and no stored gradients, so with the 50% 
+
+data cut it trains 1.6× faster end-to-end than full-data SFT. 
+
+When to use C ODA. CODA helps most when several heterogeneous domains share one adapter under a binding budget and per-domain labels for continuous evaluation are unavailable—the common case at scale. For a single or ho-mogeneous domain, or when full data is cheap, it gracefully reduces to standard within-domain selection, as the negative controls confirm (Figure 4d). 
+
+# 7 Conclusion 
+
+We showed that fine-tuning one shared LoRA on many do-mains is a multi-task co-learning problem whose two central levers—how much each domain participates and which do-mains are co-trained—can be controlled cheaply and with-out labels: a per-domain competence tracks headroom and learning speed, and the drift of probe representations yields a signed cross-domain affinity that predicts transfer. C ODA folds both into an entropy-regularized program on the sim-plex whose solution sets each domain’s participation—its loss weight and data share—favoring high-headroom, still-learning, mutually synergistic domains and damping in-terfering ones. It beats uniform mixing, learned mixtures, gradient-surgery optimizers, and online selection on two backbones and five domains at half the budget, with anal-ysis, ablations, and negative controls supporting each com-ponent. The broader message is that the relationships be-tween data sources, not only their quality, deserve dynamic control in multi-task fine-tuning. Limitations. CODA needs a small unlabeled probe per domain and enough calibration that confidence ranks domains and drift reflects transfer; se-vere miscalibration or a single-domain setting removes its advantage. Extending it to discovered domains and combin-ing it with inference-time merging are natural next steps. 
+
+# References 
+
+Albalak, A.; Elazar, Y.; Xie, S. M.; Longpre, S.; Lambert, N.; Wang, X.; Muennighoff, N.; Hou, B.; Pan, L.; Jeong, H.; et al. 2024. A survey on data selection for language models. 
+
+Transactions on Machine Learning Research (TMLR) .Arivazhagan, N.; Bapna, A.; Firat, O.; Lepikhin, D.; John-son, M.; Krikun, M.; Chen, M. X.; Cao, Y.; Foster, G.; Cherry, C.; Macherey, W.; Chen, Z.; and Wu, Y. 2019. Mas-sively multilingual neural machine translation in the wild: Findings and challenges. arXiv preprint arXiv:1907.05019 .Bengio, Y.; Louradour, J.; Collobert, R.; and Weston, J. 2009. Curriculum learning. In International Conference on Machine Learning (ICML) .Chen, Z.; Badrinarayanan, V.; Lee, C.-Y.; and Rabinovich, A. 2018. GradNorm: Gradient normalization for adaptive loss balancing in deep multitask networks. In International Conference on Machine Learning (ICML) .Chen, M.; Tworek, J.; Jun, H.; Yuan, Q.; Pinto, H. P. d. O.; Kaplan, J.; Edwards, H.; Burda, Y.; Joseph, N.; Brockman, G.; et al. 2021. Evaluating large language models trained on code. arXiv preprint arXiv:2107.03374 .Chen, M. F.; Roberts, N.; Bhatia, K.; Wang, J.; Zhang, C.; Sala, F.; and R´ e, C. 2023. Skill-it! a data-driven skills framework for understanding and training language mod-els. In Advances in Neural Information Processing Systems (NeurIPS) .Chen, L.; Li, S.; Yan, J.; Wang, H.; Gunaratna, K.; Yadav, V.; Tang, Z.; Srinivasan, V.; Zhou, T.; Huang, H.; and Jin, H. 2024. AlpaGasus: Training a better Alpaca with fewer data. In International Conference on Learning Representa-tions (ICLR) .Cobbe, K.; Kosaraju, V.; Bavarian, M.; Chen, M.; Jun, H.; Kaiser, L.; Plappert, M.; Tworek, J.; Hilton, J.; Nakano, R.; et al. 2021. Training verifiers to solve math word problems. 
+
+arXiv preprint arXiv:2110.14168 .Coleman, C.; Yeh, C.; Mussmann, S.; Mirzasoleiman, B.; Bailis, P.; Liang, P.; Leskovec, J.; and Zaharia, M. 2020. Selection via proxy: Efficient data selection for deep learn-ing. In International Conference on Learning Representa-tions (ICLR) .Crawshaw, M. 2020. Multi-task learning with deep neural networks: A survey. arXiv preprint arXiv:2009.09796 .Dou, S.; Zhou, E.; Liu, Y.; Gao, S.; Zhao, J.; Shen, W.; Zhou, Y.; Xi, Z.; Wang, X.; Fan, X.; et al. 2023. LoRAMoE: Alle-viate world knowledge forgetting in large language models via MoE-style plugin. arXiv preprint arXiv:2312.09979 .Fifty, C.; Amid, E.; Zhao, Z.; Yu, T.; Anil, R.; and Finn, C. 2021. Efficiently identifying task groupings for multi-task learning. In Advances in Neural Information Processing Systems (NeurIPS) .Garg, S.; Balakrishnan, S.; Lipton, Z. C.; Neyshabur, B.; and Sedghi, H. 2022. Leveraging unlabeled data to predict out-of-distribution performance. In International Conference on Learning Representations (ICLR) .Grattafiori, A.; Dubey, A.; Jauhri, A.; Pandey, A.; Kadian, A.; Al-Dahle, A.; Letman, A.; Mathur, A.; Schelten, A.; Vaughan, A.; et al. 2024. The Llama 3 herd of models. 
+
+arXiv preprint arXiv:2407.21783 .Guillory, D.; Shankar, V.; Ebrahimi, S.; Darrell, T.; and Schmidt, L. 2021. Predicting with confidence on unseen dis-tributions. In IEEE/CVF International Conference on Com-puter Vision (ICCV) .Hendrycks, D., and Gimpel, K. 2017. A baseline for detect-ing misclassified and out-of-distribution examples in neural networks. In International Conference on Learning Repre-sentations (ICLR) .Hendrycks, D.; Burns, C.; Basart, S.; Zou, A.; Mazeika, M.; Song, D.; and Steinhardt, J. 2021. Measuring massive mul-titask language understanding. International Conference on Learning Representations (ICLR) .Hu, E. J.; Shen, Y.; Wallis, P.; Allen-Zhu, Z.; Li, Y.; Wang, S.; Wang, L.; and Chen, W. 2022. LoRA: Low-rank adapta-tion of large language models. In International Conference on Learning Representations (ICLR) .Huang, C.; Liu, Q.; Lin, B. Y.; Pang, T.; Du, C.; and Lin, M. 2024. LoraHub: Efficient cross-task generalization via dynamic LoRA composition. In Conference on Language Modeling (COLM) .Ilharco, G.; Ribeiro, M. T.; Wortsman, M.; Schmidt, L.; Ha-jishirzi, H.; and Farhadi, A. 2023. Editing models with task arithmetic. In International Conference on Learning Repre-sentations (ICLR) .Jiang, A. Q.; Sablayrolles, A.; Mensch, A.; Bamford, C.; Chaplot, D. S.; Casas, D. d. l.; Bressand, F.; Lengyel, G.; Lample, G.; Saulnier, L.; et al. 2023. Mistral 7B. arXiv preprint arXiv:2310.06825 .Jin, D.; Pan, E.; Oufattole, N.; Weng, W.-H.; Fang, H.; and Szolovits, P. 2021. What disease does this patient have? a large-scale open domain question answering dataset from medical exams. Applied Sciences 11(14):6421. Jin, X.; Ren, X.; Preotiuc-Pietro, D.; and Cheng, P. 2023. Dataless knowledge fusion by merging weights of language models. In International Conference on Learning Represen-tations (ICLR) .Katharopoulos, A., and Fleuret, F. 2018. Not all samples are created equal: Deep learning with importance sampling. In 
+
+International Conference on Machine Learning (ICML) .Kendall, A.; Gal, Y.; and Cipolla, R. 2018. Multi-task learn-ing using uncertainty to weigh losses for scene geometry and semantics. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) .Kumar, M. P.; Packer, B.; and Koller, D. 2010. Self-paced learning for latent variable models. In Advances in Neural Information Processing Systems (NeurIPS) .Li, D.; Ma, Y.; Wang, N.; Ye, Z.; Cheng, Z.; Tang, Y.; Zhang, Y.; Duan, L.; Zuo, J.; Yang, C.; et al. 2024. MixLoRA: Enhancing large language models fine-tuning with LoRA-based mixture of experts. arXiv preprint arXiv:2404.15159 .Liu, B.; Liu, X.; Jin, X.; Stone, P.; and Liu, Q. 2021. Conflict-averse gradient descent for multi-task learning. In Advances in Neural Information Processing Systems (NeurIPS) .Liu, W.; Zeng, W.; He, K.; Jiang, Y.; and He, J. 2024. What makes good data for alignment? a comprehensive study of automatic data selection in instruction tuning. In Interna-tional Conference on Learning Representations (ICLR) .Loshchilov, I., and Hutter, F. 2015. Online batch selec-tion for faster training of neural networks. arXiv preprint arXiv:1511.06343 .Matena, M. S., and Raffel, C. A. 2022. Merging models with Fisher-weighted averaging. Advances in Neural Information Processing Systems (NeurIPS) .Mindermann, S.; Brauner, J. M.; Razzak, M. T.; Sharma, M.; Kirsch, A.; Xu, W.; H¨ oltgen, B.; Gomez, A. N.; Morisot, A.; Farquhar, S.; and Gal, Y. 2022. Prioritized training on points that are learnable, worth learning, and not yet learnt. In International Conference on Machine Learning (ICML) .Ortiz-Jimenez, G.; Favero, A.; and Frossard, P. 2023. Task arithmetic in the tangent space: Improved editing of pre-trained models. Advances in Neural Information Processing Systems (NeurIPS) .Paul, M.; Ganguli, S.; and Dziugaite, G. K. 2021. Deep learning on a data diet: Finding important examples early in training. In Advances in Neural Information Processing Systems (NeurIPS) .Peng, R.; Zou, H.; Wang, H.; Zeng, Y.; Huang, Z.; and Zhao, J. 2024. Energy-based automated model evaluation. arXiv preprint arXiv:2401.12689 .Qiu, X., and Miikkulainen, R. 2024. Semantic density: Un-certainty quantification for large language models through confidence measurement in semantic space. In Advances in Neural Information Processing Systems (NeurIPS) .Sener, O., and Koltun, V. 2018. Multi-task learning as multi-objective optimization. In Advances in Neural Information Processing Systems (NeurIPS) .Sorscher, B.; Geirhos, R.; Shekhar, S.; Ganguli, S.; and Mor-cos, A. 2022. Beyond neural scaling laws: Beating power law scaling via data pruning. In Advances in Neural Infor-mation Processing Systems (NeurIPS) .Standley, T.; Zamir, A.; Chen, D.; Guibas, L.; Malik, J.; and Savarese, S. 2020. Which tasks should be learned together in multi-task learning? In International Conference on Ma-chine Learning (ICML) .Stoica, G.; Ramesh, P.; Ecsedi, B.; Choshen, L.; and Hoff-man, J. 2025. Model merging with SVD to tie the knots. In International Conference on Learning Representations (ICLR) .Suzgun, M.; Scales, N.; Sch¨ arli, N.; Gehrmann, S.; Tay, Y.; Chung, H. W.; Chowdhery, A.; Le, Q. V.; Chi, E. H.; Zhou, D.; and Wei, J. 2023. Challenging BIG-bench tasks and whether chain-of-thought can solve them. In Findings of the Association for Computational Linguistics: ACL .Tang, A.; Shen, L.; Luo, Y.; Zhan, Y.; Hu, H.; Du, B.; Chen, Y.; and Tao, D. 2023. Parameter-efficient multi-task model fusion with partial linearization. arXiv preprint arXiv:2310.04742 .Tang, L.; Zhang, W.; Li, J.; Chen, H.; Zhao, M.; and Wang, Y. 2026. Predicting mergeability of parameter-efficient fine-tuning updates. arXiv preprint arXiv:2606.19549 .Team, G.; Riviere, M.; Pathak, S.; Sessa, P. G.; Hardin, C.; Bhupatiraju, S.; Hussenot, L.; Mesnard, T.; Shahriari, B.; Ram´ e, A.; et al. 2024. Gemma 2: Improving open language models at a practical size. arXiv preprint arXiv:2408.00118 .Tian, C.; Shi, Z.; Guo, Z.; Li, L.; and Xu, C.-Z. 2024. Hy-draLoRA: An asymmetric LoRA architecture for efficient fine-tuning. Advances in Neural Information Processing Systems (NeurIPS) .Wang, X.; Chen, T.; Ge, Q.; Xia, H.; Bao, R.; Zheng, R.; Zhang, Q.; Gui, T.; and Huang, X. 2023. Orthogonal sub-space learning for language model continual learning. In 
+
+Findings of the Association for Computational Linguistics: EMNLP .Wang, J. T.; Wu, T.; Song, D.; Mittal, P.; and Jia, R. 2024. GREATS: Online selection of high-quality data for LLM training in every iteration. In Advances in Neural Informa-tion Processing Systems (NeurIPS) .Wei, J.; Bosma, M.; Zhao, V. Y.; Guu, K.; Yu, A. W.; Lester, B.; Du, N.; Dai, A. M.; and Le, Q. V. 2022. Finetuned lan-guage models are zero-shot learners. In International Con-ference on Learning Representations (ICLR) .Wei, Y.; Wang, Z.; Liu, J.; Ding, Y.; and Zhang, L. 2024. Magicoder: Empowering code generation with OSS-instruct. In International Conference on Machine Learning (ICML) .Wettig, A.; Gupta, A.; Malik, S.; and Chen, D. 2024. QuRating: Selecting high-quality data for training language models. In International Conference on Machine Learning (ICML) .Wortsman, M.; Ilharco, G.; Gadre, S. Y.; Roelofs, R.; Gontijo-Lopes, R.; Morcos, A. S.; Namkoong, H.; Farhadi, A.; Carmon, Y.; Kornblith, S.; and Schmidt, L. 2022. Model soups: Averaging weights of multiple fine-tuned models im-proves accuracy without increasing inference time. In Inter-national Conference on Machine Learning (ICML) .Wu, X.; Huang, S.; and Wei, F. 2024. Mixture of LoRA experts. In International Conference on Learning Represen-tations (ICLR) .Xia, M.; Malladi, S.; Gururangan, S.; Arora, S.; and Chen, D. 2024. LESS: Selecting influential data for targeted in-struction tuning. In International Conference on Machine Learning (ICML) .Xie, S. M.; Pham, H.; Dong, X.; Du, N.; Liu, H.; Lu, Y.; Liang, P. S.; Le, Q. V.; Ma, T.; and Yu, A. W. 2023. DoReMi: Optimizing data mixtures speeds up language model pre-training. In Advances in Neural Information Processing Sys-tems (NeurIPS) .Yadav, P.; Tam, D.; Choshen, L.; Raffel, C. A.; and Bansal, M. 2023. TIES-merging: Resolving interference when merging models. Advances in Neural Information Process-ing Systems (NeurIPS) .Yang, A.; Yang, B.; Zhang, B.; Hui, B.; Zheng, B.; Yu, B.; Li, C.; Liu, D.; Huang, F.; Wei, H.; et al. 2024. Qwen2.5 technical report. arXiv preprint arXiv:2412.15115 .Yang, Y.; Zeng, A.; and Yang, X. 2026. The long-term effects of data selection in LLM fine-tuning. arXiv preprint arXiv:2605.30537 .Ye, J.; Liu, P.; Sun, T.; Zhou, Y.; Zhan, J.; and Qiu, X. 2024. Data mixing laws: Optimizing data mixtures by pre-dicting language modeling performance. arXiv preprint arXiv:2403.16952 .Yu, T.; Kumar, S.; Gupta, A.; Levine, S.; Hausman, K.; and Finn, C. 2020. Gradient surgery for multi-task learn-ing. In Advances in Neural Information Processing Systems (NeurIPS) .Yu, Y.; Yang, Z.; Wei, A.; Ma, Y.; and Steinhardt, J. 2022. Predicting out-of-distribution error with the projec-tion norm. In International Conference on Machine Learn-ing (ICML) .Yu, L.; Yu, B.; Yu, H.; Huang, F.; and Li, Y. 2024a. Lan-guage models are super mario: Absorbing abilities from ho-mologous models as a free lunch. In International Confer-ence on Machine Learning (ICML) .Yu, L.; Jiang, W.; Shi, H.; Yu, J.; Liu, Z.; Zhang, Y.; Kwok, J. T.; Li, Z.; Weller, A.; and Liu, W. 2024b. MetaMath: Boot-strap your own mathematical questions for large language models. In International Conference on Learning Represen-tations (ICLR) .Zhang, H., and Zhou, J. 2025. Unraveling LoRA interfer-ence: Orthogonal subspaces for robust model merging. In 
+
+Annual Meeting of the Association for Computational Lin-guistics (ACL) .Zheng, S.; Wang, H.; Huang, C.; Wang, X.; Chen, T.; Fan, J.; Hu, S.; and Ye, P. 2025. Decouple and orthogonalize: A data-free framework for LoRA merging. arXiv preprint arXiv:2505.15875 .Zhou, C.; Liu, P.; Xu, P.; Iyer, S.; Sun, J.; Mao, Y.; Ma, X.; Efrat, A.; Yu, P.; Yu, L.; et al. 2023. LIMA: Less is more for alignment. In Advances in Neural Information Processing Systems (NeurIPS) .Zou, H.; Mao, Y.; Qu, Y.; Wang, Q.; and Ji, X. 2025a. Utility-diversity aware online batch selection for llm super-vised fine-tuning. arXiv preprint arXiv:2510.16882 .Zou, H.; Zang, Y.; Xu, W.; Zhu, Y.; and Ji, X. 2025b. Fly-LoRA: Boosting task decoupling and parameter efficiency via implicit rank-wise mixture-of-experts. Advances in Neu-ral Information Processing Systems 38:10386–10419. 
+
+# A Theoretical Details and Proofs 
+
+A.1 Setup and notation 
+
+Fix a round with shared adapter θ. For domain k with probe 
+
+Pk = {xi}mi=1 , let p(x) ∈ ∆V −1 be the response-averaged next-token distribution, ˜H(x) = H(p(x)) / log V ∈ [0 , 1] 
+
+the normalized entropy, and ck(θ) = Ex∈P k [1 − ˜H(x)] 
+
+the competence of Eq. 2. Let y(x) be the (latent) label, 
+
+corr( x) = 1[arg max v pv (x) = y(x)] , and Rk(θ) =1 − Ex∈P k [corr( x)] the domain risk. Let ¯ϕk be the probe-representation centroid, δk its round-over-round drift, and 
+
+A the symmetrized affinity of Eq. 3. Write g = ( gk) for the marginal-learnability vector of Eq. 4 and J (π) for the par-ticipation objective of Eq. 5, maximized over the simplex 
+
+∆K−1.
+
+Assumption 1 (Probe calibration) . On the probe of domain 
+
+k the model is κk-calibrated: E[corr( x) | s(x) = s]−s ≤
+
+κk for all confidence levels s, where s(x) = max v pv (x).Moreover the confidence–entropy link s 7 → 1 − ˜H is ℓ-bi-Lipschitz on the operating range. 
+
+A.2 Proof of Proposition 1 (competence tracks risk) 
+
+Proof. For a distribution on V symbols, the top probability s
+
+and the normalized entropy 1− ˜H are both strictly monotone summaries of peakedness; on the operating range Assump-tion 1 gives an ℓ-bi-Lipschitz link s(x) = χ(1 − ˜H(x)) + 
+
+ζ(x) with |ζ(x)| bounded by the within-sample logit disper-sion. Averaging over Pk and using that χ is monotone with bounded slope, 
+
+Ex∈P k [s(x)] = χ ck(θ) + ¯ζk, |¯ζk| ≤ c0 disp k.
+
+By calibration, Ex[s(x)] = Ex[corr( x)] ± κk = (1 − Rk) ±
+
+κk. Linearizing the monotone χ about the operating point yields constants a > 0, b with 
+
+Rk(θ) = a 1−ck(θ)+b+ϵk, |ϵk| ≤ c1κk +c2 disp k.
+
+Hence headroom hk = 1 − ck is affine in the risk up to calibration error, so ordering domains by hk orders them by risk whenever the risk gap exceeds 2( c1κk + c2disp k).Differencing across rounds, vk = c(r) 
+
+> k
+
+− ¯c(r−1)  
+
+> k
+
+satisfies 
+
+−∆Rk = a v k + ∆ ϵk, so vk is a first-order estimate of the per-round risk reduction up to calibration drift. 
+
+A.3 Proof of Proposition 2 (well-posedness, convergence) 
+
+Proof. Write the objective on the relative interior of the simplex as J (π) = g⊤π + η π ⊤Aπ − τ P 
+
+> k
+
+πk log πk.Its Hessian is ∇2J (π) = 2ηA − τ diag(1 /π k). Since 
+
+πk ≤ 1, τ diag(1 /π k) ⪰ τ I , so for any u with ∥u∥2 = 1 ,
+
+u⊤∇2J u ≤ 2η∥A∥2 − τ < 0 whenever 2η∥A∥2 < τ .Thus J is strictly concave and admits a unique maximizer 
+
+π⋆ on the (compact, convex) simplex. The stationarity condition of the entropy-regularized pro-gram is exactly the softmax fixed point of Eq. 6, π = Φ( π)
+
+with Φ( π)k ∝ exp(( gk +2 η(Aπ)k)/τ ). The softmax is 1/τ -Lipschitz from the logit vector to the output in ℓ∞ → ℓ1up to a factor, and the linear map π 7 → 2ηAπ has opera-tor norm 2η∥A∥2; composing, Φ is Lipschitz with constant 
+
+L = 2 η∥A∥2/τ < 1. By the Banach fixed-point theorem 
+
+Φ has a unique fixed point (equal to π⋆) and the iteration 
+
+π(t+1) = Φ( π(t)) satisfies ∥π(t) − π⋆∥ ≤ Lt∥π(0) − π⋆∥,i.e. linear convergence at rate L. Warm-starting from the pre-vious round’s solution, for which ∥π(0) − π⋆∥ is small be-cause g and A drift slowly, gives convergence in a handful of iterations. 
+
+A.4 Proof of Proposition 3 (transfer-aware water-filling) 
+
+Proof. Form the Lagrangian of max π∈∆ J (π) with multi-plier ν for P 
+
+> k
+
+πk = 1 and μk ≥ 0 for πk ≥ 0: L =
+
+J (π) + ν(1 − P 
+
+> k
+
+πk) + P 
+
+> k
+
+μkπk. Stationarity in πk gives 
+
+gk + 2 η(Aπ)k − τ (1 + log πk) − ν + μk = 0 .
+
+For active domains ( π⋆k > 0, μk = 0) this is gk +2η(Aπ⋆)k − τ (1 + log π⋆k) = ν: every active domain shares a common affinity-augmented marginal value ν (the “water level”), while inactive domains have strictly smaller value, 
+
+gk + 2 η(Aπ⋆)k − τ (1 + log π⋆k) ≤ ν. Solving for π⋆k re-covers the softmax of Eq. 6. As τ → 0 the entropy term vanishes and the condition becomes equalization of the cou-pled gain gk + 2 η(Aπ⋆)k across active domains—classical water-filling on marginal gains augmented by the transfer term, which raises the effective gain of a domain in propor-tion to its aligned participation (Aπ⋆)k and lowers it when it conflicts with funded domains. Hence budget concentrates on domains that are both learnable ( gk large) and synergistic with the rest ( (Aπ⋆)k > 0), and is withheld from interfering ones. 
+
+Corollary 1 (Suboptimality under proxy error) . Let the true coupled objective be μ-strongly concave on ∆ (which holds for τ > 2η∥A∥2 by Proposition 2), and suppose the esti-mated inputs satisfy ∥ˆg − g∥2 ≤ δg and ∥ ˆA − A∥2 ≤ δA.Let ˆπ⋆ solve the program with (ˆ g, ˆA) and π⋆ the true opti-mum. Then 
+
+∥ˆπ⋆ − π⋆∥2 ≤ δg + 2 η δ A
+
+μ ,
+
+J (π⋆) − J (ˆ π⋆) ≤ (δg + 2 ηδ A)2
+
+2μ .
+
+Proof. The map (g, A) 7 → π⋆ is the solution of a strongly concave program; by the standard perturbation bound for such programs, a change of at most ∆ := δg + 2 ηδ A in the gradient of the objective moves the maximizer by at most 
+
+∆/μ . Strong concavity then gives the quadratic value gap 
+
+J (π⋆) − J (ˆ π⋆) ≤ 12μ ∆2 by the standard bound relating suboptimality to gradient perturbation. Both vanish as the proxy errors δg , δ A → 0.Corollary 1 formalizes that C ODA’s gap to the oracle is governed by how well competence and drift estimate the true gains and transfer; Table 2 shows this gap is small ( 0.3
+
+points) in practice. 
+
+# B Experimental Setup Details 
+
+B.1 Domains and datasets 
+
+We use five domains chosen to be heterogeneous in for-mat and skill: knowledge (train on the MMLU (Hendrycks et al. 2021) auxiliary set, multiple-choice), math (train on MetaMathQA (Yu et al. 2024b), evaluate GSM8K (Cobbe et al. 2021) accuracy), code (train on Magicoder-OSS (Wei et al. 2024), evaluate HumanEval (Chen et al. 2021) Pass@1), multi-step reasoning (train on FLAN chain-of-thought data (Wei et al. 2022), evaluate BBH (Suzgun et al. 2023)), and biomedical QA (train and evaluate on MedQA (Jin et al. 2021)). For each domain we hold out a small unlabeled probe of m=256 instructions (no responses used) for the competence and drift signals, disjoint from both the training pool and the test set. Evaluation uses the standard test split per benchmark with greedy decoding. 
+
+B.2 Prompt templates and examples 
+
+All domains share a minimal instruction template—a fixed system preamble, the task input, and a domain-appropriate answer cue—so that the competence and drift signals are read under the same format the model is trained and eval-uated with. Probe forward passes use the identical template with the response masked, so no labels are consumed by the controller. The shared skeleton is:               
+
+> [System] You are ahelpful assistant. [Instruction] the task input for this domain [Answer] the response (masked for probe inputs)
+
+The per-domain fillers, matching each benchmark’s released prompt, are: • Knowledge (MMLU): the question and options A–D, an-swer cue “The answer is”; 5-shot. • Math (GSM8K): the word problem with cue “Let us think step by step”, ending “The final answer is”; 8-shot chain-of-thought. • Code (HumanEval): the function signature and docstring in the Alpaca code format; the completion is the function body, scored by Pass@1. • Reasoning (BBH): the task instruction and 3-shot chain-of-thought exemplars, then the query. • Biomedical (MedQA): the clinical vignette and answer options, cue “The correct option is”; zero-shot. For the competence signal we average the normalized en-tropy over answer positions only; for the drift signal we take the mean last-layer hidden state over the answer span. Both are computed on the held-out probe, whose instructions never appear in training or test. 
+
+B.3 Models and LoRA configuration 
+
+Backbones are LL AMA-3.1-8B (Grattafiori et al. 2024) and Q WEN -2.5-7B (Yang et al. 2024); the scale study adds Q WEN -2.5-3B, M ISTRAL -7B (Jiang et al. 2023), and GEMMA -2-9B (Team et al. 2024). A single shared LoRA adapter (rank r=8 , α=16 , dropout 0.05 ) is attached to the Hyperparameter Value LoRA rank r / α / dropout 8 / 16 / 0.05                            
+
+> Optimizer AdamW, lr 1×10 −4
+> Schedule / warmup cosine / 3%
+> Batch size / precision 16 / bf16 Total budget 50% of pool Update period T100 steps Affinity weight η0.5
+> Temperature τ0.5
+> Learnability floor β0.1
+> EMA coefficient 0.5
+> Program iterations 10 (warm-started) Probe size m256 (unlabeled) Within-domain band [20 ,80] percentile Seeds 3
+
+Table 3: Default hyperparameters for C ODA. query/key/value/output and MLP up/down projections. Only the adapter is trained; base weights are frozen and kept in bf16. 
+
+B.4 CODA configuration and probe 
+
+Unless stated, the total budget is 50% of the pooled data, the per-round budget N equals one epoch-equivalent over the current shares, the period is T =100 optimizer steps, affin-ity weight η=0 .5, temperature τ =0 .5, floor β=0 .1, and the EMA coefficient for competence and centroids is 0.5. The participation program is solved with 10 mirror-descent iter-ations of Eq. 6, warm-started from the previous round; the affinity uses the last-layer mean representation. The within-domain selector keeps the middle confidence band between the 20 th and 80 th percentiles. 
+
+B.5 Optimization and baselines 
+
+We use AdamW (lr 1×10 −4, cosine schedule, warmup 3% ,weight decay 0 on the adapter), batch size 16 , and bf16 mixed precision. Baselines share these settings and the same total budget. Data-mixture baselines set static domain pro-portions (uniform, size-proportional, temperature T =2 , and a DoReMi-style proxy mixture); PCGrad and GradNorm balance gradients under uniform sampling; GREATS selects over the pooled stream with the ghost-inner-product approx-imation. All results average 3 seeds. 
+
+B.6 Hardware and compute 
+
+Each run uses a single 80GB A100 GPU. A full-data SFT run takes ∼9 GPU-hours per backbone; C ODA at 50% bud-get takes ∼5.6 GPU-hours including the ≈4% controller overhead, i.e. 1.6× faster end-to-end. Table 3 lists hyper-parameters. 
+
+# C Additional Experiments 
+
+C.1 Per-domain signal comparison 
+
+Table 4 reports how well each candidate per-domain sig-nal, computed on the probe, ranks the five domains by true accuracy across checkpoints (rank correlation) and                         
+
+> Signal Spearman Pearson Avg Random ——65.5 Training loss 0.60 0.57 66.1 Max confidence 0.86 0.83 66.6 Competence (Eq. 2) 0.91 0.89 66.7 Competence ×velocity 0.93 0.90 67.3
+> +affinity (full C ODA) ——68.0
+
+Table 4: Per-domain signal comparison. Correlation is be-tween the probe signal and true per-domain accuracy over checkpoints; the last column is downstream accuracy when the signal drives participation. Competence is the best label-free cross-domain comparator; the affinity term adds the fi-nal margin.                     
+
+> Method MMLU GSM8K HEval BBH MedQA Full data 70 .1±.379 .2±.461 .5±.462 .8±.357 .4±.4
+> GradNorm 70 .7±.379 .7±.362 .1±.463 .8±.357 .9±.4
+> CODA 71 .9±.280 .8±.363 .5±.365 .0±.359 .0±.3
+
+Table 5: Per-domain accuracy (mean ±std over 3 seeds) on QWEN -2.5-7B at the 50% budget. Best per column in bold .the downstream accuracy when it drives participation in CODA. Competence ranks domains far better than raw loss, whose scale is domain-dependent; multiplying by ve-locity adds temporal information; and adding the cross-domain affinity—not a per-domain rank, hence no correla-tion entry—gives the final gain. 
+
+C.2 Per-domain results with variance 
+
+Table 5 reports per-domain accuracy with standard devi-ation over three seeds on Q WEN -2.5-7B. Deviations are small ( ≤ 0.4 points) and C ODA’s per-domain improve-ments exceed them on every domain; a paired t-test over domain ×seed confirms significance at p < 0.05 against the strongest baseline. 
+
+C.3 Learned domain affinity 
+
+Table 6 shows the symmetrized affinity A recovered at the final round on Q WEN -2.5-7B. The largest positive en-try links Math and Reasoning, which the controller conse-quently co-schedules (Figure 3b), while Code shows mild negative affinity with Knowledge and Biomedical and is damped once it saturates. The matrix is stable across seeds (mean entry-wise deviation 0.04 ). 
+
+C.4 Further ablations: probe layer, iterations, smoothing 
+
+Table 7 varies three implementation choices. The affinity is robust to which representation defines the centroid (last layer, a mid layer, or the mean of the last four); the par-ticipation program converges by 6 warm-started iterations, matching Proposition 2; and the competence/centroid EMA coefficient is best at 0.5, with a mild plateau on either side. Know. Math Code Reas. Biom. Know. 1.00 0.10 −0.30 0.30 0.40                     
+
+> Math 0.10 1.00 0.20 0.60 −0.10
+> Code −0.30 0.20 1.00 0.10 −0.20
+> Reas. 0.30 0.60 0.10 1.00 0.15
+> Biom. 0.40 −0.10 −0.20 0.15 1.00
+
+Table 6: Learned cross-domain affinity A (final round, QWEN -2.5-7B). Positive entries indicate aligned updates (co-train), negative entries interference.                
+
+> Choice Setting Qwen Avg Affinity layer mid 67.6 last (default) 68.0
+> mean of last 468.0 Program iters.
+> 167.4
+> 367.9
+> 668.0
+> 10 (default) 68.0
+> EMA coeff.
+> 0.367.8
+> 0.5(default) 68.0
+> 0.767.9
+
+Table 7: Further ablations on Q WEN -2.5-7B: representation layer for the affinity, number of participation-program itera-tions, and the EMA smoothing coefficient.                   
+
+> Backbone Full data GradNorm CODA Qwen-2.5-3B 61.5 62.8 63.6
+> Mistral-7B 58.2 59.4 60.3
+> Gemma-2-9B 67.2 68.3 69.2
+> Qwen-2.5-7B 66.2 66.8 68.0
+> LLaMA-3.1-8B 55.4 56.0 57.2
+
+Table 8: Average accuracy across the five domains for addi-tional backbones ( 50% budget for the controllers). 
+
+C.5 Cross-backbone and scale 
+
+Table 8 extends the main results to QWEN -2.5-3B, MISTRAL -7B, and G EMMA -2-9B. C ODA improves the av-erage on every backbone; gains shrink as the base model al-ready handles a domain well (higher competence, less head-room), consistent with Proposition 1. 
+
+C.6 Static mixtures and DoReMi-style reweighting 
+
+We grid-searched fixed per-domain weights over a sim-plex at granularity 0.1 and also computed DoReMi-style proxy weights (Xie et al. 2023). The best static mixture (weights 0.24 /0.22 /0.14 /0.24 /0.16 for knowl-edge/math/code/reasoning/biomedical) reaches 66 .5 on QWEN ; the DoReMi-style proxy reaches 66 .4. Both trail CODA ( 68 .0) because they cannot track the non-stationary optimum (Figure 3b)—the ideal early participation is near-uniform, while late training should down-weight the satu-rated code domain—and because a scalar mixture cannot            
+
+> Configuration (Qwen-2.5-7B) Avg Separate adapters +average 64.9 Separate adapters +TIES 65.9 Separate adapters +DARE 65.6
+> CODA (joint shared adapter) 68.0
+
+Table 9: C ODA vs. train-then-merge. C ODA’s joint adapter is best, and its reduced interference also yields cleaner merges of separately trained adapters.                     
+
+> η0.0 0.25 0.5 1.0 2.0 Qwen Avg 67.3 67.7 68.0 67.8 67.2
+> τ0.1 0.3 0.5 1.0 2.0 Qwen Avg 67.6 67.9 68.0 67.7 67.2
+
+Table 10: Sensitivity to affinity weight η and temperature τ .express which domains to co-train, the role of the affinity term. 
+
+C.7 Composability with model merging 
+
+Table 9 details the merging study. Training five separate per-domain adapters and merging (average, TIES (Yadav et al. 2023), DARE (Yu et al. 2024a)) trails C ODA’s single jointly trained adapter, and C ODA’s lower gradient conflict corre-lates with cleaner merges—evidence that reducing interfer-ence during joint training also helps downstream composi-tion. 
+
+C.8 Sensitivity to η and τ
+
+Table 10 sweeps the affinity weight η and the tempera-ture τ . Performance is flat over a wide range: η=0 discards the transfer term (weakest), a moderate η is best, and too large η over-couples domains; too large τ approaches uni-form participation while too small τ over-commits. Defaults 
+
+η=0 .5, τ =0 .5 are robust and satisfy the contraction condi-tion of Proposition 2. 
+
+C.9 Affinity estimator and program convergence 
+
+The forward-only affinity of Eq. 3 predicts oracle leave-one-out transfer with Pearson r=0 .94 (Figure 3a), and its sign matches the oracle on 88% of domain pairs. Con-sistent with Proposition 2, warm-started mirror descent on Eq. 6 reaches residual <10 −4 within 6 iterations across all rounds at the default η=0 .5, τ =0 .5 (spectral condition 
+
+2η∥A∥2/τ ≈ 0.7 < 1); the controller cost is dominated by the probe forward passes, not the program. 
+
+C.10 Robustness of the probe 
+
+Halving the probe to m=128 or adding 20% out-of-domain noise changes the average by <0.3 points, because both sig-nals aggregate over the probe and participation depends only on the ranking and alignment of domains, not absolute val-ues. Using the training pool itself as the probe (no held-out set) costs 0.2 points. D Discussion 
+
+D.1 Why do competence and affinity work as control signals? 
+
+Competence summarizes the peakedness of the distribution the current adapter assigns to a domain: a domain the model handles confidently has high, stable competence, while a domain with headroom has low competence that rises as the adapter improves. Normalizing the entropy by log V re-moves domain-specific scale, so competence is compara-ble across heterogeneous formats (multiple-choice vs. open generation) in a way raw loss is not (Table 4). The affin-ity captures a second, relational property invisible to any single-domain score: whether the shared adapter’s updates driven by two domains point in compatible directions. To-gether they answer the two questions co-learning poses— 
+
+how much each domain should participate and which do-mains reinforce one another. 
+
+D.2 When does C ODA not help? 
+
+Three regimes: (i) a single domain, where participation is vacuous (our negative control); (ii) homogeneous domains with near-identical, synchronized curves and near-uniform affinity, where any balanced schedule is fine; and (iii) severe miscalibration , where competence no longer ranks domains by risk (Assumption 1 fails), e.g. a domain whose format the base model has never seen. In (iii) a short warmup before enabling the controller restores calibration and the benefit. 
+
+D.3 Connections to task grouping, games, and active learning. 
+
+CODA makes discrete task grouping (Standley et al. 2020; Fifty et al. 2021) continuous and online: rather than parti-tioning domains into networks, it maintains a soft partici-pation vector whose quadratic coupling favors co-training aligned domains. Each round it maximizes a concave po-tential J , so the controller is the equilibrium of a one-shot potential game among domains; the entropy term guaran-tees an interior (non-degenerate) equilibrium and continued exploration. The per-domain velocity is a label-free reward estimate as in non-stationary bandits, but the domains are 
+
+coupled through the shared adapter, motivating periodic re-estimation. The within-domain step connects to pool-based active learning but uses forward-only difficulty rather than labels. 
+
+D.4 Broader impact. 
+
+CODA reduces the data and compute needed to adapt an LLM to many domains, lowering cost and energy use. Risks are those of instruction tuning generally—capability gains transfer to harmful domains if such data is included—and the label-free controller could, if misused, prioritize domains for undesirable objectives. C ODA does not create new data and inherits the licenses and biases of the underlying cor-pora. 
+
+D.5 Reproducibility. 
+
+All results are averaged over three random seeds; per-domain standard deviations are reported in Table 5 and are 
+
+≤ 0.4 points. The full hyperparameter configuration is in Ta-ble 3, the datasets and splits in Sec. B, and the prompt tem-plates in Sec. B.2. The controller uses only forward passes over the frozen backbone and adds no trainable parameters, so a run is fully specified by the backbone, the LoRA con-figuration, and the values in Table 3. We will release training and evaluation code, configuration files, and the per-domain probe indices.
