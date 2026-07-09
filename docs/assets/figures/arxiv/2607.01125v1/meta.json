@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.01125v1/fig-001.webp",
+      "caption": "Figure 1: Stability and gradient alignment of activationinformed subspaces at epoch 3 of Llama-3-8B RTE full fine-tuning. We show the q-projection layers at decoders 0, 15, and 31.",
+      "page": 7,
+      "index": 1,
+      "width": 368,
+      "height": 463
+    },
+    {
+      "url": "assets/figures/arxiv/2607.01125v1/fig-002.webp",
+      "caption": "Table 2: Commonsense reasoning results on Llama-3-8B.",
+      "page": 7,
+      "index": 2,
+      "width": 743,
+      "height": 240
+    },
+    {
+      "url": "assets/figures/arxiv/2607.01125v1/fig-003.webp",
+      "caption": "Table 1: Language understanding and question answering results of various ZO fine-tuning methods.",
+      "page": 6,
+      "index": 3,
+      "width": 825,
+      "height": 363
+    },
+    {
+      "url": "assets/figures/arxiv/2607.01125v1/fig-004.webp",
+      "caption": "Table 7: Hyperparameters for ZO-Act on OPT-13B.",
+      "page": 13,
+      "index": 4,
+      "width": 704,
+      "height": 199
+    },
+    {
+      "url": "assets/figures/arxiv/2607.01125v1/fig-005.webp",
+      "caption": "Table 5: Hyperparameters for ZO-Act on Llama-3-8B.",
+      "page": 13,
+      "index": 5,
+      "width": 800,
+      "height": 198
+    }
+  ]
+}

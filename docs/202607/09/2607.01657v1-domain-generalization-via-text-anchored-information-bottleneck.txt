@@ -1,0 +1,593 @@
+Title: Domain Generalization via Text-Anchored Information Bottleneck
+
+URL Source: https://arxiv.org/pdf/2607.01657v1
+
+Published Time: Fri, 03 Jul 2026 00:28:35 GMT
+
+Number of Pages: 27
+
+Markdown Content:
+# Domain Generalization via Text-Anchored Information Bottleneck 
+
+Eunyi Lyou, Yunjeong Choi, Junho Lee, and Joonseok Lee ⋆
+
+Seoul National University, Seoul, Republic of Korea 
+
+{onlyou0416, racheal0, joon2003, joonseok}@snu.ac.kr 
+
+Abstract. Visual recognition models often fail when deployed in new environments. Domain Generalization (DG) addresses this by learning representations that remain invariant to environment-specific variations. Recent approaches increasingly rely on large vision-language models, as-suming that preserving their expressive visual representations improves robustness. However, we show that such visual expressiveness can instead propagate spurious cues that tie representations to the training environ-ments, hindering invariant learning. We therefore discard visual guidance and instead treat the language embedding space as the primary source of domain invariance, naturally acting as an information bottleneck that preserves core semantics while suppressing domain-specific variations. Extensive experiments across diverse backbones exhibit state-of-the-art performance and further analyze what makes guidance effective for ro-bust generalization. These findings shift the focus of DG from improving representations to designing supervision that enforces invariance. 
+
+Keywords: Domain generalization · Vision-Language Models · Infor-mation bottleneck 
+
+## 1 Introduction 
+
+Despite progress in computer vision, visual recognition models often fail to main-tain performance under environmental changes at deployment, when test samples deviate from training distribution [9, 43]. Unlike domain adaptation [8, 9], which has access to target distribution during training, domain generalization (DG) [37] addresses the stricter scenario of generalizing to unseen environments without any prior exposure. Under this constraint, DG aims to learn domain-invariant representations that preserve only essential semantics of the input. To pursue such invariance, standard DG frameworks train across multiple source domains, under the assumption that reducing distributional discrepan-cies among diverse sources will expose an underlying invariant subspace. For instance, aligning a simple sketch with a real photograph of an apple is expected to reveal the shared semantic “apple-ness” beneath domain-specific variations. Accordingly, traditional DG methods primarily align feature distributions across  
+
+> ⋆
+
+Corresponding author   
+
+> arXiv:2607.01657v1 [cs.CV] 2 Jul 2026 2E. Lyou et al.
+> Fig. 1: (a) Visual encoders inevitably absorb spurious domain cues alongside domain-invariant semantics. This inflates class regions and blurs boundaries, hindering robust-ness. Ideally, models should drop domain-specific variations while preserving only core semantics. (b) Redefining invariance via a text-anchored Information Bottleneck (IB). Textual guidance acts as a semantic filter, preserving information shared between text and image as core semantics while dropping non-shared domain styles. (c) Our method achieves state-of-the-art performance across DG benchmarks, producing an embedding space with improved class separation.
+
+domains [2,4, 15,19, 22,30, 37,47, 59] or employ robust training strategies to mit-igate domain-specific correlations [10, 11, 52]. Recently, the field has turned to large-scale vision–language models (VLMs) such as CLIP [44], motivated by their strong zero-shot generalization ability. Be-cause standard fine-tuning can compromise this robustness under distribution shift [41], current strategies aim to preserve the original zero-shot representa-tions while adapting them to the DG task [56]—often freezing the text encoder while adapting the visual branch—via knowledge distillation [1, 24, 55], prompt tuning [13, 28, 34, 36, 55, 61, 63, 64], or weight ensembling [29, 45, 56]. These approaches share a common premise that preserving the pre-trained visual knowledge of VLMs ( e.g. , CLIP) benefits generalization through zero-shot robustness or semantic expressiveness. But does preserving the visual features truly benefit domain generalization? Consider the ‘apple’ examples in Fig. 1(a). Highly expressive visual encoders entangle the core semantics ( ⋆) with visual styles, such as sketch strokes, photographic textures, or artistic abstractions. Without an explicit criterion to distinguish true semantics from these variations, models preserving such visual representations tend to retain any feature that is predictive of labels in the training domains. Consequently, domain-specific cues are absorbed alongside true semantics, expanding the range of a class beyond its core and blurring its boundary under domain shifts. In contrast, the ideal representation retains only core semantics by dropping domain spurious cues. To avoid inheriting domain entanglement from visual guidance, we propose to discard it altogether. Instead, we elevate the text space to serve as the primary Domain Generalization via Text-Anchored Information Bottleneck 3
+
+source of domain invariance, drawing on both the stability of its anchors and their semantic structure (Sec. 3). Concretely, as shown in Fig. 1(b), features from diverse domains are constrained to align with text-defined anchors through a class-conditional Information Bottleneck (IB). These anchors remove domain-induced styles not shared across modalities while preserving information shared between input images and text. Extensive experiments demonstrate that our approach consistently achieves the state-of-the-art performance across representative DG benchmarks with clearer separation in the learned embedding space, as illustrated in Fig. 1(c). Impor-tantly, our evaluation spans diverse backbone architectures, further demonstrat-ing the generality of the proposed framework. Our contributions are summarized as follows: 1. Revisiting the visual guidance in DG, we reveal that highly expressive visual encoders can propagate domain-specific cues and hinder domain invariance under distribution shift. 2. We propose a purely text-guided approach based on IB theory, suppressing domain-specific variations while preserving shared semantics. 3. Through extensive experiments across diverse DG benchmarks and backbone architectures, we demonstrate consistent state-of-the-art performance and improved reliability under domain shift. 4. We further analyze guidance signals in DG and highlight supervision design as a key factor for learning invariant representations. 
+
+## 2 Related Work 
+
+Domain Generalization (DG). Visual recognition models often suffer from real-world distribution shift. To evaluate these failures, established benchmarks span diverse shifts: style variation ( e.g. , sketch vs . photo) [31,40,51], differences in dataset acquisition process [49] or camera location [6], and background shifts [62]. Together, these benchmarks expose the inherent brittleness of models under unseen environments. DG seeks representations that remain invariant across such domain dis-crepancies without access to target data. Classical approaches primarily ex-tract invariance by aligning source-domain feature distributions via statisti-cal matching [32, 47], adversarial learning [19, 20, 32], or feature disentangle-ment [12, 22, 26, 27, 35, 37, 42, 59]. Others instead regularize optimization dy-namics [2, 4], gradient constraints [29, 52], ensembling [5, 10, 25, 33], and con-sistency guidance [11]. These approaches define invariance based on patterns shared across the training domains, yet such shared structure often mix true semantics with spurious correlations, limiting generalization beyond source-like distributions. Recent approaches increasingly build upon CLIP [44], adapting its visual en-coder while attempting to preserve zero-shot robustness. Representative strate-gies include prompt optimization [13, 28, 34, 36, 55, 61, 63, 64], robust fine-tuning and weight ensembling [29,38,45,56], and knowledge distillation [1,24,55]. Across 4 E. Lyou et al. 
+
+these methods, the visual encoder is typically the component being updated during adaptation. Meanwhile, its pretrained knowledge is preserved and reused through mechanisms such as regularization, ensembling, or distillation. In contrast, the text encoder is usually kept frozen and serves as a relatively stable semantic reference. Depending on the method, text embeddings are used (i) as auxiliary alignment targets alongside visual supervision [1, 24, 45, 55], (ii) as regularizers to constrain visual drift from the original zero-shot space [38], or (iii) as diversified prompts to steer visual representations via multimodal alignment [13, 34, 36]. We instead revisit the functional roles of CLIP’s visual and text encoders in DG, minimizing reliance on visual guidance and treating textual semantics as the primary basis for defining invariance. 
+
+Information Bottleneck in DG. Empirical Risk Minimization (ERM) [50] often struggles under distribution shift due to spurious correlations. While In-variant Risk Minimization [4] enforces a shared classifier across environments, it does not fully eliminate such biases. To further constrain representations, several classical DG methods adopt the IB principle. As the IB objective is intractable, these approaches rely on variational formulations, introducing KL-based regularization toward simple, typically non-semantic priors [2, 30], with meta-learning [15], or coupling it with feature disentanglement objectives [59]. In contrast, we anchor the bottleneck to fixed text embeddings as an explicit semantic prior. Existing IB priors are either uninformative ( e.g. , N (0 , I)), giv-ing no signal to separate semantic from spurious factors, or learned from source images, inheriting domain bias. In contrast, our approach is class-conditional yet label-derived, signaling what to preserve without injecting domain bias. 
+
+## 3 Motivation 
+
+To assess whether visual and textual modalities provide structurally reliable basis for domain-invariant guidance, we investigate the following questions: 1) Do their embedding spaces remain stable across domains? 2) How much domain-invariant and domain-specific information do the modality-specific encoders encode? 3) How do visual and textual guidance signals affect learning dynamics? 
+
+3.1 Empirical Examination Cross-domain Reliability of Embedding Space. We examine the geometry of multimodal embedding spaces across domains by extracting visual and textual CLIP features from image–caption pairs in the four PACS domains [31] (art painting, photo, cartoon, sketch). To obtain textual embeddings as rich as their visual counterparts, we generate captions with semantic and stylistic details (App. A), instead of using predefined prompts like "a [domain] of [class]" ,and feed them into a frozen CLIP text encoder. This provides rich instance-level descriptions and enables a fair comparison between modalities. As shown in Fig. 2(a), the visual space (top) exhibits pronounced domain-dependent dispersion. Even for the same class ( e.g. , person, highlighted with Domain Generalization via Text-Anchored Information Bottleneck 5
+
+> Fig. 2: Motivational experiments . (a) Textual embedding space (bottom) shows superior stability across domains than visual counterpart (top). (b) Visual encoders (gray) tend to possess both domain-specific and core-class information, while textual ones (blue) contain only the latter. (c) Text-guided models tend to yield lower Lipschitz constants, indicating smoother and more stable representations.
+
+black boxes), the corresponding clusters significantly shift across domains. In contrast, text embeddings (bottom) remain relatively stable, largely insensitive to stylistic variations present in the captions. This contrast reveals a notable gap: while visual encoders capture fine-grained details including domain-specific cues, text embeddings remain semantically structured. 
+
+Encoded Information in Embedding Spaces. The previous experiment im-plies that the textual embedding space likely encode more domain-invariant in-formation compared to the visual counterpart. Also, one might wonder whether this behavior is specific to CLIP. To answer these questions, we report in Fig. 2(b) the normalized mutual information between the learned embeddings and both class labels ( x-axis) and domain labels ( y-axis) across multiple encoders. Across visual backbones (ViT [14], CLIP-Image [44], and DINOv2 [39]), their embeddings consistently encode substantial domain information I(Z; domain )
+
+alongside class information I(Z; class ). In contrast, language models (MPNet [46], MiniLM [53], and CLIP-Text [44]) exhibit near-zero domain information, while primarily encoding class semantics. This result strongly implies that domain en-tanglement is indeed inherent to expressive visual representations. Preserving fine-grained variations, visual encoders inadvertently keep some domain-specific factors as well. In contrast, textual representations exhibit much less stylistic variation, leading them to align more consistently with semantic structure. Con-sidering that domain generalization strictly requires isolating domain-invariant semantics from such variations, a natural hypothesis from this experiment is that textual space would be more appropriate to guide DG models. 
+
+Learning Dynamics under Domain-Dependent Guidance. A natural next question is if the guidance signals contain domain-dependent variations, how does this actually affect learning dynamics? To investigate this, we estimate the local Lipschitz constant, approximated by the norm of the gradient of learned features with respect to unseen target inputs [57]. This metric measures how sensitively the representation reacts to small perturbations under domain shift. 6 E. Lyou et al. 
+
+As shown in Fig. 2(c), student models (ViT [14] and ResNet-50 [23]) distilled with visual signals exhibit consistently higher Lipschitz values than those trained with textual guidance, indicating more input-sensitive mappings. This result verifies our earlier hypothesis that visual guidance would expose the student to cross-domain conflicting cues (Fig. 2(a)). Fitting to such inconsistent signals makes the representation more sensitive to small input changes and compromises stability. In contrast, textual guidance mitigates cross-domain conflict, yielding smoother and more stable representations under domain shift. 
+
+3.2 Information-theoretic Perspective 
+
+Beyond our empirical diagnostics, we further provide an information-theoretic perspective on our two design choices: removing domain-contaminated visual guidance and introducing an explicit information bottleneck. We interpret this through the lens of finite model capacity (formal assumptions and derivations are provided in App. B). An input image X can be decomposed into domain-invariant and domain-specific (spurious) components: X = ( Xinv , X sp ). Denoting the output of the student model ϕ as S = ϕ(X) with finite capacity C, we have I(S; Xinv ) + 
+
+I(S; Xsp ) ≤ C. This constraint implies a trade-off between invariant semantics and spurious domain styles. Because visual guidance depends on the input im-age, it carries domain-specific variation Xsp into the supervision signal. Learning from such guidance increases I(S; Xsp ), thereby reducing the capacity available for Xinv . Since labels depend only on Xinv , this limits the attainable predic-tive information and degrades generalization to unseen domains. This provides additional theoretical support for removing visual guidance. However, the removal alone does not fully resolve the capacity allocation problem. Although domain signals Xsp are no longer injected through supervi-sion, they are still present in the input and may be encoded by the model during training. In practice, a high-capacity model can learn separate domain-specific feature pathways that reach the same semantic target, leaving the representation entangled with Xsp . To explicitly restrict this spurious capacity allocation, we introduce a Text-Anchored Information Bottleneck in the next section. 
+
+## 4 Method 
+
+Our previous diagnostics verify that domain invariance is largely determined by the structure of supervision. Instead of relying on visually entangled guidance, which inevitably propagates spurious domain variations, we propose to anchor the training entirely to fixed, domain-invariant text embeddings, namely, Text-Anchored Information Bottleneck, illustrated in Fig. 3. We first formalize the domain generalization problem and introduce the Information Bottleneck for-mulations (Sec. 4.1), then present our text-anchored framework with two mech-anisms: preserving semantic structure in the text space and suppressing spurious visual cues (Sec. 4.2). Domain Generalization via Text-Anchored Information Bottleneck 7          
+
+> Fig. 3: Overview of Text-Anchored Information Bottleneck . Text guidance is the primary source of domain-invariance under our Conditional Entropy Bottleneck (CEB) formulation, composed of two parts: i) Semantic distillation ( Lsem ) maximizes
+> I(Z;Y)by pulling image representations toward text anchors, and ii) Bottleneck com-pression and alignment minimizes I(Z;X|Y)to suppress domain-specific variations, achieved by encouraging intra-class concentration via Lcomp and aligning class-wise mean feature with text anchors via Lalign .
+
+4.1 Preliminary 
+
+We first formulate the DG problem and introduce the Information Bottleneck and its conditional variant, which governs our semantic purification strategy. 
+
+Problem Formulation. In domain generalization, training data from K source domains DS = {D 1, D2, . . . , DK } are given, where Dk = {(x(k) 
+
+> i
+
+, y (k) 
+
+> i
+
+)}Nk 
+
+> i=1
+
+from each domain k consists of Nk samples and follows a probability distribution 
+
+Pk(X, Y ). The core challenge is distribution shift, where P (Y |X) remains in-variant while the marginals differ across domains ( Pi(X)̸ = Pj (X)). The task aims to learn a feature encoder Z = fθ (X) that generalizes to an unseen target domain DT , where DT ∩ D S = ∅.
+
+Information Bottleneck. To learn robust representations Z, we adopt the Information Bottleneck (IB) [48], which seeks features that are maximally pre-dictive of labels Y while compressing the input X:
+
+LIB = −I(Z; Y ) + βI (Z; X), (1) where I(·; ·) denotes mutual information and β > 0 controls the trade-off between prediction and compression. Assuming the Markov chain Y ↔ X ↔ Z, IB encourages Z to retain label-relevant information while discarding irrelevant variations in X.Minimizing I(Z; X) alone, however, does not explicitly distinguish label-relevant semantics from domain-specific factors, since domain cues may still be predictive of Y within the training domains. Therefore, we minimize the Condi-tional Information Bottleneck (CEB) [17]: 
+
+LCEB = −I(Z; Y ) + βI (Z; X|Y ), (2) which replaces I(Z; X) with I(Z; X|Y ). By conditioning on the label Y , CEB removes input information that is unnecessary given Y . This provides a direct mechanism for suppressing spurious domain-specific variations, as labels serve as semantic anchors that isolate task-relevant information. 8 E. Lyou et al. 
+
+4.2 Text-Anchored Information Bottleneck 
+
+Fig. 3 presents our architecture-agnostic training framework for optimizing the CEB under fixed textual semantics. With K classes, we obtain semantic an-chors T = [ t1, . . . , tK ]⊤ ∈ RK×d, where each tk ∈ Rd is the frozen CLIP text embedding of the prompt ‘a photo of a [class]’ . Although we have used rich captions in Sec. 3 to fairly match image richness, here we adopt the sim-plest prompt, which strips instance-level noise while keeping class identity. A trainable visual encoder f maps an input image x to z = fθ (x) ∈ Rd. Mo-tivated by Sec. 3, we treat these fixed text embeddings as the primary source of domain invariance, explicitly anchoring the representation space to domain-stable semantics rather than relying on invariance to emerge implicitly or using text as auxiliary guidance. We derive concrete forms of the two complementary objectives, maximizing predictive sufficiency I(Z; Y ) and minimizing anchor-inconsistent variation I(Z; X|Y ), comprising our CEB formulation in Eq. (2). This yields three terms: a semantic distillation loss Lsem that maximizes I(Z; Y ),and compression and alignment losses Lcomp , Lalign that minimize I(Z; X|Y ), together forming our final objective (Eq. (12)). We further detail each below. 
+
+Maximizing I(Z; Y ). The mutual information term I(Z; Y ) in Eq. (2) quanti-fies the dependency between the representation Z and the target Y , defined as 
+
+I(Z; Y ) = EZ,Y 
+
+
+
+log p(Z, Y )
+
+p(Z)p(Y )
+
+
+
+= EZ,Y 
+
+h
+
+log p(Y |Z)
+
+i
+
++ H(Y ), (3) where H(Y ) is constant. Thus, maximizing I(Z; Y ) is equivalent to maximizing 
+
+EZ,Y [log p(Y |Z)] , i.e. , minimizing the cross-entropy loss [3]. We parameterize 
+
+p(Y |Z) using fixed text embeddings as class prototypes. For a sample with label 
+
+k, we define: 
+
+Lsem = − log exp(cos( z, tk)/τ )
+
+P 
+
+> k′∈K
+
+exp(cos( z, tk′ )/τ ) , (4) where tk is the text embedding of class k and τ is a temperature. This objective pulls representations toward their class anchors and pushes them away from others, thereby distilling the semantic structure of the textual space into the learned representation (Fig. 3, upper right). 
+
+Minimizing I(Z; X|Y ). We minimize the second term I(Z; X|Y ) in Eq. (2) to suppress spurious domain variations. We first derive its variational upper bound, and then convert it into a tractable training objective. Starting from the definition of conditional mutual information, 
+
+I(Z; X|Y ) := E
+
+
+
+log p(X, Z |Y )
+
+p(X|Y )p(Z|Y )
+
+
+
+= E
+
+
+
+log p(Z|X, Y )
+
+p(Z|Y )
+
+
+
+= E
+
+
+
+log p(Z|X)
+
+p(Z|Y )
+
+
+
+,
+
+(5) where the last equality follows from the Markov chain Y ↔ X ↔ Z assumption, implying p(Z|X, Y ) = p(Z|X). Since the true marginal p(Z|Y ) is intractable, we introduce a variational approximation q(Z|Y ). By non-negativity of KL di-vergence, 
+
+I(Z; X|Y ) ≤ E[log p(Z|X)] − E[log q(Z|Y )] = EKL( p(Z|X)∥q(Z|Y )) . (6) Domain Generalization via Text-Anchored Information Bottleneck 9
+
+We now derive a stable training objective from this bound. For samples be-longing to class k, Eq. (6) becomes 
+
+EX|y=k
+
+KL( p(Z|X)∥q(Z|y = k))  = EX|y=k
+
+EZ
+
+ log p(Z|X) − log q(Z|y = k) ,
+
+(7) Since CLIP embeddings are l2-normalized and lie on the unit hypersphere, we model both p and q as von Mises–Fisher (vMF) distributions [18], parameterized by a mean direction μ and concentration κ. A vMF can be viewed as the spherical analogue of a Gaussian, concentrating probability mass around a direction on the unit sphere. Specifically, q(Z|y = k) is defined as a vMF centered at the fixed text embedding tk obtained from the frozen text encoder, with a fixed concentration 
+
+κq , while p(Z|x) is centered at the image feature z = fθ (x), with concentration 
+
+κp. With κp fixed, the first term in Eq. (7), EZ [log p(Z|X)] , becomes constant with respect to θ. Thus, the optimization reduces to minimizing the second term, 
+
+−EX|y=kEZ [log q(Z|y = k)] .Approximating Z ∼ p(Z|x) by its mean feature z = fθ (x) (with a large κp), and using the vMF density q(z|y = k) = Cd(κq ) exp ( κq t⊤ 
+
+> k
+
+z), the log-density can be substituted into Eq. (7). Applying the empirical expectation over a minibatch 
+
+Bk yields 
+
+− 1
+
+|B k|
+
+X
+
+> i∈B k
+
+[log Cd(κq ) + κq t⊤ 
+
+> k
+
+zi] = const − κq t⊤
+
+> k
+
+1
+
+|B k|
+
+X
+
+> i∈B k
+
+zi
+
+!
+
+, (8) where both κq and Cd(κq ) are constants. Let ¯zk = P 
+
+> i∈B k
+
+zi/|B k| denote the mean feature of the class k, the objective reduces to 
+
+−t⊤ 
+
+> k
+
+¯zk = − ∥ tk∥∥ ¯zk∥ cos( tk, ¯zk) = − ∥ ¯zk∥ cos( tk, ¯zk), (9) since ∥tk∥ = 1 . Empirically, however, directly optimizing this multiplicative form couples the magnitude and the cosine terms, which can lead to poorly condi-tioned gradients during training ( e.g. , the cosine term may quickly saturate, weakening gradients acting on the ∥¯z∥ term). We therefore adopt a separable surrogate objective that independently encourages (i) a large intra-class resul-tant length ∥¯zk∥, and (ii) strong directional alignment cos( tk, ¯zk) with the text anchor tk, to stabilize optimization. From the magnitude term, we define: 
+
+Lcomp = − 1
+
+|KB|
+
+X
+
+> k∈KB
+
+∥¯zk∥, (10) where KB denotes the set of classes present in a mini-batch B. This encourages features of the same class to concentrate along a coherent direction (Fig. 3, lower right). From the cosine term, we define 
+
+Lalign = − 1
+
+|KB|
+
+X
+
+> k∈KB
+
+cos 
+
+
+
+tk, ¯zk
+
+∥¯zk∥
+
+
+
+(11) which aligns each class mean with its text anchor. The final objective is 
+
+L = Lsem + β1Lalign + β2Lcomp , (12) 10 E. Lyou et al. 
+
+where β1 and β2 balance the two effects. Unlike prior IB-based DG methods [15, 30, 59] that learn explicit Gaussian parameters ( e.g. , μ, σ) from each image to match a simple unconditional prior (e.g. , N (0 , I)), irrespective of class semantics, we impose a class-conditional prior anchored by fixed text embeddings, enabling more reliable compression of the representations. 
+
+## 5 Experiments 
+
+5.1 Experimental Setting Datasets. We evaluate on six standard DG benchmarks: TerraIncognita [6], OfficeHome [51], VLCS [49], PACS [31], DomainNet [40], and NICO ++ [62]. The first four contain four domains each with 10, 65, 5, and 7 classes, respectively. For large-scale evaluation, we use the latter two, DomainNet (6 domains, 345 classes) and NICO ++ (6 domains, 60 classes). 
+
+Baselines. Across diverse backbones, representative DG methods vary by ar-chitecture. For consistent comparison, we focus on a set of key baselines. Linear probing (LP) evaluates frozen features, while MIRO [11] represents classical DG without external guidance. RISE [24] and VL2V [1] perform cross-modal distil-lation, explicitly using a CLIP image encoder as the primary teacher with simple alignment objectives for text supervision. In contrast, CLIP-dedicated methods such as CLIPood [45] do not employ an external teacher but implicitly retain original CLIP visual features through zero-shot preservation. When applied to non-CLIP backbones, however, this preservation operates on backbone-specific weights, so CLIP visual features are no longer involved in adaptation and guid-ance is provided only by CLIP text embeddings. 
+
+Implementation Details. We follow the DomainBed [21] protocol. All datasets use the standard leave-one-domain-out setting, where one domain is held out for testing while training on the remaining domains. For NICO ++ , we adopt a leave-one-group-out protocol, where multiple domains are grouped and one entire group is reserved for evaluation. Model selection is based on validation accuracy using a 20% split of training data. We use β1 = 0.1 and β2 = 1.0 based on ResNet-50 on PACS, and apply them across all datasets and backbones (sensitivity in App. C). Results are averaged over three runs, with standard deviations reported in App. D. See App. E for more details. 
+
+5.2 Comparison with Baselines Main Results. Tab. 1 shows that our method achieves the state-of-the-art performance across various standard backbones. Existing approaches exhibit ar-chitectural bias: KD methods ( e.g. , RISE, VL2V) favor conventional encoders, while CLIP-specialized methods favor CLIP backbones, and both degrade when evaluated beyond their original setup. In contrast, ours consistently improves Domain Generalization via Text-Anchored Information Bottleneck 11 
+
+Table 1: DG performance comparison across representative backbones . The ‘G’ column denotes CLIP visual (V) or textual (T) guidance. The best and second-best results are highlighted. * denotes our implementation. Method G VLCS PACS OfficeHome TerraInc DomainNet Average                                                                                                                                                                                              
+
+> ResNet-50 pretrained on ImageNet-1k
+> LP -78.1 86.2 68.4 46.3 41.2 64.0 MIRO [11] -79.0 85.4 70.5 50.4 44.3 65.9 SAGM [52] -80.0 86.6 70.1 48.8 45.0 66.1 GESTUR [29] -80.1 88.0 71.1 51.3 46.3 67.4 INSURE [59] --89.3 72.0 53.1 48.0 -CLIPood* [45] T76.7 88.8 70.3 44.7 --RISE [24] V,T 81.7 89.4 71.6 52.3 46.5 68.3 VL2V [1] V,T 79.2 86.7 74.4 53.5 47.7 68.3 Ours T81.7 96.9 79.0 59.9 58.3 75.4
+> ViT-B/16 pretrained on ImageNet-1k
+> LP -79.5 81.5 82.8 42.2 50.5 67.3 MIRO* [11] -80.4 81.5 74.9 44.5 --CLIPood* [45] T80.4 87.1 80.9 44.3 --RISE* [24] V,T 84.2 91.0 80.3 44.6 56.6 71.3 VL2V [1] V,T 81.9 94.9 85.7 55.4 59.4 75.5 Ours T86.2 94.1 86.4 62.2 68.8 79.5
+> CLIP-ViT-B/16 pretrained on private dataset (400M)
+> LP -83.4 97.2 82.3 57.3 58.2 75.7 CLIP-ZS -82.4 96.1 82.3 34.4 49.7 69.0 MIRO [11] -82.2 95.6 82.5 54.3 54.0 73.7 GESTUR [29] -82.8 96.0 84.2 55.7 58.9 75.5 CAR-FT [36] V,T 85.5 96.8 85.7 61.9 62.5 78.5 CLIPood [45] V,T 85.0 97.3 87.0 60.4 63.5 78.6 CLIPCEIL [60] V,T 85.2 97.2 87.7 62.0 63.6 79.1 CLIP-DPR [13] V,T 86.4 97.5 86.1 57.1 62.1 77.8 CLIP-DTP [55] V,T 84.8 97.0 87.7 63.3 63.1 79.2 RISE [24] V,T 80.6 93.3 78.4 49.6 55.4 71.5 VL2V [1] V,T 83.3 96.7 87.4 58.5 62.8 77.7 Ours T89.0 98.5 93.2 75.1 75.8 86.3
+
+the performance without backbone-specific design, demonstrating its universal robustness. 
+
+Robustness to Background Shift. We further compare the performance of competing DG models in Tab. 2 on NICO ++ , which focuses on background-driven shift. Notably, the margin becomes more pronounced; ResNet-50 reaches 95.7% accuracy, nearly closing the gap to CLIP (97.5%). This suggests that this setting is particularly better-aligned with our text-anchored bottleneck, since background variations are more readily separable from foreground semantics than the style shifts in Tab. 1, where object appearance itself can vary. In such cases, varying background is more likely to be filtered as spurious style. We further discuss in App. G that this purification improves overall robustness, though it may fail in rare cases where contextual cues are genuinely required for identification. 
+
+Generalization across Backbones. While Tab. 1 evaluates standard architec-tures, Fig. 4 extends the comparison to a broader range of backbones, including lightweight models, CNNs, and diverse transformers. Across all backbones, ours is the only method that consistently maintains a clear margin over LP. 12 E. Lyou et al. 
+
+Table 2: Performance on NICO ++ . Results for ResNet-50 and CLIP backbones evaluated via a leave-one-group-out protocol on predefined target pairs: Autumn & Rock, Dim & Grass, and Outdoor & Water.                                                                                                    
+
+> ResNet-50 pretrained on ImageNet-1k CLIP-ViT-B/16
+> Method ARDGOWAvg ARDGOWAvg LP 85.3 85.6 78.6 86.5 82.0 76.7 82.5 91.4 92.2 89.8 92.7 90.4 84.6 90.2 MIRO* [11] 82.3 81.2 73.5 81.5 77.9 72.0 78.1 92.1 91.4 86.7 92.3 89.3 83.8 89.3 VL2V* [1] 85.2 84.3 77.1 87.1 82.7 78.9 82.6 92.7 92.8 90.1 94.7 92.3 88.5 91.8 SRE [54] -------91.4 92.3 90.4 93.2 90.8 86.4 90.8 CLIPood* [45] -------93.0 94.3 89.6 93.7 92.0 86.8 91.5 Ours 95.7 97.3 94.4 97.7 96.4 92.9 95.7 97.9 98.5 97.7 98.7 98.3 94.0 97.5
+
+Fig. 4: DG performance across diverse backbones. Average accuracy is reported (see App. F for details). We evaluate across CNNs (EfficientNet, RegNetY) and Trans-formers with different architectures and pretraining schemes (SwinT, DeiT, DINOv2). 
+
+Interestingly, when the pretrained backbone is already strong ( i.e. , high LP performance), other state-of-the-art methods often shrink to near-zero or even negative margins ( e.g. , MIRO on SwinT and RISE on DINOv2). This im-plies that KD approaches (RISE, VL2V) risk distorting well-structured semantic spaces, while regularization-based methods (MIRO, CLIPood) largely preserve them without actively removing domain-specific factors, yielding only marginal gains. In contrast, our text-anchored compression explicitly filters spurious vari-ations, sustaining positive improvements regardless of backbone strength. Recent work [58] notes that some DG benchmarks may be affected by data leakage, as supervised backbones could have encountered similar domains during large-scale pretraining. To partially control for this effect, we additionally eval-uate on DINOv2, a self-supervised backbone less likely to exhibit such leakage. While most methods remain close to the LP baseline in this setting, our method maintains a clear margin, suggesting that the gains are not solely attributable to inherited exposure, but instead stem from the intended domain-invariance mechanism. 
+
+5.3 Further Analysis Ablation on Loss Components. Tab. 3 ablates the three terms across three backbones on OfficeHome, PACS, and DomainNet. Adding Lcomp to Lsem drives the largest gains, while Lalign provides a consistent further improvement; their Domain Generalization via Text-Anchored Information Bottleneck 13                                                              
+
+> Fig. 5: Information flow ( X→Z→Y) visualization using t-SNE on PACS.
+> Left : For the house class, our method (blue) collapses inputs from different domains into a single cluster, while RISE (orange) retains domain-dependent separation, showing reduced cross-domain variation. Right : Within a single domain, our embeddings form more compact, well-separated class clusters, showing sharper class margins.
+> Table 3: Ablation of loss components
+> Lsem Lalign Lcomp
+> OfficeHome PACS DomainNet RN50 ViT CLIP RN50 ViT CLIP RN50 ViT CLIP
+> ✓73.4 82.4 85.2 92.6 92.3 96.8 35.5 52.8 60.3
+> ✓✓76.0 81.9 85.9 94.2 93.6 98.2 37.3 67.9 65.9
+> ✓✓78.9 85.1 90.8 95.8 94.0 98.1 57.6 68.7 75.2
+> ✓✓✓79.0 86.4 93.2 96.9 94.1 98.5 58.3 68.8 75.8
+
+combination performs the best across all backbones and datasets, confirming that compression and alignment are complementary. App. H extends this ablation to other backbones. 
+
+Does the bottleneck indeed suppress domain-specific information? To verify this, we visualize the information flow for a specific class ( house ) using t-SNE in Fig. 5. Across the cartoon and sketch domains in PACS, the inputs (top) are clearly domain-separated. Our features (blue in the middle, Z) concentrate into a unified cluster successfully, discarding domain information. On the other hand, the baseline (RISE) features (orange in the middle, Z) largely retain the domain-dependent separation. Within each single domain, our embedding space (right) forms more compact class clusters, indicating that the text-anchored bottleneck removes cross-domain variation, enhancing class separability with larger margins. To examine the underlying mechanism, we track the CEB term I(Z; X|Y )
+
+during training. Fig. 6(a) estimates this quantity using MINE [7]. In practice, 
+
+I(Z; X|Y ) is approximated by the alignment and compression terms ( Lalign and 
+
+Lcomp in Eq. (12)), which decrease together during training, indicating that the objective suppresses dependence on input-specific variations. This mechanism also facilitates semantic learning. Fig. 6(b) compares the full model with a variant 14 E. Lyou et al.         
+
+> Fig. 6: (a) I(Z;X|Y)decreases with the regularizers Lalign ,Lcomp during training. (b) Training with the regularizers achieves lower semantic loss and higher accuracy. (c) Accuracy decreases as the image guidance ratio increases.
+
+trained only with Lsem . By filtering domain-specific variations, the model allows 
+
+Lsem to converge to a lower value, resulting in higher accuracy. 
+
+Does visual guidance reintroduce domain entanglement? In Fig. 6(c), we test this by injecting CLIP image supervision into our objective in Eq. (12) with varied guidance ratios. As the ratio increases, the accuracy consistently drops, with CNNs (RegNet, RN50) degrading more than Transformers (DeiT, SwinT), likely because such guidance propagates domain-specific statistics that CNNs are more sensitive to. This indicates that aligning with expressive visual features disrupts the text-driven abstraction. Interestingly, this trend contrasts with prior KD approaches [1,24], where a small amount of textual guidance often improves performance, suggesting different roles of text under the two settings. 
+
+Why do text embeddings serve as effective anchors? Since our bottle-neck relies on textual anchors, we examine whether it depends on specific CLIP properties or reflects a more general characteristic of language spaces. Tab. 4(a) compares anchors from different language encoders (MiniLM [53], MPNet [46]) and prompt templates on OfficeHome. All variants perform similarly, indicating that the framework is largely agnostic to particular language model and not tied to CLIP-specific representations (see App. I for richer prompt variants explored; App. J for class-similarity analysis). Even random anchors achieve competitive performance, surpassing the pre-vious state-of-the-art (76.6 vs . 74.4), suggesting that stable external anchors are the key to the framework’s effectiveness, while pretrained text embeddings further benefit from their learned semantic structure. Crucially, this semantic advantage grows as class discrimination becomes harder; on DomainNet (345 classes), the gap between CLIP and random anchors widens sharply (58.3 vs . 36.4). It is most evident in open-set generalization, where unseen test classes make random anchors inapplicable, yet text anchors still generalize well (78.8 vs . CLIPood 78.2; Tab. 5). 
+
+How should anchors be integrated into training? Tab. 4(b) varies three factors on OfficeHome and PACS: the anchor source (random vs . CLIP), whether anchors are kept fixed ( ✓), and the alignment objective. Freezing inconsistently helps for contrastive and L2 while consistently under ours, as learnable anchors Domain Generalization via Text-Anchored Information Bottleneck 15 
+
+Table 4: Analysis of anchor design: (a) what to use and (b) how to integrate it                                                
+
+> (a) Effect of anchor encoder and template
+> Encoder Template Acc.
+> CLIP (VL) ‘a photo of [cls]’ 79.0 ImageNet prompts [44] 77.9
+> MiniLM (L) ‘a photo of [cls]’ 79.1 ImageNet prompts [44] 77.7 MPNet (L) ‘a photo of [cls]’ 78.7 ImageNet prompts [44] 78.9 random -76.6
+> (b) Effect of anchor source and objective
+> Contrastive L2 Ours Fixed? ✗✓✗✓✗✓
+> OfficeHome
+> random 71.4 73.4 13.4 11.9 75.2 76.6 CLIP 74.6 73.4 68.3 68.4 77.2 79.0
+> PACS
+> random 93.7 94.8 92.3 93.3 83.4 95.5 CLIP 94.6 94.9 91.7 88.0 95.2 96.9
+
+Table 5: Comparison on Open-Set DG.       
+
+> Known classes Unseen classes CLIP 86.1 77.6 CLIPood 89.4 78.2 Ours 90.6 78.8
+
+otherwise absorb domain-specific statistics and drift from invariant references. Likewise, our CEB-based objective is the only one that turns semantic CLIP anchors into reliable gains, via compression and directional constraints. Overall, domain invariance emerges only when stable external anchors are paired with an objective that explicitly enforces such invariance. 
+
+## 6 Conclusion 
+
+Expressive visual features can propagate spurious cues, challenging the common belief that greater capacity ensures robustness. We introduce a Text-Anchored Information Bottleneck that explicitly grounds supervision in external anchors to directly address the source of domain bias. Rather than distilling invariance from domain-shifting visual data, we utilize stable external signals to prove that the structural source of supervision is more critical than model capacity. While fixed anchors lack contextual cues and benchmark data leakage [58] currently obscures true generalization gains, it will be an interesting future direction to explore adaptive anchors and alternative signals to resolve these limitations and better isolate core semantics. 16 E. Lyou et al. 
+
+## Acknowledgments 
+
+This work was supported by Samsung Electronics, Youlchon Foundation, Na-tional Research Foundation of Korea (NRF) grants (RS-2021-NR05515, RS-2024-00336576, RS-2023-0022663), and the Institute for Information & Commu-nication Technology Planning & Evaluation (IITP) grants (RS-2022-II220264, RS-2024-00353131) funded by the Korean government. 
+
+## References 
+
+1. Addepalli, S., Asokan, A.R., Sharma, L., Babu, R.V.: Leveraging vision-language models for improving domain generalization in image classification. In: CVPR (2024) 2. Ahuja, K., Caballero, E., Zhang, D., Bengio, Y., Mitliagkas, I., Rish, I.: Invariance principle meets information bottleneck for out-of-distribution generalization. In: NeurIPS (2021) 3. Alemi, A.A., Fischer, I., Dillon, J.V., Murphy, K.: Deep variational information bottleneck. In: ICLR (2017) 4. Arjovsky, M., Bottou, L., Gulrajani, I., Lopez-Paz, D.: Invariant risk minimization. arXiv:1907.02893 (2020) 5. Arpit, D., Wang, H., Zhou, Y., Xiong, C.: Ensemble of averages: Improving model selection and boosting performance in domain generalization. In: NeurIPS (2022) 6. Beery, S., Van Horn, G., Perona, P.: Recognition in terra incognita. In: ECCV (2018) 7. Belghazi, M.I., Baratin, A., Rajeshwar, S., Ozair, S., Bengio, Y., Courville, A., Hjelm, D.: Mutual information neural estimation. In: ICML (2018) 8. Ben-David, S., Blitzer, J., Crammer, K., Kulesza, A., Pereira, F., Vaughan, J.: A theory of learning from different domains. Machine Learning 79 (2010) 9. Ben-David, S., Blitzer, J., Crammer, K., Pereira, F.: Analysis of representations for domain adaptation. In: NIPS (2006) 10. Cha, J., Chun, S., Lee, K., Cho, H.C., Park, S., Lee, Y., Park, S.: SWAD: Domain generalization by seeking flat minima. In: NeurIPS (2021) 11. Cha, J., Lee, K., Park, S., Chun, S.: Domain generalization by mutual-information regularization with pre-trained models. In: ECCV (2022) 12. Chattopadhyay, P., Balaji, Y., Hoffman, J.: Learning to balance specificity and invariance for in and out of domain generalization. In: ECCV (2020) 13. Cheng, D., Xu, Z., Jiang, X., Wang, N., Li, D., Gao, X.: Disentangled prompt representation for domain generalization. CVPR (2024) 14. Dosovitskiy, A., Beyer, L., Kolesnikov, A., Weissenborn, D., Zhai, X., Unterthiner, T., Dehghani, M., Minderer, M., Heigold, G., Gelly, S., Uszkoreit, J., Houlsby, N.: An image is worth 16x16 words: Transformers for image recognition at scale. In: ICLR (2021) 15. Du, Y., Xu, J., Xiong, H., Qiu, Q., Zhen, X., Snoek, C.G.M., Shao, L.: Learn-ing to learn with variational information bottleneck for domain generalization. In: Vedaldi, A., Bischof, H., Brox, T., Frahm, J.M. (eds.) ECCV (2020) 16. Fano, R.M.: Transmission of Information: A Statistical Theory of Communication. MIT Press (1968) 17. Fischer, I.: The conditional entropy bottleneck. Entropy 22 (9), 999 (Sep 2020) Domain Generalization via Text-Anchored Information Bottleneck 17 18. Fisher, R.A.: Dispersion on a sphere. Proceedings of the royal society of London. Series A. Mathematical and physical sciences 217 (1130), 295–305 (1953) 19. Ganin, Y., Lempitsky, V.: Unsupervised domain adaptation by backpropagation. In: ICML. pp. 1180–1189 (2015) 20. Ganin, Y., Ustinova, E., Ajakan, H., Germain, P., Larochelle, H., Laviolette, F., Marchand, M., Lempitsky, V.: Domain-adversarial training of neural networks. JMLR (2016) 21. Gulrajani, I., Lopez-Paz, D.: In search of lost domain generalization. In: ICLR (2021) 22. Guo, J., Qi, L., Shi, Y.: DomainDrop: Suppressing domain-sensitive channels for domain generalization. In: ICCV (2023) 23. He, K., Zhang, X., Ren, S., Sun, J.: Deep residual learning for image recognition. In: CVPR (2016) 24. Huang, Z., Zhou, A., Lin, Z., Cai, M., Wang, H., Lee, Y.J.: A sentence speaks a thousand images: Domain generalization through distilling CLIP with language guidance. ICCV (2023) 25. Jain, S., Addepalli, S., Sahu, P.K., Dey, P., Babu, R.V.: DART: Diversify-aggregate-repeat training improves generalization of neural networks. CVPR (2023) 26. Jeon, M., Kang, M., Lee, J.: A unified framework for robustness on diverse sampling errors. In: ICCV (2023) 27. Jeon, M., Kim, D., Lee, W., Kang, M., Lee, J.: A conservative approach for unbi-ased learning on unknown biases. In: CVPR (2022) 28. khattak, M.U., Rasheed, H., Maaz, M., Khan, S., Khan, F.S.: MaPLe: Multi-modal prompt learning. arXiv:2210.03117 (2022) 29. Lew, B., Son, D., Chang, B.: Gradient estimation for unseen domain risk mini-mization with pre-trained models. ICCVW (2023) 30. Li, B., Shen, Y., Wang, Y., Zhu, W., Reed, C., Zhang, J., Li, D., Keutzer, K., Zhao, H.: Invariant information bottleneck for domain generalization. In: AAAI (2021) 31. Li, D., Yang, Y., Song, Y.Z., Hospedales, T.M.: Deeper, broader and artier domain generalization. In: ICCV (2017) 32. Li, H., Pan, S.J., Wang, S., Kot, A.C.: Domain generalization with adversarial feature learning. In: CVPR (2018) 33. Li, Z., Ren, K., Jiang, X., Li, B., Zhang, H., Li, D.: Domain generalization using pretrained models without fine-tuning. arXiv:2203.04600 (2022) 34. Liu, G.M., Wang, Y.: TDG: Text-guided domain generalization. arXiv:2308.09931 (2023) 35. Lv, F., Liang, J., Li, S., Zang, B., Liu, C.H., Wang, Z., Liu, D.: Causality inspired representation learning for domain generalization. In: CVPR (2022) 36. Mao, X., Chen, Y., Jia, X., Zhang, R., Xue, H., Li, Z.: Context-aware robust fine-tuning. IJCV (Dec 2023) 37. Muandet, K., Balduzzi, D., Schölkopf, B.: Domain generalization via invariant feature representation. In: ICML (2013) 38. Nam, G.C., Heo, B., Lee, J.: Lipsum-FT: Robust fine-tuning of zero-shot models using random text guidance. ICLR (2024) 39. Oquab, M., Darcet, T., Moutakanni, T., Vo, H.V., Szafraniec, M., Khalidov, V., Fernandez, P., Haziza, D., Massa, F., El-Nouby, A., Howes, R., Huang, P.Y., Xu, H., Sharma, V., Li, S.W., Galuba, W., Rabbat, M., Assran, M., Ballas, N., Syn-naeve, G., Misra, I., Jegou, H., Mairal, J., Labatut, P., Joulin, A., Bojanowski, P.: DINOv2: Learning robust visual features without supervision (2023) 18 E. Lyou et al. 40. Peng, X., Bai, Q., Xia, X., Huang, Z., Saenko, K., Wang, B.: Moment matching for multi-source domain adaptation. In: ICCV (2019) 41. Pham, H., Dai, Z., Ghiasi, G., Liu, H., Yu, A.W., Luong, M.T., Tan, M., Le, Q.V.: Combined scaling for zero-shot transfer learning. Neurocomputing (2021) 42. Piratla, V., Netrapalli, P., Sarawagi, S.: Efficient domain generalization via common-specific low-rank decomposition. In: ICML (2020) 43. Quionero-Candela, J., Sugiyama, M., Schwaighofer, A., Lawrence, N.D.: Dataset Shift in Machine Learning. The MIT Press (2009) 44. Radford, A., Kim, J.W., Hallacy, C., Ramesh, A., Goh, G., Agarwal, S., Sastry, G., Askell, A., Mishkin, P., Clark, J., Krueger, G., Sutskever, I.: Learning transferable visual models from natural language supervision. In: ICML (2021) 45. Shu, Y., Guo, X., Wu, J., Wang, X., Wang, J., Long, M.: CLIPood: Generalizing CLIP to out-of-distributions. In: ICML (2023) 46. Song, K., Tan, X., Qin, T., Lu, J., Liu, T.Y.: MPNet: masked and permuted pre-training for language understanding. In: NIPS (2020) 47. Sun, B., Saenko, K.: Deep CORAL: Correlation alignment for deep domain adap-tation. In: ECCV (2016) 48. Tishby, N., Pereira, F.C., Bialek, W.: The information bottleneck method. In: Proc. of the Annual Allerton Conference on Communication, Control and Computing (1999) 49. Torralba, A., Efros, A.A.: Unbiased look at dataset bias. In: CVPR (2011) 50. Vapnik, V.N.: Statistical Learning Theory. Wiley-Interscience (1998) 51. Venkateswara, H., Eusebio, J., Chakraborty, S., Panchanathan, S.: Deep hashing network for unsupervised domain adaptation. In: CVPR (2017) 52. Wang, P., Zhang, Z., Lei, Z., Zhang, L.: Sharpness-aware gradient matching for domain generalization. CVPR (2023) 53. Wang, W., Wei, F., Dong, L., Bao, H., Yang, N., Zhou, M.: MINILM: deep self-attention distillation for task-agnostic compression of pre-trained transformers. In: NeurIPS (2020) 54. Wang, Z., Gao, Z., Chen, J., Zhao, Q., Wu, X., Luo, J.: Simulate, refo-cus and ensemble: An attention-refocusing scheme for domain generalization. arXiv:2507.12851 (2025) 55. Wen, C., Peng, Z., Huang, Y., Yang, X., Shen, W.: Domain generalization in CLIP via learning with diverse text prompts. In: CVPR (2025) 56. Wortsman, M., Ilharco, G., Kim, J.W., Li, M., Kornblith, S., Roelofs, R., Lopes, R.G., Hajishirzi, H., Farhadi, A., Namkoong, H., Schmidt, L.: Robust fine-tuning of zero-shot models. In: CVPR (2022) 57. Yang, D., Lee, J., Kim, Y.: TAROT: Towards essentially domain-invariant robust-ness with theoretical justification. In: CVPR (2025) 58. Yu, H., Zhang, X., Xu, R., Liu, J., He, Y., Cui, P.: Rethinking the evaluation protocol of domain generalization. CVPR (2023) 59. Yu, X., Tseng, H.H., Yoo, S., Ling, H., Lin, Y.: INSURE: An information theory inspired disentanglement and purification model for domain generalization. IEEE TIP (2023) 60. Yu, X., Yoo, S., Lin, Y.: CLIPCEIL: Domain generalization through CLIP via channel refinement and image-text alignment. In: NeurIPS (2024) 61. Zhang, X., Iwasawa, Y., Matsuo, Y., Gu, S.S.: Domain prompt learning for effi-ciently adapting CLIP to unseen domains. Transactions of the Japanese Society for Artificial Intelligence (2021) 62. Zhang, X., Zhou, L., Xu, R., Cui, P., Shen, Z., Liu, H.: NICO++: Towards better benchmarking for domain generalization. CVPR (2022) Domain Generalization via Text-Anchored Information Bottleneck 19 63. Zhou, K., Yang, J., Loy, C.C., Liu, Z.: Conditional prompt learning for vision-language models. In: CVPR (2022) 64. Zhou, K., Yang, J., Loy, C.C., Liu, Z.: Learning to prompt for vision-language models. IJCV 130 (9), 2337–2348 (Jul 2022) Domain Generalization via Text-Anchored Information Bottleneck i
+
+## Appendix A Details on Caption Generation 
+
+To better understand the structure of CLIP text embeddings, we visualize image-conditioned captions generated using LLaVA-v1.5-7B 1 in Fig. I.    
+
+> Fig. I: Example of generated captions in house class, across four PACS domains . Red highlights the semantic class ( e.g. ,house, home ), blue indicates domain-specific cues, and remaining denotes supplementary details unrelated to class semantics.
+
+Each image from the PACS dataset is fed to the captioner with the following prompt: “USER: <image> Generate a short and clear caption for the image. 
+
+ASSISTANT: ”. The generated captions capture a mix of high-level semantic concepts ( e.g. ,
+
+house , home ) and domain-specific visual styles ( e.g. , a painting of , a cartoon of ), along with peripheral details present in the images. As shown in Fig. I, for example, the surrounding descriptions somewhat vary in style and content, but the core semantics associated with the class label ( e.g. , house ) is consistently preserved in the textual embeddings across all domains.  
+
+> 1H. Liu et al., Improved Baselines with Visual Instruction Tuning, CVPR 2024.
+
+ii E. Lyou et al. 
+
+Xsp Xinv Y
+
+X S
+
+Fig. II: Causal graph of the domain generalization setting . Images are gener-ated from invariant semantic factors Xinv and domain-specific factors Xsp . Only Xinv 
+
+causally determines the label Y , while Xsp introduces spurious correlations. 
+
+## B Information-Theoretic Analysis 
+
+We formalize the intuition in Sec. 3 that image-dependent guidance can increase reliance on spurious domain information, thereby reducing the predictive infor-mation available for unseen-domain generalization. 
+
+Notation. An input image X can be decomposed into domain-invariant and domain-specific components: X = ( Xinv , X sp ). We denote the class label by Y
+
+and the student representation by S = ϕ(X). The text teacher provides guid-ance Gt = gt(Y ), while the image teacher provides guidance Gi = gi(X). Their mixture is denoted by Gα = αG i + (1 − α)Gt, with a weight α ∈ [0 , 1] .
+
+Assumptions. We assume the following: 
+
+– (A1) X is generated from Xinv and Xsp , the label Y is determined by Xinv ,and S is a function of X. Consequently, Y ⊥ S | Xinv and Xinv ⊥ Xsp (see Fig. II). 
+
+– (A2) The text guidance is independent of the spurious component, whereas image guidance is not, i.e., I(Gt; Xsp ) = 0 and I(Gi; Xsp ) > 0. This reflects our setting, where Gt is conditioned on Y , whereas Gi depends on X.
+
+– (A3) As α increases, spurious information in the mixed guidance is non-decreasing and is partially transferred to the learned representation. For-mally, we assume that I(Gα; Xsp ) is non-decreasing in α, and that there exists c ∈ (0 , 1] such that I(S; Xsp ) ≈ c I (Gα; Xsp ).
+
+Proposition 1. Under (A2)–(A3), I(S; Xsp ) is non-decreasing in α.
+
+Proof. By (A2), a larger α increases I(Gα; Xsp ). Then, by (A3), this implies that 
+
+I(S; Xsp ) also increases. 
+
+Proposition 2. Let C denote the model capacity of ϕ. Then the information encoded in the representation is bounded as I(S; X) = ( S; Xinv ) + I(S; Xsp |
+
+Xinv ) ≤ C.
+
+Proof. By the chain rule and the decomposition X = ( Xinv , X sp ), we have: 
+
+I(S; X) = I(S; Xinv , X sp ) = I(S; Xinv ) + I(S; Xsp | Xinv ). (13) Domain Generalization via Text-Anchored Information Bottleneck iii 
+
+Since S = ϕ(X) is deterministic, H(S|X) = 0 and I(S; X) = H(S). Thus, 
+
+I(S; X) = H(S) ≤ C.  (14) 
+
+Proposition 3. Under Xinv ⊥ Xsp (A1), I(S; Xsp | Xinv ) ≥ I(S; Xsp ).
+
+Proof. Equating two chain-rule expansions of I(S; Xsp , X inv ),
+
+I(S; Xinv , X sp ) = I(S; Xinv ) + I(S; Xsp | Xinv ) (15) 
+
+= I(S; Xsp ) + I(S; Xinv | Xsp ), (16) yields 
+
+I(S; Xsp | Xinv ) = I(S; Xsp ) + I(S; Xinv | Xsp ) − I(S; Xinv ). (17) Similarly, equating two chain-rule expansions of I(S; Xsp ; Xinv ),
+
+I(S; Xsp ; Xinv ) = I(S; Xinv ) − I(S; Xinv | Xsp ) (18) 
+
+= I(Xinv ; Xsp ) − I(Xinv ; Xsp | S), (19) gives 
+
+I(S; Xinv | Xsp ) = I(S; Xinv ) + I(Xinv ; Xsp | S) − I(Xinv ; Xsp ). (20) Substituting Eq. (20) into Eq. (17) yields 
+
+I(S; Xsp | Xinv ) = I(S; Xsp ) + I(Xinv ; Xsp | S) − I(Xinv ; Xsp ). (21) Since Xinv ⊥ Xsp by (A1), I(Xinv ; Xsp ) = 0 . Thus 
+
+I(S; Xsp | Xinv ) = I(S; Xsp ) + I(Xinv ; Xsp | S) ≥ I(S; Xsp ), (22) where the inequality follows from the non-negativity of mutual information. 
+
+Proposition 4. I(S; Xinv ) ≥ I(S; Y ).
+
+Proof. By expanding the chain rule to I(S; Xinv , Y ):
+
+I(S; Xinv , Y ) = I(S; Xinv ) + I(S; Y |Xinv ) (23) 
+
+= I(S; Y ) + I(S; Xinv |Y ), (24) it follows that: 
+
+I(S; Xinv ) = I(S; Y ) + I(S; Xinv |Y ) − I(S; Y |Xinv ). (25) By A1, I(S; Y |Xinv ) = 0 . Thus, due to the non-negativity of mutual information, we obtain I(S; Xinv ) ≥ I(S; Y ).
+
+Proposition 5. A decrease in I(S; Y ) increases the lower bound on the test error Etest .iv E. Lyou et al.   
+
+> Fig. III: Sensitivity to (β1, β 2)across datasets . Boxplots show results over searched hyperparameter combinations; triangle: fixed setting, dashed line: best SOTA baseline (VLCS: RISE, PACS: RISE, OH: VL2V, TI: VL2V).
+
+Proof. By Fano’s inequality [16], 
+
+H(Y | S) = H(Y ) − I(S; Y ) ≤ h(Etest ) + Etest log( |Y| − 1) , (26) where h(·) denotes the binary entropy and |Y| is the number of classes. Using 
+
+h(Etest ) ≤ 1, we obtain 
+
+Etest ≥ H(Y | S) − 1log |Y| − 1 . (27) Therefore, decreasing I(S; Y ) increases H(Y | S) (Eq. (26)), and hence increases the lower bound on Etest (Eq. (27)). 
+
+Interpretation. Propositions 1–5 collectively delineate a trade-off mechanism between image guidance and model generalization. Specifically, P1 demonstrates that increasing the weight on image guidance causes the representation S to ab-sorb more spurious information Xsp . Under finite capacity, this reduces the infor-mation budget available for I(S; Xinv ) (P2–3). Consequently, the label-predictive information in the representation is diminished (P4), which, via Fano’s inequal-ity, leads to a higher lower bound on the test error (P5). In summary, 
+
+α ↑ ⇒ I(S; Xsp ) ↑ ⇒ I(S; Xinv ) ↓ ⇒ I(S; Y ) ↓ ⇒ LB( Etest ) ↑ . (28) 
+
+## C Hyperparameter Sensitivity 
+
+In Fig. III, we evaluate the sensitivity of our framework to the hyperparame-ters β1 and β2, searched over {0.0, 0.1, 0.5, 1.0}. Based on the best ResNet-50 validation accuracy on PACS, we select a fixed configuration of β1 = 0 .1 and 
+
+β2 = 1 .0.Using this single configuration (denoted by the triangle in Fig. III), our method remains competitive to, and often surpasses, the strongest SOTA base-lines (dashed line). Although dataset-specific tuning could yield marginal gains Domain Generalization via Text-Anchored Information Bottleneck v
+
+Table I: Standard deviation with CLIP-ViT-B/16. Method VLCS PACS OH TI DN MIRO 82.2 ±0.3 95.6 ±0.8 82.5 ±0.1 54.3 ±0.4 54.0 ±0.3
+
+CLIPood 85.0 ±0.4 97.3 ±0.1 87.0 ±0.2 60.4 ±0.7 63.5 ±0.1
+
+VL2V 83.3 ±0.4 96.7 ±0.6 87.4 ±0.3 58.5 ±0.7 62.8 ±0.1
+
+Ours 89.0 ±0.4 98.5 ±0.1 93.2 ±0.3 75.1 ±0.6 75.8 ±0.2
+
+on certain benchmarks such as VLCS or TerraIncognita, we intentionally keep these hyperparameters fixed across all datasets and architectures. This choice is motivated by recent observations that extensive hyperparam-eter tuning may introduce evaluation biases in domain generalization bench-marks [58]. While we do not modify the standard evaluation protocol, the results suggest strong performance under a shared hyperparameter configuration. 
+
+## D Standard Deviation across Seeds 
+
+All results are averaged over three seeds; Tab. I reports per-method standard deviations on the CLIP-ViT-B/16 backbone. 
+
+## E More Experimental Details 
+
+Following common practice, we train for 5K iterations with batch size 32 (64 for OfficeHome) for TerraIncognita, OfficeHome, PACS, and VLCS, and for 15K for DomainNet and NICO ++ with a batch size of 64. We use cosine annealing without warmup. Learning rates are set to 10 −4 for ResNet/EfficientNet, 10 −6
+
+for CLIP backbones, and 10 −5 otherwise. Our mapper is implemented as a lightweight Transformer encoder that projects image features into the text embedding space, and its learning rate is fixed to 
+
+10 −4 in all experiments. To stabilize training on OfficeHome, we freeze the pre-trained image backbone for the first 1K iterations and optimize only the mapper before full end-to-end training. Our implementation is based on PyTorch 1.13 with CUDA 11.8, and all experiments are conducted on a single NVIDIA RTX A6000 GPU. We report MIRO, CLIPood, RISE, and VL2V results using their official codebases, and extend them to previously unreported backbones. For these un-reported backbone settings, we tune only the learning rate around each method’s default values. Specifically, we search { 5 · 10 −6, 10 −5, 3 · 10 −5, 5 · 10 −5, 10 −4}for MIRO (default: { 10 −5, 3 · 10 −5}), { 10 −5, 5 · 10 −5, 10 −4, 5 · 10 −4, 10 −3} for RISE (default: { 10 −3}), and { 5 · 10 −6, 10 −5, 5 · 10 −5, 10 −4} for both CLIPood (default: { 5 · 10 −6, 10 −5}) and VL2V (default: { 5 · 10 −5}). Model selection for these baselines follows the standard DomainBed protocol used in prior work, where hyperparameters are selected separately for each target-domain split. In vi E. Lyou et al. 
+
+Table II: DG performance across diverse backbones and pretraining sources .Parentheses indicate the pretraining source. 
+
+Method VLCS PACS OH TI Avg VLCS PACS OH TI Avg 
+
+EfficientNet (IN-1K) Swin Transformer (IN-21K) 
+
+LP 80.7 72.2 69.0 39.6 65.4 78.4 93.4 86.6 55.5 78.5 MIRO 80.2 83.2 72.4 40.6 69.1 82.0 93.5 83.5 57.7 79.2 CLIPood 79.1 91.2 71.1 43.8 68.7 76.9 86.2 80.9 40.4 71.1 RISE 80.9 88.0 68.4 45.1 70.6 84.3 94.2 82.8 53.4 78.7 VL2V 80.5 86.8 75.3 47.2 72.5 82.4 93.1 84.8 57.0 79.3 Ours 84.0 92.3 75.7 46.8 74.7 88.8 97.7 92.9 78.4 89.4 
+
+RegNetY-16GF (IN-12K) DeiT (IN-1K) 
+
+LP 78.1 86.2 68.4 46.3 69.7 79.9 89.4 77.6 49.5 74.1 MIRO 79.0 85.4 70.5 50.4 71.3 80.1 83.7 78.1 49.9 72.9 CLIPood 81.7 94.1 81.1 57.5 78.6 81.0 90.6 77.3 49.8 74.7 RISE 82.3 89.1 74.9 35.1 70.4 83.5 90.6 74.8 46.9 74.0 VL2V 83.0 93.1 83.6 55.3 78.8 81.5 90.8 80.5 53.4 76.6 Ours 85.4 99.4 87.2 73.5 86.4 88.1 95.8 88.7 71.5 86.0 
+
+RegNetY-16GF (IG-3B) DINOv2 (LVD-142M) 
+
+LP 81.0 92.4 81.3 55.2 77.5 82.6 95.8 84.5 57.4 80.1 MIRO 79.9 97.4 80.4 58.9 79.2 82.6 95.3 85.1 60.4 80.9 CLIPood 81.6 97.8 83.3 62.5 81.3 82.4 96.8 81.6 58.1 79.7 RISE 82.8 95.5 81.5 60.2 80.0 81.4 88.3 69.0 40.2 69.7 VL2V 82.7 96.7 84.0 61.1 81.1 83.6 95.1 85.1 61.6 81.3 Ours 88.5 99.7 88.4 76.7 88.3 87.9 97.7 90.2 63.6 84.9 
+
+contrast, our method uses a single universal hyperparameter setting across do-mains, datasets and architectures, as described in Appendix C. 
+
+## F Performance Across Diverse Backbones 
+
+Tab. II provides the detailed results corresponding to Fig. 4 in the main text, cov-ering diverse CNN and Transformer backbones with different pretraining sources. 
+
+## G Failure Analysis: Trade-off with Visual Context 
+
+We compare the predictions of VL2V and of our method on OfficeHome in Fig. IV. Our method fails on 7.1% of samples where VL2V is correct, while it succeeds on 13.4% of samples where VL2V fails, suggesting that image guidance is overall more harmful than beneficial under domain shift. We further inspect the 7.1% failure subset in Fig. IV. These cases often in-volve visually ambiguous objects whose local appearance alone is not sufficiently distinctive. For example, our method predicts printer for an oven , spoon for toys ,and bucket for trash can . Broader image cues can then help disambiguate the Domain Generalization via Text-Anchored Information Bottleneck vii 
+
+Fig. IV: Comparison between our method and VL2V on OfficeHome . Exam-ples are drawn from the 7.1% subset where VL2V predicts correctly and ours fails, often involving visually ambiguous objects for which broader image cues aid disambiguation. 
+
+correct class. These examples highlight a trade-off of our approach: reducing non-essential visual variation improves overall robustness, but can hurt recognition when additional visual cues are needed for disambiguation. 
+
+## H Loss Ablation Across Backbones 
+
+Table III: Ablation of loss components on OfficeHome across diverse backbones. 
+
+Lsem Lalign Lcomp RN-50 ViT CLIP EffNet Reg-IN Reg-IG DeiT SwinT DINO 
+
+✓ 73.4 82.4 85.2 71.3 82.5 84.9 80.7 87.9 85.0 
+
+✓ ✓ 76.0 81.9 85.9 75.0 82.7 83.6 81.2 86.4 83.7 
+
+✓ ✓ 78.9 85.1 90.8 76.7 83.8 87.0 85.7 90.0 85.4 
+
+✓ ✓ ✓ 79.0 86.4 93.2 75.7 87.2 88.4 88.7 92.9 90.2 
+
+To further validate the effectiveness of our loss design across backbones, Tab. III extends the ablation study to diverse architectures. Starting from Lsem , while adding Lcomp generally is more impactful than adding Lalign alone, their com-bination enforces directional consistency and reduces intra-class variance, facili-tating convergence to higher accuracy across all backbones. 
+
+## I Exploration on Prompt Types 
+
+We evaluate richer, AI-generated prompts on four benchmarks. We consider two richer description styles, one based on lexical and hierarchical semantics and another on class-specific shape and function, against the simple class template. As shown in Tab. IV, increasing prompt richness yields no consistent gain over the simple template, indicating that class-level prompts already suffice for sep-arability. viii E. Lyou et al. 
+
+Table IV: Exploration on prompt types. Prompt vlcs pacs oh ti Avg AI caption (lexical/hierarchical) 83.3 94.0 77.3 54.9 77.4 AI caption (shape/function) 82.3 95.1 79.4 59.7 79.1 ‘a photo of a [cls]’ 81.7 96.9 79.0 59.9 79.4 Table V: Top-5 most similar classes for selected OfficeHome queries under CLIP and MiniLM text embeddings. 
+
+Query Top-5 Similar Classes (CLIP / MiniLM) candles CLIP: knives, bottle, flowers, shelf, toys 
+
+MiniLM: lamp shade, desk lamp, flowers, pencil, bed 
+
+clipboards CLIP: folder, notebook, laptop, shelf, calendar 
+
+MiniLM: paper clip, scissors, post-it notes, pen, pencil 
+
+couch CLIP: bed, TV, chair, keyboard, shelf 
+
+MiniLM: chair, bed, curtains, desk lamp, TV 
+
+folder CLIP: computer, calendar, notebook, laptop, printer 
+
+MiniLM: file cabinet, trash can, paper clip, notebook, shelf 
+
+fork CLIP: pen, knives, toothbrush, scissors, pencil 
+
+MiniLM: spoon, knives, mug, scissors, bike 
+
+hammer CLIP: drill, radio, pen, speaker, computer 
+
+MiniLM: drill, screwdriver, knives, eraser, mug 
+
+helmet CLIP: kettle, bucket, backpack, mug, hammer 
+
+MiniLM: backpack, glasses, bike, hammer, webcam 
+
+## J Class Similarity Comparisons Across Text Encoders 
+
+In Tab. V, we report the top-5 nearest classes for several OfficeHome query labels using CLIP and MiniLM text embeddings. The two encoders capture similarity in different ways. CLIP often favors visual or shape-based resemblance; for example, for helmet , it retrieves kettle and bucket , and for fork , it retrieves 
+
+pen and knives . In contrast, MiniLM tends to emphasize semantic or functional relatedness: for clipboards , it retrieves paper clip and post-it notes , and for fork ,it retrieves spoon and knives . This comparison highlights that different text encoders induce different neighborhood structures, yet both provide semantically organized anchor spaces.

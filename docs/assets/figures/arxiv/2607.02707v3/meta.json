@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.02707v3/fig-001.webp",
+      "caption": "Figure A.1. Comparison of labeled point clouds obtained by reprojection from AnyCam[50], SS3D + VLRC, and DUSt3R, with KITTI ground truth shown for reference. For visualization, reprojections are computed from ground-truth labels rather than CLIP predictions. AnyCam exhibits strong geometric distortions, while DUSt3R benefits from supervised training and heavier test-time alignment/bundle adjustment. In contrast, our method remains fully self-supervised and lightweight at inference.",
+      "page": 13,
+      "index": 1,
+      "width": 772,
+      "height": 374
+    },
+    {
+      "url": "assets/figures/arxiv/2607.02707v3/fig-002.webp",
+      "caption": "Figure 4. Qualitative open-vocabulary 3D results on KITTI. Each row shows, from left to right: Input frame, Point cloud, Prompt heatmap, and Depth. The heatmaps are generated from text queries that are respectively from top to bottom: “Where are the trees?”, “Where are the cars?”, and “Where is the person?”.",
+      "page": 8,
+      "index": 2,
+      "width": 1039,
+      "height": 442
+    },
+    {
+      "url": "assets/figures/arxiv/2607.02707v3/fig-003.webp",
+      "caption": "Figure 5. Effect of VLRC on open-vocabulary 3D localization. Without VLRC, cars are not well located and the person is missed. Adding VLRC produces cleaner and more spatially coherent 3D activations.",
+      "page": 8,
+      "index": 3,
+      "width": 485,
+      "height": 387
+    },
+    {
+      "url": "assets/figures/arxiv/2607.02707v3/fig-004.webp",
+      "caption": "Figure 2. Reprojection of a point p ∈ R3: the head of a cyclist - The 3d point centered on the head of the cyclist is reprojected on the successive frames and the corresponding Dense VLM features are extracted with a frozen encoder and compared across the reprojected correspondences using a cosine dissimilarity loss. VLRC encourages the predicted geometry to align multi-view language-grounded features consistently across views. P denotes the set of target-source frame pairs used for reprojection.",
+      "page": 5,
+      "index": 4,
+      "width": 932,
+      "height": 524
+    }
+  ]
+}
