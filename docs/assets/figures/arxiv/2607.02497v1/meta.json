@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.02497v1/fig-001.webp",
+      "caption": "Figure 2 Overview of the PanoSeeker framework. PanoSeeker integrates a VLM with EgoSphere memory to predict movements (∆θt,∆ϕt) from inputs (Vt, I,Mt). Subsequently, an Active Alignment and Segmentation module generates the mask S. Exploration efficiency is guided by efficiency (Reff) and terminal (Rterm) rewards. Bottom: visualization of a search trajectory and its associated memory accumulation.",
+      "page": 6,
+      "index": 1,
+      "width": 977,
+      "height": 773
+    },
+    {
+      "url": "assets/figures/arxiv/2607.02497v1/fig-002.webp",
+      "caption": "Figure 1 Active Panoramic Referring Segmentation (APRS) requires an agent to search for and segment a target (e.g., finding the “floor cabinet ”) within a continuous 360◦ environment based on a user instruction. The bottom row illustrates a search trajectory: the agent adjusts its camera pose (θ, ϕ) to reason about spatial relations (e.g., “opposite the bed”) and search the target for segmentation.",
+      "page": 2,
+      "index": 2,
+      "width": 982,
+      "height": 694
+    },
+    {
+      "url": "assets/figures/arxiv/2607.02497v1/fig-003.webp",
+      "caption": "Figure 3 Visualization Results. Red dots denote initial viewpoints; blue boxes highlight final targets found by PanoSeeker. While these visualizations only show 4-step trajectories, extended scenarios can be found in the Appendix.",
+      "page": 10,
+      "index": 3,
+      "width": 986,
+      "height": 664
+    },
+    {
+      "url": "assets/figures/arxiv/2607.02497v1/fig-004.webp",
+      "caption": "Table 2 Quantitative comparison on the APRS benchmark. We compare PanoSeeker with static RIS (processing the entire panorama), heuristic scanning (Upper → Equator → Lower), and active VLM agents. PanoSeeker achieves a significant leap in exploration efficiency (SPL and AS) thanks to its EgoSphere spatial memory and GRPO-optimized [35] policy. The best results are in bold.",
+      "page": 9,
+      "index": 4,
+      "width": 968,
+      "height": 558
+    },
+    {
+      "url": "assets/figures/arxiv/2607.02497v1/fig-005.webp",
+      "caption": "Table 1 Taxonomy of Spatial Referring Expressions in the APRS Benchmark. O is the target object; {A} denotes visual attributes; R represents spatial relations; v is the initial camera viewpoint; and Oanc is the anchor object.",
+      "page": 5,
+      "index": 5,
+      "width": 968,
+      "height": 231
+    }
+  ]
+}

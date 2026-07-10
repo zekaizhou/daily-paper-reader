@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.03836v1/fig-001.webp",
+      "caption": "Figure 1: Scatter plot demonstrating the specialization gap. Small, domain-tuned TrOCR models achieve the lowest CER, outperforming general-purpose VLMs that are larger in parameter size. Mistral-OCR-3 is assumed to be the largest, as the creator doesn’t publish its actual size.",
+      "page": 1,
+      "index": 1,
+      "width": 446,
+      "height": 315
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03836v1/fig-002.webp",
+      "caption": "Figure 4: Parallel coordinates chart comparing the top pipeline topologies across five normalized NLP metrics. While P1 dominates exact-match metrics, the full pipeline P4 remains highly competitive on semantic metrics.",
+      "page": 6,
+      "index": 2,
+      "width": 437,
+      "height": 287
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03836v1/fig-003.webp",
+      "caption": "Table 3: Comprehensive evaluation results across all individual execution runs for each pipeline topology. (O1: PaddleOCR, O2: TRIDIS, O3: TrOCR Medieval Base, C1: ByT5 (ours), C2: ByT5 (yaya), R: RAG. The ↑ symbol indicates that higher scores are better, while ↓ indicates that lower scores are better. RR stands for refusal rate, the percentage of samples where the API refused to return a response due to safety guardrails. The full table is in the Appendix C.",
+      "page": 7,
+      "index": 3,
+      "width": 457,
+      "height": 498
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03836v1/fig-004.webp",
+      "caption": "Table 11: Fair Arena. (O2: TRIDIS, O3: TrOCR Medieval Base, C1: ByT5 (ours) fine-tuned on specialization-gap OCR outputs, C2: ByT5 (yaya) from (Momtaz et al., 2025), R: RAG). The ↑ symbol indicates that higher scores are better. BERTScore is rescaled. The bold-red line shows the best pipeline configuration in the arena, red lines show the best pipelines in their own group of topology.",
+      "page": 13,
+      "index": 4,
+      "width": 727,
+      "height": 477
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03836v1/fig-005.webp",
+      "caption": "Table 10: Comprehensive evaluation results across all individual execution runs for each pipeline topology. (O1: PaddleOCR, O2: TRIDIS, O3: TrOCR Medieval Base, C1: ByT5 (ours) fine-tuned on specialization-gap OCR outputs (CER 0.1-0.4), C2: ByT5 (yaya) from (Momtaz et al., 2025), R: RAG). The ↑ symbol indicates that higher scores are better, while ↓ indicates that lower is better. BERTScore is rescaled. RR stands for refusal rate – the percentage of samples where the API refused to return a response due to safety guardrails.",
+      "page": 13,
+      "index": 5,
+      "width": 704,
+      "height": 498
+    },
+    {
+      "url": "assets/figures/arxiv/2607.03836v1/fig-006.webp",
+      "caption": "Figure 3: (a) Fair Arena Representativeness Check. Length-weighted CER density for each OCR model over the full corpus and the Fair Arena subset. O1 is Paddle, O2 is TRIDIS, O3 is TrOCR. (b) Performance Density Analysis. Individual pipeline distributions for topologies P0 through P4 on the Shared Benchmark, shown as per-sample sentence-level ChrF densities.",
+      "page": 5,
+      "index": 6,
+      "width": 902,
+      "height": 344
+    }
+  ]
+}

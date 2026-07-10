@@ -1,0 +1,236 @@
+Title: Dual-Selective Network for Domain-Incremental Change Detection
+
+URL Source: https://arxiv.org/pdf/2607.02299v1
+
+Published Time: Fri, 03 Jul 2026 01:16:17 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# Dual-Selective Network for Domain-Incremental Change Detection 
+
+Yuzhi He, Junxi Huang, Haorui Wu, Jiahui Qu †
+
+Xidian University, Xi’an, China 
+
+{23012100059,24012100067,23012100073}@stu.xidian.edu.cn, jhqu@xidian.edu.cn †Corresponding author 
+
+Abstract. Domain-incremental change detection (DICD) continuously adapts models to new geographic domains while preserving prior knowl-edge. However, a structural mismatch exists: the label space remains fixed while domain characteristics vary drastically. Consequently, incre-mental models struggle to maintain stable spatial change representations across domains. Existing strategies—such as replay-based or regularization-based methods—often fail to scale to long domain sequences, leading to knowledge degradation or increased computational cost. We propose 
+
+Dual-Selective Incremental Network (DSINet), a unified framework built on visual state space models. DSINet leverages Mamba’s input-dependent selective mechanism through a selective spatial state unit (S 3U). This unit preserves stable spatial change structures while filter-ing domain-specific variations during feature propagation. As a result, spatial representations remain stable across domains, preventing the ac-cumulation of feature confusion over incremental steps. Additionally, we employ a concentration-balanced distillation (CBD) strategy to stabilize knowledge transfer across domains. It balances hardness and confidence concentration effects during incremental updates. This ensures reliable probability mass allocation and prevents over-smoothing or mode col-lapse during distillation. Together, these mechanisms maintain stable learning dynamics throughout incremental stages. Experimental results demonstrate that DSINet mitigates knowledge degradation across long domain sequences while maintaining the linear computational efficiency of state space models. 
+
+Keywords: Incremental Learning, Visual State Space Models, Knowl-edge Distillation, Remote Sensing 
+
+## 1 Introduction 
+
+Change detection (CD) monitors earth surface dynamics and remains fundamen-tal to remote sensing [5, 4]. In practice, CD models must continuously integrate data from newly observed geographic regions. This requirement naturally moti-vates continual learning. Task-incremental learning (TIL) relies on explicit task identifiers, while class-incremental learning (CIL) expands the categorical label  
+
+> arXiv:2607.02299v1 [cs.CV] 2 Jul 2026 2He et al.
+
+space [11]. In contrast, domain-incremental learning (DIL) maintains a consis-tent learning objective while accommodating variations in input data distribu-tions [11, 8]. For practical CD applications, domain-incremental change detection (DICD) is particularly relevant [14]. As illustrated in Fig. 1, DICD maintains a fixed binary label space (changed vs. unchanged), while the input feature distribution shifts across different geographic domains. However, this setting in-troduces a structural mismatch. The discrepancy between a constant label space and shifting feature distributions causes spatial representation confusion—newly encountered domain-specific variations overwrite the domain-agnostic structural knowledge essential for fundamental change identification.  
+
+> Fig. 1. Comparison between standard incremental learning and DICD (a) Standard incremental learning: both feature and label spaces expand with new classes. (b) DICD: fixed binary label space with shifting feature domains.
+
+Existing continual learning frameworks primarily mitigate catastrophic for-getting through data replay or regularization [13]. While effective for short do-main sequences, they encounter stability challenges when scaled to longer trajec-tories. Replay-based methods preserve prior knowledge by maintaining a memory buffer of historical samples [9]. However, under strict memory constraints, the representation of earlier domains becomes progressively diluted as new domains are encountered. This data sparsity restricts spatial diversity, causing the model to overfit on a limited subset rather than generalizing past structural knowledge. Alternatively, regularization-based methods, particularly knowledge distillation (KD) [7], preserve prior knowledge by constraining network updates. Yet, when spatial features remain entangled and probability mass is rigidly matched via standard Kullback-Leibler Divergence [12], the model suffers from representa-tion confusion and distribution over-smoothing. Over extended sequences, these step-wise inaccuracies accumulate, degrading the historical teacher model and causing it to transfer unreliable structural priors to subsequent tasks. Conse-quently, scaling DICD to long sequences requires explicitly stabilizing both spa-tial feature propagation and knowledge transfer at every incremental step to mitigate error accumulation. To address these challenges, we design the DSINet, a unified teacher-student framework built upon SSMs [15, 4]. By establishing rigorous step-wise stability across both spatial feature propagation and probabilistic knowledge transfer, Dual-Selective Network for Domain-Incremental Change Detection 3
+
+DSINet effectively mitigates representation confusion and error accumulation in long domain sequences. At the spatial level, we design the S 3U. Instead of relying on rigid param-eter isolation, S 3U leverages the input-dependent selective mechanism of SSMs to dynamically assign update step sizes. This active selection inherently pre-serves domain-agnostic geographic structures while filtering out domain-specific environmental noise. Consequently, S 3U stabilizes spatial representations and prevents the feature-level confusion that typically triggers catastrophic forget-ting. At the optimization level, we introduce CBD to ensure stable knowledge transfer. To overcome the distribution matching dilemma in traditional distillation— which often leads to over-smoothing or background mode collapse—CBD re-formulates probability matching as a selective allocation process via the α-β
+
+divergence framework [12]. By dynamically balancing hardness-concentration (regions with high teacher-student discrepancies) and confidence-concentration (structurally certain predictions), CBD acts as a probabilistic filter. Together, these dual-selective mechanisms enable the student network to inherit reliable structural priors without degradation, allowing DSINet to scale robustly across continuous domains while maintaining the O(N ) linear computational efficiency of its SSM backbone. To summarize, the contributions of this work are as follows: 
+
+– We propose DSINet , a dual-selective framework designed to address the challenges of representation confusion and distillation instability in long do-main sequences. The framework explicitly maintains step-wise stability to mitigate severe error accumulation across prolonged domain shifts. 
+
+– We design the S3U to overcome spatial knowledge confusion. By leveraging the data-dependent selection mechanism of SSMs, it preserves universal ge-ographic structures while filtering domain-specific variations, ensuring more stable feature propagation than static architectures. 
+
+– We introduce CBD to stabilize knowledge transfer. By treating probabil-ity matching as a selective allocation process, CBD balances hardness and confidence concentration to prevent distribution over-smoothing and mode collapse. Extensive experiments demonstrate that DSINet effectively mit-igates knowledge degradation without the prohibitive costs of large-scale data replay. 
+
+## 2 Methodology 
+
+2.1 Problem Formulation and Dual-Selective Architecture 
+
+The objective of DICD is to enable a model to sequentially learn mapping functions across continuous geographical domains D1, D2, . . . , DT without catas-trophic forgetting. At each incremental step t, the model receives bi-temporal images Xt = {x1, x 2}t from a new domain Dt and outputs a binary prediction map yt ∈ { 0, 1}H×W . In the context of long domain sequences, standard incre-mental updates inevitably lead to severe error accumulation. Therefore, main-4 He et al.  
+
+> Fig. 2. Overview of the proposed DSINet. Designed for long domain sequences, DSINet maintains step-wise stability through two selection mechanisms.
+
+taining rigorous step-wise stability is critical to prevent historical representations from being overwritten by continuous environmental shifts. To resolve spatial knowledge confusion and distribution mismatch in long-sequence DICD, we introduce DSINet , whose overall framework is illustrated in Fig. 2. The network adopts a teacher-student Siamese structure consisting of a shared SSM-based encoder F and domain-specific decoders Gt. The forward pass at step t is formulated as: 
+
+Mt(Xt; Ws, W t) = Gt(F (Xt; Ws, ϕ t)) , (1) where Ws represents the domain-shared parameters, and Wt = {ϕt, G t} denotes the domain-specific parameters for step t. Supported by the O(N ) linear com-plexity of the 2D cross-scan mechanism, this architecture renders high-resolution dual-model processing computationally efficient. Crucially, rather than relying on static regularization, DSINet ensures step-wise stability through two orthogonal active selection mechanisms: the S 3U for dynamic spatial feature disentanglement (detailed in Section 2.2), and CBD for selective probability mass allocation during knowledge transfer (detailed in Section 2.3). 
+
+2.2 Representational Level: Selective Spatial State Unit 
+
+In incremental CD, maintaining a strictly binary label space while feature dis-tributions shift across continuous domains naturally leads to optimization diver-gence. To address this, the network must explicitly disentangle domain-agnostic structural representations from domain-specific spectral variations. Unlike tra-ditional domain residual units (DRUs) that rely on static parameter isolation, Dual-Selective Network for Domain-Incremental Change Detection 5
+
+we design the S 3U to dynamically route and filter features based on their spatial context as shown in Fig. 3.  
+
+> Fig. 3. Structure of the S 3U. The input feature map is dynamically disentangled into two parallel pathways. The domain-shared pathway utilizes the 2D cross-scan mechanism of SSMs to capture global domain-agnostic structures. Simultaneously, the domain-specific pathway extracts localized variations using a lightweight convolution. The concatenated features are calibrated via channel-wise affine transformations, pro-jected back to the original dimension, and fused via a residual connection.
+
+Selective State Space Mechanism. The foundational SSM maps a 1D input sequence x(t) ∈ R to an output y(t) ∈ R through a latent state h(t) ∈ RN . This process is formulated as a linear continuous-time ordinary differential equation (ODE): 
+
+h′(t) = Ah(t) + Bx(t), y(t) = Ch(t). (2) To integrate this into a deep learning framework, the continuous parame-ters ( A, B) are discretized using a timescale parameter ∆ via the zero-order hold rule. Unlike standard SSMs, the visual Mamba architecture introduces a data-dependent selection mechanism [15, 4]. Specifically, the matrices B, C, and crucially the timescale ∆, are parameterized as functions of the input. This selectivity enables the network to dynamically filter information based on the current spatial context rather than applying a uniform transformation. 
+
+Dynamic Feature Disentanglement. We embed this selective capability into our parameter decomposition strategy. Let xj−1 
+
+> t
+
+∈ RB×C×H×W denote the input feature map at the (j − 1) -th module. The S 3U decomposes the representation into two parallel pathways: The domain-shared pathway extracts generalized change representations us-ing the Selective SSM, denoted as WSSM (·). By flattening the spatial dimensions into a 1D sequence via a 2D cross-scan mechanism, the model assigns larger step sizes ∆ to low-frequency, domain-agnostic structures (e.g., universal building footprints), actively updating the hidden state h. Conversely, it assigns smaller 6 He et al. 
+
+step sizes to domain-specific environmental noise, effectively treating them as transient variations to be ignored. The domain-specific pathway employs a lightweight convolution Cj−1 
+
+> t
+
+(·), ini-tialized exclusively for domain t, to capture localized regional attributes. The domain-agnostic structures and domain-specific variations are then concatenated along the channel dimension and calibrated using learnable channel-wise scaling (γj ∈ R2C ) and shifting ( δj ∈ R2C ) parameters: 
+
+Dconcat = γj ⊙
+
+h
+
+Cj−1 
+
+> t
+
+(xj−1 
+
+> t
+
+), W SSM (xj−1 
+
+> t
+
+)
+
+i
+
++ δj , (3) where [·] denotes channel concatenation and ⊙ represents the Hadamard prod-uct. To align the dimensionalities for the subsequent residual connection, the calibrated 2C-channel feature is reduced back to C channels via a linear projec-tion layer P(·) (e.g., a 1 × 1 convolution) and followed by a non-linear activation: 
+
+xjt = xj−1 
+
+> t
+
++ ReLU (P(Dconcat )) . (4) Through this structurally rigorous mechanism, S 3U ensures that the shared pa-rameters Ws continuously accumulate generalized geographical features, while the specific parameters ϕt absorb shifting distributions, fundamentally prevent-ing the feature-level overlap that causes catastrophic forgetting. 
+
+2.3 Optimization Level: Concentration-Balanced Distillation 
+
+Preserving historical knowledge requires effective distillation between a frozen teacher model Mt−1 and an active student Mt. However, in continuous CD tasks, standard distillation is hindered by a distribution matching dilemma. 
+
+The Distribution Matching Dilemma. Standard knowledge distillation typ-ically minimizes the forward Kullback-Leibler divergence (FKLD). From a gradi-ent optimization perspective, FKLD allocates probability mass evenly, exhibiting a weak concentration effect. This forces the student distribution to become overly smooth, diluting the sharp structural boundaries transferred from the teacher. Conversely, utilizing reverse KLD (RKLD) prioritizes modes where the student is already confident, often driving the model into mode collapse.[12] This causes the student to ignore the broader, soft-label structural information captured by the teacher. 
+
+α − β Divergence for Selective Allocation. To resolve this dilemma, we introduce the CBD strategy, formulated upon the α − β divergence framework [12]. For a teacher distribution p and a student distribution qθ , the divergence is defined as: 
+
+D(α,β ) 
+
+> AB
+
+(p ∥ qθ ) ≜
+
+− 1
+
+αβ 
+
+X
+
+> k
+
+
+
+p(k)αqθ (k)β − αα + β p(k)α+β − βα + β qθ (k)α+β
+
+
+
+. (5) Dual-Selective Network for Domain-Incremental Change Detection 7
+
+where α, β ∈ R and α + β̸ = 0 . The singularities at α = 0 or β = 0 are rigorously resolved via continuous extension using L’Hôpital’s rule. This generalized family smoothly recovers FKLD as (α → 1, β → 0) and RKLD as (α → 0, β → 1) .Crucially, these hyperparameters decouple two competing optimization forces. The parameter α controls hardness-concentration : decreasing α amplifies the penalty on regions with large teacher-student discrepancies. Simultaneously, β
+
+controls confidence-concentration : increasing β focuses gradient updates on pre-dictions where the student is highly confident. By selecting intermediate val-ues (e.g., α, β ∈ (0 , 1) ), CBD selectively allocates probability mass. It penalizes structural errors without over-smoothing, while preventing the student from col-lapsing into dominant background modes. 
+
+Comprehensive Distillation Objective. While CBD stabilizes logit-level semantic transfer, spatial consistency across incremental stages must also be strictly enforced. To complement CBD, we integrate a multi-layer feature map (MFM) loss to anchor intermediate spatial representations. It computes the nor-malized mean squared error (MSE) between the teacher and student features: 
+
+LM F M = X
+
+> l∈L
+
+1
+
+ClHlWl
+
+F lt−1(Xt) − F lt (Xt) 22 , (6) where L denotes the selected intermediate stages in the encoder, and Cl, H l, W l
+
+are the dimensions of the l-th feature map. By explicitly penalizing representa-tional drift at multiple scales, LM F M acts as a spatial regularizer that directly supports the feature propagation stability of the S 3U. The overall training objective combines the task-specific supervision with this dual-level distillation strategy: 
+
+Ltotal = LCE + λCBD D(α,β ) 
+
+> AB
+
+(p ∥ qθ ) + λM F M LM F M , (7) where LCE is the standard cross-entropy loss evaluated against the strictly bi-nary label space, and λCBD and λM F M are hyperparameters balancing the dis-tillation terms. 
+
+## 3 Experiments 
+
+3.1 Datasets 
+
+To evaluate the DICD performance, we utilize three distinct datasets: 
+
+– SYSU-CD : Contains 0.5m resolution aerial images. We utilize a subset of 4,000 pairs, partitioned into 3,000 pairs for training and 1,000 pairs for testing. 
+
+– CDD : Comprises season-varying images from Google Earth. We selected 10,000 pairs of images for training and 3,000 pairs for testing. 
+
+– PRCV : Comprises 512 × 512 multitemporal images focusing on ground ob-ject changes. We leverage 6,000 pairs for training and 3,000 pairs for testing. 8 He et al. 
+
+3.2 Implementation Details 
+
+Models are all implemented in PyTorch and trained on a single RTX 4090D GPU for 50 epochs. The network is optimized via Adam with initial learning rate 5 × 10 −4. Distillation weights are empirically set to λc = 0 .1 and λf m = 0 .1
+
+to balance knowledge retention and acquisition. For ablation studies, α = 0 .8,
+
+β = 0 .8, and temperature T = 1 .0 are fixed. Evaluation metrics include F1-score and IoU, with all results reported in percentages. To explicitly evaluate the model’s resistance to catastrophic forget-ting during incremental learning sequences, we introduce the memory retention metrics, Mem F1 and Mem IoU. Specifically, the retention is calculated as the ratio of the model’s performance on the old domain after incremental learning (Mnew ) to its original baseline performance on that domain ( Mbase ): 
+
+M em M = Mnew 
+
+Mbase 
+
+× 100% (8) where M denotes either the F1-score or IoU. Multi-stage performance is denoted as X →Y or X →Y→Z. 
+
+3.3 Performance Comparison 
+
+Our framework is compared with static models including CNNs, Transformers, Mambas and incremental learning (IL) baselines to evaluate catastrophic forget-ting mitigation under a binary label space. 
+
+Table 1. Accuracy Assessment for Two-Stage Incremental Change Detection. In this and other tables, C indicates CNN-based models, T indicates Transformer-based mod-els, M indicates Mamba-based models, and IL indicates incremental learning baselines. We highlight the highest values in red and the second-highest results in blue. Type Method Base Memory Old Memory New Memory SYSU SYSU (+C) SYSU (+P) CDD PRCV F1 IoU Mem F1 Mem IoU Mem F1 Mem IoU F1 IoU F1 IoU CFC-Siam-conc [3] 74.86 59.82 44.95 33.81 39.05 28.62 75.16 60.28 72.14 56.42 FC-Siam-diff [3] 75.99 61.28 43.24 32.08 40.74 29.89 77.15 62.73 71.09 55.14 CDNet [1] 72.87 57.32 37.92 27.97 34.33 24.94 71.65 55.79 67.76 51.24 LUNet [10] 75.48 60.61 39.22 29.32 37.73 27.39 80.75 67.73 76.50 61.97 HANet [6] 77.46 63.21 42.33 31.45 40.56 29.48 79.67 66.22 75.33 60.42 TChangFormerV1 [2] 78.26 64.28 31.45 22.16 35.99 25.50 83.17 71.29 74.39 59.23 ChangFormerV2 [2] 76.47 61.90 21.87 15.19 29.45 20.52 83.38 71.65 76.61 62.10 ChangFormerV3 [2] 79.18 65.53 26.15 18.27 34.38 24.04 80.06 66.77 74.64 59.55 TransWCD-pixel [16] 80.04 66.72 43.12 31.26 39.65 28.27 84.72 73.96 78.80 64.99 M ChangeMamba [4] 80.58 67.48 46.75 34.39 43.11 30.57 78.31 64.33 74.29 59.10 RSMamba [15] 80.26 67.02 45.59 33.41 38.50 27.26 81.64 69.21 73.18 57.70 IL MDINet (FT) [14] 76.43 61.85 61.58 49.76 54.09 42.13 82.21 69.80 74.03 58.77 MDINet (FE) [14] 52.24 40.33 46.72 35.14 79.60 66.10 71.52 55.67 MDINet (KD) [14] 63.29 51.58 55.70 43.72 83.03 71.03 75.09 60.11 Ours 81.56 68.85 70.21 58.26 59.45 46.47 83.67 71.93 79.34 65.75 Dual-Selective Network for Domain-Incremental Change Detection 9
+
+Two-Stage Domain Incremental Change Detection. As shown in Table 1, static architectures prioritize plasticity at the cost of severe catastrophic forget-ting. For example, after adapting to CDD, TransWCD-pixel retains only 43.12% of its base F1 score on SYSU. While incremental baselines like MDINet mitigate this degradation, they still struggle to fully preserve historical knowledge. In contrast, our proposed DSINet achieves a state-of-the-art balance between stability and plasticity. It delivers the highest knowledge retention across all base-lines without compromising its adaptability to new domains, achieving highly competitive F1 scores of 83.67% on CDD and 79.34% on PRCV. This optimal tradeoff demonstrates that our dual-selective mechanism effectively disentangles and preserves domain-agnostic structures during new environmental adaptation. 
+
+Three-Stage Domain Incremental Change Detection. As the incremental sequence lengthens, accumulated domain shifts severely exacerbate knowledge confusion. Table 2 details the memory retention metrics across the S →C→Pand S →P→C sequences, explicitly tracking the retention of both the base and intermediate domains after adapting to the final target. 
+
+Table 2. Accuracy Assessment for Three-Stage Incremental Change Detection. Type Method S→C→P Sequence S→P→C Sequence Mem (S) Mem (C) Mem (S) Mem (P) Mem F1 Mem IoU Mem F1 Mem IoU Mem F1 Mem IoU Mem F1 Mem IoU CFC-Siam-conc [3] 29.46 20.51 46.41 34.24 29.13 20.47 49.31 36.28 FC-Siam-diff [3] 30.78 21.63 46.68 34.76 30.57 21.64 48.94 35.80 CDNet [1] 27.84 19.42 40.37 30.11 23.32 15.90 43.70 31.28 LUNet [10] 28.53 19.87 42.83 31.65 27.51 19.13 50.26 37.06 HANet [6] 32.11 22.72 44.10 32.55 31.06 21.95 49.98 36.68 TChangFormerV1 [2] 25.78 18.11 36.37 26.47 25.28 17.64 45.36 32.94 ChangFormerV2 [2] 16.93 11.32 35.12 25.52 22.43 15.52 42.69 31.16 ChangFormerV3 [2] 21.37 14.31 34.71 25.63 25.63 17.29 42.81 31.08 TransWCD-pixel [16] 37.85 26.93 36.43 27.20 30.42 20.87 50.96 37.78 M ChangeMamba [4] 39.23 28.16 45.70 33.69 40.79 29.47 52.53 38.43 RSMamba [15] 33.75 23.79 43.82 32.19 35.25 24.97 46.67 33.82 IL MDINet (FT) [14] 49.60 38.05 48.26 35.83 44.89 33.91 58.69 44.68 MDINet (FE) [14] 38.58 28.95 44.75 33.15 41.16 31.17 56.39 42.41 MDINet (KD) [14] 50.22 38.55 47.51 34.69 45.25 34.30 57.06 42.14 Ours 55.64 43.59 50.45 36.93 49.21 37.39 60.75 45.58 
+
+As shown in Table 2, extending the evaluation to three-stage sequences severely exacerbates historical knowledge degradation. Static models suffer ex-treme performance drops on old domains; after sequentially learning CDD and PRCV, ChangFormerV2 retains an abysmal 16.93% of its original F1 score on the base SYSU dataset. While incremental baselines like MDINet attempt to mitigate this, their standard KD produces over-smoothed probability distribu-tions that gradually erode sharp spatial boundaries over extended steps. Under these challenging conditions, DSINet exhibits superior learning sta-bility and effectively resists catastrophic forgetting. Our framework consistently achieves the highest retention metrics across all historical domains. After com-10 He et al. 
+
+pleting the full S →C→P sequence, DSINet successfully retains 55.64% Mem F1 on the base SYSU domain and 50.45% Mem F1 on the intermediate CDD do-main, outperforming the best MDINet variants by a significant margin. This quantitative advantage is visually corroborated in Figure 4, demonstrating that DSINet maintains sharp spatial boundaries and accurate change masks across all stages without the structural erosion typical of other baselines. 
+
+Fig. 4. Qualitative comparison on the three-stage incremental sequence (SYSU → CDD 
+
+→ PRCV). Visualization results on the base domain (SYSU), first new domain (CDD), and second new domain (PRCV) after full incremental training. 
+
+3.4 Ablation Study 
+
+To validate the contributions of our proposed components, we conduct an ab-lation study evaluating the S 3U and CBD. Table 3 presents the mean metrics across both two-stage and three-stage incremental sequences. Metrics represent the mean performance across all seen domains. 
+
+Table 3. Ablation study of the proposed components (S 3U and CBD) on both two-stage and three-stage incremental sequences. Method S→C S→P S→C→P S→P→CmF1 mIoU mF1 mIoU mF1 mIoU mF1 mIoU Baseline 65.71 48.93 61.73 44.64 55.94 38.83 55.14 38.07 + S 3U 67.31 50.73 63.25 46.25 58.40 41.24 59.82 42.67 + CBD 68.42 52.01 65.79 49.02 56.35 39.23 57.26 40.11         
+
+> + S 3U + CBD (Ours) 70.77 54.76 69.13 52.82 59.83 42.68 60.90 43.78
+
+Effectiveness of S 3U. Integrating the S 3U into the baseline consistently improves retention metrics across all sequences. In the challenging S →P→Csequence, S 3U elevates the baseline mF1 from 55.14% to 59.82%, demonstrating its ability to effectively filter domain-specific noise during feature propagation. By preserving domain-agnostic spatial structures, the network inherently avoids feature confusion when adapting to new geographic regions. 
+
+Effectiveness of CBD. Applying CBD alone robustly boosts overall per-formance, as seen in the S →P sequence where it improves the baseline mF1 Dual-Selective Network for Domain-Incremental Change Detection 11 
+
+from 61.73% to 65.79%. This confirms that explicitly balancing hardness and confidence during distillation prevents the over-smoothing of probability mass, allowing the model to maintain sharper structural boundaries over continuous updates compared to standard KD. 
+
+Synergistic Effect. The combination of S 3U and CBD yields the most significant gains, establishing a strong complementary relationship. While S 3Ustabilizes internal feature representations, CBD stabilizes external knowledge transfer. The combined model substantially outperforms either component alone by achieving 59.83% mF1 and 42.68% mIoU in the S →C→P sequence, firmly validating the necessity and effectiveness of our proposed framework for long-sequence DICD. 
+
+## 4 Conclusion 
+
+In this paper, we proposed the DSINet to tackle the severe catastrophic forgetting and representation confusion inherent in DICD. To address the structural mis-match caused by shifting geographic domains under a fixed binary label space, our framework establishes step-wise stability across both feature propagation and knowledge transfer. At the feature level, the S 3U leverages the input-dependent selection of SSMs to dynamically preserve domain-agnostic spatial structures while filtering out domain-specific noise. At the optimization level, the CBD strategy mitigates the distribution matching dilemma of standard knowledge distillation. By explicitly balancing hardness and confidence concentration, CBD prevents over-smoothing and mode collapse, ensuring reliable probability mass allocation over continuous incremental updates. Extensive experiments on long domain sequences validate that DSINet suc-cessfully maintains high retention of historical knowledge, preserving sharp spa-tial boundaries without compromising its ability to adapt to new environments. Ultimately, DSINet provides a highly scalable and effective solution for contin-uous earth observation, paving the way for more resilient incremental learning systems in practical remote sensing applications. 
+
+## References                           
+
+> 1. Alcantarilla, P.F., Stent, S., Ros, G., Arroyo, R., Gherardi, R.: Street-view change detection with deconvolutional networks. Autonomous Robots 42 (7), 1301–1322 (2018). https://doi.org/10.1007/s10514-018-9734-5 2. Bandara, W.G.C., Patel, V.M.: Atransformer-based siamese net-work for change detection. In: IGARSS 2022 -2022 IEEE Interna-tional Geoscience and Remote Sensing Symposium. pp. 207–210 (2022). https://doi.org/10.1109/IGARSS46834.2022.9883686 3. Caye Daudt, R., Le Saux, B., Boulch, A.: Fully convolutional siamese networks for change detection. In: 2018 25th IEEE International Conference on Image Process-ing (ICIP). pp. 4063–4067 (2018). https://doi.org/10.1109/ICIP.2018.8451652
+
+12 He et al. 4. Chen, H., Song, J., Han, C., Xia, J., Yokoya, N.: Changemamba: Re-mote sensing change detection with spatiotemporal state space model. IEEE Transactions on Geoscience and Remote Sensing 62 , 1–20 (2024). https://doi.org/10.1109/TGRS.2024.3417253 5. Cheng, G., Huang, Y., Li, X., Lyu, S., Xu, Z., Zhao, H., Zhao, Q., Xiang, S.: Change detection methods for remote sensing in the last decade: A comprehensive review. Remote Sensing 16 (13), 2355 (2024). https://doi.org/10.3390/rs16132355 6. Han, C., Wu, C., Guo, H., Hu, M., Chen, H.: Hanet: A hierarchical attention net-work for change detection with bitemporal very-high-resolution remote sensing im-ages. IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing 16 , 3867–3878 (2023). https://doi.org/10.1109/JSTARS.2023.3264802 7. Himeur, Y., Aburaed, N., Elharrouss, O., Varlamis, I., Atalla, S., Mansoor, W., Al-Ahmad, H.: Applications of knowledge distillation in remote sensing: A survey. In-formation Fusion 115 , 102742 (2025). https://doi.org/10.1016/j.inffus.2024.102742 8. Huang, W., Ding, M., Deng, F.: Domain-incremental learning for remote sensing semantic segmentation with multifeature constraints in graph space. IEEE Transactions on Geoscience and Remote Sensing 62 , 1–15 (2024). https://doi.org/10.1109/TGRS.2024.3481875 9. Lee, Y., Lee, D., Kwak, T., Kim, Y.: Er-pass: Experience replay with performance-aware submodular sampling for domain-incremental learning in remote sensing. Preprints (2025). https://doi.org/10.3390/rs17183233 10. Papadomanolaki, M., Vakalopoulou, M., Karantzalos, K.: A deep multitask learn-ing framework coupling semantic segmentation and fully convolutional lstm net-works for urban change detection. IEEE Transactions on Geoscience and Remote Sensing 59 (9), 7651–7668 (2021). https://doi.org/10.1109/TGRS.2021.3055584 11. van de Ven, G.M., Tuytelaars, T., Tolias, A.S.: Three types of incremental learning. Nature Machine Intelligence 4, 1185–1197 (2022). https://doi.org/10.1038/s42256-022-00568-3 12. Wang, G., Yang, Z., Wang, Z., Wang, S., Xu, Q., Huang, Q.: ABKD: Pursu-ing a proper allocation of the probability mass in knowledge distillation via α-
+
+β-divergence. In: Proceedings of the 42nd International Conference on Machine Learning (ICML) (2025) 13. Wang, L., Zhang, X., Su, H., Zhu, J.: A comprehensive survey of continual learning: Theory, method and application. IEEE Transactions on Pattern Analysis and Machine Intelligence 46 , 5362–5383 (2023). https://doi.org/10.1109/TPAMI.2024.3367329 14. Weng, L., Yang, W., Hu, B., Han, P., Xue, S., Zhang, Y., Li, H., Jin, J., Bu, S.: Mdinet: Multidomain incremental network for change detection. IEEE Transactions on Geoscience and Remote Sensing 62 , 1–15 (2024). https://doi.org/10.1109/TGRS.2023.3348878 15. Zhao, S., Chen, H., Zhang, X.l., Xiao, P., Lei, B., Wanli, O.: Rs-mamba for large remote sensing image dense prediction. IEEE Transactions on Geoscience and Re-mote Sensing 62 , 1–14 (2024). https://doi.org/10.1109/TGRS.2024.3425540 16. Zhao, Z., Ru, L., Wu, C., Wang, D.: Transwcd: Scene-adaptive joint constrained framework for weakly supervised change detection. IEEE Transactions on Geoscience and Remote Sensing 63 , 1–12 (2025). https://doi.org/10.1109/TGRS.2025.3545051
