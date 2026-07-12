@@ -1,0 +1,696 @@
+Title: When Simpler Is Better: Evaluating Translation Pipelines for Medieval Latin Manuscripts
+
+URL Source: https://arxiv.org/pdf/2607.03836v1
+
+Published Time: Tue, 07 Jul 2026 02:09:51 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+# When Simpler Is Better: Evaluating Translation Pipelines for Medieval Latin Manuscripts 
+
+Nguyen Kim Hai Bui 1∗ Md. Easin Arafat 1∗ Tamás Gábor Orosz 1 Mufti Mahmud 21Eötvös Loránd University 2King Fahd University of Petroleum and Minerals 
+
+{qmibhu,arafatmdeasin}@inf.elte.hu 
+
+Abstract 
+
+Despite remarkable progress in machine trans-lation, Vision Language Models (VLMs) strug-gle on historical manuscripts, a domain that stresses core Natural Language Processing (NLP) capabilities: low-resource translitera-tion, archaic vocabulary, and noisy input sig-nals. We present a systematic framework for evaluating the full image-to-translation pipeline on medieval Latin manuscripts, a set-ting in which scribal shorthand, ligatures, and parchment degradation expose failure modes that are invisible in clean-text benchmarks. Benchmarking on the CATMuS Latin dataset reveals a specialization gap: domain-specific Optical Character Recognition (OCR) models reduce character error rate by up to 4.3 × com-pared to general-purpose VLMs, despite op-erating at orders of magnitude fewer param-eters. We introduce the Interpres-Parallel-Corpus (IPC), a novel dataset comprising 1,383 aligned manuscript image lines, tran-scriptions, and expert translations, the first of its kind for medieval Latin. Our exper-iments uncover a complexity paradox: the simplest pipeline, a specialized OCR model feeding directly into a VLM, outperforms all multi-component variants. Adding retrieval-augmented generation (RAG) or post-OCR cor-rection introduces prompt saturation and er-ror propagation that degrade aggregate transla-tion quality. These findings offer both a new benchmark and practical guidance for deploy-ing translation systems in low-resource histori-cal settings. 
+
+1 Introduction 
+
+Medieval Latin manuscripts are the foundational primary sources for European history, philoso-phy, and law from late antiquity to the early mod-ern period (Bischoff, 1990). From royal charters to philosophical treatises, these documents con-tain the blueprint of Western intellectual heritage. 
+
+> ∗
+
+Equal contribution 10 1 10 2 10 3 10 4
+
+> Parameter Size (Millions, log scale)
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Character Error Rate ( )
+> better
+> Domain-tuned TrOCR
+> General-purpose VLM
+> Traditional OCR
+
+Figure 1: Scatter plot demonstrating the specialization gap. Small, domain-tuned TrOCR models achieve the lowest CER, outperforming general-purpose VLMs that are larger in parameter size. Mistral-OCR-3 is assumed to be the largest, as the creator doesn’t publish its actual size. 
+
+However, the vast majority of these collections re-main untranscribed and untranslated, locked be-hind a paleographic barrier that requires years of specialized training to overcome. Historical text is not merely a humanities concern – it serves as a stress test for NLP robustness. Archaic ortho-graphic conventions, low-resource scribal abbrevi-ations, and morphological variation that deviates sharply from modern token distributions probe fun-damental limitations in how current VLMs han-dle distributional shift. While some domains in machine translation have reached near-human par-ity (Hassan et al., 2018), historical manuscripts present a unique frontier defined by scribal abbre-viations, non-standardized ligatures, and physical parchment degradation (Derolez, 2003). The typical approach to unlocking these texts involves a multi-stage process: OCR, post-OCR correction, and semantic translation. Recent ad-vances in Transformer-based OCR (TrOCR) (Li et al., 2023) and character-level language model-
+
+> arXiv:2607.03836v1 [cs.CV] 4 Jul 2026
+
+ing (ByT5) (Xue et al., 2022) have provided pow-erful building blocks for this task. However, there is a lack of systematic evaluation regarding how these components should be integrated into an end-to-end (E2E) pipeline. Specifically, it remains unclear whether massive VLMs can bypass the need for modularity, or whether more complex, retrieval-augmented architectures can handle the inherent noise of historical transcriptions. In this paper, we introduce a modular framework designed to benchmark and optimize the journey from manuscript image to translated text. We ad-dress two primary research questions: (1) Does model specialization outperform massive parame-ter scale in historical paleography? and (2) Do complex, multi-component pipelines consistently outperform simpler baselines on noisy historical data? To answer these, we introduce the IPC, the first tripartite dataset mapping medieval Latin manuscript images to both character-accurate tran-scriptions and authoritative English translations. Our analysis reveals two striking phenomena that challenge modern AI scaling assumptions. First, we identify a specialization gap: domain-tuned models achieve a CER that is 4.3 × lower than DeepSeek-OCR (Wei et al., 2025), one of the largest dedicated OCR-focused VLMs evalu-ated, despite operating with orders-of-magnitude fewer parameters. This advantage is mechanis-tic rather than coincidental: TrOCR-Medieval-Base (Mattingly, 2024) is fine-tuned on CAT-MuS Medieval (Clérice et al., 2024), a corpus of ∼195,000 annotated lines spanning nine cen-turies of Latin manuscripts, which provides di-rect exposure to paleographic variation, medieval scribal ligatures, and diachronic orthographic con-ventions that general-purpose VLMs lack. TRIDIS (Aguilar, 2025) further specializes in documen-tary manuscripts (charters, registers, legal instru-ments) by training on semi-diplomatic transcrip-tion conventions, abbreviation expansion rules, and allograph normalization specific to these gen-res. The specialization gap thus reflects learned pa-leographic priors, not merely different architecture choices. Second, we identify a complexity para-dox: a simple OCR-to-VLM baseline yields more reliable results than configurations that use RAG or post-OCR correction. We trace this failure to prompt saturation (i.e., high-density retrieval dis-tracts the generator) and brittleness propagation (i.e., correction artifacts can interfere with down-stream semantic reasoning). Our contributions are as follows: • We introduce the Interpres Parallel Corpus (IPC), a first-of-its-kind benchmark of 1,383 aligned image lines, accurate transcriptions, and expert translations for medieval Latin re-search. • We explain the specialization gap mecha-nistically, showing that domain-exposure through paleographic corpora (CATMuS Medieval (Clérice et al., 2024), TRIDIS (Aguilar, 2025)) provides learned scribal priors that general-purpose VLMs cannot acquire through scale alone. • We identify and quantify the complexity para-dox, demonstrating that no multi-component variant consistently outperforms the simple OCR-to-VLM baseline, and we provide the first formal failure taxonomy for historical translation pipelines, characterizing two dis-tinct failure mechanisms: prompt satura-tion and brittleness propagation. Unlike post-hoc pipeline comparisons, our taxonomy provides explanatory structure—predicting which pipeline configurations will degrade and why. 
+
+2 Related Work 
+
+The digitization and automated analysis of histori-cal manuscripts involve multiple converging fron-tiers in NLP and Computer Vision. 
+
+Historical Hand-written Text Recognition (HTR) and Corpora. State-of-the-art HTR has transitioned from Convolutional Recurrent Neural Networks architectures utilizing Connectionist Temporal Classification (Graves et al., 2006) to Transformer-based models like TrOCR (Li et al., 2023). This evolution has been supported by the emergence of large-scale, heterogeneous corpora. The TRIDIS corpus (Aguilar, 2025) provides a unified resource of medieval and early modern documentary manuscripts, while CAT-MuS Medieval (Clérice et al., 2024) introduces a multilingual, diachronic dataset spanning nine centuries of Latin and vernacular scripts. These resources enable the development of the special-ized OCR models analyzed in our specialization gap benchmark. OCR Error Correction. Post-OCR correction has evolved from rule-based and linguistic heuris-tics (Springmann et al., 2014) to neural approaches. Alfi and Way demonstrated that integrating neural correction modules can improve translation quality by up to 30% (Afli and Way, 2016). Modern strate-gies often leverage byte-level models like ByT5 (Xue et al., 2022) to handle the irregular orthog-raphy of historical texts, though the risk of error propagation in serialized pipelines remains high. In this work, we evaluate two ByT5 correction vari-ants: C2 (ByT5 yaya), which follows the modular pipeline of Momtaz et al. (Momtaz et al., 2025) using a fine-tuned ByT5 model for post-OCR cor-rection on incunabula, and C1 (ours), which adapts the C2 architecture and training code to our setting by fine-tuning on OCR outputs from the special-ization gap benchmark with CER ranging from 0.1 to 0.4. This CER range is to ensure the collected dataset doesn’t capture too many gibberish cases from OCR models, and not too easily. 
+
+Historical and Low-Resource Machine Trans-lation. Machine Translation for dead or archaic languages presents unique data-scarcity challenges. Early efforts in Latin-to-English NMT reached BLEU scores of approximately 22.4 (Rosenthal, 2023). More recently, systems like LITERA (Rosu, 2025) and Hanja-to-Korean frameworks such as H2KE (Son et al., 2022) have utilized large-scale pre-trained LLMs/VLMs with specialized fine-tuning to achieve expert-level performance. LIT-ERA (Rosu, 2025), the most directly related work, employs a fine-tuned GPT-4o-mini with multi-layer GPT-4o revision for Latin-to-English transla-tion. However, LITERA assumes access to clean, pre-transcribed Latin text—a critical assumption that bypasses the core challenge of manuscript dig-itization: there is no OCR stage. In real-world manuscript workflows, transcribed text is unavail-able; every document must first pass through char-acter recognition before semantic translation can begin. Our framework evaluates the full image-to-translation cascade, revealing that OCR quality and pipeline topology critically determine trans-lation outcomes for medieval manuscripts – find-ings that LITERA’s clean-text evaluation design is structurally unable to capture. Crucially, we find that adding more components does not reli-ably improve results, framing the OCR integra-tion problem as one of pipeline architecture rather than component replacement. Beyond Latin, low-resource historical NLP encompasses a range of under-resourced languages and scripts where the same specialization-versus-scale trade-off we in-vestigate has been observed across diverse typo-logical contexts (Ling et al., 2025; Alshehhi et al., 2025; Tukenov, 2026). Our work contributes an empirical data point to this broader question. 
+
+RAG Failure Modes and Context Distraction. 
+
+The integration of retrieval mechanisms into gen-eration pipelines introduces well-documented fail-ure modes. Our RAG system augments trans-lation with historical lexical resources, includ-ing the Medieval Latin Word Vocabulary 1, the William Whitaker’s Words 2, the Lexicon Abbre-viaturarum 3 dictionary by Adriano Cappelli for paleographic shorthand, the Medieval Latin Dic-tionary 4, parallel Latin-English texts (Rosenthal, 2023), and the TRIDIS translation corpus (Aguilar, 2025). Retrieved passages are reranked by seman-tic similarity to the source OCR text before being appended to the prompt. Research into LLM/VLM context utilization reveals a lost-in-the-middle phe-nomenon, where models struggle to extract rele-vant information from dense, distractor-heavy con-texts (Liu et al., 2024). In cross-lingual RAG ap-plications, such as dictionary-augmented transla-tion, providing excessive or tangentially relevant context can overwhelm the model’s reasoning ca-pabilities (Wu et al., 2024; Li et al., 2026). Specif-ically, dense retrieval (i.e., dense given context in the prompt) can trigger copy-back behavior, where the generator bypasses semantic translation and in-stead echoes the retrieved source tokens directly into the output (Zaranis et al., 2024; Ali et al., 2026). 
+
+Cascading Errors in Serialized NLP Pipelines. 
+
+Error propagation across pipeline stages has been identified as a structural challenge in multi-component NLP systems (Caselli et al., 2015). In machine translation pipelines, upstream noise, whether from ASR, OCR, or normalization mod-ules, degrades downstream quality non-linearly 
+
+> 1https://anonymous.4open.science/r/ medieval-latin-dicts-D540/medieval_latin_word_ vocabulary.txt
+> 2https://anonymous.4open.science/r/ medieval-latin-dicts-D540/WORDS.txt
+> 3https://www.adfontes.uzh.ch/en/ressourcen/ abkuerzungen/cappelli-online
+> 4https://anonymous.4open.science/r/ medieval-latin-dicts-D540/medieval_latin_ dictionary.txt
+
+when later components lack robustness to atypical input distributions (Todorov and Colavizza, 2022; Shapira et al., 2025). We extend this direction by quantifying both failure modes (prompt saturation and brittleness propagation) empirically in the con-text of medieval paleography, providing the first formal failure taxonomy for historical translation pipelines. 
+
+3 The Specialization Gap 
+
+Tesseract 
+
+Mistral 
+
+DeepSeek 
+
+Paddle 
+
+TRIDIS 
+
+TrOCR 
+
+0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+1  
+
+> CER  ↓
+> Figure 2: The Specialization Gap. CER comparison across architectures on CATMuS Latin samples. Mis-tral: Mistral-OCR-3; Deepseek: Deepseek-OCR; Pad-dle: PaddleOCR-v5; TrOCR: TrOCR-Medieval-Base. Domain-tuned models (TrOCR/TRIDIS) significantly outperform massive VLMs despite being orders of mag-nitude smaller.
+
+The initial stage of our pipeline extracts text from digitized manuscript images. Conventional AI scaling laws (Kaplan et al., 2020) suggest that increasing parameter counts, as seen in VLMs, should yield superior performance on edge cases like historical paleography. However, our bench-marks challenge this assumption, revealing a sig-nificant performance divergence we term the spe-cialization gap. 
+
+Benchmarking Scale vs. Domain-Expertise. 
+
+We evaluated a range of OCR architectures against the Latin manuscripts from CATMuS dataset (Clérice et al., 2024) to identify the optimal vi-sion foundation: traditional engines like Tesser-act (Smith, 2007, 2009; Unnikrishnan and Smith, 2009; Smith et al., 2009; Shafait and Smith, 2010), Rescribe (White, 2019), and PaddleOCR-v5 (Cui et al., 2025); massive general-purpose VLMs in-clude DeepSeek-OCR (Wei et al., 2025), Mistral-OCR-3 (Mistral AI, 2025), Surya (Paruchuri, 2025b), Chandra (Paruchuri, 2025a), olmOCR-2 (Poznanski et al., 2025), dots.ocr (Li et al., 2025); and specialized historical models such as TrOCR Medieval models (Mattingly, 2024), TRIDIS (Aguilar, 2025). As shown in Figures 1 and 2, we observe that model size is an unreliable predictor of accu-racy for medieval Latin. Massive general-purpose VLMs frequently fail to interpret scribal short-hand and ligatures. In contrast, specialized mod-els, such as Base from the TrOCR Medieval col-lection, achieved a CER of 14.6%, significantly outperforming models with over 3B parameters. This demonstrates that for high-noise historical do-mains, specialized exposure is more valuable than sheer model scale. 
+
+4 Evaluation Methodology 
+
+Quantifying E2E historical translation requires a codebase spanning vision, transcription, and se-mantics. We developed the framework to facilitate this systematic evaluation. To support this study, we constructed the IPC. We sourced manuscript line images from the HTRomance project (Clérice et al., 2023; Glaise et al., 2023), specifically focusing on me-dieval Latin scripts from four literary works (Ta-ble 1). These were then aligned with expert-curated ground-truth transcriptions and transla-tions from the Perseus Digital Library and Project Gutenberg. This tripartite dataset (Image Line ↔
+
+Medieval Latin ↔ English) allows for granular er-ror analysis at every stage of the pipeline. 
+
+Author Work Samples 
+
+Ovid Metamorphoses 5 492 Catullus Poems 6 166 Cicero Tusculan Disputations 7 260 Quintilian Institutio Oratoria 8 465 
+
+Total 1383      
+
+> Table 1: Paleographic literary sources comprising the IPC. Metamorphoses ,Poems ,Institutio Oratoria are taken from Perseus Digital Library and translated by B. More, L.C. Smithers, and H.E. Butler, respectively.
+> Tusculan Disputations is taken from Project Gutenberg and translated by C.D. Yonge.
+
+Dataset Construction and Annotation. The IPC was constructed through a three-stage pipeline. 
+
+> 5https://catalog.perseus.org/catalog/urn:cts: latinLit:phi0959.phi006.perseus-eng1
+> 6https://catalog.perseus.org/catalog/urn:cts:
+
+0 0.2 0.4 0.6 0.8 1
+
+0
+
+0.5
+
+1
+
+Character Error Rate (CER)             
+
+> Density (Norm.)
+> Avg Full O1Full O2Full O3Full
+> Avg Shared O1Shared O2Shared O3Shared
+
+0 20 40 60 
+
+0
+
+0.5
+
+1
+
+Translation Quality (ChrF)     
+
+> P0P1P2P3P4
+
+Figure 3: (a) Fair Arena Representativeness Check. Length-weighted CER density for each OCR model over the full corpus and the Fair Arena subset. O1 is Paddle, O2 is TRIDIS, O3 is TrOCR. (b) Performance Density Analysis. Individual pipeline distributions for topologies P0 through P4 on the Shared Benchmark, shown as per-sample sentence-level ChrF densities. 
+
+First, manuscript line images and their correspond-ing OCR-text were sourced from the HTRomance project (Clérice et al., 2023; Glaise et al., 2023), which provides manually curated transcriptions for medieval Latin manuscripts. Second, authoritative English translations were identified at the chapter and page level from the Perseus Digital Library and Project Gutenberg, selecting editions whose translators are credited in Table 1. Third, using the given book/chapter/page numbers from HTRo-mance, individual manuscript lines were aligned with their corresponding translated sentence or clause in Gemini 3 Pro (Google, 2025), which per-formed semantic matching between the Latin tran-scriptions and the target-language translation pas-sages. Each alignment was constrained to a slid-ing window of the source text to prevent cross-chapter drift. We used a zero-shot prompt instruct-ing the model to output only a single matched pair, and we verified alignment quality across all samples through manual inspection. The resulting triplets (image, Latin transcription, English trans-lation) were retained for evaluation. Despite its modest size of 1,383 samples (Ta-ble 2), the IPC is the first dataset to provide aligned image-transcription-translation triplets for medieval Latin. Prior datasets like CATMuS Medieval provide line-level transcriptions but no translations, whereas prior Latin translation work like LITERA uses only pre-transcribed text, with 
+
+> latinLit:phi0472.phi001.perseus-eng2
+> 7https://www.gutenberg.org/ebooks/14988
+> 8https://catalog.perseus.org/catalog/urn:cts: latinLit:phi1002.phi001.perseus-eng2
+
+Metric Full Corpus Fair Arena 
+
+Samples ( N ) 1,383 1,003 Mean CER 0.3507 0.3091 CER StdDev ( σ) 0.3556 0.3060 Mean Line Length 38.6 39.6 Abbr. Density 0.0912 0.0856 
+
+Table 2: Corpus statistics comparing the full IPC against the Fair Arena evaluation subset. Metrics con-firm that the filtered subset maintains a representative difficulty profile across transcription noise (CER) and linguistic complexity (Length/Abbreviations). 
+
+no manuscript images. The Fair Arena protocol (in the next paragraph) ensures rigorous comparison across pipeline topologies by restricting evaluation to the 1,003 samples successfully processed by all configurations, mitigating the confounding effects of unequal refusal rates across OCR engines. 
+
+Fair Arena Benchmarking Protocol. Evaluat-ing commercial VLMs like GPT-4o (OpenAI et al., 2024) on noisy historical data presents a unique challenge: adversarial refusal. We observed that extreme OCR noise (garbled character strings) of-ten triggers automated safety guardrails. Specifi-cally, models misinterpret these strings as poten-tial adversarial injection attempts or trials to ex-ploit Personally Identifiable Information due to the presence of historical names in the manuscripts. This leads to API Refusal Rates (RR) that vary across pipeline configurations, ranging from 1.3% on clean text to nearly 24% on aggressively noisy output. To ensure statistical integrity, we implemented the fair arena protocol. We restricted our aggre-gate metrics to a shared benchmark subset of N =1, 003 samples that were successfully processed across all candidate topologies. To verify the rep-resentativeness of this subset, we performed a Fair Arena Check by comparing the CER and length dis-tributions of the shared subset against the full cor-pus ( N = 1 , 383 ), summarized in Table 2. CER is computed as the character-level edit distance be-tween TrOCR-Medieval-Base predictions and the expert ground-truth transcriptions, normalized by reference length. We find that the shared sub-set maintains a comparable difficulty profile: the mean CER is 0.3091 (σ = 0 .306 ) vs. 0.3507 (σ =0.355 ) for the full corpus, and the mean line length is actually slightly higher in the shared subset ( 39 .6
+
+vs. 38 .6 characters). Furthermore, the density of medieval abbreviations (proxied by the fraction of non-alphanumeric, non-whitespace characters in the ground-truth transcription) remains nearly identical ( μ = 0 .086 vs. 0.091 ). This confirms that the Fair Arena subset is a representative cross-section of the manuscript noise encountered in the full corpus, rather than an easier filtered subset. For all configurations, we use a structured sys-tem prompt that instructs the model to act as a me-dieval Latin paleography expert, cross-reference OCR and corrected text, and output a JSON object with the translation and optional notes. The RAG component retrieves from historical dictionaries and parallel texts using an embedding model and a cross-encoder reranker with an overfetch limit of 50 per source and returns the top 10 results. Full prompt text and retrieval configuration details are provided in Appendix B. Figure 3(a) visualizes this representativeness check as a set of length-weighted CER kernel den-sity estimates. For each OCR architecture (TrOCR-Medieval-Base, TRIDIS, PaddleOCR), we com-pute the character error rate of every prediction against the expert ground-truth Latin transcription from our corpus, then fit a Gaussian with mean 
+
+μw =   
+
+> ∑
+> iℓi·CER i∑
+> iℓi
+
+and variance weighted by line length ℓi = |ref i|. Weighting by length ensures that each character contributes equally to the dis-tribution, so short lines with high noise do not disproportionately skew the estimate. The two bold curves show the pooled averages across all three architectures for the full corpus (solid blue, 
+
+μw = 0 .451 ) and the Fair Arena subset (dashed red, μw = 0 .413 ); their close agreement across the entire CER range confirms that our filtering crite-rion preserves the full difficulty spectrum. 
+
+5 E2E Pipeline Results 
+
+We evaluated five pipeline topologies, each pro-gressively augmenting the input to GPT-4o (using default OpenAI API sampling parameters): P0 re-ceives only the manuscript image; P1 receives the image and the raw OCR text; P2 receives the im-age, OCR text, ByT5-corrected text; P3 receives the image, OCR text, reranked retrieval context from historical dictionaries and parallel texts; and 
+
+P4 combines all preceding components. For clar-ity, P1 corresponds to O2, P2 to O2+C1, P3 to 
+
+O2+R, and P4 to O2+C1+R in Tables 3 and 11. To maintain fairness across commercial model re-fusal behaviors, all main results are reported on the Fair Arena shared subset ( N = 1 , 003 ). The per-formance differences between P1 and P2 (paired t-test, t = 4 .76 , p < 0.001 ) and between P1 and P4
+
+(t = 3 .71 , p < 0.001 ) are statistically significant; the difference between P1 and P3 is not significant (t = 1 .33 , p = 0 .18 ), indicating that RAG alone does not reliably improve translation quality. Fig-ure 3(b) shows the per-sample ChrF distributions for each topology. COMET BLEU ChrF Semantic BERTScore 
+
+> 0.45
+> 0.55
+> 3.5
+> 6.5
+> 19.0
+> 27.0
+> 0.30
+> 0.45
+> 0.05
+> 0.20
+> P0 (Baseline)
+> P1 (OCR)
+> P2 (+Correct)
+> P3 (+RAG)
+> P4 (+Correct+RAG)
+
+Figure 4: Parallel coordinates chart comparing the top pipeline topologies across five normalized NLP met-rics. While P1 dominates exact-match metrics, the full pipeline P4 remains highly competitive on semantic metrics. 
+
+The Complexity Paradox. Our results (Table 4 and Figure 4) reveal a counter-intuitive finding we term the Complexity Paradox: the simplest spe-cialized pipeline achieves the highest mean ChrF of 26.00, and no multi-component variant reliably Pipeline RR %↓ COMET ↑ BLEU ↑ ChrF ↑                                                                                                                      
+
+> Baseline 1.30 0.4537 3.44 18.81
+> O117.86 0.4651 3.61 19.36
+> O22.53 0.5100 5.76 24.93
+> O32.53 0.5003 5.22 22.81
+> O1+C116.99 0.4504 3.44 18.62
+> O1+C223.93 0.4515 3.50 18.65
+> O2+C12.75 0.5033 5.17 24.87
+> O2+C24.19 0.5021 5.23 24.39
+> O3+C14.77 0.4931 5.02 22.32
+> O3+C24.84 0.4892 4.44 22.17
+> O1+R12.80 0.4531 3.35 18.77
+> O2+R3.25 0.5073 5.15 24.17
+> O3+R3.69 0.4931 4.73 21.89
+> O1+C1+R––––
+> O1+C2+R––––
+> O2+C1+R4.56 0.5045 5.18 24.56
+> O2+C2+R3.98 0.5012 5.20 24.36
+> O3+C1+R5.71 0.4897 4.64 22.21
+> O3+C2+R3.76 0.4883 4.70 22.06
+
+Table 3: Comprehensive evaluation results across all in-dividual execution runs for each pipeline topology. ( O1:PaddleOCR, O2: TRIDIS, O3: TrOCR Medieval Base, 
+
+C1: ByT5 (ours), C2: ByT5 (yaya), R: RAG. The ↑
+
+symbol indicates that higher scores are better, while ↓
+
+indicates that lower scores are better. RR stands for re-fusal rate, the percentage of samples where the API re-fused to return a response due to safety guardrails. The full table is in the Appendix C.                   
+
+> Pipeline BLEU ↑ChrF ↑COMET ↑
+> Baseline ( P0)3.73 19.68 0.4615 OCR ( P1)6.26 26.00 0.5195
+> + Correct ( P2)5.67 25.83 0.5108 + RAG ( P3)5.75 25.38 0.5169 + Correct + RAG ( P4)5.84 25.58 0.5122
+
+Table 4: Fair Arena Leaderboard: E2E pipeline perfor-mance comparison (N=1,003). All pipelines in this ta-ble (except baseline P0) utilize the TRIDIS engine as the primary vision engine. The correction variant used in this table is C1.
+
+improves upon it. Adding correction ( P2: 25.83), RAG ( P3: 25.38), or both ( P4: 25.58) yields no statistically reliable gain over the simple baseline. Notably, P4 remains competitive on semantic-level metrics (Figure 4), and a small subset of samples show RAG providing genuine lexical disambigua-tion benefits (Figure 6, Table 5), but these cases do not outweigh the aggregate complexity over-head. As shown in Figure 5, all four TRIDIS-based topologies exhibit virtually identical noise sensitiv-ity against OCR noise (corr ≈ − 0.15 to −0.17 ,slope ≈ − 5 ChrF/CER), confirming that the VLM absorbs transcription errors equally regardless of pipeline depth. The observed variance between 
+
+P1 and P2 to P4 is therefore attributable to two component-specific failure modes detailed below, not to differential noise sensitivity. 
+
+0 0.2 0.4 0.6 0.8
+
+24 
+
+26 
+
+28 
+
+TRIDIS OCR Noise (CER) Predicted ChrF       
+
+> P1(r=−0.15 )P2(r=−0.17 )
+> P3(r=−0.17 )P4(r=−0.16 )
+
+Figure 5: Noise robustness of all TRIDIS-based pipeline topologies. Lines show sentence-level ChrF predicted by linear regression over TRIDIS CER. All four configurations exhibit nearly identical degradation slopes ( ≈ − 5 ChrF/CER, r ≈ − 0.15 ), confirming that pipeline depth does not affect noise sensitivity. 
+
+Prompt Saturation. In P3, the inclusion of high-density dictionary retrieval often acts as a cogni-tive distractor. Instead of synthesizing a transla-tion based on context, the model exhibits a copy-back behavior, echoing the Latin source text or dic-tionary definitions directly into the English output (Figure 7, Table 6). Quantitative analysis reveals a weak positive correlation between RAG token over-lap and translation quality ( r = 0 .146 , explain-ing only ∼2% of variance on the TRIDIS-based 
+
+P3 run), suggesting that while RAG provides use-ful lexical anchors in some cases, the model can overly rely on direct extraction from the retrieval context at the expense of syntactic coherence. 
+
+Brittleness Propagation. In P2 and P4,character-level repetition loops introduced by the ByT5 correction layer can interfere with downstream translation. When these loops occur, the VLM is forced to reason over corrupted strings, leading to degraded translation quality (Figure 8, Table 7). We detect repetition artifacts in 0.60 %of samples in the TRIDIS-based P2 configuration, where they incur an average penalty of 7.15 
+
+ChrF points compared to non-repeating samples (μrep = 19 .47 vs. μnon-rep = 26 .61 ). Notably, this failure mode accounts for only a small fraction of the overall performance gap between P1 and 
+
+P2, suggesting that additional degradation mech-anisms (e.g., minor hallucinations introduced by imperfect correction) also contribute to the complexity paradox. 
+
+Diagnostic Archetypes. To make these dynam-ics concrete, we organize the qualitative evidence into three diagnostic archetypes: Synergy (Fig-ure 6), where RAG resolves lexical or idiomatic ambiguity that the simpler pipelines miss; Para-dox (Figure 7), where dense retrieval triggers the prompt-saturation echo failure described above; and Cascade (Figure 8), where correction-layer ar-tifacts propagate into the VLM and corrupt the final translation. Extended examples for each archetype are provided in Appendix D. 
+
+Figure 6: Archetype A (Synergy). Latin: Uenisti. o michi nuncii beati . Translation: You have come back. O joyful news to me!      
+
+> Translation Output
+> P0O Christ, now bless.
+> P1And you, sent forth, the announcement of the blessed.
+> P2You have come, blessed messenger.
+> P3You have come. O joyful news to me!
+> P4You have come, O joyful news to me.
+
+Table 5: Performance delta for Figure 6. P3 and P4
+
+resolve the idiomatic “news” through RAG retrieval. 
+
+Figure 7: Archetype B (Paradox). Latin: Attuł. &positis pars itͣq substitit armis. Translation: while both sides resting, laid aside their arms.      
+
+> Translation Output
+> P0And he, as a powerful protector of peace, subdued the arms.
+> P1And with the arms laid aside, each side paused.
+> P2Having been brought and with the positions set, each side halted.
+> P3Attul et positis pars utraque substitit.
+> P4The troop, having been set in position, stood on each side.
+
+Table 6: The RAG Paradox in Figure 7. Dense retrieval triggers an “echo failure” in P3.
+
+6 Conclusion 
+
+This paper shows that for medieval manuscript translation, model specialization and pipeline sim-plicity are paramount. We introduce the IPC and 
+
+Figure 8: Archetype C (Cascade). Latin: quoꝵ alt̾ ocu-los. alt̾ͣ aures mo . Translation: of which the one appeals to the eye and the other to the ear.      
+
+> Translation Output
+> P0how now, O Paulus, the white ears
+> P1from which one moved the eyes, the other the ears.
+> P2parts ×22 … from whom one has eyes, another has ears
+> P3parts ×12 … from which one has eyes the other ears
+> P4parts ×22 … of which one has eyes the other ears
+
+Table 7: Cascade failure in Figure 8 caused by ByT5 repetition loops. 
+
+identify the specialization gap and the complexity paradox. Our findings suggest that current generic VLMs are not yet capable of replacing specialized historical OCR systems, and that complex multi-component pipelines may suffer from error propa-gation. Future work will explore whether dynamic pipeline selection based on OCR confidence can recover the occasional benefits of retrieval without incurring the aggregate complexity penalty. 
+
+Limitations 
+
+First, the dataset is restricted to Medieval Latin, which does not capture the full variance of pa-leographic challenges in other historical scripts. Second, our RAG relies on static dictionary an-chors; future work could explore dynamic retrieval from larger contextual corpora to resolve deeper ambiguities. Third, all pipeline evaluations use GPT-4o as a translation backend; the generality of the complexity paradox across different VLMs re-mains untested. Smaller or instruction-tuned mod-els may exhibit different sensitivity to prompt sat-uration and OCR noise, and the relative ordering of pipeline topologies may shift. Finally, the ob-served Complexity Paradox suggests that perfor-mance gains from multi-component correction are currently capped by the noise floor of the underly-ing OCR engines, indicating that further progress in historical translation is fundamentally tied to vi-sion model improvements. 
+
+Ethics Statement 
+
+DH research involving historical manuscripts car-ries an ethical responsibility to preserve cultural heritage with high fidelity. While our pipeline improves translation accessibility, we caution that model hallucinations in the context of fragmented or rare texts can lead to significant historical mis-interpretations. Our tools are designed to augment, not replace, expert human inquiry. We commit to open-sourcing the IPC to foster transparent and re-producible benchmarking in this domain. 
+
+References 
+
+Haithem Afli and Andy Way. 2016. Integrating optical character recognition and machine translation of his-torical documents. In Proceedings of the Workshop on Language Technology Resources and Tools for Digital Humanities (LT4DH) , pages 109–116, Os-aka, Japan. The COLING 2016 Organizing Commit-tee. Sergio Torres Aguilar. 2025. Tridis: A comprehensive medieval and early modern corpus for htr and ner. 
+
+Preprint , arXiv:2503.22714. Ameen Ali Ali, Lior Wolf, and Ivan Titov. 2026. Miti-gating copy bias in in-context learning through neu-ron pruning. In Findings of the Association for Com-putational Linguistics: EACL 2026 , pages 230–251, Rabat, Morocco. Association for Computational Lin-guistics. Maitha Alshehhi, Ahmed Sharshar, and Mohsen Guizani. 2025. Towards inclusive nlp: Assessing compressed multilingual transformers across diverse language benchmarks. In International Joint Con-ference on Artificial Intelligence , pages 108–126. Springer. Bernhard Bischoff. 1990. Latin Palaeography: Antiq-uity and the Middle Ages . Cambridge University Press. Tommaso Caselli, Piek Vossen, M. Erp, Antske Fokkens, Filip Ilievski, Rubén Beviá, Minh Lê, Roser Morante, and Marten Postma. 2015. When it’s all piling up: Investigating error propagation in an nlp pipeline. CEUR Workshop Proceedings , 1386. Thibault Clérice, Ariane Pinche, Malamatenia Vlachou-Efstathiou, Alix Chagué, Jean-Baptiste Camps, Matthias Gille Levenson, Olivier Brisville-Fertin, Federico Boschetti, Franz Fischer, Michael Gervers, Agnès Boutreux, Avery Manton, Simon Gabay, Pa-tricia O’Connor, Wouter Haverals, Mike Kestemont, Caroline Vandyck, and Benjamin Kiessling. 2024. Catmus medieval: A multilingual large-scale cross-century dataset in latin script for handwritten text recognition and beyond. In Document Analysis and Recognition - ICDAR 2024 , pages 174–194, Cham. Springer Nature Switzerland. Thibault Clérice, Alix Chagué, Matthias Gille-Levenson, Olivier Brisville-Fertin, Ariane Pinche, Jean-Baptiste Camps, Franz Fischer, Federico Boschetti, Elisa Guadagnini, Gilles Guilhem Couf-fignal, Olivier Canteaut, Laurent Romary, Marianne Reboul, Nicolas Perreaux, Thierry Poibeau, Marc Smith, Jade Norindr, Anthony Glaise, Marina Navas Farré, and 4 others. 2023. HTRomance. Cheng Cui, Ting Sun, Manhui Lin, Tingquan Gao, Yubo Zhang, Jiaxuan Liu, Xueqing Wang, Zelun Zhang, Changda Zhou, Hongen Liu, Yue Zhang, Wenyu Lv, Kui Huang, Yichao Zhang, Jing Zhang, Jun Zhang, Yi Liu, Dianhai Yu, and Yanjun Ma. 2025. Paddleocr 3.0 technical report. Preprint ,arXiv:2507.05595. Albert Derolez. 2003. The Palaeography of Gothic Manuscript Books: From the Twelfth to the Early Six-teenth Century , volume 9 of Cambridge Studies in Palaeography and Codicology . Cambridge Univer-sity Press, Cambridge. Anthony Glaise, Thibault Clérice, Federico Boschetti, Franz Fischer, and Alix Chagué. 2023. Htromance, medieval latin corpus of ground-truth for handwrit-ten text recognition and layout segmentation. Google. 2025. A new era of intelligence with gemini 3. Alex Graves, Santiago Fernández, Faustino Gomez, and Jürgen Schmidhuber. 2006. Connectionist temporal classification: Labelling unsegmented sequence data with recurrent neural networks. Proceedings of the 23rd International Conference on Machine Learning (ICML 2006) , pages 369–376. Hany Hassan, Anthony Aue, Chang Chen, Vishal Chowdhary, Jonathan Clark, Christian Feder-mann, Xuedong Huang, Marcin Junczys-Dowmunt, William Lewis, Mu Li, Shujie Liu, Tie-Yan Liu, Renqian Luo, Arul Menezes, Tao Qin, Frank Seide, Xu Tan, Fei Tian, Lijun Wu, and 5 others. 2018. Achieving human parity on automatic chinese to en-glish news translation. Preprint , arXiv:1803.05567. Jared Kaplan, Sam McCandlish, Tom Henighan, Tom B. Brown, Benjamin Chess, Rewon Child, Scott Gray, Alec Radford, Jeffrey Wu, and Dario Amodei. 2020. Scaling laws for neural language models. Preprint ,arXiv:2001.08361. Bo Li, Zhenghua Xu, and Rui Xie. 2026. Language drift in multilingual retrieval-augmented generation: Characterization and decoding-time mitigation. In 
+
+Proceedings of the AAAI Conference on Artificial In-telligence , volume 40, pages 31519–31526. Minghao Li, Tengchao Lv, Jingye Chen, Lei Cui, Yi-juan Lu, Dinei Florencio, Cha Zhang, Zhoujun Li, and Furu Wei. 2023. Trocr: transformer-based optical character recognition with pre-trained mod-els. In Proceedings of the Thirty-Seventh AAAI Conference on Artificial Intelligence and Thirty-Fifth Conference on Innovative Applications of Artificial Intelligence and Thirteenth Symposium on Educational Advances in Artificial Intelligence ,AAAI’23/IAAI’23/EAAI’23. AAAI Press. Yumeng Li, Guang Yang, Hao Liu, Bowen Wang, and Colin Zhang. 2025. dots.ocr: Multilingual doc-ument layout parsing in a single vision-language model. Preprint , arXiv:2512.02498. Chen Ling, Xujiang Zhao, Jiaying Lu, Chengyuan Deng, Can Zheng, Junxiang Wang, Tanmoy Chowd-hury, Yun Li, Hejie Cui, Xuchao Zhang, Tian-jiao Zhao, Amit Panalkar, Dhagash Mehta, Stefano Pasquali, Wei Cheng, Haoyu Wang, Yanchi Liu, Zhengzhang Chen, Haifeng Chen, and 5 others. 2025. Domain specialization as the key to make large lan-guage models disruptive: A comprehensive survey. 
+
+ACM Comput. Surv. , 58(3). Nelson F Liu, Kevin Lin, John Hewitt, Ashwin Paran-jape, Michele Bevilacqua, Fabio Petroni, and Percy Liang. 2024. Lost in the middle: How language mod-els use long contexts. Transactions of the association for computational linguistics , 12:157–173. William Mattingly. 2024. Trocr medieval htr: A collec-tion of models for medieval script recognition. Mistral AI. 2025. Mistral ocr 3. Yahya Momtaz, Lorenza Laccetti, and Guido Russo. 2025. Modular pipeline for text recognition in early printed books using kraken and byt5. Electronics ,14(15). OpenAI, Aaron Hurst, Adam Lerer, Adam P. Goucher, Adam Perelman, Aditya Ramesh, Aidan Clark, AJ Ostrow, Akila Welihinda, Alan Hayes, Alec Radford, Aleksander Mądry, Alex Baker-Whitcomb, Alex Beutel, Alex Borzunov, Alex Carney, Alex Chow, Alex Kirillov, Alex Nichol, and 400 oth-ers. 2024. Gpt-4o system card. Preprint ,arXiv:2410.21276. Vikas Paruchuri. 2025a. Chandra: Ocr model that han-dles complex tables, forms, handwriting with full lay-out. Vikas Paruchuri. 2025b. Surya: A lightweight frame-work for analyzing documents and pdfs at scale. Jake Poznanski, Luca Soldaini, and Kyle Lo. 2025. olmocr 2: Unit test rewards for document ocr. 
+
+Preprint , arXiv:2510.19817. Gil Rosenthal. 2023. Machina cognoscens: Neural ma-chine translation for latin, a case-marked free-order language. University of Chicago .Paul Rosu. 2025. LITERA: An LLM based approach to Latin-to-English translation. In Findings of the Association for Computational Linguistics: NAACL 2025 , pages 7796–7809, Albuquerque, New Mexico. Association for Computational Linguistics. Faisal Shafait and Ray Smith. 2010. Table detection in heterogeneous documents. In Document Analysis Systems , ACM International Conference Proceeding Series, pages 65–72. ACM. Ori Shapira, Shlomo Chazan, and Amir David Nissan Cohen. 2025. Measuring the effect of transcription noise on downstream language understanding tasks. In Proceedings of the 63rd Annual Meeting of the As-sociation for Computational Linguistics (Volume 1: Long Papers) , pages 29978–30004. Ray Smith. 2007. An overview of the tesseract ocr en-gine. In ICDAR ’07: Proceedings of the Ninth In-ternational Conference on Document Analysis and Recognition , pages 629–633, Washington, DC, USA. IEEE Computer Society. Ray Smith. 2009. Hybrid page layout analysis via tab-stop detection. In ICDAR ’09: Proceedings of the 2009 10th International Conference on Document Analysis and Recognition , pages 241–245, Washing-ton, DC, USA. IEEE Computer Society. Ray Smith, Daria Antonova, and Dar-Shyang Lee. 2009. Adapting the tesseract open source ocr engine for multilingual ocr. In MOCR ’09: Proceedings of the International Workshop on Multilingual OCR , ACM International Conference Proceeding Series, pages 1–8. ACM. Juhee Son, Jiho Jin, Haneul Yoo, JinYeong Bak, Kyunghyun Cho, and Alice Oh. 2022. Translating hanja historical documents to contemporary Korean and English. In Findings of the Association for Com-putational Linguistics: EMNLP 2022 , pages 1260– 1272, Abu Dhabi, United Arab Emirates. Associa-tion for Computational Linguistics. Uwe Springmann, Dietmar Najock, Hermann Morgen-roth, Helmut Schmid, Annette Gotscharek, and Flo-rian Fink. 2014. Ocr of historical printings of latin texts: problems, prospects, progress. In Proceed-ings of the First International Conference on Digital Access to Textual Cultural Heritage , DATeCH ’14, page 71–75, New York, NY, USA. Association for Computing Machinery. Konstantin Todorov and Giovanni Colavizza. 2022. An assessment of the impact of ocr noise on lan-guage models. In Proceedings of the 14th Inter-national Conference on Agents and Artificial Intel-ligence - Volume 2: ICAART , pages 674–683. IN-STICC, SciTePress. Saken Tukenov. 2026. Sozkz: Training efficient small language models for kazakh from scratch. Preprint ,arXiv:2603.20854. Ranjith Unnikrishnan and Ray Smith. 2009. Combined orientation and script detection using the tesseract ocr engine. In MOCR ’09: Proceedings of the Inter-national Workshop on Multilingual OCR , pages 1–7, New York, NY, USA. ACM. Haoran Wei, Yaofeng Sun, and Yukun Li. 2025. Deepseek-ocr: Contexts optical compression. 
+
+Preprint , arXiv:2510.18234. Nick White. 2019. Rescribe: Desktop tool for optical character recognition of historical texts. Suhang Wu, Jialong Tang, Baosong Yang, Ante Wang, Kaidi Jia, Jiawei Yu, Junfeng Yao, and Jinsong Su. 2024. Not all languages are equal: Insights into mul-tilingual retrieval-augmented generation. Preprint ,arXiv:2410.21970. Linting Xue, Aditya Barua, Noah Constant, Rami Al-Rfou, Sharan Narang, Mihir Kale, Adam Roberts, and Colin Raffel. 2022. ByT5: Towards a token-free future with pre-trained byte-to-byte models. Trans-actions of the Association for Computational Lin-guistics , 10:291–306. Emmanouil Zaranis, Nuno M Guerreiro, and Andre Martins. 2024. Analyzing context contributions in LLM-based machine translation. In Findings of the Association for Computational Linguistics: EMNLP 2024 , pages 14899–14924, Miami, Florida, USA. Association for Computational Linguistics. 
+
+A Usage of AI Assistants 
+
+We used a large language model for editorial tasks such as grammar correction and enhancing clarity and readability. We also use a language model to align the translations as discussed in §4. 
+
+B Detailed Configurations 
+
+B.1 Translation System Prompt 
+
+The following system prompt is used for all GPT-4o-based translation configurations. The prompt is designed to leverage expertise in medieval Latin paleography while handling noisy OCR input and retrieval-augmented context.                                                                                                                                                      
+
+> You are Interpres , an expert in medieval Latin paleography and translation . You will receive : -** OCR Text ( raw ) ** ( when available ): Text extracted directly from amanuscript image via OCR . This may contain character - level errors . -** Suggested Corrected Text ** ( when available ): The same text after automated correction by aByT5 model . This may improve accuracy but can also introduce new errors . Especially if the text is too long or the OCR already contains some error . -** Dictionary Matches ** ( when available ) :Relevant entries from Latin dictionaries ( high reliability ). -** Parallel Text Matches ** ( when available ): Similar passages from Latin - English parallel corpora (reference only ). Your task : 1. ** Cross - reference ** the raw OCR and suggested corrected versions . Where they disagree , use context , grammar , and the reference materials to determine the most likely original text . 2. ** Translate ** the reconstructed Latin text faithfully . 3. If there are ambiguous or damaged sections , note them briefly . You MUST respond with aJSON object containing exactly two keys : -" translation ": The English translation of the Latin text . -" note ": Brief notes about ambiguous readings , damaged sections , or translation choices . Use an empty string if there are no notes .
+
+B.2 Translation Configuration 
+
+We use GPT-4o (model: gpt-4o-2024-08-06 )with the default OpenAI API sampling parameters; the response format is JSON, and image detail is high. All pipelines are executed via the BatchAPI, with one pipeline per batch. The total API cost across all experiments is about $50. 
+
+B.3 RAG Configuration 
+
+The RAG component augments the prompt with relevant dictionary entries and parallel text pas-sages. Dictionaries include Medieval Latin Word Vocabulary 9, the William Whitaker’s Words 10 , the Lexicon Abbreviaturarum 11 , the Medieval Latin Dictionary 12 . Parallel Texts include Latin-English texts (Rosenthal, 2023) and the TRIDIS translation corpus (Aguilar, 2025). The pipeline overfetches 50 candidates per source, deduplicates by text con-tent, reranks using a cross-encoder, and returns the top 10 results for prompt augmentation. Key pa-rameters are summarized in Table 8.        
+
+> Parameter Value
+> Overfetch Limit (per source) 50 Final Top-K after Reranking 10 Embedding Batch Size 64 Retrieval Sources Dictionary, Parallel Texts Embedding Model all-MiniLM-L6-v2 13
+> Reranking Model ms-marco-MiniLM-L-6-v2 14
+
+Table 8: RAG retrieval and reranking configuration. B.4 ByT5 Correction Model Training 
+
+The C1 correction model is a fine-tuned ByT5-Small (google/byt5-small ) that maps noisy OCR outputs to corrected Latin transcriptions. Training was performed on a single NVIDIA L40S GPU (CUDA 12.8) using the Transformers Trainer API. Key hyperparameters are listed in Table 9. The model was trained for 7 epochs with early stopping based on validation CER, saving up to 3 checkpoints. The model will be publicly released on Hugging Face upon acceptance.                
+
+> Parameter Value
+> Base Model ByT5-Small Effective Batch Size 4×4×1
+> Learning Rate 3×10 −4
+> Epochs 7Hardware 1×NVIDIA L40S Training Framework Transformers 4.57.6
+
+Table 9: OCR correction fine-tuning configuration. 
+
+C Detailed Experimental Results 
+
+Table 10 reports the full pipeline evaluation across all OCR engines and correction strategies. Ta-ble 11 provides the extended Fair Arena leader-board with additional metrics. 
+
+D Detailed Qualitative Case Studies 
+
+This appendix provides extended qualitative evi-dence for the three diagnostic archetypes discussed in Section 5. For each archetype, we show 5 repre-sentative examples with the original Latin source, expert reference translation, and pipeline outputs. 
+
+> 9https://anonymous.4open.science/r/ medieval-latin-dicts-D540/medieval_latin_word_ vocabulary.txt
+> 10 https://anonymous.4open.science/r/ medieval-latin-dicts-D540/WORDS.txt
+> 11 https://www.adfontes.uzh.ch/en/ressourcen/ abkuerzungen/cappelli-online
+> 12 https://anonymous.4open.science/r/ medieval-latin-dicts-D540/medieval_latin_ dictionary.txt
+> 13 https://huggingface.co/sentence-transformers/ all-MiniLM-L6-v2
+> 14 https://huggingface.co/cross-encoder/ ms-marco-MiniLM-L6-v2
+
+Config. RR %↓ COMET ↑ BLEU ↑ ChrF ↑ Semantic ↑ BERTScore ↑
+
+Baseline 1.30 0.4537 3.44 18.81 0.2912 0.0608 
+
+O1 17.86 0.4651 3.61 19.36 0.3179 0.0861 
+
+O2 2.53 0.5100 5.76 24.93 0.4140 0.1727 
+
+O3 2.53 0.5003 5.22 22.81 0.3907 0.1540 
+
+O1 + C1 16.99 0.4504 3.44 18.62 0.3009 0.0802 
+
+O1 + C2 23.93 0.4515 3.50 18.65 0.3030 0.0693 
+
+O2 + C1 2.75 0.5033 5.17 24.87 0.4107 0.1657 
+
+O2 + C2 4.19 0.5021 5.23 24.39 0.4084 0.1628 
+
+O3 + C1 4.77 0.4931 5.02 22.32 0.3877 0.1476 
+
+O3 + C2 4.84 0.4892 4.44 22.17 0.3795 0.1434 
+
+O1 + R 12.80 0.4531 3.35 18.77 0.3015 0.0723 
+
+O2 + R 3.25 0.5073 5.15 24.17 0.4083 0.1689 
+
+O3 + R 3.69 0.4931 4.73 21.89 0.3812 0.1435 
+
+O1 + C1 + R – – – – – –
+
+O1 + C2 + R – – – – – –
+
+O2 + C1 + R 4.56 0.5045 5.18 24.56 0.4082 0.1701 
+
+O2 + C2 + R 3.98 0.5012 5.20 24.36 0.4022 0.1638 
+
+O3 + C1 + R 5.71 0.4897 4.64 22.21 0.3802 0.1415 
+
+O3 + C2 + R 3.76 0.4883 4.70 22.06 0.3759 0.1381 
+
+Table 10: Comprehensive evaluation results across all individual execution runs for each pipeline topology. ( O1:PaddleOCR, O2: TRIDIS, O3: TrOCR Medieval Base, C1: ByT5 (ours) fine-tuned on specialization-gap OCR outputs (CER 0.1-0.4), C2: ByT5 (yaya) from (Momtaz et al., 2025), R: RAG). The ↑ symbol indicates that higher scores are better, while ↓ indicates that lower is better. BERTScore is rescaled. RR stands for refusal rate – the percentage of samples where the API refused to return a response due to safety guardrails. 
+
+Config. COMET ↑ BLEU ↑ ChrF ↑ Semantic ↑ BERTScore ↑
+
+Baseline 0.4615 3.73 19.68 0.3114 0.0732 
+
+O2 0.5195 6.26 26.00 0.4372 0.1879 
+
+O3 0.5074 5.85 23.94 0.4136 0.1635 
+
+O2 + C1 0.5108 5.67 25.83 0.4328 0.1769 
+
+O2 + C2 0.5094 5.68 25.35 0.4289 0.1742 
+
+O3 + C1 0.4995 5.49 23.26 0.4076 0.1579 
+
+O3 + C2 0.4954 4.85 22.99 0.3996 0.1557 
+
+O2 + R 0.5169 5.75 25.38 0.4309 0.1824 
+
+O3 + R 0.5017 5.26 23.03 0.4035 0.1579 
+
+O2 + C1 + R 0.5122 5.84 25.58 0.4315 0.1806 
+
+O2 + C2 + R 0.5105 5.69 25.54 0.4243 0.1787 
+
+O3 + C1 + R 0.4980 5.03 23.23 0.4028 0.1545 
+
+O3 + C2 + R 0.4972 5.26 23.16 0.3998 0.1539 
+
+Table 11: Fair Arena. ( O2: TRIDIS, O3: TrOCR Medieval Base, C1: ByT5 (ours) fine-tuned on specialization-gap OCR outputs, C2: ByT5 (yaya) from (Momtaz et al., 2025), R: RAG). The ↑ symbol indicates that higher scores are better. BERTScore is rescaled. The bold-red line shows the best pipeline configuration in the arena, red lines show the best pipelines in their own group of topology. 523 Content 
+
+Image 
+
+Latin Ipsam tam bene ꝙͣ puella matre. 
+
+English as well as a girl knows her own mother. Archetype Synergy 
+
+P0 (Base) psalm as well as the girl mother 
+
+P1 (OCR) [She] herself as well as the girl, [as] mother. 
+
+P2 (Corr) herself as well as the girl mothers. 
+
+P3 (RAG) As well as a girl knows her mother. 
+
+P4 (Full) She knew her as well as a girl knows her own mother. 524 Content 
+
+Image 
+
+Latin Nec sese a gremio illius mouebat 
+
+English Nor did it move from her lap, Archetype Synergy 
+
+P0 (Base) He did not move from her embrace. 
+
+P1 (OCR) Nor did he/she move from his/her embrace. 
+
+P2 (Corr) nor did he/she move from the embrace of that person. 
+
+P3 (RAG) Nor did he move from her embrace. 
+
+P4 (Full) Nor would he move from her lap. 648 Content 
+
+Image 
+
+Latin Et quonia michi ꝓfuiss here 
+
+English and whether I had made any money there. Archetype Synergy 
+
+P0 (Base) And because it pleased me to begin here 
+
+P1 (OCR) And since to me it first appeared 
+
+P2 (Corr) And because to me it seemed here 
+
+P3 (RAG) And because it is necessary for me to bear here. 
+
+P4 (Full) And because it was beneficial for me here. 274 Content 
+
+Image 
+
+Latin Tũ clipeo genibꝰ q p̾mens p̾ cordia duris 
+
+English Then pressing with buckler and hard knees the breast of Cygnus, Archetype Synergy 
+
+P0 (Base) You, with a deceitful heart, always pondering cruel things. 
+
+P1 (OCR) Et cum dixero, genibusque primens, prima cordia duris. 
+
+P2 (Corr) And when I shall speak, pressing my knees, the first hearts are hard. 
+
+P3 (RAG) And you, pressing your knees, endure the hard hearts first. 
+
+P4 (Full) And when I say, pressing first with my knees, the first hearts are hardened. 901 Content 
+
+Image 
+
+Latin ciplinas haud dubie primatum tenet. Seneca inter 
+
+English disciplines hold the primacy without doubt. Seneca, among Archetype Synergy 
+
+P0 (Base) Certainly, he undoubtedly held the first place. Seneca says: 
+
+P1 (OCR) Without a doubt, [he/she/it] holds the first place in disciplines. Seneca among [them/us]. 
+
+P2 (Corr) It undoubtedly holds the first place among the disciplines. Among them is Seneca. 
+
+P3 (RAG) Disciplines undoubtedly hold the first place. Seneca among them. 
+
+P4 (Full) Disciplines undoubtedly hold the first place. Seneca among them. 1252 Content 
+
+Image 
+
+Latin dilucida u̾o erit pronũtiatio 
+
+English The delivery will be clear if, Archetype Paradox 
+
+P0 (Base) dilucidatio art [proprietates] 
+
+P1 (OCR) the explanation will indeed be clear 
+
+P2 (Corr) Indeed, the pronunciation will be clear. 
+
+P3 (RAG) The elucidation, however, will be a pronouncement. 
+
+P4 (Full) Indeed, the pronunciation will be clear. 
+
+120 Content 
+
+Image 
+
+Latin Exire. utq nouas hum̾is assũpserat alas 
+
+English “As he assumed upon his shoulders wings newformed, Archetype Paradox 
+
+P0 (Base) From either side, now wings lift this one up. 
+
+P1 (OCR) And it was as if new wings had taken on the human condition. 
+
+P2 (Corr) 1473. To go forth and take up new wings of the earth... 
+
+P3 (RAG) E xire utque novas huminis assumpserat alas 
+
+P4 (Full) 1473. He began to take on new wings of humanity. 
+
+636 Content 
+
+Image 
+
+Latin Naͬrantem / loca / facta / nationes / 
+
+English of regions, deeds, and peoples... Archetype Paradox 
+
+P0 (Base) Not all places are blessed. 
+
+P1 (OCR) Narrating places, deeds, nations. 
+
+P2 (Corr) Telling places, deeds, nations 
+
+P3 (RAG) Telling stories, places made, nations 
+
+P4 (Full) Telling the places, deeds, nations 357 Content 
+
+Image 
+
+Latin Ard&. & ębͥetas geminata libidine regnat. 
+
+English inflamed with drunkenness and lust Archetype Paradox 
+
+P0 (Base) Ardisce, do not allow twin desires to rule over you. 
+
+P1 (OCR) Greed and drunkenness reign, doubled with lust. 
+
+P2 (Corr) Greed and drunkenness, twinned by lust, reign. 
+
+P3 (RAG) Greed and laziness, doubled by lust, reign. 
+
+P4 (Full) Arrogance and drunkenness, joined together, rule by lust. 
+
+667 Content 
+
+Image 
+
+Latin te maxime ad ea studia 
+
+English to those studies Archetype Cascade 
+
+P0 (Base) you especially to those pursuits 
+
+P1 (OCR) you especially to those studies 
+
+P2 (Corr) you especially have zeal for these things. 
+
+P3 (RAG) you especially towards those studies 
+
+P4 (Full) you especially towards these pursuits. 
+
+572 Content 
+
+Image 
+
+Latin Deinde usq altera mille / deinde centu. 
+
+English then another thousand without resting, then a hundred. Archetype Cascade 
+
+P0 (Base) From then on, another thousand are added. 
+
+P1 (OCR) Then up to another thousand, then a hundred. 
+
+P2 (Corr) then up to another thousand then then then then then then then 
+
+P3 (RAG) Then straight on to another thousand, then continuously. 
+
+P4 (Full) Then onwards another thousand, then completed. 
+
+850 Content 
+
+Image 
+
+Latin Cornelia multum contulit. uerum et doctior et eloquẽ 
+
+English Cornelia contributed much. But Caius was both more learned and more elo-Archetype Cascade 
+
+P0 (Base) Cornelia of many conferred, wise, learned and eloquent. 
+
+P1 (OCR) Cornelia contributed much indeed, being both more learned and eloquent. 
+
+P2 (Corr) Martino and Quintia’s misfortunes. Cornelia contributed much, indeed both more learned and elo-quent. 
+
+P3 (RAG) Cornelia contributed much, but she was more learned and eloquent. 
+
+P4 (Full) Martino and Quentia of evil. Cornelia contributed much, indeed more learned and eloquent. 729 Content 
+
+Image 
+
+Latin liquit utrumq uixisse ante romam conditam Syl 
+
+English that both lived before the founding of Rome, Archetype Cascade 
+
+P0 (Base) he left either to live before the city of Rome, Syl— 
+
+P1 (OCR) that each of them lived before the founding of Rome. 
+
+P2 (Corr) something or both lived before Rome was founded, Syl. 
+
+P3 (RAG) Someone or something, both of them lived before Rome was founded. 
+
+P4 (Full) Something, some others, both lived before Rome was founded, Syl. 
+
+190 Content 
+
+Image 
+
+Latin Illic credulitas. illic tem̾ariꝰ error. 
+
+English Credulity is there and rash Mistake, Archetype Cascade 
+
+P0 (Base) Where gullibility is, the error follows. 
+
+P1 (OCR) There lies credulity, there reckless error. 
+
+P2 (Corr) There is sweetness there; there is rash error there. 
+
+P3 (RAG) There, credulity; here, rash error. 
+
+P4 (Full) There is credulity; there is a rash error.
