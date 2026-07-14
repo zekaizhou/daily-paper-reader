@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.10358v1/fig-001.webp",
+      "caption": "Table 3: Mean OOD AUROC by model and task. Values are mean ± 95% CI across OOD datasets. Models are grouped by pretraining/domain family. Bold marks the best model per task; underline marks second best. † denotes VLMs.",
+      "page": 6,
+      "index": 1,
+      "width": 944,
+      "height": 629
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10358v1/fig-002.webp",
+      "caption": "Figure 1: Overview of the mammography foundation-model benchmark.",
+      "page": 2,
+      "index": 2,
+      "width": 937,
+      "height": 269
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10358v1/fig-003.webp",
+      "caption": "Figure 3: Dataset-level AUROC performances (with 95% confidence interval error-bar) for five representative backbones across BI-RADS, breast density, and cancer status. The ID datasets are marked with an asterisk (∗); all other datasets are used as OOD.",
+      "page": 7,
+      "index": 3,
+      "width": 923,
+      "height": 357
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10358v1/fig-004.webp",
+      "caption": "Table 1: Benchmark datasets after task-specific label filtering. Values are task-specific sample counts: exams for BI-RADS/cancer and images for density. * marks the source dataset for each task; parentheses show held-out ID test units for source datasets. † marks BI-RADS targets with available ordinal labels but a missing class; these targets are excluded from the final OOD AUROC result to avoid biasing the benchmark.",
+      "page": 3,
+      "index": 4,
+      "width": 944,
+      "height": 627
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10358v1/fig-005.webp",
+      "caption": "Figure 4: UMAP inspection grid for five representative backbones. Rows are (top to bottom) DINOv3, RAD-DINO, DINOv3-EMBED, MaMA, and Mammo-FM. Columns color embedding by (left to right) dataset, manufacturer, view position, breast density, and BI-RADS.",
+      "page": 8,
+      "index": 5,
+      "width": 924,
+      "height": 853
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10358v1/fig-006.webp",
+      "caption": "Table 2: Foundation-model families used throughout the paper. Family refers to pretraining/domain source; † denotes VLMs.",
+      "page": 4,
+      "index": 6,
+      "width": 944,
+      "height": 213
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10358v1/fig-007.webp",
+      "caption": "Figure 2: ID-to-OOD generalization of foundation-model representations. Each point is one frozen backbone. Axes show ID AUROC (x-axis) and mean OOD AUROC (y-axis) across compatible external datasets. Error bars show 95% confidence interval across OOD datasets. Colors indicate pretraining/domain family, and † marks VLM encoders. The dashed diagonal marks equivalent ID and OOD performance.",
+      "page": 5,
+      "index": 7,
+      "width": 938,
+      "height": 374
+    }
+  ]
+}

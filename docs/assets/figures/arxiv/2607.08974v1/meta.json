@@ -1,0 +1,78 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.08974v1/fig-001.webp",
+      "caption": "Table 2: LIBERO benchmark (h=8). Best result per VLA-0 vs. CLAP pair under the same number of gradient steps. Gray rows are prior work under their original training protocols (contextual refs).",
+      "page": 6,
+      "index": 1,
+      "width": 827,
+      "height": 303
+    },
+    {
+      "url": "assets/figures/arxiv/2607.08974v1/fig-002.webp",
+      "caption": "Figure 6: LIBERO Success Rate of CLAP@Qwen3.5-2B across training epochs on the four LIBERO suites. Success exceeds 90% on Spatial, Object, and Goal already at epoch 1, while Long benefits from one additional epoch before saturating.",
+      "page": 15,
+      "index": 2,
+      "width": 811,
+      "height": 219
+    },
+    {
+      "url": "assets/figures/arxiv/2607.08974v1/fig-003.webp",
+      "caption": "Table 9: SmolVLA all sizes vs. CLAP on LIBERO (1 epoch, h=8). Gray rows show SmolVLA under its full training protocol (contextual reference only).",
+      "page": 18,
+      "index": 3,
+      "width": 827,
+      "height": 210
+    },
+    {
+      "url": "assets/figures/arxiv/2607.08974v1/fig-004.webp",
+      "caption": "Figure 5: Pick-and-Place Task in Cluttered Scene. Left three: pick-and-place tasks in cluttered scenes with randomized object layouts. Right: an out-of-distribution scenario with unseen objects.",
+      "page": 13,
+      "index": 4,
+      "width": 824,
+      "height": 185
+    },
+    {
+      "url": "assets/figures/arxiv/2607.08974v1/fig-005.webp",
+      "caption": "Table 5: Objects used in real-robot evaluation. Seen objects appear in the training demonstrations as pick targets. Unseen objects are introduced as distractors only and are never picked.",
+      "page": 13,
+      "index": 5,
+      "width": 822,
+      "height": 201
+    },
+    {
+      "url": "assets/figures/arxiv/2607.08974v1/fig-006.webp",
+      "caption": "Figure 2: Overview of CLAP. CLAP changes only the target output sequence for VLA finetuning. During training, the language-action description d̃ is generated from the ground-truth action chunk by a fixed template d̃ = T(a). At inference time, both language-action description d and the numeric action tokens a are generated autoregressively by the model. Because generation is causal, each action token conditions on the preceding language-action description.",
+      "page": 4,
+      "index": 6,
+      "width": 826,
+      "height": 236
+    },
+    {
+      "url": "assets/figures/arxiv/2607.08974v1/fig-007.webp",
+      "caption": "Figure 7: VLABench capability profiles under 0-shot prompting. Same evaluation as Figure 3 in the main paper (1-shot) but without an in-context example. The overall capability ranking across model scales is consistent with the 1-shot setting, with the 4B model showing balanced performance across most dimensions. However, Physical Law accuracy, which remains modest but nonzero under 1-shot prompting (Figure 3 in the main paper), drops to near zero for all three scales without the incontext example, suggesting that even this limited performance relies on the provided demonstration.",
+      "page": 17,
+      "index": 7,
+      "width": 805,
+      "height": 352
+    },
+    {
+      "url": "assets/figures/arxiv/2607.08974v1/fig-008.webp",
+      "caption": "Figure 4: Real-Robot Setup. A UR5e arm with a Robotiq 2F-85 gripper performs pick-and-place tasks in cluttered tabletop scenes. Cam1 (fixed side view) and cam2 (wrist-mounted) provide the two RGB observations used as model input. Insets show example frames from each camera.",
+      "page": 12,
+      "index": 8,
+      "width": 748,
+      "height": 348
+    },
+    {
+      "url": "assets/figures/arxiv/2607.08974v1/fig-009.webp",
+      "caption": "Table 1: Example CLAP output sequence. Given an instruction, system message, and image observations, CLAP first generates a fixed-template language-action prefix that summarizes the intended h-step motion, then generates discrete numeric action tokens for execution. The prefix provides a structured intermediate conditioned on the observation and instruction, while the numeric tokens encode the precise 7-DoF command for each step.",
+      "page": 5,
+      "index": 9,
+      "width": 827,
+      "height": 308
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.05348v1/fig-001.webp",
+      "caption": "Table 1: Open-Vocabulary 3D Semantic Segmentation Results on ScanNetV2 and ScanNet200. We report mIoU and mAcc. † denotes numbers reported in the original paper (ScanNetV2) or reproduced by us (ScanNet200) based on LSeg.",
+      "page": 11,
+      "index": 1,
+      "width": 540,
+      "height": 465
+    },
+    {
+      "url": "assets/figures/arxiv/2607.05348v1/fig-002.webp",
+      "caption": "Fig. 1: RelGraphOV. We propose a relationship-aware open-vocabulary 3D scene understanding framework. Left: Illustration of encoding a 3D scene into a relationshipaware scene graph to capture contextual relationships. Right: Qualitative openvocabulary segmentation results produced by our method.",
+      "page": 2,
+      "index": 2,
+      "width": 704,
+      "height": 246
+    },
+    {
+      "url": "assets/figures/arxiv/2607.05348v1/fig-003.webp",
+      "caption": "Fig. 3: Qualitative Comparisons. Images of 3D semantic segmentation results on ScanNetV2 [7], including the example of a curtain and shower curtain as mentioned in the introduction.",
+      "page": 12,
+      "index": 3,
+      "width": 710,
+      "height": 644
+    },
+    {
+      "url": "assets/figures/arxiv/2607.05348v1/fig-004.webp",
+      "caption": "Fig. 2: Overall Pipeline of RelGraphOV. (1) Graph Construction: We build a relationship-aware 3D scene graph via multi-view VLM reasoning. (2) Annotation: A VLM chain-of-thought generates rich node semantics. (3) Adaptive Gated Dual-Stream GAT : To prevent feature interference, we decouple geometric (main) and semantic (auxiliary) feature propagation. Both undergo edge-guided message passing, while a learnable gate dynamically injects auxiliary semantics into the main stream. (4) Training : Hierarchical contrastive and dual-alignment losses optimize the network, effectively mitigating semantic drift and catastrophic forgetting.",
+      "page": 5,
+      "index": 4,
+      "width": 708,
+      "height": 425
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.10909v1/fig-001.webp",
+      "caption": "Figure 1: Conventional Side Adapter vs. Stresa. Using the frozen Qwen3-VL-8B-Embedding backbone, Dropped 18 layers and Full 36 layers mean that the item encoder extracts hidden states from 18 or 36 backbone layers for adapter computation. Left: HR@10 under both settings. Right: Side Adapter uses residual addition and sigmoid fusion, whereas Stresa uses selective residual update (ReSA) and earlierrepresentation-preserved fusion (SHAF). HSP and HSA denote hidden states from the pretrained model and previous adapter layer, respectively.",
+      "page": 1,
+      "index": 1,
+      "width": 494,
+      "height": 324
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10909v1/fig-002.webp",
+      "caption": "Figure 2: Overview of the proposed stream-aware fusion framework. (1) Stream-aware Hidden-Adapter Fusion (SHAF) at layer 𝑘 first reshapes the hidden representations into multiple streams and computes routing logits via query-key interactions. An identity-preservation operation is applied to preserve information from earlier layers. (2) Residual Stream Adapter (ReSA) applies stream-wise pre-, post-, and residual mappings around a bottleneck MLP. The mapped residual and nonlinear branches are combined to produce the next side state A𝑘 , which is directly propagated to the following adapted layer.",
+      "page": 3,
+      "index": 2,
+      "width": 1046,
+      "height": 549
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10909v1/fig-003.webp",
+      "caption": "Figure 4: Layer-wise cosine similarity onMicroLens-100K for the frozenQwen3-VL backbone, SideAdapter, and Stresa. Left: cos(z𝑘 , z1) versus backbone layer index 𝑘 . Right: cos(z𝑘 , z36) versus 𝑘 . Each series averages over items; layers 𝑘 = 1, . . . , 36 correspond to the 36 adapter depths.",
+      "page": 8,
+      "index": 3,
+      "width": 496,
+      "height": 243
+    }
+  ]
+}

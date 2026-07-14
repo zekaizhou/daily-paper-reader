@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.09351v1/fig-001.webp",
+      "caption": "Figure 3: Visulization of Simon-SR and other baselines.",
+      "page": 4,
+      "index": 1,
+      "width": 458,
+      "height": 335
+    },
+    {
+      "url": "assets/figures/arxiv/2607.09351v1/fig-002.webp",
+      "caption": "Figure 2: Overview of Simon-SR framework. Given the input low-resolution image ILR x and pre-trained prompts, two stages operate sequentially. (a) Contrastive Prompt Learning extracts learnable textual semantics from unannotated images based on frozen CLIP encoders. Then, the optimized prompts are passed to (b) Prompt-Guided Spatially Adaptive Refinement, where text–image fusion is conducted via PTRBlocks. Spatially adaptive affine transformations are used to progressively improve multi-modal alignment during iterative refinement.",
+      "page": 2,
+      "index": 2,
+      "width": 1041,
+      "height": 396
+    },
+    {
+      "url": "assets/figures/arxiv/2607.09351v1/fig-003.webp",
+      "caption": "Table 1: Quantitative comparison between Simon-SR and baseline SOTAs on CUB, DIV2K and COCO2017 datasets.",
+      "page": 3,
+      "index": 3,
+      "width": 1089,
+      "height": 439
+    },
+    {
+      "url": "assets/figures/arxiv/2607.09351v1/fig-004.webp",
+      "caption": "Figure 1: (a) Existing single-modal methods fail at extreme downsampling rates (e.g., ×16). (b) Existing multi-modal models suffer from sub-optimal fusion strategies and text bias. (c) The proposed learnable prompts for textual semantic mining reduce annotation cost, mitigate prior bias, and enhance detail recovery.",
+      "page": 1,
+      "index": 4,
+      "width": 496,
+      "height": 390
+    }
+  ]
+}
