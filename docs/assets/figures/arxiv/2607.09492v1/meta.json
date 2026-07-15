@@ -1,0 +1,70 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.09492v1/fig-001.webp",
+      "caption": "Figure 3 Decision boundaries amplify reward hacking and refusal behavior. Left panel shows RHR under clean vs. ambiguous settings. Right panel shows refusal rate under the same conditions. Ambiguous inputs consistently yield higher RHR and refusal rates, especially under R1.",
+      "page": 6,
+      "index": 1,
+      "width": 967,
+      "height": 330
+    },
+    {
+      "url": "assets/figures/arxiv/2607.09492v1/fig-002.webp",
+      "caption": "Table 1 Safety VQA composition. Sizes for each split broken down by risk label and effective source. The ambiguous variants of GRPO and eval extend their clean counterparts with ambiguous samples, isolating decision-boundary effects. Source counts are balanced by the 30% per-source cap in Stage 4.",
+      "page": 15,
+      "index": 2,
+      "width": 986,
+      "height": 195
+    },
+    {
+      "url": "assets/figures/arxiv/2607.09492v1/fig-003.webp",
+      "caption": "Figure 1 Overview of multimodal reward hacking. When automated proxy rewards 𝑟 (𝑥, 𝑦) diverge from the intended oracle objective 𝑜(𝑥, 𝑦), RL can increase reward scores while degrading faithful multimodal reasoning. The central example shows a Chart VQA case where the RL policy obtains high reward by giving the correct answer but fabricates visual evidence, exposing a reward–oracle mismatch. We study this failure mode in a controlled multimodal RL sandbox covering task type, reward design, RL algorithm, and model scale, and diagnose three hacking categories: Decision Hacking, Evidence Hacking, and Reward-Form Hacking. Metrics including RHR, ROG, and NRFR quantify how imperfect rewards induce shortcut learning under optimization pressure.",
+      "page": 2,
+      "index": 3,
+      "width": 957,
+      "height": 633
+    },
+    {
+      "url": "assets/figures/arxiv/2607.09492v1/fig-004.webp",
+      "caption": "Figure 4 Algorithm robustness under exploitable rewards across scales. (a) Training dynamics at 2B: RLOO converges fastest to high reward, DAPO next, GRPO slowest—yet higher reward does not imply better oracle quality. (b) RHR (bars, left axis) and |ROG| (lines, right axis) across model scales. DAPO’s RHR drops sharply with scale, producing a ranking inversion at 8B, while RLOO’s |ROG| worsens monotonically. (c) Benign worse rate across scales: RLOO degrades benign-query handling most severely (86.1% at 8B), while DAPO improves from 78.2% to 73.9%.",
+      "page": 7,
+      "index": 4,
+      "width": 971,
+      "height": 303
+    },
+    {
+      "url": "assets/figures/arxiv/2607.09492v1/fig-005.webp",
+      "caption": "Figure 5 Scaling and reward design are complementary. (a) Worse Rate (solid, left axis) and ROG (dashed, right axis) across model scales under R1 and R2 (Safety VQA, clean). R1 stays inverted at every scale. R2 achieves positive ROG throughout and reduces WR to 26.4% at 32B. (b) RHR heatmap across model scales, reward designs, and data regimes. RHR decreases along both the scale axis and the reward-design axis. Ambiguous columns are consistently higher than their clean counterparts. The lightest cell (R2 Clean at 32B, 11.9%) still shows residual hacking, confirming that scaling mitigates but does not eliminate reward hacking.",
+      "page": 8,
+      "index": 5,
+      "width": 967,
+      "height": 308
+    },
+    {
+      "url": "assets/figures/arxiv/2607.09492v1/fig-006.webp",
+      "caption": "Figure 6 Verifier reliability, not information quantity, determines whether visual-evidence rewards help. (a) Safety VQA RHR across model scales: adding visual evidence via keyword matching (R3) yields RHR equal to or higher than R2 at every scale, despite incorporating additional visual information. (b) The same intervention “add visual evidence” produces opposite outcomes under different verifiers. On Safety VQA with keyword matching (unreliable), R3 raises RHR from 25.5% to 27.7%; on Chart VQA with VLM-as-judge (reliable), R3 lowers RHR from 10.0% to 8.5%.",
+      "page": 9,
+      "index": 6,
+      "width": 967,
+      "height": 315
+    },
+    {
+      "url": "assets/figures/arxiv/2607.09492v1/fig-007.webp",
+      "caption": "Figure 2 Reward-oracle alignment spectrum. (a) Total misalignment (Safety VQA, 2B, R1 clean). Proxy reward rises while ROG steadily worsens, producing a scissor curve. (b) Partial misalignment (Chart VQA, 2B, format-only reward R0). Reward climbs rapidly while ROG declines, though less severely than in (a). (c) Active failure creation. Among settings where NRFR exceeds RHR, proxy-reward gains are disproportionately concentrated on hacking samples, confirming that RL selectively reinforces oracle-rejected behaviors.",
+      "page": 5,
+      "index": 7,
+      "width": 969,
+      "height": 286
+    },
+    {
+      "url": "assets/figures/arxiv/2607.09492v1/fig-008.webp",
+      "caption": "Table 2 Training hyperparameters for both tracks and both stages.",
+      "page": 16,
+      "index": 8,
+      "width": 514,
+      "height": 240
+    }
+  ]
+}
