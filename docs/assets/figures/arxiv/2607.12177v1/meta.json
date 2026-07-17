@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.12177v1/fig-001.webp",
+      "caption": "Fig. 4. A conceptual user interface for an agentic geospatial reasoning system. A user tasks the system via a natural language text prompt. The system then orchestrates the use of datasets and tools, including GeoFMs, to generate an analytical output. The user can then follow up with additional prompts in natural language [4].",
+      "page": 15,
+      "index": 1,
+      "width": 725,
+      "height": 440
+    },
+    {
+      "url": "assets/figures/arxiv/2607.12177v1/fig-002.webp",
+      "caption": "Fig. 1. The two-stage life-cycle of a vision geospatial foundation model. (Left:) The self-supervised pre-training phase, where a model backbone learns to extract powerful embeddings by reconstructing masked patches with the help of a temporary head. (Right:) The supervised fine-tuning phase, where the pre-trained backbone is used, its temporary reconstruction head discarded, and a new, task-specific head is trained on a small, labeled dataset.",
+      "page": 4,
+      "index": 2,
+      "width": 725,
+      "height": 379
+    },
+    {
+      "url": "assets/figures/arxiv/2607.12177v1/fig-003.webp",
+      "caption": "Fig. 3. Conceptual illustrations for performance-cost analyses. (Left:) A notional curve showing the trade-off between model performance and cost for different fine-tuning strategies. (Right:) A conceptual diagram of the breakeven point, where the up-front, fixed cost of fine-tuning is surpassed by the recurring, variable costs of inference over many images.",
+      "page": 12,
+      "index": 3,
+      "width": 702,
+      "height": 198
+    },
+    {
+      "url": "assets/figures/arxiv/2607.12177v1/fig-004.webp",
+      "caption": "Fig. 2. Example of open-vocabulary object detection. The same vision-language GeoFM is prompted to detect (Top:) the text string \"building\" and subsequently (Bottom:) the text string \"golf course\", demonstrating the ability to dynamically query the image for different object types without fine-tuning. Images courtesy of Bellwether [20].",
+      "page": 9,
+      "index": 4,
+      "width": 688,
+      "height": 960
+    }
+  ]
+}
