@@ -1,0 +1,548 @@
+Title: PhysMRV: Physical Memory Retrieval and Verification for Physics Plausibility Reasoning
+
+URL Source: https://arxiv.org/pdf/2607.10190v1
+
+Published Time: Tue, 14 Jul 2026 00:33:59 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# PhysMRV: Physical Memory Retrieval and Verification for Physics Plausibility Reasoning 
+
+Wenyuan Wang 1 2 Lianyu Hu 1 Hao Wang 2 3 Yang Liu 1
+
+Abstract 
+
+Video-language models (VLMs) have achieved remarkable performance on video understanding and visual question answering, yet they remain unreliable in reasoning about physical plausibility, where understanding object interactions, causal dynamics, and fundamental physical principles is essential. This limitation is particularly evident on challenging physical reasoning benchmarks, revealing a persistent gap in physical commonsense reasoning. To address this challenge, we propose P HYS MRV, a training-free physical memory and verification framework for physical plausibility reasoning. Unlike retrieval-augmented VLMs that retrieve semantically similar videos as additional context, P HYS MRV transforms training videos into a Hierarchical Memory Bank of structured physical knowledge comprising three complementary levels: scene descriptions capturing visual context, physical-event graphs modeling object interactions and causal structure, and physics-rule summaries distilling reusable physical principles and cues. During inference, P HYS MRV retrieves physically relevant memories and leverages their structured physical evidence to guide a frozen VLM in verifying physical plausibility, requiring neither fine-tuning nor parameter updates. We evaluate P HYS MRV on three challenging physical reasoning benchmarks, ImplausiBench, IntPhys2, and GRASP Level 2, across multiple state-of-the-art VLMs. Experimental results demonstrate consistent improvements over direct prompting across diverse VLMs and evaluation benchmarks, showing that structured physical memories provide an effective and scalable means of enhancing physical plausibility reasoning without additional training. 
+
+1. Introduction 
+
+Recent VLMs have achieved impressive progress in video understanding, demonstrating strong performance in perceptual tasks and reasoning abilities, including spatial reasoning and temporal reasoning.(Bai et al., 2025; NVIDIA, 2026; Wang et al., 2025; An et al., 2026). However, successful deployment in real-world environments requires capabilities beyond recognizing objects, actions, and scenes. A model also needs to reason about the physical world and determine whether an observed event is physically plausible. For example, it should recognize whether an unsupported object can remain suspended in midair, whether an object should continue to exist after becoming occluded, and whether a collision produces a physically consistent outcome. Such judgments require physical commonsense reasoning about object permanence, causal interactions, and the fundamental principles governing real-world dynamics. This makes physical plausibility reasoning fundamentally different from conventional video understanding: a model may correctly identify visible entities and actions while still failing to detect violations of basic physical laws, because such judgments cannot be directly captured by object-level semantics and instead require an understanding of real-world physical constraints. Prior benchmarks have begun to systematically examine this capability. ImplausiBench focuses on detecting physical violations from visual evidence (Motamed et al., 2025), IntPhys2 evaluates intuitive physics through violation-of-expectation scenarios involving object permanence, continuity, and solidity (Bordes et al., 2025), and GRASP studies physical reasoning in grounded and interactive settings (Jassim et al., 2023). Figure 1 shows representative examples from these benchmarks. Results on these benchmarks show that current multimodal models still fall substantially below human-level physical understanding, suggesting that VLMs lack a reliable mechanism for verifying whether observed evidence satisfies physical 
+
+> 1
+
+Nanyang Technological University 2Rutgers University 3University of Illinois Urbana-Champaign. Correspondence to: Wenyuan Wang <ww462@scarletmail.rutgers.edu >.
+
+Preprint. July 14, 2026. 
+
+1arXiv:2607.10190v1 [cs.LG] 11 Jul 2026 PhysMRV: Physical Memory Retrieval and Verification ImplausiBench             
+
+> 3.00s 3.25s 3.38s 3.50s 3.62s
+> Physically plausible? Implausible IntPhys2
+> 4.40s 4.55s 4.70s 4.85s 5.00s
+> Physically plausible? Plausible GRASP Level 2
+> 2.20s 2.50s 2.80s 3.10s 3.40s
+> Physically plausible? Implausible
+
+Figure 1. Examples of physical plausibility reasoning across the evaluation benchmarks. Given short video evidence, a model must determine whether the observed event is physically plausible rather than relying only on object or action recognition. 
+
+constraints. This limitation is also consistent with the observation in InPhyRe (Sreekumar & Boddeti, 2026), which suggests that physical reasoning relies on identifying violations of latent physical constraints that are often invariant to surface-level visual similarity and thus cannot be reliably captured through retrieval signals based on semantic similarity. A key reason is that current VLMs are strongly shaped by physical plausibility priors . Since large-scale video-language pretraining data predominantly describe physically valid scenes, models tend to prefer physically reasonable interpretations even when the observed evidence suggests otherwise. As a result, their predictions are often driven by learned expectations about how the world typically behaves, rather than explicit verification of whether the current observation satisfies the relevant physical constraints. Effective physical reasoning therefore requires more than knowing what is physically likely; it requires verifying whether the observed visual evidence actually satisfies the relevant constraints. Existing approaches have provided useful foundations. Prompting and context-construction methods, such as Physics Context Builders (Balazadeh et al., 2025), provide structured scene descriptions for VLM reasoning. Training-based approaches, such as TRAVL (Motamed et al., 2025), improve physical-implausibility recognition through supervision training, but require updating model parameters. Existing retrieval-based approaches provide a non-parametric way to enhance physical reasoning by incorporating external memories at inference time (Luo et al., 2025; Zhong et al., 2024; Ma et al., 2026; Li et al., 2026). However, they are typically driven by semantic or task-level similarity, which is insufficient for physical plausibility reasoning. Visually or linguistically similar events may differ in underlying physical constraints such as support, contact, and causality. As a result, retrieval based solely on surface-level similarity may fail to distinguish physically distinct but semantically similar events, leading to unreliable plausibility verification. This suggests that retrieval should be conditioned on physical event structure rather than surface-level similarity. To address this challenge, we propose P HYS MRV, a non-parametric and plug-and-play framework for physical plausibility reasoning in video-language models. The core idea is to transform training videos into a structured Physical Memory Bank 
+
+that serves as a repository of explicit physical memories for inference. Each memory instance corresponds to a QA pair represented by hierarchical semantic-level scene caption, event-level physical graphs, and rule-level physical rules with associated positive and negative cues. At inference time, P HYS MRV consists of two tightly coupled stages: physics-aware retrieval and evidence-centered verification . First, a coarse-to-fine retrieval strategy identifies physically analogous memories by matching semantic context and subsequently refining candidates using event-graph similarity. The retrieved memories are then treated as explicit physical evidence for verification, where a frozen VLM compares the observed event graph against retrieved rules and cues to determine whether the current event is physically plausible. Unlike conventional 2PhysMRV: Physical Memory Retrieval and Verification Memory Bank Construction 
+
+1. Physics Video QA 
+
+TRAVL Datasets 
+
+3,482 Videos 
+
+19,708 QA examples 
+
+2. Construction branches 
+
+Caption 
+
+generation 
+
+> Qwen3-VL-8B
+
+Caption 
+
+> Scene Description
+> video -> caption
+
+Event graph 
+
+generation 
+
+> Qwen3-VL-8B
+
+Event Graph   
+
+> event_type subject/object
+> state_change visible_evidence
+> temporal_phase
+> video ->
+> event graph
+
+Rule 
+
+Generation 
+
+> GPT 5.5 Generation
+
+Physics Rule   
+
+> rule_family principle
+> positive_cues negative_cues
+> VQA+
+> explanation
+> ->
+> rule_family
+
+3. Composition 
+
+Memory Bank 
+
+19708 Unit / 3,482 Video 
+
+> Caption
+> Event Graph
+> Physics Rule
+> 4. 15-family physical rule catalog
+> 01 Support, Gravity,
+> and Trajectory
+> 02 Force and
+> Motion Change
+> 03 Contact and
+> Collision Response
+> 04 Rotation, Balance,
+> and Stability
+> 05 Solid Barriers
+> and Occupancy
+> 06 Continuity, Identity,
+> and Presence
+> 07 Material Amount
+> and Transfer
+> 08 Fluid Flow,
+> Containment, Buoyancy
+> 09 Material Properties
+> and Phase Change
+> 10 Shape, Deformation,
+> and Breakage
+> 11 Size, Scale,
+> and Growth
+> 12 Thermal, Combustion,
+> and Heat
+> 13 Light, Shadow,
+> Reflection, Visibility
+> 14 Biological and
+> Environmental Change
+> 15 Causal and
+> Temporal Order
+
+Explanation, Label 
+
+> Explanation
+> QA examples
+
+Figure 2. Structure of the Physics Memory Bank. Each training video contributes shared caption and physical-event rows, while question-answer anchor rows store training questions, training labels, explanations, rule-family assignments, principles, and cue lists. Dense recall and physical reranking select training-only anchors for the verifier. 
+
+retrieval-augmented approaches that primarily retrieve textual context to enrich prompting, P HYS MRV explicitly separates retrieval from verification, enabling frozen VLMs to validate physical plausibility through structured physical memories. We evaluate P HYS MRV on ImplausiBench, IntPhys2, and GRASP Level 2 across multiple vision-language model backbones, including Qwen3-VL, Cosmos-Reason2, InternVL3.5, and LLaVA-OneVision-2. Across all settings, P HYS MRV consistently improves physical plausibility reasoning performance without any additional training or parameter updates to the backbone models. Beyond overall performance gains, we conduct a series of analyses to understand where these improvements come from. Our results highlight the importance of structure-aware retrieval over purely semantic matching, the effectiveness of event graph-based alignment for identifying physically analogous cases, and the role of prompt-level grounding signals in enabling the frozen model to better leverage retrieved physical memories. Together, these findings suggest that explicitly structured physical memory can serve as an effective external mechanism for enhancing physical reasoning in frozen VLMs. In summary, our contributions are: 
+
+❶ Hierarchical Physical Memory Bank. We construct a structured Physical Memory Bank from video QA training data, where each physical memory is represented by hierarchical semantic context, physical event graphs, and rule-level physical abstractions grounded in a unified taxonomy of physical principles. 
+
+❷ Physics-Aware Coarse-to-Fine Retrieval. We propose a coarse-to-fine retrieval strategy that first recalls candidate physical memories using semantic context and then reranks them through physical event graph alignment, enabling frozen VLMs to retrieve physically analogous memories that support reliable physical plausibility verification. 
+
+❸ Training-free Physical Reasoning Framework. We introduce P HYS MRV, a plug-and-play framework that enhances frozen VLMs for physical plausibility reasoning by retrieving structured physical memories and using them as explicit evidence for physical plausibility verification, without any parameter updates or additional training. 3PhysMRV: Physical Memory Retrieval and Verification 
+
+2. Related Work 
+
+2.1. Video Understanding 
+
+VLMs aim to transform visual streams into representations suitable for question answering, event understanding, and reasoning. Despite strong progress in multimodal perception, existing models often struggle to preserve fine-grained temporal dependencies over long videos, especially when reasoning requires tracking interactions among multiple objects across time. Recent work addresses this challenge from different perspectives. One line improves multimodal backbones and video interfaces to better capture long-range temporal structure, as exemplified by Qwen3-VL (Bai et al., 2025). Another line focuses on efficient long-video comprehension through structured representations. LLoVi converts long videos into language-centered memory for question answering (Zhang et al., 2024), VideoTree organizes video content into hierarchical structures for LLM-based reasoning (Wang et al., 2024), and Video-RAG retrieves aligned visual and textual evidence for long-context video understanding (Luo et al., 2025). Despite these advances, existing systems still largely rely on object- and action-level abstractions and often lack explicit modeling of fine-grained physical interaction structure, such as contact, support relations, and motion continuity, which are crucial for determining physical plausibility. 
+
+2.2. Memory and Retrieval 
+
+Retrieval-augmented methods enhance frozen models by incorporating external demonstrations, documents, or past experi-ences. In in-context learning, prior work shows that the choice of retrieved demonstrations significantly influences model behavior, motivating learned retrieval mechanisms that select examples tailored to a given query (Liu et al., 2022; Rubin et al., 2022). Beyond short-term in-context retrieval, long-term memory systems maintain reusable experiences that can be revisited during inference. Memory Bank stores and retrieves persistent conversational memories for LLMs (Zhong et al., 2024), BrainMem organizes embodied-agent experience into structured memory for planning and decision making (Ma et al., 2026), and PhysMem introduces test-time memory for physical reasoning in embodied settings (Li et al., 2026). These methods share a common paradigm of constructing searchable memory representations, retrieving relevant experiences, and injecting them into frozen models. However, most retrieval mechanisms are primarily optimized for semantic or task-level similarity, and may not explicitly preserve underlying physical interaction structure. As a result, retrieved examples can be content-relevant while still differing in fine-grained dynamics such as contact patterns, support relations, and state transitions. This limitation is particularly critical for physical plausibility reasoning, which requires identifying whether observed events are consistent with underlying physical constraints rather than surface-level semantic similarity alone. 
+
+2.3. Physical Reasoning 
+
+Physical plausibility reasoning concerns an agent’s ability to infer physical states, interactions, and temporal transitions from observations. Recent work has extended its evaluation to VLMs through a diverse set of benchmarks. TRAVL and ImplausiBench evaluate whether models can distinguish physically plausible from implausible events in videos (Motamed et al., 2025); IntPhys2 focuses on intuitive physics reasoning in synthetic environments (Bordes et al., 2025); GRASP studies grounded physical understanding in situated settings (Jassim et al., 2023); and PhysBench provides a broader evaluation of physical-world understanding in multimodal models (Chow et al., 2025). Collectively, these benchmarks indicate that strong visual recognition and video understanding do not reliably transfer to physical plausibility reasoning, highlighting a persistent gap in modeling physical interactions. Existing approaches to improving physical plausibility reasoning can be broadly categorized into two directions. The first direction specializes the reasoning model through task-specific training or supervision. For example, PhysGame constructs PhysInstruct and PhysDPO to train PhysVLM for detecting physical commonsense violations in gameplay videos (Cao et al., 2024), and TRAVL further improves performance through auxiliary supervision signals (Motamed et al., 2025). The second direction introduces auxiliary physical context while keeping the downstream model largely frozen. Physics Context Builders (PCBs), for instance, train a separate model on simulated physical scenes to generate physics-enriched 4PhysMRV: Physical Memory Retrieval and Verification PhysMRV Inference Framework 
+
+1. Physical MemoryBank 
+
+> Train 1
+> Material
+> Amount Transfer
+> Train 2
+> Force
+> Motion Change
+> Train 3
+> Support
+> Gravity Trajectory
+
+... 
+
+Test Query 
+
+> eval video frames
+
+Retrieval Pipeline              
+
+> 1Semantic Recall
+> top-50
+> caption-
+> question
+> 10.92
+> 20.88
+> 30.84
+> ... ...
+> 50 0.41
+> 2Physical Rerank
+> event-
+> component
+> matching
+> 10.96
+> 20.93
+> 30.89
+> ... ...
+> 50 0.46
+> 3Diverse Rules
+> top-3
+> rule-family diverse
+> Material
+> Amount Transfer
+> Force
+> Motion Change
+> Support
+> Gravity Trajectory
+
+Physical Verification 
+
+& Answer 
+
+> Memory Card x3
+> Card 1
+> Rule cues
+> Card 2
+> Rule cues
+> Card 3
+> Rule cues
+
+Physical Verifier (VLM) 
+
+Answer     
+
+> Caption +
+> Question
+> caption text
+> physical QA prompt
+> Eval Event Graph
+> object event object
+> state
+> event_type state_change evidence
+> Eval Graph
+> Eval Caption
+
+Figure 3. Overview of P HYS MRV. Given a test video and question, P HYS MRV retrieves physically relevant training precedents from Physical Memory Bank via hierarchical retrieval: semantic similarity identifies candidate scenes, and physical-event matching selects the most event-relevant memories across diverse physical phenomena. A frozen VLM then uses the video’s extracted scene description and event graph to verify plausibility against the retrieved physical rules and diagnostic cues. 
+
+context for downstream reasoning (Balazadeh et al., 2025). While effective, these approaches typically rely on additional supervision or training, either for the reasoning model or for auxiliary context generation modules, which limits their applicability to frozen or proprietary VLMs and makes adaptation to new settings costly. In contrast, we construct a physical experience memory from available data and perform retrieval and structured verification over retrieved cases entirely at inference time. This enables improved physical plausibility reasoning for frozen VLMs without requiring additional training or modification of the underlying model. 
+
+3. Method 
+
+Overview. 
+
+PHYS MRV is a training-free inference-time framework for physical plausibility reasoning in frozen video-language models. It reformulates physical plausibility reasoning as a verification problem against retrieved physically similar training instances, which serve as explicit physical evidence for the current observation. Instead of directly inferring answers from video inputs, P HYS MRV conditions reasoning on a structured set of retrieved physically similar memories, which provide explicit physical cues for verification. The framework consists of three stages: (i) hierarchical Physical Memory Bank construction from TRAVL training videos, (ii) coarse-to-fine retrieval of physically relevant memories from the Memory Bank, and (iii) rule-guided verification via structured prompting, where retrieved physical rules and cues are explicitly used to guide the model’s plausibility judgment. Figure 2 illustrates the design of the Physical Memory Bank, and Figure 3 presents the overall inference pipeline. 
+
+3.1. Preliminaries 
+
+We consider a physical plausibility reasoning problem over a benchmark set B, which consists of ImplausiBench, IntPhys2, and GRASP Level 2. Each benchmark instance is defined as: 
+
+si = ( vi, q i, Ai, y i), (1) where vi is the input video, qi is the associated question, Ai denotes the candidate answer set, and yi ∈ A i is the ground-truth label. For multiple-choice benchmarks (e.g., ImplausiBench), Ai is explicitly provided, while for binary classification benchmarks (e.g., IntPhys2 and GRASP Level 2), Ai is mapped to a binary label space. 5PhysMRV: Physical Memory Retrieval and Verification 
+
+The task is to predict the correct answer given only the test-time input (vi, q i):
+
+ˆyi = arg max 
+
+> a∈A i
+
+P (a | vi, q i), (2) without any training or parameter updates on B.
+
+Physical Memory Bank Construction. PHYS MRV constructs an offline Physical Memory Bank M using training videos from TRAVL. Each memory entry mj ∈ M is defined as: 
+
+mj = ( cap train  
+
+> j
+
+, g train  
+
+> j
+
+, q train  
+
+> j
+
+, e j , r j , C + 
+
+> j
+
+, C − 
+
+> j
+
+), (3) where cap train  
+
+> j
+
+is the generated video caption, gtrain  
+
+> j
+
+denotes the extracted physical event graph, qtrain  
+
+> j
+
+is the associated training question, ej is the dataset-provided explanation, rj is the corresponding physical rule, and C+ 
+
+> j
+
+and C− 
+
+> j
+
+represent positive and negative physical cue sets, respectively. 
+
+Test-Time Setting. At inference time, given a test instance (vi, q i), P HYS MRV retrieves a relevant subset Ri ⊂ M based on semantic similarity in the representation space of the frozen video-language model Fθ . The retrieved evidence is then organized into a structured verification prompt Pi, which provides explicit physical context for reasoning. Given (vi, q i, P i), a frozen video-language model Fθ produces the final prediction: 
+
+ˆyi = Fθ (vi, q i, P i), (4) without any updates to model parameters θ.
+
+3.2. Hierarchical Physical Memory Bank 
+
+Physical plausibility reasoning depends on both observed dynamics and the physical regularities behind them. We therefore construct a Hierarchical Physical Memory Bank from 3,482 TRAVL training videos with 2–6 QA pairs per video, yielding 19,708 VQA examples. The Physical Memory Bank organizes each video into three complementary abstraction levels: • Caption Layer , which stores coarse-grained global scene descriptions; • Physical-Event Layer , which stores fine-grained event graphs for object interactions and state transitions; • Rule Layer , which stores the physical principle, and diagnostic cues. For each video, the caption and physical-event graph are generated once and shared by all associated QA memories. Each QA memory is linked to one of fifteen rule families covering support, force, collision, continuity, fluid, thermal, optical, and causal phenomena, enabling semantic retrieval through text and physical matching through structured event evidence. This design separates what is seen (caption), what happens (event graph), and why it is valid or invalid (physical rule). Physical-event graphs are constructed by prompting Qwen3-VL-8B to extract objects, state transitions, temporal phases, and causal relations as a structured event list. Training graphs gtrain  
+
+> j
+
+are built offline during Memory Bank construction; the same pipeline generates evaluation graphs geval  
+
+> i
+
+= Γ( vi, q i) at inference time from the target video. 
+
+3.3. Physical Memory Retrieval and Verification 
+
+Given a query video and question, retrieval identifies Physical Memory Bank samples that are both semantically related and physically relevant. 
+
+Scene-Level Semantic Retrieval. The first stage favors recall by using caption-question representations rather than questions alone: the caption describes the observed scene, while the question identifies the physical aspect to judge. For an evaluation sample, we form τ eval  
+
+> i
+
+= cap eval  
+
+> i
+
+⊕ qeval  
+
+> i
+
+and represent each training memory analogously as τ train  
+
+> j
+
+=cap train  
+
+> j
+
+⊕qtrain  
+
+> j
+
+. We encode these texts with Qwen3-Embedding-0.6B, compare normalized embeddings by cosine similarity, and keep the top-50 candidates as C50  
+
+> i
+
+. This broad pool is then refined by physical-event reranking. 6PhysMRV: Physical Memory Retrieval and Verification 
+
+Physical-Event Reranking. Semantic similarity does not necessarily imply physical similarity, so P HYS MRV reranks 
+
+C50  
+
+> i
+
+according to structured physical-event graph similarity. Let Eeval  
+
+> i
+
+and Etrain  
+
+> j
+
+denote the event sets extracted from the current graph geval  
+
+> i
+
+= Γ( vi, q i) and a training candidate graph gtrain  
+
+> j
+
+. Each event is decomposed into the ordered tuple 
+
+P = (event type , objects , state , evidence , phase) .For component p ∈ P , let up(e) be the ℓ2-normalized embedding of the textual representation of component p in event e.The physical match between an evaluation event e and a training event e′ is 
+
+M (e, e ′) = X
+
+> p∈P
+
+αp up(e)⊤up(e′). (5) Here we set each component-specific weight αp to 0.2. To measure how well a training memory covers the current video’s physical events, we define the graph-level score as 
+
+Sgraph (geval  
+
+> i
+
+, g train  
+
+> j
+
+) = 1
+
+|Eeval  
+
+> i
+
+|
+
+X
+
+> e∈Eeval
+> i
+
+max 
+
+> e′∈Etrain
+> j
+
+M (e, e ′). (6) Candidates are reranked by Sgraph . To encourage diverse physical precedents, duplicate videos are removed and the final top-3 anchors Ri are greedily selected such that each belongs to a different rule family. 
+
+3.4. Rule-Cue Verification 
+
+After retrieval, the selected memories are rendered as compact verification criteria rather than answer templates. For each selected memory mj ∈ Ri, we expose a compact verification record by retaining only the fields required for reasoning: 
+
+Vj = ( qtrain  
+
+> j
+
+, e j , r j , C + 
+
+> j
+
+, C − 
+
+> j
+
+). (7) These cues turn retrieved precedents into checks over the current video: positive cues describe physically consistent evidence, while negative cues describe typical violations involving contact, support, continuity, trajectory, state change, or material behavior. Let Vi collect the verification records for all retrieved memories Vi = {Vj | mj ∈ Ri}. The final prompt is generated as 
+
+Pi = ρ(qi, Ai, cap eval  
+
+> i
+
+, g eval  
+
+> i
+
+, Vi), (8) so the prompt-visible context contains the current question, answer, eval caption, eval physical-event graph, and retrieved rule-cue records. The VLM is instructed to act as a visual verifier: it compares the current video and event graph against the retrieved principles and cue lists, then answers from current evidence. The final prediction is 
+
+ˆyi = Fθ (Pi), (9) where the model is prompted to respond with a single token from Yb.
+
+4. Experiments 
+
+Datasets. We evaluate on three video benchmarks for physical plausibility reasoning. ImplausiBench (Motamed et al., 2025) contains 150 paired scenarios and 300 videos, with one plausible and one implausible video per scenario, and uses multiple-choice questions about the relevant physical outcome or violation. IntPhys2 Main (Bordes et al., 2025) contains 1,012 synthetic videos balanced between possible and impossible events, covering object permanence, immutability, spatio-temporal continuity, and solidity. GRASP Level 2 (Jassim et al., 2023) contains 4,096 situated-physics videos with concept-specific yes/no questions about whether the observed event is physically possible. 
+
+Metrics. We report each benchmark with its task-native evaluation metric. For ImplausiBench, the public release provides the multiple-choice annotations but without an official option-accuracy evaluation script. We therefore implement a lightweight scorer that parses the model’s returned option letter (A–G) and computes exact-match accuracy against the benchmark MCQA target. For IntPhys2, the official code includes multiple prompting/parsing variants. We use the official binary 1/0
+
+convention, where 1 denotes physically possible/plausible behavior and 0 denotes impossible/implausible behavior. We 7PhysMRV: Physical Memory Retrieval and Verification 
+
+Table 1. Main results on three physical-reasoning benchmarks. For each final VLM, we compare zero-shot direct prompting with component-level controls: evaluation captions, current-video physical graphs, train-memory retrieval, and the full P HYS MRV. Training memories are drawn exclusively from TRAVL (Motamed et al., 2025). Best and second-best results for each backbone and benchmark are highlighted.                                                                        
+
+> Benchmark Qwen3-VL Cosmos-Reason-2 InternVL3.5-8B LLaVA-OneVision-2
+> Dir. +Cap. +Graph Mem. PHYS MRV Dir. +Cap. +Graph Mem. PHYS MRV Dir. +Cap. +Graph Mem. PHYS MRV Dir. +Cap. +Graph Mem. PHYS MRV ImplausiBench option acc. 0.5500 0.5567 0.5800 0.5667 0.5900 0.5333 0.5367 0.5533 0.5267 0.5733 0.5433 0.5767 0.5600 0.5633 0.5833 0.3400 0.3600 0.3533 0.3333 0.3567 IntPhys2 0.4990 0.5217 0.5040 0.5040 0.5395 0.5010 0.5208 0.5109 0.5336 0.5366 0.4990 0.5217 0.4980 0.5198 0.5346 0.4802 0.5000 0.4990 0.4921 0.5020
+> GRASP L2 0.4836 0.5542 0.5227 0.5386 0.5798 0.4998 0.5405 0.5308 0.5527 0.5664 0.4973 0.5479 0.5029 0.5415 0.5715 0.4885 0.5029 0.4922 0.5061 0.5081
+
+report balanced possible/impossible accuracy, i.e., the average accuracy over the possible and impossible subsets, to reduce sensitivity to class-prior bias. For GRASP, we follow the official binary evaluation script. Model outputs are reduced to the first valid yes/no answer and compared with the ground-truth label, where yes indicates a physically plausible video and no 
+
+indicates an implausible one. 
+
+Implementation Details. We use Qwen3-VL-8B-Instruct to generate captions and physical-event graphs. Rule-family labels, cues, and rule assignments are all generated using the GPT-5.5 API. Unless otherwise specified, all video inputs are processed with video fps =1.0. Caption generation uses deterministic decoding with temperature 0 and max new tokens =160, while physical-event graph extraction additionally uses video max pixels =151200 and max new tokens =1280. Final answer generation is performed with deterministic decoding (temperature 0), using max new tokens =256 for ImplausiBench and IntPhys2, and 32 for GRASP. Videos are decoded using torchcodec . All experiments are conducted on 4 H100 GPUs. 
+
+4.1. Main Results 
+
+Table 1 compares P HYS MRV with zero-shot direct prompting and four component-level controls across four representative VLM backbones. The controls isolate the contributions of evaluation captions, current-video physical graphs, memory retrieval only, and the complete PhysMRV framework. 
+
+PHYS MRV consistently improves physical plausibility reasoning across strong VLM backbones. Across Qwen3-VL, Cosmos-Reason-2, and InternVL3.5-8B, P HYS MRV achieves the best performance on all three benchmarks. Relative to direct prompting, it improves option accuracy by approximately 4 percentage points on ImplausiBench and IntPhys2, while yielding substantially larger gains of 6–10 percentage points on GRASP Level 2. The largest improvement is achieved by Qwen3-VL on GRASP Level 2, where accuracy increases from 0.4836 to 0.5798 ( +9 .6 pp). 
+
+Verification provides complementary benefits beyond retrieval or context augmentation alone. Neither evaluation-caption augmentation, evaluation-graph augmentation, nor training memory retrieval without verification consistently matches the full framework across the three benchmarks. While individual components occasionally improve on specific datasets, integrating retrieved physical memories with verification consistently produces the strongest overall performance, suggesting that both retrieving relevant physical memories and explicitly verification over captions and structured physical events are important for robust physical plausibility reasoning. 
+
+The largest improvements are observed on GRASP Level 2. Compared with direct prompting, P HYS MRV improves GRASP Level 2 by +9 .6, +6 .7, and +7 .4 percentage points for Qwen3-VL, Cosmos-Reason-2, and InternVL3.5-8B, respectively. GRASP Level 2 requires fine-grained discrimination between subtle physical violations and plausible events, a setting where retrieved physical memories provide particularly targeted evidence. 
+
+LLaVA-OneVision-2 benefits only marginally from P HYS MRV. Unlike the other backbones, LLaVA-OneVision-2 exhibits a near-degenerate prediction pattern, classifying most events as plausible regardless of the input. Consequently, PHYS MRV yields only marginal improvements on IntPhys2 and GRASP Level 2 and no improvement on ImplausiBench. We include these results for completeness, highlighting that the effectiveness of retrieval-based reasoning ultimately depends on the backbone’s ability to utilize the retrieved evidence. 
+
+4.2. Ablation Studies 
+
+We decompose P HYS MRV into a three-level ablation to isolate the contribution of each component: (i) retrieval quality, (ii) scene-grounded verification, and (iii) multi-anchor aggregation. Table 2 reports all four variants on Qwen3-VL and InternVL3.5-8B across the three benchmarks. 8PhysMRV: Physical Memory Retrieval and Verification 
+
+Table 2. Ablation and retrieval strategy comparison. Main uses rule-family-diverse top-3 physical-event graph retrieval with cur-rent/evaluation graph and verifier context. Visual-CLIP and Semantic retrieval variants use the same verifier context as Main but replace graph-aware reranking with visual frame similarity and text-only semantic retrieval, respectively. Top-1 uses graph-aware retrieval with a single anchor. Top 3 memories only keeps query-matched memories but removes evaluation graph and verifier context. Random 3 uses randomly sampled train memories without verifier context. ImplausiBench cells use return-only option accuracy; IntPhys2 and GRASP cells use balanced accuracy.                                        
+
+> Benchmark Qwen3-VL InternVL3.5-8B Random 3 memories only Top 3 memories only Semantic retrieval + verifier Visual-CLIP + verifier Top-1 rule anchor Main Random 3 memories only Top 3 memories only Semantic retrieval + verifier Visual-CLIP + verifier Top-1 rule anchor Main
+> ImplausiBench option acc. 0.5533 0.5667 0.5767 0.5833 0.5967 0.5900 0.5400 0.5633 0.5600 0.5600 0.5733 0.5833
+> IntPhys2 0.4980 0.5040 0.5128 0.5237 0.5237 0.5395 0.5030 0.5198 0.5445 0.5158 0.5099 0.5346 GRASP L2 0.4988 0.5386 0.5635 0.5657 0.5437 0.5798 0.5156 0.5415 0.5430 0.5542 0.5398 0.5715
+
+Memory retrieval is the primary driver of improvement. The most direct evidence for memory effectiveness comes from comparing Random 3 memories only against Top 3 memories only . Both variants provide exactly three in-context training examples without verification; the sole difference is whether those examples are drawn from random training samples or retrieved by query-aware rule-family matching. Top 3 memories only consistently outperforms Random 3 on all benchmarks for both backbones. The gap is largest on GRASP Level 2, where matched retrieval exceeds random retrieval by +3 .98 
+
+points for Qwen3-VL and +2 .59 points for InternVL3.5-8B. This rules out the hypothesis that physical-reasoning gains can be obtained by simply prepending arbitrary training demonstrations; the improvements depend on surfacing memories that are semantically and rule-family relevant to the current event. 
+
+Scene-grounded verification adds further gains on top of matched memories. Adding the current-video scene description and physical-event graph as verifier context ( Top-1 rule anchor and Main ) provides a second layer of improvement over the matched-memory-only baseline ( Top 3 memories only ). For Qwen3-VL, the full method raises ImplausiBench option accuracy from 0.5667 to 0.5900 and IntPhys2 from 0.5040 to 0.5395 , confirming that grounding the verification step in the current-video scene description and event graph is complementary to retrieval quality. 
+
+Rule-diverse top-3 aggregation improves robustness beyond single-anchor retrieval. Comparing Top-1 rule anchor with 
+
+Main isolates the effect of aggregating multiple rule-diverse physical precedents. On ImplausiBench, the top-1 variant is slightly higher for Qwen3-VL (0.5967 vs. 0.5900), but this pattern does not hold for InternVL3.5-8B, where P HYS MRV is higher (0.5833 vs. 0.5733). In contrast, P HYS MRV consistently improves GRASP Level 2 for both backbones, increasing Qwen3-VL from 0.5437 to 0.5798 and InternVL3.5-8B from 0.5398 to 0.5715. On IntPhys2, P HYS MRV is strongest for Qwen3-VL (0.5395), while InternVL3.5-8B shows a slightly higher score with semantic retrieval plus verification (0.5445). These results suggest that a single high-confidence precedent can be competitive on constrained multiple-choice option selection, but rule-diverse top-3 aggregation provides more reliable gains on the broader binary video plausibility benchmarks, especially GRASP Level 2. 
+
+Physical-event graph retrieval outperforms semantic and visual retrieval alternatives. Table 2 also includes two alternative retrieval strategies that use the same verifier context as P HYS MRV but replace graph-aware reranking with text-only semantic retrieval ( Semantic retrieval + verifier ) and visual frame similarity ( Visual-CLIP + verifier ). Both alternatives improve over the random and matched-memory-only baselines, confirming that verifier context contributes meaningfully regardless of retrieval strategy. However, neither achieves consistent gains across all three benchmarks for both backbones. Visual-CLIP retrieval degrades on IntPhys2, where the synthetic video domain reduces the reliability of appearance-based matching, and tends to retrieve anchors with low rule-family diversity, limiting the coverage of physical evidence presented to the verifier. Dense text retrieval is more robust to domain shift but cannot distinguish physically distinct events that share surface-level language, such as scenarios involving the same objects or actions under different physical constraints. Physical-event graph reranking addresses both failure modes by matching on interaction structure rather than appearance or language, and the rule-family diversity constraint ensures that the retrieved anchor set covers complementary physical principles. P HYS MRV is the only configuration that outperforms direct prompting consistently across all three benchmarks for both backbones. 
+
+4.3. Bias Analysis Across Benchmarks 
+
+Aggregate accuracy on balanced benchmarks is insensitive to answer-polarity bias: a model that always responds “yes” can score 50% without any physical understanding. We therefore report per-class accuracy slices as a diagnostic to test whether observed gains reflect genuine physical reasoning or a shift in answer prior. Table 3 reports positive-class (plausible/yes) and negative-class (implausible/no) accuracies for Qwen3-VL and InternVL3.5-8B—the two strongest backbones across all 9PhysMRV: Physical Memory Retrieval and Verification 
+
+Table 3. Class-conditional diagnostic accuracy across three benchmarks. P/Y and I/N denote accuracy on plausible/yes and implausible/no instances, respectively. On ImplausiBench, these slices measure binary plausibility bias, while the Metric column reports benchmark-native option accuracy over the specific physical-reason choices; hence it is not computed as the average of P/Y and I/N. On IntPhys2 and GRASP, the native task is binary, so Metric is the balanced average of the two slices. 
+
+Model Method ImplausiBench IntPhys2 GRASP L2 P/Y I/N Metric P/Y I/N Metric P/Y I/N Metric 
+
+Qwen3-VL Direct 0.9867 0.2867 0.5500 0.7589 0.2391 0.4990 0.9453 0.0220 0.4836 Qwen3-VL PHYS MRV 0.9933 0.3267 0.5900 0.8103 0.2688 0.5395 0.6636 0.4961 0.5798 InternVL3.5-8B Direct 0.9531 0.3209 0.5433 0.9862 0.0119 0.4990 0.9814 0.0132 0.4973 InternVL3.5-8B PHYS MRV 0.9933 0.2867 0.5833 0.8202 0.2490 0.5346 0.4990 0.6440 0.5715                
+
+> GRASP: identity-continuity correction IntPhys2: implicit violation correction
+> Video/question. A yellow ball disappears behind a wooden block; a white ball later appears and rolls left. The task asks whether the outcome is plausible.
+> Video/question. A blue sphere rolls down an incline, becomes airborne, lands, and disappears. The task asks whether the behavior is physically possible.
+> Outputs. Direct: yes; P HYS MRV: no; GT: no. Outputs. Direct: possible; P HYS MRV: impossible; GT: impossible.
+> Retrieved criteria. force motion change ,continuity identity presence ,and
+> solid barrier occupancy ; cues include no visible force, vanishing, materializing, and passing through barriers.
+> Retrieved criteria. continuity identity presence ,force motion change , and con-tact collision response ; cues include unexplained appearance/disappearance and unsupported motion changes.
+> Current graph fragment. Yellow and white balls are separately tracked as moving objects behind the same block, exposing an identity change rather than ordinary occlusion.
+> Current graph fragment. The sphere moves from the incline into the air and then vanishes after impact, exposing a continuity and force-motion violation.
+
+Figure 4. Qualitative successful corrections. Left: a GRASP example where direct prompting follows the plausible/yes prior, while PHYS MRV uses retrieved continuity and force-change criteria to answer the correct “no.” Right: an IntPhys2 example where retrieved continuity and motion cues help change a direct possible answer to the correct impossible answer. 
+
+three benchmarks—as representative probes of the failure mode. 
+
+Direct VLMs exhibit a severe positive-class prior across backbones. Both backbones achieve near-ceiling plausible-event accuracy in the direct baseline while implausible-event accuracy collapses. On GRASP Level 2—a balanced benchmark of 4,096 yes/no questions—Qwen3-VL direct correctly identifies fewer than one in forty-five impossible events (0.0220), and InternVL3.5-8B fewer than one in seventy-five (0.0132). On IntPhys2, InternVL3.5-8B is even more extreme: it achieves perfect possible-event recall (0.9862) while detecting essentially no impossible events (0.0119). This pattern is consistent across backbones and suggests that frozen VLMs default to affirming physical normalcy when perceptual evidence is ambiguous. 
+
+PHYS MRV corrects the prior in both backbones, but with different magnitudes and directions. Negative-class accuracy improves on all three benchmarks for both backbones, ruling out the hypothesis that aggregate gains stem purely from reinforcing an existing positive prior. However, the correction overshoots differently for each backbone. On GRASP Level 2, Qwen3-VL negative accuracy rises from 0.0220 to 0.4961 while positive accuracy drops from 0.9453 to 0.6636, yielding a slightly positive-biased post-method profile. InternVL3.5-8B undergoes a larger shift in the same direction: positive accuracy drops from 0.9814 to 0.4990 and negative rises from 0.0132 to 0.6440, flipping to a slightly negative-biased profile. On IntPhys2, by contrast, both positive and negative slices improve for both backbones without a polarity trade-off, indicating that the method can sharpen both-class discrimination when the perceptual signal is sufficient. 
+
+PHYS MRV substantially mitigates answer-polarity bias across backbones. Although the two backbones converge to different operating points after applying P HYS MRV, both exhibit a much more balanced prediction profile than their direct counterparts. Qwen3-VL shifts from an extremely positive-biased distribution (0.9453/0.0220) to a substantially more balanced one (0.6636/0.4961), while InternVL3.5-8B moves from an even stronger positive prior (0.9814/0.0132) to a considerably more balanced profile (0.4990/0.6440). These consistent improvements across both backbones indicate that PHYS MRV effectively mitigates the severe positive-class bias exhibited by frozen VLMs, rather than simply reinforcing their original answer prior. 10 PhysMRV: Physical Memory Retrieval and Verification 
+
+4.4. Qualitative Analysis 
+
+Figure 4 shows two examples where training only memories change an initially plausible answer into the correct implausible judgment. In the GRASP case, direct prompting answers “yes” even though the video contains an identity-continuity violation: a yellow ball disappears behind a block and a white ball later appears. The retrieved anchors expose force-change, continuity, and solid-barrier criteria, including negative cues such as objects that vanish, materialize, or move without visible cause. With these criteria and the current event graph visible, P HYS MRV answers the correct “no.” The IntPhys2 case shows the same mechanism on a different benchmark format. Direct prompting marks the video as possible, while P HYS MRV marks it impossible. The current caption and event graph describe a blue sphere rolling down an incline, becoming airborne, and disappearing after impact. Retrieved continuity and force-motion anchors provide the relevant checklist: objects should not appear or vanish without an explained transition, and motion changes should follow visible forces or contact. In both cases, the retrieved rule families— continuity identity presence and force motion change —directly correspond to the violation type surfaced in the current-video graph, confirming that rule-family-aware retrieval selects memories governed by the same physical principles as the query event. These cases make the aggregate prior-correction result concrete: P HYS MRV does not merely add physics vocabulary, but brings matched training memories into the final decision context. 
+
+5. Conclusion 
+
+We introduced P HYS MRV, a training-only physical precedent engine that enhances physical plausibility reasoning for frozen VLMs without any test-time model updates. The method organizes TRAVL training examples into a hierarchical MemoryBank spanning semantic descriptions, physical-event components, and a compact catalog of physical rule families, and uses coarse-to-fine retrieval to supply rule-family-diverse case-level exemplars at inference time. P HYS MRV consistently improves three of four tested backbones across ImplausiBench, IntPhys2, and GRASP Level 2, with gains of up to 9.6 points on GRASP. LLaVA-OneVision-2 improves on IntPhys2 and GRASP but not on ImplausiBench, suggesting that the benefit of retrieved physical precedents depends on backbone instruction-following capacity. Three findings from our analysis sharpen the research picture. First, case-level exemplar retrieval is the primary driver of improvement: randomly sampled in-context demonstrations are consistently weaker than rule-family-matched precedents, confirming that physical reasoning gains depend on surfacing semantically relevant training evidence rather than simply injecting in-context examples. Second, direct VLMs exhibit a systematic positive-class prior that approaches near-ceiling on plausible events while collapsing on implausible events; P HYS MRV substantially corrects this bias on GRASP but does not eliminate the calibration gap on IntPhys2. Third, the magnitude and direction of polarity correction are backbone-dependent: Qwen3-VL and InternVL3.5-8B land on opposite sides of the balance point after correction, indicating that evidence integration is still mediated by backbone-specific priors rather than by per-instance physical reasoning. Together, these results establish retrieved physical memory as an effective inference-time scaffold, while identifying calibrated per-instance physical verification—grounding decisions in evidence about specific object states, contacts, and trajectories observed in the current video—as the key open challenge for future physical plausibility systems. 
+
+References 
+
+An, X., Xie, Y., Tang, F., Yan, Y., Tan, H., Zhu, D., Chen, C., Zhao, X., Qin, B., Yang, K., Shen, Y., Zhang, Y., Zhang, K., Zhang, W., Cheng, Z., Zhang, N., Wu, C., Ge, C., Ran, Z., Song, D., Li, C., Feng, S., Hu, M., Chen, Z., Niu, J., Li, B., Feng, Z., Liu, Z., Ge, Z., and Deng, J. Llava-onevision-2: Towards next-generation perceptual intelligence. In arXiv ,2026. Bai, S. et al. Qwen3-VL technical report, 2025. URL https://arxiv.org/abs/2511.21631 .Balazadeh, V., Ataei, M., Cheong, H., Khasahmadi, A. H., and Krishnan, R. G. Physics context builders: A modular framework for physical reasoning in vision-language models. In Proceedings of the IEEE/CVF International Conference on Computer Vision , 2025. doi: 10.1109/ICCV51701.2025.00687. URL https://arxiv.org/abs/2412.08619 .Bordes, F., Garrido, Q., Kao, J. T., Williams, A., Rabbat, M., and Dupoux, E. IntPhys 2: Benchmarking intuitive physics understanding in complex synthetic environments, 2025. URL https://arxiv.org/abs/2506.09849 .11 PhysMRV: Physical Memory Retrieval and Verification 
+
+Cao, M., Tang, H., Zhao, H., Guo, H., Liu, J., Zhang, G., Liu, R., Sun, Q., Reid, I., and Liang, X. Physgame: Uncovering physical commonsense violations in gameplay videos, 2024. URL https://arxiv.org/abs/2412.01800 .Chow, W., Mao, J., Li, B., Seita, D., Guizilini, V., and Wang, Y. PhysBench: Benchmarking and enhancing vision-language models for physical world understanding. In The Thirteenth International Conference on Learning Representations , 2025. URL https://openreview.net/forum?id=Q6a9W6kzv5 .Jassim, S., Holubar, M., Richter, A., Wolff, C., Ohmer, X., and Bruni, E. GRASP: A novel benchmark for evaluating language grounding and situated physics understanding in multimodal language models, 2023. URL https://arxiv. org/abs/2311.09048 .Li, H., You, Y., Su, H., and Guibas, L. PhysMem: Scaling test-time memory for embodied physical reasoning, 2026. URL 
+
+https://arxiv.org/abs/2602.20323 .Liu, J., Shen, D., Zhang, Y., Dolan, B., Carin, L., and Chen, W. What makes good in-context examples for GPT-3? In 
+
+Proceedings of Deep Learning Inside Out: The 3rd Workshop on Knowledge Extraction and Integration for Deep Learning Architectures , 2022. URL https://aclanthology.org/2022.deelio-1.10/ .Luo, Y., Zheng, X., Li, G., Yin, S., Lin, H., Fu, C., Huang, J., Ji, J., Chao, F., Luo, J., and Ji, R. Video-RAG: Visually-aligned retrieval-augmented long video comprehension. In Advances in Neural Information Processing Systems , 2025. URL 
+
+https://arxiv.org/abs/2411.13093 .Ma, X., Hu, L., Tang, W., Hu, Z., Liao, Z., Wu, Z., and Liu, Y. BrainMem: Brain-inspired evolving memory for embodied agent task planning, 2026. URL https://arxiv.org/abs/2604.16331 .Motamed, S., Chen, M., Van Gool, L., and Laina, I. TRAVL: A recipe for making video-language models better judges of physics implausibility, 2025. URL https://arxiv.org/abs/2510.07550 .NVIDIA. Cosmos-Reason2-8B. https://huggingface.co/nvidia/Cosmos-Reason2-8B , 2026. Hugging Face model card. Initial release: December 19, 2025; updated March 10, 2026. Accessed: 2026-06-30. Rubin, O., Herzig, J., and Berant, J. Learning to retrieve prompts for in-context learning. In Proceedings of the 2022 Confer-ence of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies ,pp. 2655–2671, 2022. URL https://aclanthology.org/2022.naacl-main.191/ .Sreekumar, G. and Boddeti, V. N. Inphyre discovers: Large multimodal models struggle in inductive physical reasoning, 2026. URL https://arxiv.org/abs/2509.12263 .Wang, W., Gao, Z., Gu, L., Pu, H., Cui, L., Wei, X., Liu, Z., Jing, L., Ye, S., Shao, J., et al. Internvl3.5: Advancing open-source multimodal models in versatility, reasoning, and efficiency. arXiv preprint arXiv:2508.18265 , 2025. Wang, Z., Yu, S., Stengel-Eskin, E., Yoon, J., Cheng, F., Bertasius, G., and Bansal, M. VideoTree: Adaptive tree-based video representation for LLM reasoning on long videos, 2024. URL https://arxiv.org/abs/2405.19209 .Zhang, C., Lu, T., Islam, M. M., Wang, Z., Yu, S., Bansal, M., and Bertasius, G. A simple LLM framework for long-range video question-answering. In Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing ,2024. URL https://aclanthology.org/2024.emnlp-main.1209/ .Zhong, W., Guo, L., Gao, Q., Ye, H., and Wang, Y. MemoryBank: Enhancing large language models with long-term memory. In Proceedings of the AAAI Conference on Artificial Intelligence , pp. 19724–19731, 2024. doi: 10.1609/aaai.v38i17.29946. URL https://doi.org/10.1609/aaai.v38i17.29946 .12

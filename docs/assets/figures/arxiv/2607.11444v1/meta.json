@@ -1,0 +1,70 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.11444v1/fig-001.webp",
+      "caption": "Figure 1: Overview of UMoE. Direct SFT fine-tunes the pretrained MoE as is. UMoE first prunes the least domain-salient experts and regrows the pool from the retained experts, restoring the original size and inference cost before SFT. The same domain data D is used for calibration and training.",
+      "page": 1,
+      "index": 1,
+      "width": 962,
+      "height": 713
+    },
+    {
+      "url": "assets/figures/arxiv/2607.11444v1/fig-002.webp",
+      "caption": "Figure 2: Data scaling across three domains and five benchmarks (Qwen3-30B-A3B). Each panel shows Direct SFT (gray dashed) vs. UMoE (blue solid) at increasing SFT data sizes (horizontal axis: billion tokens). All 15 paired comparisons favor UMoE.",
+      "page": 6,
+      "index": 2,
+      "width": 920,
+      "height": 225
+    },
+    {
+      "url": "assets/figures/arxiv/2607.11444v1/fig-003.webp",
+      "caption": "Table 4: Ablation of the two algorithmic steps (Qwen3-30B-A3B, math OpenMath 150k, math-benchmark average at n=32). Pruning-criterion rows fix expansion to symmetric σ=0.05; expansion-noise rows fix pruning to REAP50. The default (REAP + router+MLP) is the shared anchor.",
+      "page": 7,
+      "index": 3,
+      "width": 920,
+      "height": 288
+    },
+    {
+      "url": "assets/figures/arxiv/2607.11444v1/fig-004.webp",
+      "caption": "Figure 4: The direct-SFT model allocates routing to a low-saliency subset. Experts are ranked by REAP saliency (left). Before SFT (middle), routing frequency is concentrated on the salient experts. After SFT (right), routing becomes flatter and the low-saliency tail receives a larger share of routing than of normalized saliency (orange). The dashed line repeats the saliency profile for reference; the dotted line marks the top-64 experts kept by pruning.",
+      "page": 8,
+      "index": 4,
+      "width": 922,
+      "height": 304
+    },
+    {
+      "url": "assets/figures/arxiv/2607.11444v1/fig-005.webp",
+      "caption": "Table 5: Post-SFT pruning: each model is pruned to its own top-64 experts by REAP saliency (removing the least-salient half), then re-evaluated (Qwen3-30B-A3B, math benchmarks, avg@32). Pruning Direct SFT changes the average by only −0.12, whereas pruning UMoE costs 5.00 points, collapsing the gap from +5.16 to +0.28.",
+      "page": 8,
+      "index": 5,
+      "width": 939,
+      "height": 198
+    },
+    {
+      "url": "assets/figures/arxiv/2607.11444v1/fig-006.webp",
+      "caption": "Figure 5: Math SFT loss (150k): UMoE starts higher, then trains below Direct SFT and ends lower (0.396 vs. 0.404).",
+      "page": 9,
+      "index": 6,
+      "width": 428,
+      "height": 365
+    },
+    {
+      "url": "assets/figures/arxiv/2607.11444v1/fig-007.webp",
+      "caption": "Figure 6: Per-problem pass rate. When problems are grouped by their observed Direct SFT pass rate, the per-bin mean stays above the diagonal in every bin.",
+      "page": 9,
+      "index": 7,
+      "width": 428,
+      "height": 365
+    },
+    {
+      "url": "assets/figures/arxiv/2607.11444v1/fig-008.webp",
+      "caption": "Table 2: Avg@32 scores on six math competition benchmarks. All models in block (b), including open-source checkpoints, are evaluated with a maximum generation length of 102,400. Boldface within the final two rows compares Direct SFT and UMoE.",
+      "page": 5,
+      "index": 8,
+      "width": 941,
+      "height": 335
+    }
+  ]
+}

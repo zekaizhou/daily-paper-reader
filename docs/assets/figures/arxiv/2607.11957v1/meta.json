@@ -1,0 +1,94 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.11957v1/fig-001.webp",
+      "caption": "FIGURE 4. Workflow for creating similarity maps between videos 𝑽𝑴and 𝑽𝑬. For each frame of the videos, the proposed method generates image captions 𝑪𝑴and 𝑪𝑬using a VLM 𝑴𝐜𝐚𝐩. To improve the quality of the generated descriptions, the method vectorizes images and captions, compares their similarities to select the closest caption, and uses it as the cleaned caption. Then, the method vectorizes the cleaned captions ?̃?𝑴and ?̃?𝑬using a text encoder 𝝓𝑻, calculates the similarity between each pair of vectors 𝐕𝐞𝐜𝑴and 𝐕𝐞𝐜𝑬, and creates a frame similarity map 𝑺𝐟𝐦𝐚𝐩whose elements are the calculated similarities.",
+      "page": 6,
+      "index": 1,
+      "width": 1014,
+      "height": 204
+    },
+    {
+      "url": "assets/figures/arxiv/2607.11957v1/fig-002.webp",
+      "caption": "FIGURE 3. Conceptual flowchart of the proposed method.",
+      "page": 6,
+      "index": 2,
+      "width": 1027,
+      "height": 214
+    },
+    {
+      "url": "assets/figures/arxiv/2607.11957v1/fig-003.webp",
+      "caption": "FIGURE 10. Comparison between the segment similarity map 𝑺𝒔𝒎𝒂𝒑 of the proposed method (m) and the frame similarity map 𝑺𝒇𝒎𝒂𝒑 of the baseline naive method (l).",
+      "page": 13,
+      "index": 3,
+      "width": 512,
+      "height": 341
+    },
+    {
+      "url": "assets/figures/arxiv/2607.11957v1/fig-004.webp",
+      "caption": "TABLE II EVALUATION RESULTS ON THE COLLECTED DATA USING THE PROPOSED METHOD AND THE BASELINE METHODS",
+      "page": 13,
+      "index": 4,
+      "width": 1051,
+      "height": 340
+    },
+    {
+      "url": "assets/figures/arxiv/2607.11957v1/fig-005.webp",
+      "caption": "FIGURE 5. Conceptual diagram of filtering applied to 𝑺𝐟𝐦𝐚𝐩. (a) An example of detected anomalous frames in 𝑽𝑬. (b) An example of detected anomalous frames in 𝑽𝑴.",
+      "page": 8,
+      "index": 5,
+      "width": 529,
+      "height": 281
+    },
+    {
+      "url": "assets/figures/arxiv/2607.11957v1/fig-006.webp",
+      "caption": "FIGURE 1. Conceptual flow diagram illustrating the process of extracting candidate actions and candidate scenes containing expert know-how from both the manual-based work video 𝑽𝑴 and the expert’s work video 𝑽𝑬.",
+      "page": 4,
+      "index": 6,
+      "width": 998,
+      "height": 446
+    },
+    {
+      "url": "assets/figures/arxiv/2607.11957v1/fig-007.webp",
+      "caption": "FIGURE 8. Example of the frame similarity map 𝑺𝐟𝐦𝐚𝐩 generated from 𝑽𝑴 and 𝑽𝑬 using the proposed method.",
+      "page": 12,
+      "index": 7,
+      "width": 471,
+      "height": 331
+    },
+    {
+      "url": "assets/figures/arxiv/2607.11957v1/fig-008.webp",
+      "caption": "FIGURE 9. Example of the segment similarity map 𝑺𝐬𝐦𝐚𝐩 generated from 𝑽𝑴 and 𝑽𝑬 using the proposed method.",
+      "page": 12,
+      "index": 8,
+      "width": 487,
+      "height": 317
+    },
+    {
+      "url": "assets/figures/arxiv/2607.11957v1/fig-009.webp",
+      "caption": "FIGURE 6. Video segmentation process based on a self-similarity map. (a) Calculation of self-similarity map 𝑺𝒔𝒆𝒍𝒇. (b) Binarization of the self-similarity map and video segmentation.",
+      "page": 9,
+      "index": 9,
+      "width": 1045,
+      "height": 235
+    },
+    {
+      "url": "assets/figures/arxiv/2607.11957v1/fig-010.webp",
+      "caption": "FIGURE 7. Generation process of the segment similarity map. (a) Overview of segment similarity map 𝑺𝐬𝐦𝐚𝐩. (b) Details of the segment similarity calculation process in (a).",
+      "page": 9,
+      "index": 10,
+      "width": 1052,
+      "height": 565
+    },
+    {
+      "url": "assets/figures/arxiv/2607.11957v1/fig-011.webp",
+      "caption": "FIGURE 2. Examples of the manual-based work video (𝑽𝑴), the expert’s work video (𝑽𝑬) and the start frame (𝑭𝒔) and end frames (𝑭𝒆) to be detected. (a) An example of anomalous frame detection (including additional action). (b) An example of anomalous frame detection (with skipping action). (c) An example of anomalous frame detection (including scene difference).",
+      "page": 5,
+      "index": 11,
+      "width": 984,
+      "height": 539
+    }
+  ]
+}

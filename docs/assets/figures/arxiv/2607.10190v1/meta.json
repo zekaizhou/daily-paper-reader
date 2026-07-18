@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.10190v1/fig-001.webp",
+      "caption": "Figure 1. Examples of physical plausibility reasoning across the evaluation benchmarks. Given short video evidence, a model must determine whether the observed event is physically plausible rather than relying only on object or action recognition.",
+      "page": 2,
+      "index": 1,
+      "width": 913,
+      "height": 494
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10190v1/fig-002.webp",
+      "caption": "Table 3. Class-conditional diagnostic accuracy across three benchmarks. P/Y and I/N denote accuracy on plausible/yes and implausible/no instances, respectively. On ImplausiBench, these slices measure binary plausibility bias, while the Metric column reports benchmark-native option accuracy over the specific physical-reason choices; hence it is not computed as the average of P/Y and I/N. On IntPhys2 and GRASP, the native task is binary, so Metric is the balanced average of the two slices.",
+      "page": 10,
+      "index": 2,
+      "width": 1017,
+      "height": 193
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10190v1/fig-003.webp",
+      "caption": "Figure 4. Qualitative successful corrections. Left: a GRASP example where direct prompting follows the plausible/yes prior, while PHYSMRV uses retrieved continuity and force-change criteria to answer the correct “no.” Right: an IntPhys2 example where retrieved continuity and motion cues help change a direct possible answer to the correct impossible answer.",
+      "page": 10,
+      "index": 3,
+      "width": 997,
+      "height": 288
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10190v1/fig-004.webp",
+      "caption": "Figure 2. Structure of the Physics Memory Bank. Each training video contributes shared caption and physical-event rows, while questionanswer anchor rows store training questions, training labels, explanations, rule-family assignments, principles, and cue lists. Dense recall and physical reranking select training-only anchors for the verifier.",
+      "page": 3,
+      "index": 4,
+      "width": 860,
+      "height": 556
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10190v1/fig-005.webp",
+      "caption": "Figure 3. Overview of PHYSMRV. Given a test video and question, PHYSMRV retrieves physically relevant training precedents from Physical Memory Bank via hierarchical retrieval: semantic similarity identifies candidate scenes, and physical-event matching selects the most event-relevant memories across diverse physical phenomena. A frozen VLM then uses the video’s extracted scene description and event graph to verify plausibility against the retrieved physical rules and diagnostic cues.",
+      "page": 5,
+      "index": 5,
+      "width": 987,
+      "height": 412
+    }
+  ]
+}

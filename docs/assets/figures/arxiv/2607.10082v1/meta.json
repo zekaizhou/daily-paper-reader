@@ -1,0 +1,94 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.10082v1/fig-001.webp",
+      "caption": "Table 1: Quantitative evaluation of cross-modal relative pose estimation on the MVSEC and TUM-VIE pose estimation benchmarks. Modality denotes whether themethod performs pseudo Image-to-Image (I↔I, using event-to-image conversion) or direct Event-to-Image (E↔I) matching. “pretrain” and “ft.” represent our label-agnostic pre-training and self-supervised fine-tuning, respectively. Best results are highlighted in bold.",
+      "page": 6,
+      "index": 1,
+      "width": 1048,
+      "height": 325
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10082v1/fig-002.webp",
+      "caption": "Table 4: Detailed architectural configuration of the Event Branch. 𝐻 and𝑊 denote the input image height and width. The architecture is divided into a sharedBackbone for feature extraction and two task-specific Heads.",
+      "page": 11,
+      "index": 2,
+      "width": 498,
+      "height": 292
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10082v1/fig-003.webp",
+      "caption": "Figure 1: (a) In label-free event-image feature matching, unknown spatial relationships and absent geometric priors prevent obtaining matching labels. (b) Supervised synthesis paradigms rely on simulated data and existing matching labels, rendering them incapable of label-free fine-tuning. (c) Alignment-dependent approaches fully rely on pixel-aligned data, failing to adapt to target datasets where such hardware relations are unavailable. (d) Our framework first performs label-agnostic pretraining for robust zero-shot features. Driven by self-distillation, the model could self-evolve directly on the unlabeled target domain.",
+      "page": 2,
+      "index": 3,
+      "width": 1055,
+      "height": 342
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10082v1/fig-004.webp",
+      "caption": "Table 3: Train and test splits of TUM-VIE event-image matching benchmark.We sample two sequences for test under each calibration status.",
+      "page": 10,
+      "index": 4,
+      "width": 498,
+      "height": 383
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10082v1/fig-005.webp",
+      "caption": "Figure 8: Qualitative results of pose estimation on the TUM-VIE dataset.",
+      "page": 14,
+      "index": 5,
+      "width": 954,
+      "height": 604
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10082v1/fig-006.webp",
+      "caption": "Figure 7: Qualitative results of pose estimation on the MVSEC dataset.",
+      "page": 14,
+      "index": 6,
+      "width": 954,
+      "height": 606
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10082v1/fig-007.webp",
+      "caption": "Figure 6: Threshold sensitivity during self-distillation.",
+      "page": 8,
+      "index": 7,
+      "width": 478,
+      "height": 333
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10082v1/fig-008.webp",
+      "caption": "Figure 5: Ablation study on self-distillation against various variants, including distilling without confidence weighting, and weighting based purely on descriptor similarity.",
+      "page": 8,
+      "index": 8,
+      "width": 452,
+      "height": 274
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10082v1/fig-009.webp",
+      "caption": "Figure 2: Overview of the label-agnostic pretraining. Knowledge is transferred from the frozen image teacher to the event student.",
+      "page": 4,
+      "index": 9,
+      "width": 506,
+      "height": 344
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10082v1/fig-010.webp",
+      "caption": "Table 6: Optimization hyperparameters and dataset-specific configurations for Self-Distillation. Differences between the MVSEC and TUM-VIE setups are explicitly highlighted.",
+      "page": 12,
+      "index": 10,
+      "width": 498,
+      "height": 396
+    },
+    {
+      "url": "assets/figures/arxiv/2607.10082v1/fig-011.webp",
+      "caption": "Figure 3: Epipolar-guided self-distillation procedure. The pretrained model is copied as the teacher and student network, while the teacher is updated through EMA. Student receives homography-augmented event inputs. The predicted matches from Student and Teacher are further verified by checking consistency. The Teacher’s prediction was further calculated using the epipolar constraint to obtain geometric confidence, guiding the self-distillation process.",
+      "page": 5,
+      "index": 11,
+      "width": 1054,
+      "height": 464
+    }
+  ]
+}
