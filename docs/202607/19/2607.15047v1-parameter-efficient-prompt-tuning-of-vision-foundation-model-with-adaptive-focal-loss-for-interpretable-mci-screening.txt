@@ -1,0 +1,543 @@
+Title: Parameter-efficient Prompt Tuning of Vision Foundation Model With Adaptive Focal Loss for Interpretable MCI Screening
+
+URL Source: https://arxiv.org/pdf/2607.15047v1
+
+Published Time: Fri, 17 Jul 2026 01:16:14 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# PARAMETER -EFFICIENT PROMPT TUNING OF VISION 
+
+# FOUNDATION MODEL WITH ADAPTIVE FOCAL LOSS FOR 
+
+# INTERPRETABLE MCI S CREENING 
+
+Javad Khoramdel ∗1, Farhad Hoseyni 1, Amirhossein Nikoofard 11APAC Research Group, Faculty of Electrical Engineering, K. N. Toosi University of Technology, Tehran, Iran 
+
+ABSTRACT 
+
+Mild Cognitive Impairment is a critical early stage of cognitive decline that frequently precedes Alzheimer’s disease, yet its automated detection from neuropsychological drawing tests remains fundamentally constrained by data scarcity, class imbalance, and diagnostic ambiguity near clinical boundaries. Existing methodologies attempt to bypass these constraints using computationally expensive, fully fine-tuned hybrid architectures that relegate spatial explainability to a post-hoc approximation rather than an intrinsic model property. We propose a parameter-efficient framework utilizing frozen DINOv2-Small model adapted via three modality-specific learnable prompt tokens while Operating with 1.19 million trainable parameters, each token serves as a query in a shared cross-attention layer over the source image patch tokens. Crucially, spatial explainability is achieved directly through these attention maps; as a structural consequence of the architecture. Then task-conditioned embeddings fused via an attention module to quantify modality-level importance per subject. To handle boundary ambiguity, a MoCA-adapted focal loss introduced that integrates continuous cognitive scores into the training target, loss modulation, and adaptive sample weighting, strictly generalizing standard soft-label approaches. Under stratified five-fold cross-validation, the proposed architecture yields an MCI-class F1 of 0.641 ± 0.026 and an AUC of 0.795 ± 0.024 ,outperforming the computationally heavier ResViT baseline by 0.110 in MCI-class F1. 
+
+Keywords Vision Foundation Models, Parameter-Efficient Fine-Tuning, Interpretable Deep Learning, Mild Cognitive Impairment, Neuropsychological Assessment, Medical Image Analysis 
+
+1 Introduction 
+
+Mild Cognitive Impairment (MCI) occupies a clinically critical window between normal ageing and dementia: subjects scoring below 25 on the Montreal Cognitive Assessment (MoCA) [ 1] are classified as MCI, yet scores cluster densely around this cutoff, making the boundary inherently uncertain and the diagnostic task sensitive to both labelling strategy and evaluation design. Ruengchaijatuporn et al. [ 2] address this by jointly processing clock drawing test (CDT), cube-copying, and trail-making images through three fully fine-tuned VGG16 [ 3 ] backbones and introducing MoCA-derived soft labels to relax the hard threshold, demonstrating that multi-modal inputs and score-informed labelling substantially improve detection. Interpretability is recovered post-hoc via attention rollout [ 4], and evaluation relies on random splits that do not guarantee balanced class representation on a 2.4:1 skewed dataset. Sirshar et al. [ 5] subsequently propose ResViT, a parallel hybrid of a ResNet50 [ 6 ] and ViT-B/16 [ 7], arguing that combining local convolutional and global transformer features is necessary for this task. Yet their 32-million-parameter model is evaluated on a single held-out partition without cross-validation, and performance is reported only in aggregate, obscuring MCI-class sensitivity under class imbalance. We argue that such architectural complexity is unnecessary. An architecture including a self-supervised vision foundation model already encodes rich local and global representations, and the domain gap can be closed far more efficiently through lightweight, task-specific adaptation rather than by stacking two large pretrained networks. Furthermore, MoCA scores carry richer supervisory information than a single soft-label transformation can exploit, 
+
+> ∗
+
+j.khorramdel96@gmail.com, mohammadhosini@email.kntu.ac.ir, a.nikoofard@kntu.ac.ir arXiv:2607.15047v1 [cs.CV] 16 Jul 2026 Parameter-efficient Prompt Tuning of Vision Foundation Model With Adaptive Focal Loss for Interpretable MCI Screening Frozen DINOv2 ViT-S/14_reg  🔒         
+
+> Input tokens (sequence)
+> Transformer
+> Encoder
+> Layer (one block)
+> × layers
+> [CLS] token (1, D)
+> Register tokens (R, D)
+> Patch tokens (16, D)
+> Learnable token
+> (clock)
+> (1, D)
+> x_norm_clstoken (B,
+> D)
+> x_norm_regtokens
+> x_norm_patchtokens
+> x_norm_clock (B, 1,
+> D)
+> Frozen DINOv2 ViT-S/14_reg 🔒
+> Input tokens (sequence)
+> [CLS] token (1, D)
+> Register tokens (R, D)
+> Patch tokens (16, D)
+> Learnable token (cube)
+> (1, D)
+> Transformer
+> Encoder
+> Layer (one block)
+> × layers
+> x_norm_clstoken (B,
+> D)
+> x_norm_regtokens
+> x_norm_patchtokens
+> x_norm_cube (B, 1, D)
+> Frozen DINOv2 ViT-S/14_reg 🔒
+> Input tokens (sequence)
+> [CLS] token (1, D)
+> Register tokens (R, D)
+> Patch tokens (16, D)
+> Learnable token (trail)
+> (1, D)
+> Transformer
+> Encoder
+> Layer (one block)
+> × layers
+> x_norm_clstoken (B,
+> D)
+> x_norm_regtokens
+> x_norm_patchtokens
+> x_norm_trail (B, 1, D)
+> PatchTokenCrossAttention (shared parameters) 🔥
+> applied to each image independently
+> LayerNorm
+> LayerNorm
+> Multi-Head
+> Attention
+> (Q from query,
+> K,V from patches)
+> Squeeze
+> v_clock (B, D)
+> Query token (clock)
+> K, V
+> PatchTokenCrossAttention (shared parameters) 🔥
+> applied to each image independently
+> LayerNorm
+> LayerNorm
+> Multi-Head
+> Attention
+> (Q from query,
+> K,V from patches)
+> Squeeze
+> v_trail (B, D)
+> Query token (trail)
+> K, V
+> PatchTokenCrossAttention (shared parameters) 🔥
+> applied to each image independently
+> LayerNorm
+> LayerNorm
+> Multi-Head
+> Attention
+> (Q from query,
+> K,V from patches)
+> Squeeze
+> v_cube(B, D)
+> Query token (cube)
+> K, V
+> Stack per-image vectors
+> v_clock
+> v_cube
+> v_trail
+> T (tokens) (B, 3, D)
+> ↓
+> Classifier head (trainable)
+> Linear (D, 2)
+> Binary prediction
+> Class 0 Class 1
+> Legend
+> Frozen (not trainable)
+> Trainable (parameters)
+> Intermediate
+> Clock trainables
+> Cube trainables
+> Trail trainables
+> Attention pooling over 3 tokens 🔥
+> Learnable pool query
+> (B, 1, D)
+> LayerNorm LayerNorm
+> Multi-Head Attention
+> (Q from pool query,
+> K,V from tokens)
+> Pooled patient vector (B, D)
+
+Figure 1: Overview of the proposed framework. Each drawing (clock, cube, trail) is processed by a shared frozen DINOv2-Small backbone with a modality-specific learnable token, which is then refined via a shared cross-attention over the backbone’s patch tokens. The 3 resulting embeddings are aggregated by a learnable query attention pooling module into a single vector, which is passed to a linear classifier. Frozen components are shown in blue; trainable components in orange. and robust evaluation on a skewed dataset requires stratified cross-validation with MCI-class sensitivity as the primary optimisation target. 1. Parameter-efficient, interpretable MCI classification from neuropsychological drawing triplets. Modality-specific prompt tokens adapt a frozen DINOv2-Small [ 8] backbone with under 6% of parameters trainable, yielding spatial attention maps and modality importance weights as direct byproducts of inference. 2. MoCA-aware focal loss. A unified loss incorporates the continuous MoCA score into a soft target, a MoCA-probability modulator, and MoCA-bin adaptive weighting, strictly generalising [2]. 3. Targeted augmentation strategies. Image inversion, class-balanced sampling, type-preserving Mixup, and MoCA-neighbour drawing swap address the photometric domain gap and increase triplet diversity. 
+
+2 Related Works 
+
+Recent approaches to automated cognitive screening primarily apply deep convolutional networks (CNNs) and Vision Transformers (ViTs) to the CDT. Chen et al. [ 9] combined manifold learning with DenseNet-121 for binary dementia screening, demonstrating high classification accuracy. However, their evaluation relies on a skewed dataset with a high prevalence of pathological cases, complicating cross-study generalization. Similarly, Raksasat et al. [ 10 ] introduced API-Net, a contrastive learning architecture, while Liu et al. [ 11 ] proposed a self-supervised contrastive framework utilizing MoCo. Both studies struggle with class imbalance. Raksasat et al. collapsed moderate and severe impairment stages into a single monolithic class, destroying fine-grained staging capability. Liu et al.’s framework suffers from catastrophic misclassifications in minority categories, resulting in severely degraded macro-averaged performance of 0.554. Hu et al. [ 12 ] extended this paradigm by applying an ordinal loss function to a ViT backbone for severity classification on a large cohort. While demonstrating strong binary discrimination, their reliance on the computationally expensive full fine-tuning of massive pre-trained networks lacks parameter efficiency. Generative architectures have also been leveraged to extract disentangled features for CDT assessment. Bandyopadhyay et al. [ 13 ] utilized a Relevance Factor Variational Autoencoder (RF-VAE) to differentiate dementia from cognitively normal patients with robust predictive performance. Addressing demographic biases inherent in such models, Zhang et al. [ 14 ] subsequently applied static sample reweighting to mitigate elevated Type I error rates observed in patients with limited formal education. Both approaches, however, collapse the continuous spectrum of cognitive decline into rigid binary classifications. Transitioning beyond unimodal assessment, Yang et al. [ 15 ] proposed a multimodal graph neural network (GNN) combining cube-copying images, demographics, and cognitive scores to achieve high diagnostic sensitivity. However, their reliance on explicit line-simplification algorithms to convert images into geometric graphs is problematic for 2Parameter-efficient Prompt Tuning of Vision Foundation Model With Adaptive Focal Loss for Interpretable MCI Screening Patient (0) Healthy (1) 
+
+> True class (labels.csv)
+> 0
+> 100
+> 200
+> 300
+> 400
+> 500
+> 600
+> 700
+> Count
+> 267
+> 651
+> Class distribution (full dataset)
+
+Figure 2: Class distribution of the full dataset. Of 918 subjects, 651 are healthy controls and 267 are MCI pa-tients. 5 10 15 20 25 30 
+
+> MoCA score
+> 0.00
+> 0.05
+> 0.10
+> 0.15
+> 0.20
+> Density
+> MoCA score distributions (full dataset)
+> Patient (0)
+> Healthy (1)
+> MoCA cut-off = 25
+
+Figure 3: MoCA-score distribution across the dataset, with a mode of 27. The dashed line marks the clinical cutoff of 25. unconstrained visuospatial tasks. Furthermore, their evaluation is constrained to a limited cohort, producing high-variance performance estimates. Regarding loss formulations and label smoothing, the soft-label approach of Ruengchaijatuporn et al. [ 2 ] integrates continuous cognitive scores by converting the MoCA cutoff into a soft binary cross-entropy target. The proposed framework strictly generalizes this concept. Rather than relying solely on soft targets, we introduce a MoCA-aware focal loss that couples a focal modulator with a score-probability misalignment penalty and MoCA-bin-level adaptive weighting. Furthermore, to maintain a coherent training signal under data augmentation, we apply type-preserving Mixup that linearly interpolates both the hard labels and the continuous cognitive scores, ensuring the adaptive loss components remain stable for mixed samples. Despite these advances, existing methodologies share fundamental structural limitations. The majority remain strictly unimodal [ 11 , 12 , 10 , 9, 13 , 14 ], failing to exploit complementary diagnostic signals across diverse neuropsychological tasks. Second, spatial interpretability is overwhelmingly treated as a post-hoc approximation (e.g., CAM or SHAP) [ 15 , 12 , 10 ] rather than an intrinsic architectural property. Moreover, Most of the previous works focus on fully finetuning large models, which is not computationally efficient. Finally, prior architectures typically force continuous cognitive decline into rigid classifications. The proposed framework directly addresses these constraints through parameter-efficient prompt tuning of a frozen DINOv2 foundation model, enabling multimodal fusion, yielding intrinsic spatial attention maps, and preserving continuous diagnostic uncertainty. 
+
+3 Dataset 
+
+All experiments use the publicly available multi-drawing MCI dataset introduced by Ruengchaijatuporn et al. [ 2], collected under institutional review board approval at King Chulalongkorn Memorial Hospital, Bangkok, Thailand. The dataset comprises 918 subjects drawn from a healthy elderly cohort with a median age of 67 years (range 55–89), of whom 77% were female. Each subject completed a digital version of the Montreal Cognitive Assessment (MoCA) administered on a tablet with a digital stylus, and simultaneously performed three neuropsychological drawing tasks: the Clock Drawing Test (CDT), the Cube Copying Test (CCT), and the Trail Making Test (TMT). Each task was recorded as a rasterised image, yielding a triplet of drawings per subject and 2,754 images in total. Subjects are labelled according to the standard clinical criterion: those with a MoCA score of 25 or above are classified as healthy controls (HC) and those with a score below 25 as MCI patients. This results in 651 HC subjects and 267 MCI patients, a 2.4:1 class ratio, as illustrated in Figure 2. The MoCA score distribution across the full dataset is shown in Figure 3. The distribution is unimodal and right-skewed, with the mode falling near a score of 27 and a long left tail extending toward the lower end of the scale. A notable concentration of subjects falls immediately above and below the cutoff of 25, forming a region of inherent diagnostic ambiguity that motivates the MoCA-aware loss formulation described in Section 4.4. Five-fold cross-validation is employed throughout, with folds stratified by binary label to preserve the class ratio in each split. 
+
+4 Methodology 
+
+We propose a parameter-efficient, interpretable framework for detecting Mild Cognitive Impairment (MCI) from three neuropsychological drawing tests: the Clock Drawing Test (CDT), the Cube Copying Test (CCT), and the Trail Making Test (TMT). The framework comprises three principal contributions. First, a task-specific prompt-tuned DINOv2 3Parameter-efficient Prompt Tuning of Vision Foundation Model With Adaptive Focal Loss for Interpretable MCI Screening backbone extracts a dedicated representation for each drawing test while keeping all pre-trained weights frozen, achieving adaptation at a fraction of the parameters required by full fine-tuning. Second, a learnable query attention 
+
+fusion module aggregates the three task-level embeddings into a single vector for binary classification, providing an interpretable, subject-level importance score over the three drawing modalities. Third, a MoCA-aware focal loss 
+
+incorporates each subject’s continuous cognitive score into both the training target and the per-sample loss modulation, enabling the model to explicitly account for diagnostic uncertainty near the clinical boundary. In addition, a set of targeted training and augmentation strategies (such as: image inversion, class-balanced batch sampling, type-preserving Mixup, and MoCA-neighbour drawing swap) are introduced to address the photometric domain gap and the limited subject-level diversity characteristic of neuropsychological drawing datasets. 
+
+4.1 preleminary 
+
+The proposed architecture consists of a foundation model as the backbone for vision feature extraction. To enhance the performance of the architecture for downstream tasks, the backbone model should be fine-tuned. For this purpose, Parameter-efficient fine-tuning (PEFT) methodologies are used as modern techniques to adapt large-scale foundation models to downstream tasks while mitigating severe computational and storage overhead. To establish a comparative baseline, the fine-tuning of top layers (top tuning) [ 16 ] is frequently applied, albeit requiring the optimization of a comparatively larger subset of task-specific parameters. Alternatively, Low-Rank Adaptation (LoRA) [ 17 ] is implemented by freezing the original pre-trained network weights and exclusively optimizing injected low-rank decomposition matrices, thereby enabling practical and efficient model adaptation. Furthermore, prompt tuning strategies specifically engineered for vision-language models, such as Context Optimization (CoOp) [ 18 ], are deployed by modeling prompt context words as continuous, learnable vectors, successfully aligning fixed model representations with new visual categories without updating the underlying image or text encoders. 
+
+4.2 Parameter-Efficient Feature Extraction via Task-Specific Prompt Tuning 
+
+The DINOv2-Small with registers [ 19 , 8] is adopted as the visual backbone. DINOv2 is a Vision Transformer [ 7]trained through self-supervised knowledge distillation on large-scale curated image collections, yielding semantically rich, transferable patch-level representations without relying on labelled data. The registers variant augments the standard sequence with R additional register tokens that absorb high-norm patch outliers, yielding cleaner local attention maps [ 8 ] and directly benefiting the spatial interpretability. All backbone parameters are frozen throughout training. The overall architecture is illustrated in Figure 1. 
+
+4.2.1 Task-Specific Prompt Tokens and Cross-Attention Aggregation 
+
+The three drawing tests probe distinct cognitive functions: visuospatial planning and executive function (CDT), three-dimensional construction (CCT), and visual scanning together with cognitive flexibility (TMT) [20]. To capture these distinctions, we introduce a dedicated learnable prompt token: tk ∈ Rd, k ∈ { clock , cube , tail }; initialized randomly and optimized end-to-end. For task k, the frozen patch-embedding layer partitions image xk into N non-overlapping 
+
+14 ×14 -pixel patches and projects each to Rd, yielding patch tokens {pk 
+
+> 1
+
+, . . . , pkN }. These propagate through the L
+
+frozen transformer encoder blocks of DINOv2 alongside the built-in class token and R register tokens, producing final-layer patch representations {˜pk 
+
+> 1
+
+, . . . , ˜pkN }.
+
+Task-specific cross-attention. Rather than reading the final-layer CLS token directly, each task-specific token tk
+
+is used as the query in a cross-attention operation whose keys and values are the final-layer patch tokens of the corresponding image: 
+
+ek = CrossAttn 
+
+
+
+tkWx
+
+> Q
+
+| {z } 
+
+> query
+
+, ˜PkWx
+
+> K
+
+| {z }
+
+> keys
+
+, ˜PkWx
+
+> V
+
+| {z }
+
+> values
+
+
+
+∈ Rd, (1) where ˜Pk ∈ RN ×d is the stacked matrix of final-layer patch tokens and Wx
+
+> Q
+
+, Wx 
+
+> K
+
+, Wx 
+
+> V
+
+are learned projection matrices shared across all three tasks . This design programmes each token tk to learn which spatial patches of its assigned drawing are most informative for the corresponding cognitive function, producing a task-conditioned summary embedding ek.
+
+Spatial interpretability. The cross-attention weights from tk to each patch constitute a natural spatial saliency map. Averaging over heads and reshaping to √N × √N :
+
+Ak = Reshape 1
+
+H
+
+> H
+
+X
+
+> h=1
+
+αx
+
+> h,k,n
+
+!Nn=1 
+
+∈ R  
+
+> √N×√N
+
+, (2) 4Parameter-efficient Prompt Tuning of Vision Foundation Model With Adaptive Focal Loss for Interpretable MCI Screening where αx 
+
+> h,k,n
+
+is the attention weight from token tk to patch n in head h. These maps are a direct product of the forward pass and require no additional backward computation, unlike gradient-based attribution methods [21, 22]. 
+
+4.3 Multi-Task Fusion via Learnable Query Attention 
+
+The three cross-attention outputs are stacked as E = [ e1; e2; e3] ∈ R3×d and aggregated by a learnable query attention mechanism [ ?]. A single learnable query vector q ∈ Rdq attends over E:
+
+f = softmax 
+
+ (qW Q) ( EW K )⊤
+
+√dk
+
+| {z }  
+
+> α∈∆2
+
+(EW V ) ∈ Rdv , (3) where α = ( α1, α 2, α 3) lies on the probability simplex ∆2. This vector forms a second, complementary interpretability signal: while Ak reveals where the model attends within each drawing, α reveals which drawing test most influenced the classification decision for a given subject, which may assist a clinician in identifying the cognitive domain most implicated in a subject’s risk profile. The fused vector f is passed through a linear classifier. 
+
+4.4 MoCA-Adapted Focal Loss 
+
+Standard BCE assigns identical weight to every sample and imposes a hard label at a fixed MoCA cutoff, which ignores diagnostic uncertainty near the clinical boundary and is sensitive to class imbalance. Both of them are addressed with a unified MoCA-adapted focal loss that controls (i) the effective training target, (ii) the loss modulation strategy, and (iii) per-sample weighting by MoCA-bin frequency. 
+
+4.4.1 Notation and Soft Anchor 
+
+Let pi = softmax( zi)HC ∈ [ε, 1 − ε] be the predicted HC probability for subject i, with mi ∈ [0 , 30] their MoCA score, 
+
+yi ∈ { 0, 1} their hard label ( yi = 1 iff mi ≥ 25 ), and C = 25 .5 the default clinical cutoff. The MoCA soft anchor is defined as: 
+
+si = σ mi − C ∈ (0 , 1) , (4) where σ is the sigmoid function. The effective training target is yeff ,i = si if soft targets are enabled, and yeff ,i = yi
+
+otherwise. 
+
+4.4.2 Loss Modulators 
+
+Two modulator families are proposed that reweight each log-likelihood term independently. 
+
+Classic focal modulator. Following [ 23 ], the modulators down-weight confident, easy samples via m1,i = (1 − pi)γ
+
+and m2,i = pγi , with focusing parameter γ ≥ 0. Setting γ = 0 recovers standard BCE. 
+
+MoCA–probability modulator. A novel alternative is introduced that focuses training on samples where the model’s prediction is inconsistent with the MoCA-derived expectation :
+
+m1,i = m2,i =  |si − pi| + εb, (5) with exponent b ≥ 0. When pi ≈ si, the modulator is small and the sample contributes little to the loss; when the two diverge, the modulator amplifies that sample’s gradient. Unlike the classic focal modulator, this is explicitly tied to the subject’s cognitive score rather than prediction confidence alone. 
+
+4.4.3 Adaptive Per-Sample Weight 
+
+To correct for unequal MoCA-bin frequencies, each sample receives an effective-number weight :
+
+wi = 1 − γw
+
+1 − γNb
+
+> w
+
+, (6) where Nb is the number of training samples in MoCA bin b (scores rounded to the nearest integer) and γw ∈ (0 , 1) 
+
+(default 0.99 ). Over-represented bins are down-weighted and rare bins up-weighted, simultaneously correcting for class imbalance and MoCA-score skewness. When adaptive weighting is disabled, wi = 1 .5Parameter-efficient Prompt Tuning of Vision Foundation Model With Adaptive Focal Loss for Interpretable MCI Screening 
+
+4.4.4 Unified Loss 
+
+The per-sample and batch losses are 
+
+ℓi = − wi
+
+
+
+m1,i yeff ,i log pi + m2,i (1 − yeff ,i ) log(1 − pi)
+
+
+
+, L = 1
+
+B
+
+> B
+
+X
+
+> i=1
+
+ℓi. (7) Table 1 summarises the four configurations evaluated in our experiments. Table 1: Loss configurations compared in experiments. BCE = binary cross-entropy; γ, b are the focal and MoCA–probability exponents respectively. All configurations use the same classifier and fusion module. 
+
+Configuration Soft Target MoCA Mod. Modulator Effective target Hard BCE ✗ ✗ (1 − p)0, p 0 = 1 yi ∈ { 0, 1}
+
+Soft-label BCE [2] ✓ ✗ 1 si
+
+Hard + MoCA mod. (ours) ✗ ✓ |si − pi|b yi ∈ { 0, 1}
+
+Soft + MoCA mod. (ours) ✓ ✓ |si − pi|b si
+
+4.5 Training Augmentation and Sampling Strategies 
+
+Four complementary techniques address the domain gap between neuropsychological drawings and natural-image pre-training data, class imbalance, and limited dataset diversity. Each is independently configurable and ablated in Section 5. 
+
+Image Inversion Since neuropsychological drawings consist of dark strokes on a white background (the inverse of the natural-image statistics DINOv2 was pre-trained on) we optionally invert pixel intensities ( ˜x = 255 − x) before any transforms. This maps background pixels to zero and makes stroke pixels the dominant activations, reducing the photometric domain gap. 
+
+Class-Balanced Batch Sampling To counteract class imbalance, we optionally draw B/ 2 samples from each class per batch, complementing the MoCA-bin adaptive weights of Equation (6). 
+
+Type-Preserving Mixup To prevent clinically meaningless cross-modal blending, each drawing type is mixed only with another sample of the same type. A single coefficient λ ∼ Beta( αmix , α mix ) is shared across all three types, so the same subject pair is mixed in every modality. 
+
+MoCA-Neighbour Drawing Swap To increase structural triplet diversity beyond pixel-level interpolation, we introduce drawing swap : with probability pswap , one or two drawings of a subject are replaced by the corresponding drawings of a MoCA-score nearest neighbour. At least one drawing always originates from the base subject, and the synthetic triplet inherits its label and MoCA score. The rationale is that MoCA-similar subjects share comparable cognitive deficit patterns, so the resulting triplet remains diagnostically coherent. Drawing swap is applied only to MCI patients during training. 
+
+5 Experiments 
+
+5.1 Experimental Setup 
+
+All experiments are conducted under a five-fold stratified cross-validation protocol. The folds are generated from a fixed random seed (42) and kept constant across every configuration to ensure strictly comparable results. Within each fold, the checkpoint that achieves the best MCI-class F1 score on the held-out validation split is retained for evaluation. We report the mean and standard deviation of each metric across the five folds. All configurations share the same optimization schedule: AdamW [ 24 ] with a learning rate of 10 −4, weight decay 0.05 , and a three-epoch linear warm-up followed by cosine annealing, for a total of 40 training epochs. The batch size is 4. A common data augmentation pipeline is applied in every configuration, comprising random translations (spatial fraction 0.03), additive Gaussian noise ( σ = 0 .02 ), random Gaussian blur (kernel ∈ { 3, 5}, application probability 0.25), and colour jitter (brightness, contrast, and saturation ±0.15 ; hue ±0.03 ). 
+
+Metrics. MCI screening is a safety-critical task in which missed diagnoses carry greater clinical cost than false alarms. We therefore designate the MCI-class F1 score ( F 1MCI ) as the primary metric for checkpoint selection and 6Parameter-efficient Prompt Tuning of Vision Foundation Model With Adaptive Focal Loss for Interpretable MCI Screening configuration ranking. To characterise each model’s precision-recall operating point more completely, we additionally report the area under the ROC curve (AUC-ROC), overall accuracy, macro-averaged F1 (Macro-F1), and MCI-class recall and precision. 
+
+5.2 Individual Contribution of Training Strategies 
+
+Table 2 evaluates each proposed training strategy in isolation: a single technique is added to the base model while every other setting remains at its default. The base model uses hard binary cross-entropy loss, the task-specific prompt-tuned DINOv2 architecture described in Section 4.2, and no components beyond the shared augmentation pipeline. We also include a cross-architecture comparison against the reference method of [ 5]. Because the authors do not release source code, we re-implement their architecture exactly as described in the paper and train it under the same conditions as our base model. We additionally report a row corresponding to the MoCA Soft Target strategy proposed in [2], which our framework strictly generalises as shown in Section 2; this entry measures the performance of that strategy alone on our architecture. 
+
+Observations. All single-technique variants improve F 1MCI over the base model. Type-Preserving Mixup achieves the largest gain in F 1MCI (+0 .022 ) and Macro-F1 ( +0 .020 ) among all individual techniques, and ranks second in AUC-ROC ( +0 .018 ). The MoCA Soft Target attains the highest AUC-ROC across all single-strategy configurations (+0 .019 ), indicating that MoCA-guided label smoothing improves the model’s ranking of subjects across classification thresholds, consistent with its role in relaxing overconfident predictions near the diagnostic boundary. Image Inversion yields the highest accuracy ( 0.788 ) and the largest improvement in MCI-class precision ( +0 .042 ), suggesting that mapping ink strokes to bright foreground on a black background better aligns the drawing images with the photometric statistics of the natural-image data on which DINOv2 was pre-trained, and directs patch-level representations toward diagnostically relevant stroke regions rather than the uninformative white canvas. Balanced Batch Sampling improves accuracy and precision by correcting the class-level imbalance in the training stream. Adaptive MoCA-Bin Weighting achieves the highest MCI-class recall of any single technique ( +0 .071 ), at the cost of precision (−0.037 ); this trade-off is expected, as the effective-number reweighting explicitly elevates the influence of under-represented MoCA bins, which are disproportionately populated by MCI subjects. Drawing Swap provides consistent improvements in F 1MCI and precision, albeit slightly lower in magnitude than Mixup, reflecting its complementary role in expanding the combinatorial diversity of multi-modal training triplets. The MoCA-Probability Modulator offers modest but consistent gains across most metrics. When all strategies are combined into the full system, the model achieves the highest F 1MCI across the entire table (0.641 ), demonstrating that the individual improvements are largely complementary rather than redundant, with the primary gain concentrated in MCI-class recall and F1. The reference architecture of [ 5 ] underperforms the base model across every metric. Its F 1MCI falls 0.086 points below the base model and its MCI-class recall is 0.135 points lower, confirming that the representational power of the frozen DINOv2 backbone combined with task-specific prompt tuning provides a substantially stronger foundation for this task than the convolutional-transformer hybrid proposed in the reference work. 
+
+5.3 Qualitative Analysis of Attention Maps and Modality Weights 
+
+Figure 4 presents two representative subjects alongside the cross-attention maps {Ak} and the learnable query attention weights α produced by the model at inference. Together, these two interpretability signals expose not only the spatial regions that drove each task-specific embedding, but also the relative contribution of each drawing modality to the final binary prediction. 
+
+True positive (MCI patient, top row). The model assigns the highest pool weight to the trail drawing ( αtrail = 0 .40 ), with clock and cube receiving equal weights of 0.30. Inspecting the trail attention map reveals that the model concentrates on the junction points where strokes are incorrectly connected, a salient marker of executive dysfunction in the TMT. This is consistent with clinical scoring practice, in which erroneous path connections are the primary error category in MCI patients on this task. On the clock drawing, attention localizes around the digit positions for 2 and 11, where stroke density is elevated relative to a correctly drawn clock, suggesting the model identifies these as anomalous regions. On the cube, attention highlights the corners and edge intersections where superfluous strokes and misaligned lines accumulate, another common indicator of visuospatial difficulty. The modality weight pattern is therefore clinically coherent: the trail, which shows the clearest structural error, is assigned the most diagnostic weight. 
+
+False positive (healthy subject, bottom row). The model assigns the highest weight to the clock drawing ( αclock =0.41 ), followed by the trail ( 0.32 ) and the cube ( 0.27 ). The clock attention map concentrates near the top of the face where the digit 12 is absent or atypically rendered, and around the 9 position. The absence of a clearly formed 12 7Parameter-efficient Prompt Tuning of Vision Foundation Model With Adaptive Focal Loss for Interpretable MCI Screening pool weight: 0.30 
+
+clock 
+
+> pool weight: 0.40
+
+trail (train) 
+
+> pool weight: 0.30
+
+copy 
+
+ID 189717536599027191 | MoCA: 23.0 | true: patient (0) | pred: patient (0) | p(patient)=0.752 p(healthy)=0.248 pool weight: 0.41 
+
+clock 
+
+> pool weight: 0.32
+
+trail (train) 
+
+> pool weight: 0.27
+
+copy 
+
+ID 7814901082631900473 | MoCA: 28.0 | true: healthy (1) | pred: patient (0) | p(patient)=0.542 p(healthy)=0.458 
+
+Figure 4: Cross-attention maps and learnable pool weights for two representative subjects. Each column shows one drawing modality (clock, trail, cube from left to right); warm colours indicate high attention. Pool weights (shown above each panel) are the components of α and sum to one across the three modalities. Top row: MCI patient correctly classified as MCI. Bottom row: healthy subject incorrectly classified as MCI (false positive). Table 2: Per-technique comparison against the base model under five-fold cross-validation (mean ± std). Coloured arrows in parentheses denote absolute change relative to the base model: ↑ improvement, ↓ degradation, (=) no change. 
+
+Bold denotes the best result and underline the second-best in each column; the reference architecture is excluded from this ranking. F 1MCI is the primary metric. 
+
+Configuration F 1MCI (primary) AUC-ROC Accuracy Macro-F1 Recall MCI Prec .MCI 
+
+Base Model 0.617 ± 0.055 0.784 ± 0.031 0.764 ± 0.063 0.722 ± 0.054 0.648 ± 0.094 0.607 ± 0.101 
+
++ Balanced Batch Sampling 0.631 ± 0.027 (↑0.014 ) 0.798 ± 0.026 (↑0.014 ) 0.786 ± 0.014 (↑0.022 ) 0.740 ± 0.010 (↑0.018 ) 0.633 ± 0.098 (↓0.015 ) 0.645 ± 0.071 (↑0.038 )
+
++ Image Inversion 0.627 ± 0.040 (↑0.010 ) 0.784 ± 0.030 (=) 0.788 ± 0.023 (↑0.024 ) 0.739 ± 0.024 (↑0.017 ) 0.617 ± 0.099 (↓0.031 ) 0.649 ± 0.060 (↑0.042 )
+
++ Type-Preserving Mixup 0.639 ± 0.030 (↑0.022 ) 0.802 ± 0.031 (↑0.018 ) 0.783 ± 0.013 (↑0.019 ) 0.742 ± 0.015 (↑0.020 ) 0.663 ± 0.086 (↑0.015 ) 0.624 ± 0.039 (↑0.017 )
+
++ Drawing Swap 0.632 ± 0.027 (↑0.015 ) 0.784 ± 0.039 (=) 0.784 ± 0.021 (↑0.020 ) 0.740 ± 0.021 (↑0.018 ) 0.637 ± 0.045 (↓0.011 ) 0.631 ± 0.045 (↑0.024 )
+
++ MoCA Soft Target [2] 0.638 ± 0.044 (↑0.021 ) 0.803 ± 0.027 (↑0.019 ) 0.777 ± 0.034 (↑0.013 ) 0.738 ± 0.033 (↑0.016 ) 0.678 ± 0.081 (↑0.030 ) 0.611 ± 0.066 (↑0.004 )
+
++ Adaptive MoCA-Bin Weighting 0.622 ± 0.053 (↑0.005 ) 0.784 ± 0.027 (=) 0.742 ± 0.069 (↓0.022 ) 0.711 ± 0.056 (↓0.011 ) 0.719 ± 0.114 (↑0.071 ) 0.570 ± 0.123 (↓0.037 )
+
++ MoCA-Probability Modulator 0.623 ± 0.053 (↑0.006 ) 0.782 ± 0.033 (↓0.002 ) 0.772 ± 0.046 (↑0.008 ) 0.729 ± 0.043 (↑0.007 ) 0.644 ± 0.083 (↓0.004 ) 0.614 ± 0.082 (↑0.007 )
+
+Full System (all strategies combined) 0.641 ± 0.026 (↑0.024 ) 0.795 ± 0.024 (↑0.011 ) 0.765 ± 0.042 (↑0.001 ) 0.732 ± 0.031 (↑0.010 ) 0.719 ± 0.096 (↑0.071 ) 0.593 ± 0.086 (↓0.014 )
+
+Reference architecture [5] 0.531 ± 0.045 (↓0.086 ) 0.741 ± 0.037 (↓0.043 ) 0.741 ± 0.019 (↓0.023 ) 0.675 ± 0.018 (↓0.047 ) 0.513 ± 0.116 (↓0.135 ) 0.568 ± 0.043 (↓0.039 )
+
+is a well-known indicator of MCI in the CDT, and its misinterpretation here likely drives the elevated clock weight and contributes to the erroneous prediction. On the trail drawing, the attention map highlights two parallel stroke segments that are not connected to one another, a configuration that superficially resembles an incorrect path connection. However, in a healthy subject these isolated strokes may simply reflect a different drawing style rather than a genuine executive failure. This false positive therefore illustrates a known limitation of purely image-based MCI screening: subtle stylistic variation in an otherwise intact drawing can activate the same spatial attention patterns as genuine impairment, particularly near the diagnostic boundary. 
+
+6 Ablation Study 
+
+We conduct three targeted ablation studies. The first evaluates the MoCA-adapted focal loss by removing one component at a time from the full system. The second compares prompt-token design choices to isolate the architectural contribution of task-specific adaptation. The third compares prompt tuning against alternative parameter-efficient fine-tuning strategies to justify the choice of backbone adaptation mechanism. 8Parameter-efficient Prompt Tuning of Vision Foundation Model With Adaptive Focal Loss for Interpretable MCI Screening Table 3: Leave-one-out ablation of MoCA-adapted loss components within the full system. Results are mean ±
+
+std across five folds. Parenthesised values show the absolute change relative to the full system: ( ↑ value) denotes improvement and ( ↓ value) denotes degradation. Bold marks the best result per column; underline marks the second best.                                                                                                  
+
+> Configuration F1MCI AUC-ROC Macro-F1 Accuracy Recall MCI Prec. MCI
+> Full System 0.641 ±0.026 0.795 ±0.024 0.732 ±0.031 0.765 ±0.042 0.719 ±0.096 0.593 ±0.086
+> w/o MoCA-Probability Modulator 0.624 ±0.050 (↓0.017 )0.778 ±0.044 (↓0.017 )0.706 ±0.055 (↓0.026 )0.731 ±0.066 (↓0.034 )0.760 ±0.104 (↑0.041 )0.545 ±0.097 (↓0.048 )
+> w/o Adaptive MoCA-Bin Weighting 0.634 ±0.019 (↓0.007 )0.789 ±0.031 (↓0.006 )0.722 ±0.023 (↓0.010 )0.751 ±0.031 (↓0.014 )0.741 ±0.068 (↑0.022 )0.560 ±0.049 (↓0.033 )
+> w/o MoCA Soft Labels 0.636 ±0.026 (↓0.005 )0.802 ±0.018 (↑0.007 )0.730 ±0.034 (↓0.002 )0.766 ±0.047 (↑0.001 )0.701 ±0.124 (↓0.018 )0.600 ±0.083 (↑0.007 )
+
+Table 4: Comparison of prompt-token design choices under baseline training conditions. Results are mean ± std across five folds. Bold marks the best result per column; underline marks the second best. 
+
+Configuration F 1MCI AUC-ROC Macro-F1 Accuracy Recall MCI Prec. MCI 
+
+Task-Specific Tokens (proposed) 0.617 ± 0.055 0.784 ± 0.031 0.722 ± 0.054 0.764 ± 0.063 0.648 ± 0.094 0.607 ± 0.101 
+
+Shared Learnable Token 0.613 ± 0.047 0.796 ± 0.021 0.727 ± 0.032 0.776 ± 0.032 0.614 ± 0.095 0.626 ± 0.083 
+
+CLS Token Only (no prompt) 0.614 ± 0.042 0.782 ± 0.031 0.731 ± 0.028 0.783 ± 0.031 0.600 ± 0.104 0.644 ± 0.070 
+
+6.1 Leave-One-Out Ablation of MoCA-adapted Loss Components 
+
+Table 3 reports a leave-one-out analysis of the three MoCA-adapted loss components: the MoCA-probability modulator, adaptive MoCA-bin weighting, and MoCA soft labels. In each row, one component is removed while all remaining strategies are kept active. This design ensures that the measured degradation reflects the unique contribution of the removed component rather than any confound introduced by simultaneously changing other settings. A central motivation for this analysis is the relationship established in Table 1: MoCA soft labels, as proposed in [ 2], constitute a strict special case of the proposed MoCA-adapted focal loss, obtained by disabling both the modulator and adaptive weighting. The ablation therefore directly quantifies how much the additional components contribute beyond 
+
+the soft-label baseline. Removing the MoCA-probability modulator produces the most severe degradation across the primary metrics, with 
+
+F 1MCI declining by 0.017 points, AUC-ROC by 0.017 points, and Macro-F1 by 0.026 points, the largest drops observed in this analysis. This finding confirms that directly penalizing the misalignment between the model’s predicted probability and the MoCA-derived expectation provides a training signal that is not redundant with either soft labels or adaptive weighting. The simultaneous rise in MCI recall ( +0 .041 ) upon removing this component suggests that its primary effect is to regularize the decision boundary, preventing the model from compensating for difficult borderline samples through indiscriminate threshold shifting. Removing adaptive MoCA-bin weighting produces a moderate but consistent degradation in F 1MCI (−0.007 ), Macro-F1 ( −0.010 ), and accuracy ( −0.014 ), confirming that fine-grained score-distribution reweighting provides a useful complement to the class-level correction applied by balanced batch sampling. The ablation of MoCA soft labels yields a more nuanced profile: AUC-ROC increases by 0.007 points and accuracy by 0.001 points relative to the full system, yet F 1MCI and recall both decline. This pattern is consistent with the theoretical role of soft labels: relaxing the hard boundary near the MoCA cutoff improves sensitivity at a modest cost to overall confidence calibration as captured by AUC-ROC. Crucially, the degradation from removing the MoCA-probability modulator ( −0.017 in F 1MCI ) exceeds the degradation from removing MoCA soft labels ( −0.005 ), even though the latter is the richer component in terms of the information it encodes. This ordering is consistent with the individual strategy results in Table 2, where the MoCA-probability modulator and adaptive weighting each produced a larger boost in F 1MCI than MoCA soft labels when applied in isolation. Together, these results confirm that the proposed MoCA-adapted focal loss contributes meaningfully beyond what the soft-label formulation of prior work [2] provides. 
+
+6.2 Prompt-Token Design Ablation 
+
+Table 4 compares three prompt-token configurations under identical baseline training conditions (no MoCA-adapted loss, no augmentation beyond the shared pipeline) to isolate the architectural contribution of task-specific prompt tuning from any training-strategy effects. Both the shared learnable token and the CLS-only configurations achieve higher accuracy and, in the case of the shared token, higher AUC-ROC than the task-specific design. However, both alternatives yield lower F 1MCI and MCI-class recall, indicating a systematic shift in the operating point toward the healthy control class. This behaviour is consistent 9Parameter-efficient Prompt Tuning of Vision Foundation Model With Adaptive Focal Loss for Interpretable MCI Screening Table 5: Comparison of parameter-efficient fine-tuning strategies under baseline training conditions. Results are mean 
+
+± std across five folds. Bold marks the best result per column; underline marks the second best. 
+
+Configuration F 1MCI AUC-ROC Recall MCI Trainable Params 
+
+Prompt Tuning (proposed) 0.617 ± 0.055 0.784 ± 0.031 0.648 ± 0.094 1,188,098 Top Tuning 0.614 ± 0.042 0.782 ± 0.031 0.600 ± 0.104 1,186,946 
+
+LoRA ( r=4 , α=8 ) 0.610 ± 0.068 0.787 ± 0.042 0.624 ± 0.140 1,260,674 LoRA ( r=8 , α=16 ) 0.605 ± 0.026 0.778 ± 0.027 0.550 ± 0.073 1,334,402 with a reduction in representational flexibility: a shared token or a fixed CLS token must produce a single embedding that simultaneously accounts for all three drawing modalities, which may cause the model to anchor on the visually dominant healthy-pattern drawings, where all three tests are executed correctly, at the expense of the subtler task-specific deficits characteristic of MCI subjects. The task-specific design, by contrast, allows each learnable token to attend selectively to the drawing-level features most relevant to its assigned test, preserving the sensitivity required to detect partial or task-selective impairments. The task-specific configuration is therefore adopted as the proposed baseline, as it achieves the best trade-off between MCI sensitivity and overall discrimination, which is the criterion most consequential for a clinical screening tool. 
+
+6.3 Comparison of Parameter-Efficient Fine-Tuning Strategies 
+
+Having established task-specific prompt tokens as the preferred adaptation signal, we compare prompt tuning against two alternative PEFT strategies: top tuning and Low-Rank Adaptation (LoRA) [ 17 ]. This ablation is conducted under the same baseline conditions as Section 6.2, with the backbone frozen except where each strategy explicitly introduces trainable parameters. 
+
+Top tuning corresponds to the CLS-token-only configuration of Section 6.2: no learnable tokens are added and no backbone weights are modified. The pre-trained CLS token output is used directly as the per-modality embedding, so the only trainable parameters reside in the fusion module and the classifier. 
+
+LoRA applies low-rank decomposition to the query, key, and value projection matrices of every transformer block. Each frozen weight matrix W0 is adapted as W = W0 + αr BA , where A ∈ Rr×d and B ∈ Rd×r are trainable low-rank factors with rank r and scaling coefficient α. The CLS token output serves as the per-modality embedding, which is then passed to the shared cross-attention and fusion modules. Two rank configurations are evaluated: (r=8 , α =16) 
+
+and (r=4 , α =8) .Table 5 reports F 1MCI , AUC-ROC, and MCI-class recall alongside the number of trainable parameters for each strategy. These three metrics are selected as sufficient to characterise the primary performance objective, ranking calibration, and MCI sensitivity respectively; together they capture the clinically relevant axes of comparison without redundancy. Prompt tuning achieves the highest F 1MCI and MCI-class recall of all four strategies while introducing only 1,152 parameters beyond those of top tuning (three prompt tokens of dimension d=384 ). This marginal addition is sufficient to produce a measurable gain in MCI sensitivity, demonstrating that task-dedicated input-space adaptation is more effective per added parameter than modifying the backbone projections through low-rank residuals. The two LoRA configurations introduce between 72,576 and 147,456 additional trainable parameters relative to prompt tuning, yet both yield lower F 1MCI and recall. The larger LoRA variant ( r=8 ) achieves the lowest recall (0.550) and highest standard deviation in accuracy across all configurations, suggesting that introducing a larger number of trainable parameters into the frozen backbone can destabilise training on a dataset of this size, particularly under class imbalance. The smaller variant ( r=4 ) is more stable but still underperforms prompt tuning on the primary metric. These results collectively confirm that prompt tuning is the preferred PEFT strategy for this task: it achieves the strongest MCI-class performance, introduces the fewest additional parameters, and preserves the full interpretability guarantees of the frozen backbone. 
+
+7 Discussion 
+
+Parameter efficiency and representational transfer. A frozen DINOv2-Small backbone adapted through three prompt tokens of dimension d=384 (1,152 backbone-stage parameters, under 6% of the total model) consistently outperforms ResViT [ 5 ] across all reported metrics, with a margin of 0.086 in MCI-class F1 and 0.043 in AUC-ROC 10 Parameter-efficient Prompt Tuning of Vision Foundation Model With Adaptive Focal Loss for Interpretable MCI Screening for the base model alone. This confirms that self-supervised patch-level representations transfer effectively to the neuropsychological drawing domain without modifying backbone weights, and that architectural complexity is not a prerequisite for strong performance on this task. The PEFT comparison (Table 5) reinforces this point: LoRA, which introduces up to 147,000 additional trainable parameters into the backbone projections, yields lower MCI-class F1 and recall than prompt tuning, suggesting that modifying the frozen attention structure on a dataset of this scale is counterproductive. 
+
+Task-specific versus shared representations. The prompt-token ablation (Table 4) shows that task-specific tokens preserve MCI sensitivity better than a shared token or the frozen CLS token, even the latter two achieve marginally higher accuracy and AUC. This dissociation arises because aggregate metrics are dominated by the majority class under a 2.4:1 imbalance, whereas MCI-class F1 and recall quantify the sensitivity that matters clinically. Shared or frozen queries must represent all three drawing types with a single attention pattern, which likely anchors on the dominant healthy-subject features common to all three modalities, at the cost of sensitivity to partial, task-selective deficits. Task-specific tokens are free to specialize independently per drawing type, preserving diagnostic signal even when only one modality carries evidence of impairment. 
+
+Interpretability as an architectural property. Both reference works treat interpretability as a post-hoc step: Ru-engchaijatuporn et al. [ 2] apply attention rollout after inference, and Sirshar et al. [ 5 ] apply Grad-CAM [ 21 ] over the convolutional stream. In the proposed framework, the cross-attention weights from each prompt token to the patch tokens constitute the saliency map; no additional computation is required. Because these weights are the same mechanism that produces the task embedding, they directly reflect the information used during classification rather than a gradient-based approximation thereof. The second interpretability layer, the modality importance weights α, has no counterpart in either reference work and allows inspection of which cognitive domain drove a given prediction, a capability that is directly relevant to clinical decision support. 
+
+MoCA-adapted loss formulation. The leave-one-out ablation confirms that the MoCA-probability modulator is the most consequential loss component ( −0.017 in F 1MCI upon removal), exceeding the contribution of MoCA soft labels ( −0.005 ). This ordering holds in the individual strategy analysis as well, where the modulator produces a larger isolated gain than the soft-label term. The soft-label approach of [ 2 ] encodes score-derived uncertainty in the target; the proposed modulator encodes it in the loss gradient, upweighting samples whose predicted probability diverges from the score-derived expectation. The two mechanisms address the diagnostic boundary problem from complementary directions, and are most effective in combination, as the full-system results demonstrate. Adaptive MoCA-bin weighting addresses a further dimension that neither reference work considers: the non-uniform density of subjects across the MoCA range, which concentrates under-represented, borderline subjects in sparsely populated score bins. 
+
+Limitations and future directions. All experiments use a single dataset from one clinical institution in Thailand with a specific demographic profile; generalizability to other populations remains to be established. The framework operates on static drawing images and discards the temporal trajectory recorded by the digital platform; kinematic features such as pen velocity, pressure, and stroke order have been shown to carry independent diagnostic value [ 25 ]and represent a natural extension. The modality importance weights α have not been validated against clinical expert judgment; future work should assess whether they align with the cognitive domains that practitioners identify as most impaired in individual subjects. Finally, replacing the scalar MoCA score with domain-specific subscores could allow each task-specific token to be guided by the cognitive dimension it is designed to assess, potentially strengthening both performance and interpretability. 
+
+8 Additional information 
+
+Code and data availability. Code is available at https://github.com/JVD9kh96/mci-detection . Data is publicly available at https://github.com/cccnlab/MCI-multiple-drawings .
+
+References 
+
+[1] Ziad S Nasreddine, Natalie A Phillips, Valérie Bédirian, Simon Charbonneau, Victor Whitehead, Isabelle Collin, Jeffrey L Cummings, and Howard Chertkow. The montreal cognitive assessment, moca: a brief screening tool for mild cognitive impairment. Journal of the American Geriatrics Society , 53(4):695–699, 2005. [2] Natthanan Ruengchaijatuporn, Itthi Chatnuntawech, Surat Teerapittayanon, Sira Sriswasdi, Sirawaj Itthipuripat, Solaphat Hemrungrojn, Prodpran Bunyabukkana, Aisawan Petchlorlian, Sedthapong Chunamchai, Thiparat Chotibut, et al. An explainable self-attention deep neural network for detecting mild cognitive impairment using multi-input digital drawing tasks. Alzheimer’s Research & Therapy , 14(1):111, 2022. 11 Parameter-efficient Prompt Tuning of Vision Foundation Model With Adaptive Focal Loss for Interpretable MCI Screening [3] Karen Simonyan and Andrew Zisserman. Very deep convolutional networks for large-scale image recognition. 
+
+arXiv preprint arXiv:1409.1556 , 2014. [4] Samira Abnar and Willem Zuidema. Quantifying attention flow in transformers. In Proceedings of the 58th annual meeting of the association for computational linguistics , pages 4190–4197, 2020. [5] Mehreen Sirshar, Irum Matloob, Ayesha Tayyabah, Faiza Syed, Aliya Ashraf, and Hessa Alfraihi. Mci detection from handwritten drawing test using residual vision transformer. Scientific Reports , 2026. [6] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual learning for image recognition. In 
+
+Proceedings of the IEEE conference on computer vision and pattern recognition , pages 770–778, 2016. [7] Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg Heigold, Sylvain Gelly, et al. An image is worth 16x16 words: Transformers for image recognition at scale. arXiv preprint arXiv:2010.11929 , 2020. [8] Timothée Darcet, Maxime Oquab, Julien Mairal, and Piotr Bojanowski. Vision transformers need registers. arXiv preprint arXiv:2309.16588 , 2023. [9] Shuqing Chen, Daniel Stromer, Harb Alnasser Alabdalrahim, Stefan Schwab, Markus Weih, and Andreas Maier. Automatic dementia screening and scoring by applying deep learning on clock-drawing tests. Scientific Reports ,10(1):20854, 2020. [10] Raksit Raksasat, Surat Teerapittayanon, Sirawaj Itthipuripat, Kearkiat Praditpornsilpa, Aisawan Petchlorlian, Thiparat Chotibut, Chaipat Chunharas, and Itthi Chatnuntawech. Attentive pairwise interaction network for ai-assisted clock drawing test assessment of early visuospatial deficits. Scientific Reports , 13(1):18113, 2023. [11] Liu Ning, Qian Sun, Xiaoyin Xu, Haifeng Mou, Xinhai Liao, Bokai Rong, and Lingxing Wang. An improved contrastive learning loss function for automated clock-drawing test grading with implications for cognitive impairment screening. Frontiers in Computer Science , 8:1690044. [12] Mengyao Hu, Tian Qin, Richard Gonzalez, Vicki A Freedman, Laura B Zahodne, Edmundo R Melipillán, and Yi Lu Murphey. A novel vision transformer model produces clock drawing test scores as accurate as expert human coders. Scientific Reports , 2026. [13] Sabyasachi Bandyopadhyay, Jack Wittmayer, David J Libon, Patrick Tighe, Catherine Price, and Parisa Rashidi. Explainable semi-supervised deep learning shows that dementia is associated with small, avocado-shaped clocks with irregularly placed hands. Scientific Reports , 13(1):7384, 2023. [14] Jiaqing Zhang, Sabyasachi Bandyopadhyay, Faith Kimmet, Jack Wittmayer, Kia Khezeli, David J Libon, Cather-ine C Price, and Parisa Rashidi. Developing a fair and interpretable representation of the clock drawing test for mitigating low education and racial bias. Scientific Reports , 14(1):17444, 2024. [15] Jaeho Yang and Kijung Yoon. A multimodal approach to alzheimer’s diagnosis: Geometric insights from cube copying and cognitive assessments. arXiv preprint arXiv:2512.16184 , 2025. [16] Paolo Didier Alfano, Vito Paolo Pastore, Lorenzo Rosasco, and Francesca Odone. Top-tuning: A study on transfer learning for an efficient alternative to fine tuning for image classification with fast kernel methods. Image and Vision Computing , 142:104894, 2024. [17] Edward J Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Liang Wang, Weizhu Chen, et al. Lora: Low-rank adaptation of large language models. Iclr , 1(2):3, 2022. [18] Kaiyang Zhou, Jingkang Yang, Chen Change Loy, and Ziwei Liu. Learning to prompt for vision-language models. 
+
+International journal of computer vision , 130(9):2337–2348, 2022. [19] Maxime Oquab, Timothée Darcet, Théo Moutakanni, Huy Vo, Marc Szafraniec, Vasil Khalidov, Pierre Fernandez, Daniel Haziza, Francisco Massa, Alaaeldin El-Nouby, et al. Dinov2: Learning robust visual features without supervision. arXiv preprint arXiv:2304.07193 , 2023. [20] Soo Borson, James M Scanlan, Peijun Chen, and Mary Ganguli. The mini-cog as a screen for dementia: validation in a population-based sample. Journal of the American Geriatrics Society , 51(10):1451–1454, 2003. [21] Ramprasaath R Selvaraju, Michael Cogswell, Abhishek Das, Ramakrishna Vedantam, Devi Parikh, and Dhruv Batra. Grad-cam: Visual explanations from deep networks via gradient-based localization. In Proceedings of the IEEE international conference on computer vision , pages 618–626, 2017. [22] Zahra Rafati, Mohammad Hoseyni, Javad Khoramdel, and Amirhossein Nikoofard. Benchmarking class activation map methods for explainable brain hemorrhage classification on hemorica dataset. In 2025 32nd National and 10th International Iranian Conference on Biomedical Engineering (ICBME) , pages 717–724. IEEE, 2025. [23] Tsung-Yi Lin, Priya Goyal, Ross Girshick, Kaiming He, and Piotr Dollár. Focal loss for dense object detection. In 
+
+Proceedings of the IEEE international conference on computer vision , pages 2980–2988, 2017. 12 Parameter-efficient Prompt Tuning of Vision Foundation Model With Adaptive Focal Loss for Interpretable MCI Screening [24] Ilya Loshchilov and Frank Hutter. Decoupled weight decay regularization. arXiv preprint arXiv:1711.05101 ,2017. [25] Anis Davoudi, Catherine Dion, Shawna Amini, Patrick J Tighe, Catherine C Price, David J Libon, and Parisa Rashidi. Classifying non-dementia and alzheimer’s disease/vascular dementia patients using kinematic, time-based, and visuospatial parameters: the digital clock drawing test. Journal of Alzheimer’s Disease , 82(1):47–57, 2021. 13

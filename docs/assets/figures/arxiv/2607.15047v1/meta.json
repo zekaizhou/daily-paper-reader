@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.15047v1/fig-001.webp",
+      "caption": "Figure 1: Overview of the proposed framework. Each drawing (clock, cube, trail) is processed by a shared frozen DINOv2-Small backbone with a modality-specific learnable token, which is then refined via a shared cross-attention over the backbone’s patch tokens. The 3 resulting embeddings are aggregated by a learnable query attention pooling module into a single vector, which is passed to a linear classifier. Frozen components are shown in blue; trainable components in orange.",
+      "page": 2,
+      "index": 1,
+      "width": 949,
+      "height": 397
+    },
+    {
+      "url": "assets/figures/arxiv/2607.15047v1/fig-002.webp",
+      "caption": "Table 5: Comparison of parameter-efficient fine-tuning strategies under baseline training conditions. Results are mean ± std across five folds. Bold marks the best result per column; underline marks the second best.",
+      "page": 10,
+      "index": 2,
+      "width": 906,
+      "height": 189
+    },
+    {
+      "url": "assets/figures/arxiv/2607.15047v1/fig-003.webp",
+      "caption": "Figure 2: Class distribution of the full dataset. Of 918 subjects, 651 are healthy controls and 267 are MCI patients.",
+      "page": 3,
+      "index": 3,
+      "width": 457,
+      "height": 288
+    },
+    {
+      "url": "assets/figures/arxiv/2607.15047v1/fig-004.webp",
+      "caption": "Figure 3: MoCA-score distribution across the dataset, with a mode of 27. The dashed line marks the clinical cutoff of 25.",
+      "page": 3,
+      "index": 4,
+      "width": 457,
+      "height": 265
+    },
+    {
+      "url": "assets/figures/arxiv/2607.15047v1/fig-005.webp",
+      "caption": "Figure 4: Cross-attention maps and learnable pool weights for two representative subjects. Each column shows one drawing modality (clock, trail, cube from left to right); warm colours indicate high attention. Pool weights (shown above each panel) are the components of α and sum to one across the three modalities. Top row: MCI patient correctly classified as MCI. Bottom row: healthy subject incorrectly classified as MCI (false positive).",
+      "page": 8,
+      "index": 5,
+      "width": 876,
+      "height": 564
+    },
+    {
+      "url": "assets/figures/arxiv/2607.15047v1/fig-006.webp",
+      "caption": "Table 2: Per-technique comparison against the base model under five-fold cross-validation (mean ± std). Coloured arrows in parentheses denote absolute change relative to the base model: ↑ improvement, ↓ degradation, (=) no change. Bold denotes the best result and underline the second-best in each column; the reference architecture is excluded from this ranking. F1MCI is the primary metric.",
+      "page": 8,
+      "index": 6,
+      "width": 980,
+      "height": 206
+    }
+  ]
+}

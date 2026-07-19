@@ -1,0 +1,422 @@
+Title: WeaveEarth: Structured Evidence Construction and Reasoning for Training-Free UHR Remote Sensing Understanding
+
+URL Source: https://arxiv.org/pdf/2607.10120v1
+
+Published Time: Tue, 14 Jul 2026 00:38:10 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# WeaveEarth: Structured Evidence Construction and Reasoning for Training-Free UHR Remote Sensing Understanding 
+
+## Xianzhi Ma 
+
+School of Frontier Sciences, Nanjing University Suzhou, China xianzhima@smail.nju.edu.cn 
+
+## Shujun Wang 
+
+School of Frontier Sciences, Nanjing University Suzhou, China 502025830005@smail.nju.edu.cn 
+
+## Xiaohan Li 
+
+School of Frontier Sciences, Nanjing University Suzhou, China 602025830003@smail.nju.edu.cn 
+
+## Hao Liu 
+
+School of Frontier Sciences, Nanjing University Suzhou, China haoliu@nju.edu.cn 
+
+## Changhua Pei 
+
+Computer Network Information Center, Chinese Academy of Sciences Beijing, China chpei@cnic.cn 
+
+## Jianhui Li ∗
+
+School of Frontier Sciences, Nanjing University Suzhou, China lijh@nju.edu.cn 
+
+## Abstract 
+
+Ultra-High-Resolution (UHR) remote sensing image understand-ing requires Vision-Language Models (VLMs) to capture both the global scene layout and sparse yet task-critical local details under limited computational budgets. Existing methods mainly follow two paradigms. One is passive perception , which relies on resolu-tion expansion or token compression and may therefore discard fine-grained details. The other is active perception , which depends on multi-round zooming and search, but suffers from high latency, contextual fragmentation, and error accumulation. We argue that a more effective path toward UHR understanding lies not in accessing more, but in organizing better. To this end, we propose WeaveEarth, a training-free framework that reformulates UHR understanding as a problem of structured evidence construction and reasoning under global context constraints. Specifically, WeaveEarth first employs Global-Aware Evidence Construction to select a compact, low-redundancy, and spatially complementary Minimal Support Ev-idence Set . It then introduces Structured Evidence Reasoning , which weaves local evidence, spatial metadata, and relative topology into a unified reasoning interface, thereby enhancing the VLM’s abil-ity to perform global-local joint reasoning. Extensive experiments show that WeaveEarth consistently outperforms strong baselines and existing UHR methods across multiple UHR remote sensing benchmarks and multiple frozen VLM backbones. Code is available at https://github.com/XianZhi-Ma/WeaveEarth. 
+
+## CCS Concepts 
+
+• Computing methodologies → Image representations ; • In-formation systems → Multimedia and multimodal retrieval . 
+
+> ∗Corresponding author. Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. Copyrights for components of this work owned by others than the author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee. Request permissions from permissions@acm.org.
+> ACM MM, Rio de Janeiro, Brazil
+> ©202 Copyright held by the owner/author(s). Publication rights licensed to ACM. ACM ISBN 978-1-4503-XXXX-X/2018/06 https://doi.org/XXXXXXX.XXXXXXX
+
+## Keywords 
+
+Vision-Language Models, Ultra-High-Resolution Remote Sensing, Training-Free Understanding, Structured Evidence Reasoning 
+
+## 1 Introduction 
+
+With the rapid advancement of Earth observation technologies, re-mote sensing (RS) image analysis is entering the era of Ultra-High-Resolution (UHR) imagery [ 5 –7, 21 , 28 , 31 ]. Unlike ordinary natural images, UHR RS images exhibit a pronounced Macro-Micro Duality :they span large-scale scene layouts while containing sparse, fine-grained, and task-critical local details. Enabling Vision-Language Models (VLMs) to understand such images is important for real-world applications such as environmental monitoring, fine-grained urban governance, and the monitoring and evaluation of the Sustain-able Development Goals (SDGs) [ 17 ], where answering questions often depends on joint reasoning over global structure, local evi-dence, and cross-region relationships [ 8 , 9, 13 , 38 , 55 , 65 ]. Achieving such understanding under limited computational budgets is there-fore not only important for practical deployment, but also poses a fundamental challenge for evidence-driven global-local reasoning in VLMs [46, 47, 64]. Existing UHR RS methods mainly follow two routes, yet both re-main constrained by the trade-off between accuracy and efficiency. 
+
+Passive perception adapts the whole image through higher input resolution or token compression [ 32 , 45 , 64 ], but remains costly and may discard task-critical local evidence. Active perception in-stead searches for evidence through iterative zooming and cropping [ 27 , 46 , 47 , 68 ], but often incurs high latency, contextual fragmen-tation, and additional search overhead, and may even require extra training for search or stopping policies. More importantly, sequen-tial cropping can break long-range spatial dependencies, turning local evidence into isolated fragments that lack stable global ground-ing and are difficult to reason over jointly. As a result, a unified framework that can jointly support effective evidence selection, compact evidence organization, and reliable visual grounding under limited budgets is still lacking. As illustrated in Figure 1, the bottleneck in UHR RS understand-ing lies not merely in expanding visual access, but in constructing and organizing the right evidence for reasoning. To address this arXiv:2607.10120v1 [cs.CV] 11 Jul 2026 ACM MM, 2026, Rio de Janeiro, Brazil Xianzhi Ma, Shujun Wang, Xiaohan Li, Hao Liu, Changhua Pei, and Jianhui Li Q: What is the spatial relationship of 
+
+the rugby field to the cyan building? 
+
+> Paradigm 1: Passive Perception
+
+UHR RS Images 10K × 10K px                                       
+
+> Whole-image
+> Adaptation
+> Resolution Scaling
+> Ambiguous region
+> Rugby or Soccer ?
+> Token Pruning Might Lose
+> Critical Info
+> Based on the aerial image provided, there is no
+> rugby field visible in the scene .··· The cyan
+> building is located in the lower right portion of the
+> image, ··· Therefore, since there is no rugby field
+> in the image, there is no spatial relationship to
+> describe between a rugby field and the cyan building.
+> Qwen3-VL-8B (Dynamic Resolution)
+> Paradigm 2: Active Search
+> Search Zoom Iterative
+> Response
+> Crop
+> ZoomSearch (Think with Image)
+> Final Selected Final Output
+> The rugby
+> field is to the
+> left of the
+> cyan building. Latency:
+> 231.26s
+> VLM
+> Need More?
+> Done!
+> High Costs
+> Fragmented Context
+> Error Accumulation
+> Single-Pass Inference
+> Ours: Evidence Construction & Structured Reasoning Global Constraint
+> Global Thumbnail
+> Candidate
+> Patches
+> ···
+> Evidence Set
+> (Minimal yet Sufficient)
+> Evidence
+> Organization
+> WeaveEarth
+> Construct
+> Section 3.2
+> Response
+> Based on the provided images, ··· a
+> prominent red track and field located in
+> the upper right quadrant .A small,
+> distinct cyan-colored building is visible in
+> the lower right quadrant ,··· Therefore,
+> the rugby field is located to the north
+> of the cyan building.
+> Compact Evidence
+> Low Redundancy
+> Topology-Aware
+
+UHR understanding requires not more visual access, but better evidence organization.  
+
+> Topology-Preserving Board
+> Section 3.3
+
+Figure 1: Paradigm comparison for UHR remote sensing understanding. Answering questions over UHR images requires jointly capturing the global layout and sparse task-critical local evidence. Existing methods mainly rely on passive whole-image adaptation , which may lose critical details, or active multi-round search , which often causes contextual fragmentation, error accumulation, and high latency. In contrast, WeaveEarth constructs a compact, globally constrained evidence set for structured reasoning, enabling effective UHR understanding through better evidence organization rather than expanded visual access. 
+
+gap, we propose WeaveEarth , a training-free framework for UHR RS understanding. Rather than feeding isolated local crops into the model, WeaveEarth weaves the global thumbnail, critical local evidence, and their spatial relationships into a unified structured evidence representation. Concretely, it first constructs a compact, low-redundancy, and spatially complementary Minimal Support Evidence Set (MSES) under global context constraints, and then organizes it into a structured reasoning interface that preserves spatial grounding and relative topology. As a plug-and-play frame-work, WeaveEarth improves the efficiency and reliability of UHR reasoning without fine-tuning any backbone VLM parameters. The main contributions of this work are summarized as follows: (1) We propose WeaveEarth , a training-free framework that re-formulates UHR RS understanding as structured evidence con-struction and joint reasoning under global context constraints. (2) We introduce Global-Aware Evidence Construction , which builds a compact, low-redundancy, and spatially complementary 
+
+Minimal Support Evidence Set from a large candidate pool under limited budgets. (3) We introduce Structured Evidence Reasoning , which uses 
+
+Structured Evidence Metadata and a Topology-Preserving Evi-dence Board to preserve spatial grounding and relative topology for global-local reasoning. (4) Extensive experiments on multiple UHR benchmarks and frozen VLM backbones demonstrate consistent gains, while ablations show that the improvements come from better evidence selec-tion and organization rather than from expanded visual access. 
+
+## 2 Related Work 
+
+RS-VLMs. In recent years, open-source VLMs have achieved re-markable progress in general visual understanding and multimodal reasoning, such as LLaVA v1.6 [ 25 ] and IXC-2.5 [ 57 ]. Inspired by these advances, increasing efforts have sought to inject RS do-main knowledge into general-purpose VLMs, extending remote sensing vision-language models (RS-VLMs) from image-level un-derstanding to region-level and even pixel-level tasks [ 4 , 12 , 14 , 18 –20 , 22 , 29 , 33 , 51 , 66 , 67 ]. Early methods such as RSGPT [ 11 ] and RS-CapRet [ 43 ] mainly focused on image-level captioning and scene understanding. Subsequent works, including GeoChat [15], Earth-Marker [ 59 ], SkyEyeGPT [ 56 ], EarthGPT [ 60 ], and SkySense++ [ 49 ], progressively extended RS-VLMs to region-level comprehension, localization, and ROI-aware understanding. More recently, GeoPix [37 ], GeoPixel [ 40 ], and Falcon [ 50 ] further pushed RS-VLMs toward pixel-level segmentation. Despite the increasingly fine-grained task granularity supported by RS-VLMs, most of these methods are still built upon a modeling paradigm with fixed input resolution and conventional visual token budgets. 
+
+UHR RS Image Understanding. Existing methods for UHR RS image understanding mainly follow two routes: passive per-ception and active perception . Passive perception methods directly adapt to ultra-large images through higher input resolution, visual token compression, or retrieval-augmented mechanisms. Repre-sentative works include the text-guided dynamic pyramid token pruning strategy of Luo et al. [ 32 ], as well as ImageRAG [ 64 ] and GeoLLaVA-8K [ 45 ]. Although these methods usually maintain a relatively simple inference pipeline without explicit multi-round interaction, they still rely on costly large-input processing and often sacrifice fine-grained local evidence during compression or retrieval. In contrast, active perception methods formulate UHR understanding as searching for evidence before reasoning, dynami-cally selecting task-relevant regions through zooming, searching, or agentic interaction. Representative works include ZoomSearch [ 68 ], ZoomEarth [ 27 ], the stage-wise knowledge-injected RL strategy [ 26 , 34 , 41 , 44 , 52 –54 , 58 , 61 , 63 ] of Wang et al. [ 47 ], and GeoEyes WeaveEarth: Structured Evidence Construction and Reasoning for Training-Free UHR Remote Sensing Understanding ACM MM, 2026, Rio de Janeiro, Brazil 
+
+[ 46 ]. While more effective at locating relevant regions, they typ-ically incur repeated interaction, higher latency, and fragmented spatial context. 
+
+## 3 WeaveEarth 3.1 Framework Overview 
+
+UHR RS understanding requires the model to jointly capture large-scale global layout and sparse yet answer-critical local evidence [45 , 64 ]. To address this challenge, we propose WeaveEarth , a struc-tured evidence construction and reasoning framework for UHR RS understanding. Rather than treating UHR understanding as a prob-lem of stronger whole-image perception, WeaveEarth reformulates it as structured evidence construction and joint reasoning under global context constraints. Instead of modifying the internal archi-tecture of a frozen VLM, WeaveEarth redesigns its inference input interface through structured evidence composition. As shown in Figure 2, WeaveEarth consists of two tightly coupled stages, corresponding to two core questions: how to construct criti-cal evidence and how to organize evidence for reasoning. Global-Aware Evidence Construction builds a compact, low-redundancy, and spatially complementary Minimal Support Evidence Set under global context constraints. Structured Evidence Reasoning then organizes the selected evidence together with spatial metadata and the global thumbnail into a unified structured evidence interface, enabling a frozen VLM to perform stable joint reasoning between global scene priors and task-critical local evidence. We next describe these two components in detail. 
+
+## 3.2 Global-Aware Evidence Construction 
+
+Instead of performing high-resolution reasoning over the entire im-age, we first divide the original image into a set of overlapping local regions to form a candidate evidence pool. This design is intended to avoid the case where a critical target lies on a region boundary, which would make it incomplete under non-overlapping partition-ing. Meanwhile, we construct a low-resolution global thumbnail from the image to provide a scene-level contextual prior at low cost. The motivation is that, in UHR RS images, critical evidence is often distributed over only a few local regions, while the seman-tic value of these regions depends on the global scene layout in which they are situated. Therefore, the selection of local evidence should not rely solely on the question text, but should also be jointly constrained by the global context. Formally, let the original image be divided into 𝑁 local regions 
+
+{𝑝 𝑖 }𝑁 𝑖 =1, with the question denoted as 𝑞 and the global thumbnail as 𝑔 . We first employ a cross-modal semantic encoder to extract semantic representations for the local regions, the question text, and the global thumbnail, respectively. Then, for each candidate region, we compute a joint relevance score 𝑠 𝑖 with respect to both the question and the global thumbnail: 
+
+𝑠 𝑖 = sim (𝑝 𝑖 , 𝑞 ) + 𝜆 sim (𝑝 𝑖 , 𝑔 ), (1) where sim (· , ·) denotes the similarity between normalized features, and 𝜆 balances the contributions of question semantics and the global scene prior. Unlike local patch retrieval based solely on the question, this design explicitly introduces a Global Context Con-straint (GCC), requiring candidate regions to be not only semanti-cally relevant to the question, but also consistent with the scene layout of the entire image. Our key insight is that, in UHR RS images, the importance of a local region depends not only on whether it resembles the target described in the question, but also on whether it lies within a reasonable global context. We first select the top-scoring candidate regions as anchor ev-idence. To alleviate the boundary fragmentation caused by local cropping, we further perform local neighborhood expansion around the anchor evidence, incorporating spatially adjacent regions into the candidate evidence pool. This step is not intended merely to increase the number of evidence regions, but rather to preserve nec-essary contextual information, allowing the model to perceive the spatial dependencies between local targets and their surrounding regions during subsequent reasoning. However, relying solely on top-𝑘 retrieval is still insufficient for high-quality reasoning. Directly selecting the highest-scoring re-gions often leads to two problems. First, the candidate regions may be highly redundant, with multiple patches repeatedly covering the same location or object. Second, regions that are semantically relevant are not necessarily spatially complementary, meaning that the resulting evidence set may be relevant but not necessarily suffi-cient. To address this issue, we further construct a Minimal Support Evidence Set (MSES) from the candidate evidence pool, with the goal of preserving a small number of key regions that are sufficient to support answer prediction. Formally, given a candidate region set C, we aim to select a compact support set S ⊆ C that simultaneously satisfies three requirements: (1) high semantic relevance to the question; (2) strong spatial complementarity, so as to cover richer regional information; (3) low visual redundancy, avoiding repeated transmission of the same evidence across multiple regions. Accordingly, we formulate support set construction as the fol-lowing objective: 
+
+S∗ = arg max  
+
+> S ⊆ C
+
+Rel (S , 𝑞 ) + 𝛼 Cov (S) − 𝛽 Red (S) , (2) where S∗ denotes the optimal support set, Rel denotes the overall relevance between the support set and the question, Cov measures spatial coverage and complementarity, and Red quantifies the re-dundancy within the evidence set. In practice, we adopt a training-free greedy strategy to progressively select candidate regions by jointly considering semantic scores, spatial coverage gains, and overlap penalties, thereby constructing a compact, low-redundancy, and spatially complementary support set. Since this process only involves lightweight ranking and set updating over a small num-ber of candidate regions, its additional computational overhead is relatively small compared with the final VLM inference. By unifying candidate retrieval and support set compression into a single evidence construction process under global context constraints, WeaveEarth substantially reduces the input scale for subsequent reasoning while preserving evidence quality, thereby laying the foundation for structured evidence organization and final joint reasoning. ACM MM, 2026, Rio de Janeiro, Brazil Xianzhi Ma, Shujun Wang, Xiaohan Li, Hao Liu, Changhua Pei, and Jianhui Li Q: What is the direction of 
+
+the construction site relative 
+
+to the lake in the picture? 
+
+> UHR RS Image ( 10K  × 10K  px)
+
+Global Thumbnail Overlap 
+
+Candidate Patches 
+
+> Scene
+> -level
+> Prior
+
+Overlapping 
+
+Crop 
+
+Resize 
+
+> Anti-fragmentation
+
+Stage 1: Global-Aware Evidence Construction 
+
+si = sim(p i, q) + λsim(p i, g) 
+
+> ···
+> Anchor Evidences
+
+Encoder       
+
+> Question
+> Thumbnail
+> Patches
+> Global Context
+> Constraint (GCC)
+> Neighbor Expansion
+> Evidence Pool C
+> Top-ranked
+> Greedy Selection
+> Minimal Support
+> Evidence Set S
+> (MSES)
+> q
+> g
+> p
+
+S* = argmax(Rel (S, q )
+
++ αCov (S) - βRed (S))
+
+> S⊆C
+> Low Redundancy
+> High Coverage
+> Minimal
+> yet
+> Sufficient
+> High Relevance
+
+Stage 2: Structured Evidence Reasoning       
+
+> Structured Evidence Metadata (SEM)
+> [Patch R14 | role=support |grid=(2,1) |box=(0.250,0.417,0.200,0.200) |
+> neighbors={R7,R8,R9,R13,R15,R19,R20,R21} | scale=grid_6x6]
+> [Patch R35 | role=anchor | grid=(5,4) | box=(0.750,0.908,0.200,0.183) |
+> neighbors={R28,R29,R30,R34,R36} | scale=grid_6x6]
+> [Patch R15 | role= anchor | grid=(2,2) | box=(0.417,0.417,0.200,0.200) |
+> neighbors={R8,R9,R10,R14,R16,R20,R21,R22} | scale=grid_6x6]
+
+ei = (p i, ui, bi, ni, ri, ℓi) 
+
+> Enrich
+> Meta data
+> ··· ···
+> Spatial Grounding
+
+Weave 
+
+> Topology-Preserving
+> Evidence Board （TPEB ）
+
+VLM Thumbnail         
+
+> Metadata
+> Board
+> Structured Evidence
+> Interface
+> Alright, let's combine the global map and local evidence for reasoning. ··· To verify this, we examine the evidence regions. Evidence regions R35 (anchor) and R36 (anchor) are both
+> located in the lower-right portion of the image , near the lake and the stadium. In contrast, evidence regions R14 and R15 are positioned in the upper-left part of the image , close
+> to residential areas.· ·· Integrating insights from both the global map and local evidence, the construction site is situated to the northwest of the lake. Final Answer: Northwest
+
+## WeaveEarth 
+
+> Answer
+
+Figure 2: Overview of WeaveEarth. Stage 1 ( Global-Aware Evidence Construction ) uses a global thumbnail and overlapping local crops to construct a compact, globally constrained Minimal Support Evidence Set . Stage 2 ( Structured Evidence Reasoning )enriches selected patches with Structured Evidence Metadata and organizes them into a Topology-Preserving Evidence Board to preserve spatial grounding and relative topology. Together with the global thumbnail, they form a unified structured evidence interface for a frozen VLM, enabling global-local joint reasoning under limited visual budgets. 
+
+## 3.3 Structured Evidence Reasoning 
+
+After the Global-Aware Evidence Construction stage, WeaveEarth has already constructed a compact, low-redundancy, and spatially complementary MSES from a large pool of local regions. However, merely obtaining a set of relevant patches is still insufficient for stable UHR reasoning. The reason is that, if these local regions are directly fed into the model as independent visual fragments, the model can often perceive only their local appearance, while failing to understand their spatial roles within the full image and the relative relationships among different regions. For example, for position-sensitive questions such as “which object is on the left/right” or “which target is closer to the center,” the model cannot make accurate judgments when only local appearance is available without global positional context. In UHR RS images, the answer to many questions depends not only on whether a local target exists, but also on where it is located, which regions it is adjacent to, and what semantic role it plays in the overall layout. Therefore, the second stage of WeaveEarth is not merely to use the evidence, but to further organize it into a structured evidence representation that is suitable for global-local joint reasoning in VLMs. Specifically, for each region in the MSES, we preserve not only its local visual content, but also explicitly encode its spatial attributes in the original image, including its normalized bounding box, rel-ative grid position, adjacency relationships, and role information within the evidence set. In this way, each local region is no longer treated as a simple cropped image, but is instead represented as a structured evidence unit with explicit spatial semantics. We refer to the associated structured metadata as Structured Evidence Meta-data (SEM). Formally, given the 𝑖 -th region in the support set, we represent it as 
+
+𝑒 𝑖 = (𝑝 𝑖 , 𝑢 𝑖 , 𝑏 𝑖 , 𝑛 𝑖 , 𝑟 𝑖 , ℓ 𝑖 ), (3) where 𝑒 𝑖 denotes the structured representation of the 𝑖 -th evidence unit, 𝑝 𝑖 denotes the local image content, 𝑢 𝑖 denotes the region identifier, 𝑏 𝑖 denotes its normalized spatial location in the full image, 
+
+𝑛 𝑖 denotes its adjacency relationships with other evidence regions, 
+
+𝑟 𝑖 denotes its role attribute within the current evidence set, and 
+
+ℓ𝑖 denotes its grid/scale information. As illustrated in Stage 2 of Figure 2, SEM provides a concrete structured representation for each evidence unit. Such a representation naturally endows each local region with both positional and relational information, preventing it from degenerating into an isolated visual fragment detached from context when fed into the model. Based on this, we further construct a Topology-Preserving Evi-dence Board (TPEB) to organize the discrete evidence regions into a unified visual input. Unlike simply arranging patches accord-ing to retrieval order or tiling them on a fixed grid, WeaveEarth preserves, as much as possible under a compact visual layout, the coarse-grained relative topology and adjacency relationships of the support set in the original image, so that spatially adjacent or structurally related local regions remain close to each other on the evidence board. The key motivation is that, for spatial relations, distribution patterns, and multi-region joint reasoning in RS scenes, textual prompts alone are often insufficiently stable for conveying positional relationships, whereas preserving relative topology and adjacency consistency provides VLMs with a more reliable spatial inductive bias. In other words, WeaveEarth not only selects evidence, but also weaves local evidence into a visually structured reasoning interface through topology-preserving evidence organization. It is worth noting that SEM and TPEB play complementary but distinct roles in WeaveEarth. SEM addresses the question of what each evidence region is, where it is located, and how it relates to other regions, by providing each patch with explicit and readable spatial grounding. In contrast, TPEB addresses how multiple evi-dence regions should be jointly perceived by the model as a whole, by preserving relative adjacency and layout consistency to provide a more stable spatial organization for VLMs. Together, they form the structured evidence reasoning interface for a frozen VLM. Finally, WeaveEarth feeds three types of information into the frozen VLM: WeaveEarth: Structured Evidence Construction and Reasoning for Training-Free UHR Remote Sensing Understanding ACM MM, 2026, Rio de Janeiro, Brazil 
+
+Method #Params Training -free LRS-VQA MME-RealWorld FAIR Bridge STAR Avg. Color Count Position Avg. 
+
+Commercial VLMs 
+
+GPT-4o-mini [35] - ë 18.67 31.99 25.85 24.51 5.82 2.61 11.54 6.69 GPT-4o [36] - ë 22.15 31.84 27.40 26.42 34.18 15.17 37.07 28.81 Claude-3.7-Sonnet [1] - ë 14.28 28.52 15.03 16.75 32.90 19.42 28.57 27.02 
+
+Open-Source General VLMs 
+
+Qwen2.5-VL [3] 7B ë 22.85 36.94 25.78 26.49 45.94 21.05 55.23 40.90 Qwen3-VL [2] 8B ë 24.61 38.15 27.53 28.16 48.07 21.35 56.41 42.11 LLaVA-OV [16] 7B ë 20.61 35.11 26.08 25.69 26.81 26.14 27.57 26.85 IXC-2.5 [57] 7B ë 25.25 38.41 27.30 28.27 45.34 17.62 44.95 36.12 LLaVA-v1.5 [23] 7B ë 18.76 30.70 22.63 22.60 23.11 16.88 26.25 22.12 LLaVA-v1.6 [25] 7B ë 19.55 31.97 23.58 23.55 24.51 18.03 27.49 23.39 CogVLM2 [10] 8B ë - - - - 37.69 18.35 29.99 28.76 ZoomEye [42] 7B ë 22.53 34.48 26.27 26.30 48.54 17.76 31.18 32.61 
+
+RS-VLMs 
+
+RSUniVLM [30] 0.5B ë 21.02 32.61 24.72 26.07 28.97 19.00 28.33 25.48 GeoChat [15] 7B ë 20.18 24.54 13.75 17.30 23.11 15.66 25.06 21.32 VHM [39] 7B ë 22.59 34.40 26.75 26.57 20.32 16.80 35.24 24.18 
+
+UHR RS Understanding Methods 
+
+Luo et al. (2025) [32] 7B ë 22.97 36.89 27.48 27.45 - - - 39.04 ZoomEarth [27] 3B ë - - - - 49.69 31.66 50.14 43.93 GeoLLaVA-8K [45] 7B ë 20.81 32.73 24.56 24.58 27.92 22.27 34.90 28.41 ZoomSearch [68] 7B Í 21.83 32.33 26.05 25.65 48.62 20.05 59.83 43.02 
+
+WeaveEarth (Ours) 8B Í 30.99 26.08 36.68 33.38 51.39 27.65 62.60 47.38 
+
+Table 1: Main results on two UHR RS benchmarks, LRS-VQA and MME-RealWorld. The reported Avg. is the sample-size-weighted average accuracy (%) across subcategories, ensuring a fairer overall comparison under category imbalance. Rankings are computed column-wise, with the best result highlighted in purple and bold, and the second-best result highlighted in blue and underlined. The symbol “-” indicates that the corresponding category result was not reported in the original paper. 
+
+(1) the global thumbnail that provides a scene-level prior; (2) the topology-preserving evidence board constructed from the MSES; (3) the structured evidence metadata corresponding to each evi-dence unit. Under this input interface, the model no longer needs to search for key regions by itself within the full UHR image, but can instead directly perform joint reasoning over a limited amount of critical local evidence under global context constraints. The core insight of this design is that, for UHR RS image understanding, the key challenge is not merely to find evidence, but to organize evidence into a unified representation that preserves spatial structure and is amenable to model reasoning. 
+
+## 4 Experiments 4.1 Experimental Setup 
+
+Benchmarks and Metrics. We evaluate WeaveEarth on three representative UHR RS image understanding benchmarks, including one visual question answering dataset, LRS-VQA (7,333 questions) [ 32 ], and two multiple-choice benchmarks, MME-RealWorld (3,738 questions) [ 62 ] and XLRS-Bench (3,080 questions) [ 48 ]. To ensure fair evaluation, we follow the official data splits and evaluation protocols of each benchmark, and uniformly adopt accuracy as the evaluation metric. For benchmarks with multiple subcategories, the overall Avg. is computed as the sample-size-weighted average accuracy across all subcategories, thereby ensuring a fairer overall comparison under category imbalance. 
+
+Implementation Details. All experiments are conducted on an NVIDIA A100 80GB GPU, with CUDA 12.4, Python 3.11.11, and Py-Torch 2.5.1. To validate the plug-and-play capability of our model, in the main experiments we instantiate it on three representative open-source VLM backbones, Qwen3-VL-8B [ 2 ], LLaVA-v1.6-7B [ 25 ], and IXC-2.5-7B [ 57 ]. All backbones are kept frozen, without any param-eter fine-tuning. Unless otherwise specified, all remaining ablation studies, efficiency analyses, and case studies are conducted using Qwen3-VL-8B. More details about the experimental environment and hyperparameter settings are provided in the appendix. 
+
+## 4.2 Main Results 
+
+As shown in Table 1, we evaluate WeaveEarth on two UHR re-mote sensing benchmarks, LRS-VQA and MME-RealWorld, where it achieves the best overall performance on both datasets, with average accuracies of 33.38% and 47.38%, respectively. Specifically, WeaveEarth surpasses the previous best UHR image understanding methods, outperforming Luo et al. (2025) [ 32 ] on LRS-VQA by 5.93 percentage points (from 27.45% to 33.38%) and ZoomEarth [ 27 ] on ACM MM, 2026, Rio de Janeiro, Brazil Xianzhi Ma, Shujun Wang, Xiaohan Li, Hao Liu, Changhua Pei, and Jianhui Li                                                                                                                                                                                            
+
+> Method #Params Training -free Perception Reasoning Avg. Cnt SC OSR OP Plan AR CR SR
+> Commercial VLMs
+> GPT-4o-mini [35] -ë24.38 39.33 23.60 45.60 29.00 71.00 50.50 6.67 40.16 GPT-4o [36] -ë28.75 40.33 24.60 10.78 35.00 73.00 49.00 20.00 22.30 Claude-3.7-Sonnet [1] -ë25.00 43.00 27.60 41.33 35.00 65.00 55.50 28.33 39.65
+> Open-Source General VLMs
+> Qwen2.5-VL [3] 7B ë30.63 40.33 30.80 43.31 32.00 67.00 62.50 43.33 41.98 Qwen3-VL [2] 8B ë32.50 41.67 31.40 43.92 34.00 70.00 63.50 46.33 42.92 LLaVA-OV [16] 7B ë31.25 35.67 25.20 45.42 24.00 76.00 59.50 43.33 41.62 IXC-2.5 [57] 7B ë31.88 37.67 26.00 22.11 41.00 72.00 64.00 36.67 30.00 LLaVA-v1.5 [23] 7B ë22.50 19.67 23.00 20.18 39.00 35.00 34.00 30.00 22.89 LLaVA-v1.6 [25] 7B ë24.38 21.33 23.80 21.27 40.00 35.00 34.50 33.33 24.00 CogVLM2 [10] 8B ë36.88 46.33 36.20 36.87 34.00 69.00 60.50 -40.23 LLaVA-Next [24] 8B ë33.13 36.00 30.00 42.71 27.00 69.00 57.00 35.00 40.62 InternVL3 [69] 8B ë36.88 40.67 25.20 46.80 36.00 77.00 66.00 21.67 43.57
+> RS-VLMs
+> GeoChat [15] 7B ë22.50 12.67 24.20 24.28 10.00 33.00 32.00 -23.35
+> UHR RS Understanding Methods
+> ZoomEarth [27] 3B ë--------40.97 GeoLLaVA-8K [45] 7B ë35.00 62.00 35.80 37.71 65.00 68.00 63.50 51.67 43.44
+> WeaveEarth (Ours) 8B Í37.50 50.33 36.40 47.41 36.00 73.00 67.50 46.33 47.14
+
+Table 2: Results on the UHR RS benchmark XLRS-Bench. The reported Avg. is the sample-size-weighted average accuracy (%) across subcategories, ensuring a fairer overall comparison under category imbalance. The subcategories include Counting (Cnt), Scene Classification (SC), Object Spatial Relationship (OSR), Object Properties (OP), Planning (Plan), Anomaly Reasoning (AR), Complex Reasoning (CR), and Spatiotemporal Reasoning (SR). Rankings are computed column-wise, with the best result highlighted in purple and bold, and the second-best result highlighted in blue and underlined. 
+
+MME-RealWorld by 3.45 percentage points (from 43.93% to 47.38%), establishing new state-of-the-art results. Compared with the corresponding baselines, WeaveEarth con-sistently improves performance across multiple subcategories, in-dicating that its advantage is not limited to a single question type. These results suggest that, compared with brute-force whole-image perception or multi-round search, explicitly constructing and orga-nizing the key evidence that supports the answer is more effective. We further report the fine-grained results on XLRS-Bench in Table 2. WeaveEarth achieves the best weighted average accuracy of 47.14%, and attains the best performance on key sub-tasks such as Object Spatial Relationship and Complex Reasoning , which rely more heavily on spatial structure and reasoning ability. This ob-servation is consistent with our design motivation: the strength of WeaveEarth lies not in exposing the model to more visual content, but in providing a compact and spatially organized evidence inter-face that better supports fine-grained recognition and multi-region reasoning. In this sense, the results on XLRS-Bench lend empirical support to our method design, showing that the Minimal Support Evidence Set and Topology-Preserving Evidence Board indeed help improve the key capabilities required by UHR benchmarks. 
+
+## 4.3 Ablation Study 
+
+Table 3 presents the ablation results of WeaveEarth on LRS-VQA and XLRS-Bench. The results show that the performance gains of WeaveEarth do not come from any single module alone, but rather from the synergy between globally constrained evidence construc-tion and structured evidence organization. In particular, the larger gains mainly arise from the subsequent stages of evidence com-pression, spatial grounding, and topology-preserving organization, rather than solely from the global-context constraint introduced at the candidate construction stage. From the perspective of functional roles, the Global Context Con-straint (GCC) mainly serves as a global prior during candidate evi-dence construction, corresponding to the second term, 𝜆 sim (𝑝 𝑖 , 𝑔 ),in Eq. (1), which constrains local regions to be consistent with the overall scene layout. Its effect is relatively modest, indicating that global context is beneficial for candidate proposal, but is not the primary bottleneck in performance. In contrast, removing the Min-imal Support Evidence Set (MSES) leads to an average performance drop of 3.54 percentage points, showing that, in UHR scenarios, simply retaining more semantically relevant local regions does not naturally translate into better reasoning. Instead, redundant local regions dilute key clues, whereas a compact, low-redundancy, and spatially complementary support set is more beneficial for subse-quent decision-making. Removing Structured Evidence Metadata (SEM) causes an av-erage drop of 2.24 percentage points, indicating that preserving local appearance alone is insufficient and that explicit bounding boxes, adjacency relations, and role attributes remain necessary for effective spatial grounding. Removing the Topology-Preserving Evidence Board (TPEB) results in the largest drop across the two WeaveEarth: Structured Evidence Construction and Reasoning for Training-Free UHR Remote Sensing Understanding ACM MM, 2026, Rio de Janeiro, Brazil 
+
+Variant Con straint Support Set Meta data Evidence Board LRS-VQA XLRS-Bench Avg. 𝚫 
+
+Avg. OSR CR Overall 
+
+Baseline ✗ ✗ ✗ ✗ 26.68 31.40 62.50 42.92 34.80 -5.46 w/o GCC ✗ ✓ ✓ ✓ 32.56 35.80 66.50 46.33 39.45 -0.81 w/o MSES ✓ ✗ ✓ ✓ 29.61 32.40 64.00 43.82 36.72 -3.54 w/o SEM ✓ ✓ ✗ ✓ 31.24 31.80 65.50 44.80 38.02 -2.24 w/o TPEB ✓ ✓ ✓ ✗ 28.86 31.00 63.00 43.29 36.08 -4.18 
+
+WeaveEarth (Ours) ✓ ✓ ✓ ✓ 33.38 36.40 67.50 47.14 40.26 -
+
+Table 3: Ablation study results of WeaveEarth on LRS-VQA and XLRS-Bench benchmarks. The table reports the weighted average accuracy (%) on LRS-VQA and XLRS-Bench, as well as the accuracy on specific sub-tasks Object Spatial Relationship (OSR) and Complex Reasoning (CR) in XLRS-Bench. "Avg." represents the average accuracy across both datasets, while the last column " Δ Avg." denotes the performance drop relative to the full WeaveEarth model.                                         
+
+> Method LRS-VQA MME XLRS Avg.
+> Qwen3-VL-8B
+> Baseline 28 .16 42 .11 42 .92 37 .73
+> +WeaveEarth 33.38 ↑5.22 47.38 ↑5.27 47.14 ↑4.22 42.63 ↑4.90
+> Relative +18 .5%+12 .5%+9.8%+13.0%
+> LLaVA-v1.6-7B
+> Baseline 23.55 23.39 24.00 23.65
+> +WeaveEarth 27.60 ↑4.05 28.04 ↑4.65 28.87 ↑4.87 28.17 ↑4.52
+> Relative +17 .2%+19 .9%+20 .3%+19 .1%
+> IXC-2.5-7B
+> Baseline 28.27 36.12 30.00 31.46
+> +WeaveEarth 32.58 ↑4.31 39.96 ↑3.84 34.37 ↑4.37 35.64 ↑4.18
+> Relative +15 .2%+10 .6%+14 .6%+13 .3%
+
+Table 4: Plug-and-play transferability of WeaveEarth across multiple frozen VLM backbones. The evaluation metric is accuracy (%). “Avg.” denotes the average accuracy across the three benchmarks. The superscript ↑ indicates the absolute improvement over the baseline, while the “Relative” row reports the relative improvement in percentage. 
+
+datasets, reducing the average accuracy by 4.18 percentage points. This suggests that preserving relative topology and spatial adja-cency among evidence regions is critical for effective reasoning. When MSES or TPEB is removed, the performance on OSR and CR in XLRS-Bench drops substantially. This suggests that the diffi-culty of spatial reasoning lies not only in whether the model can find a relevant local target, but also in whether it can simultane-ously access complementary evidence, explicit spatial attributes, and relative layout relationships. Here, SEM primarily improves patch-level spatial grounding, whereas TPEB mainly enhances set-level joint perception and spatial organization. Together with MSES, they constitute the key factors that distinguish WeaveEarth from simple patch retrieval. 
+
+## 4.4 Plug-and-Play Transfer Across Frozen VLMs 
+
+To further verify that the performance gains of WeaveEarth do not rely on any single strong backbone, we instantiate it on two additional frozen backbones, LLaVA-v1.6-7B and IXC-2.5-7B. As 
+
+Figure 3: Accuracy-efficiency comparison of WeaveEarth with two representative UHR RS image understanding meth-ods. GeoLLaVA-8K represents the passive perception para-digm, while ZoomSearch represents the active perception par-adigm. The figure reports the accuracy (%) on LRS-VQA, MME-RealWorld, and their average, together with per-sample in-ference time (s), in order to evaluate the trade-off between performance and inference cost across different methods. 
+
+shown in Table 4, WeaveEarth consistently improves the perfor-mance of all three backbones across all benchmarks, with stable gains across backbones, yielding average improvements of +13.0% for Qwen3-VL-8B, +19.1% for LLaVA-v1.6-7B, and +13.3% for IXC-2.5-7B, respectively. These results support the plug-and-play nature of WeaveEarth and suggest that its gains stem from the structured evidence construction and reasoning mechanism itself, rather than from any particular backbone. 
+
+## 4.5 Efficiency and Budget Analysis 
+
+Accuracy-Efficiency Trade-off. Figure 3 compares WeaveEarth with two representative paradigms for UHR RS image understand-ing in terms of accuracy and inference time. Overall, WeaveEarth achieves a better balance between performance and inference cost. ACM MM, 2026, Rio de Janeiro, Brazil Xianzhi Ma, Shujun Wang, Xiaohan Li, Hao Liu, Changhua Pei, and Jianhui Li 
+
+Figure 4: Performance and inference time under different evidence budgets on MME-RealWorld and LRS-VQA. The figure reports Accuracy (Acc., %) and per-sample Inference Time (IT, s) as the support evidence budget varies from 2 to 10, in order to analyze the impact of evidence quantity on the performance and cost of WeaveEarth. 
+
+Compared with GeoLLaVA-8K, a representative passive percep-tion method, WeaveEarth increases the average inference time on LRS-VQA and MME-RealWorld, but delivers a gain of 13.88 percent-age points at the cost of only 4.11 seconds more per sample. Compared with ZoomSearch, a representative active perception 
+
+method, WeaveEarth not only achieves a higher average accuracy (40.38% vs. 34.34%), but also reduces the average inference time from 54.25 s to 7.59 s. This result suggests that, rather than progressively discovering evidence through multi-round zooming, constructing key evidence under global context constraints first and then or-ganizing it into a unified structured interface enables more stable UHR reasoning at a much lower cost. WeaveEarth neither attempts to expand the model’s visual access nor relies on repeated search. Instead, it compresses and organizes a small number of critical and complementary local evidence regions into an input interface that is well suited for frozen VLM reasoning. Therefore, Figure 3 does not merely show that WeaveEarth is more efficient or more accurate; more importantly, it indicates that the key to UHR RS image understanding lies not in expanding visual access, but in improving the quality of evidence organization. 
+
+Evidence Budget Sensitivity. Figure 4 further reports the effect of the evidence budget on performance and time cost. On both MME-RealWorld and LRS-VQA, accuracy consistently improves as the budget increases from 2 to 6, while inference time increases only slightly. However, when the budget is further increased to 8 and 10, accuracy begins to decline, whereas inference time continues to rise. In both experiments, the best performance is achieved at the default setting of budget = 6. This result reveals a key phenomenon: for UHR RS image un-derstanding, more evidence is not necessarily better; instead, there exists a minimal yet sufficient effective range. When the budget is too small, the support set fails to cover the critical clues required for reasoning. When the budget is too large, the additional regions introduce redundancy and distractions, weakening the model’s abil-ity to focus on the most informative evidence. Therefore, if the performance gain mainly came from expanding visual access, the accuracy should continue to improve as the evidence budget in-creases. However, the actual results exhibit a clear rise-then-fall trend, with the optimum achieved at the default budget of 6. This indicates that the gains of WeaveEarth do not come from simply User:  Which direction                                     
+
+> is the swimming pool
+> relative to the train
+> station in the image?
+> ZoomSearth: Left .
+> WeaveEarth: Southeast .
+> WeaveEarth Q&AInput ZoomSearth
+> Reasoning: Alright, let's analyze this step by step .· ··1. Train Station : According to the evidence region
+> metadata, anchor R1 4is associated with the train station .···2. Swimming Pool : The metadata indicates that
+> evidence region R28 corresponds to the swimming pool .···3. Relative Direction Reasoning:From a global
+> perspective, the train station is located in the upper -left part of the image. The swimming pool is located in
+> the lower -right part. ···In conclusion, the swimming pool is located to the southeast of the train station .
+> 14.92s 159.08s 8500× 8500 px
+> Anchor
+> Region 14
+> Anchor
+> Region 28
+
+Figure 5: A case study on a UHR image. Due to mismatched and fragmented local evidence, ZoomSearch produces an incorrect answer. In contrast, WeaveEarth selects the correct key regions and answers correctly by organizing them into a globally grounded structured evidence interface, while also incurring much lower latency. 
+
+enlarging the visual input, but from compressing, filtering, and structurally organizing evidence under limited budgets. 
+
+## 4.6 Case Study and Discussion 
+
+Qualitative Case Study. As shown in Figure 5, for the cross-region spatial relation question, “What is the direction of the swimming pool relative to the train station?”, the failure of ZoomSearch arises from two aspects. First, it fails to stably localize the true key regions corresponding to the train station and the swimming pool. Second, even when the cropped local results are concatenated, this frag-mented evidence still lacks reliable global orientation and relative layout information, which ultimately leads to an incorrect answer, with an inference time as high as 159.08 s. In contrast, guided by the global thumbnail, WeaveEarth suc-cessfully identifies the anchor regions corresponding to the train station and the swimming pool, and answers the question correctly in a single round of reasoning through structured metadata and topology-preserving evidence organization, with an inference time of only 14.92 s. This case shows that the key to UHR RS reasoning lies not merely in discovering local evidence, but in whether criti-cal evidence can be accurately selected and structurally organized under global context. Additional qualitative examples are provided in the appendix. 
+
+Limitation and Future Work. The model is still prone to errors on counting tasks. The main reason is that the objects to be counted in UHR RS images are often very small and densely distributed, mak-ing individual instances difficult to recognize reliably in the global thumbnail. Therefore, although WeaveEarth has already improved counting performance substantially over the corresponding base-line, its support for fine-grained instance counting remains limited. In future work, we plan to introduce multi-scale evidence modeling for counting tasks, so that the structured evidence interface can better cover scenes containing dense small objects. 
+
+## 5 Conclusion 
+
+In this paper, we propose WeaveEarth, a training-free framework for UHR RS image understanding via structured evidence construc-tion and reasoning. Unlike whole-image perception or multi-round WeaveEarth: Structured Evidence Construction and Reasoning for Training-Free UHR Remote Sensing Understanding ACM MM, 2026, Rio de Janeiro, Brazil 
+
+search, WeaveEarth reformulates the task as constructing key sup-porting evidence under global context constraints and performing joint reasoning through a structured evidence interface. Specifically, WeaveEarth uses Global-Aware Evidence Construction to build a Minimal Support Evidence Set, and Structured Evidence Reasoning to organize local evidence, spatial metadata, and relative topology into a unified input interface, thereby enhancing the global-local joint reasoning capability of frozen VLMs. Extensive experiments demonstrate that WeaveEarth achieves consistent gains across multiple benchmarks and backbones, and further verify that its advantages mainly come from the compres-sion, selection, and structured organization of critical evidence, rather than from expanding visual access. Therefore, for UHR RS image understanding, a more effective path lies not in accessing more, but in organizing better. 
+
+## References 
+
+[1] Anthropic. 2025. Claude 3.7 Sonnet and Claude Code . Retrieved February 24, 2025 from https://www.anthropic.com/news/claude-3-7-sonnet [2] Shuai Bai, Yuxuan Cai, Ruizhe Chen, Keqin Chen, Xionghui Chen, Zesen Cheng, Lianghao Deng, Wei Ding, Chang Gao, Chunjiang Ge, Wenbin Ge, Zhifang Guo, Qidong Huang, Jie Huang, Fei Huang, Binyuan Hui, Shutong Jiang, Zhaohai Li, Mingsheng Li, Mei Li, Kaixin Li, Zicheng Lin, Junyang Lin, Xuejing Liu, Jiawei Liu, Chenglong Liu, Yang Liu, Dayiheng Liu, Shixuan Liu, Dunjie Lu, Ruilin Luo, Chenxu Lv, Rui Men, Lingchen Meng, Xuancheng Ren, Xingzhang Ren, Sibo Song, Yuchong Sun, Jun Tang, Jianhong Tu, Jianqiang Wan, Peng Wang, Pengfei Wang, Qiuyue Wang, Yuxuan Wang, Tianbao Xie, Yiheng Xu, Haiyang Xu, Jin Xu, Zhibo Yang, Mingkun Yang, Jianxin Yang, An Yang, Bowen Yu, Fei Zhang, Hang Zhang, Xi Zhang, Bo Zheng, Humen Zhong, Jingren Zhou, Fan Zhou, Jing Zhou, Yuanzhi Zhu, and Ke Zhu. 2025. Qwen3-VL Technical Report. (2025). arXiv preprint arXiv:2511.21631. [3] Shuai Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, Sibo Song, Kai Dang, Peng Wang, Shijie Wang, Jun Tang, Humen Zhong, Yuanzhi Zhu, Mingkun Yang, Zhaohai Li, Jianqiang Wan, Pengfei Wang, Wei Ding, Zheren Fu, Yiheng Xu, Jiabo Ye, Xi Zhang, Tianbao Xie, Zesen Cheng, Hang Zhang, Zhibo Yang, Haiyang Xu, and Junyang Lin. 2025. Qwen2.5-VL Technical Report. (2025). arXiv preprint arXiv:2502.13923. [4] Yuxiang Cai, Yongheng Shang, and Jianwei Yin. 2024. MultiDAN: Unsupervised, Multistage, Multisource and Multitarget Domain Adaptation for Semantic Seg-mentation of Remote Sensing Images. In Proceedings of the 32nd ACM International Conference on Multimedia (ACM MM) . 1168–1177. [5] Antoine Carreaud, Elias Naha, Arthur Chansel, Nina Lahellec, Jan Skaloud, and Adrien Gressin. 2026. Context-Aware Semantic Segmentation via Stage-Wise Attention. (2026). arXiv preprint arXiv:2601.11310. [6] Hengzhi Chen, Liqian Feng, Wenhua Wu, Xiaogang Zhu, Shawn Leo, and Kun Hu. 2025. F2Net: A Frequency-Fused Network for Ultra-High Resolution Remote Sensing Segmentation. (2025). arXiv preprint arXiv:2506.07847. [7] Yunkai Dang, Meiyi Zhu, Donghao Wang, Yizhuo Zhang, Jiacheng Yang, Qi Fan, Yuekun Yang, Wenbin Li, Feng Miao, and Yang Gao. 2025. A Benchmark for Ultra-High-Resolution Remote Sensing MLLMs. (2025). arXiv preprint arXiv:2512.17319. [8] Lamei Di, Bin Zhang, Yiming Wang, and Wenxia Zhang. 2025. Frequency Meets Semantics: Text-Visual Fusion with Directional Spectral Enhancement for Salient Object Detection in Optical Remote Sensing Images. In Proceedings of the 33rd ACM International Conference on Multimedia (ACM MM) . 1987–1996. [9] Renxiang Guan, Junhong Li, Siwei Wang, Wenxuan Tu, Miaomiao Li, En Zhu, Xinwang Liu, and Ping Chen. 2025. Multi-view Graph Clustering with Dual Relation Optimization for Remote Sensing Data. In Proceedings of the 33rd ACM International Conference on Multimedia (ACM MM) . 7346–7355. [10] Wenyi Hong, Weihan Wang, Ming Ding, Wenmeng Yu, Qingsong Lv, Yan Wang, Yean Cheng, Shiyu Huang, Junhui Ji, Zhao Xue, Lei Zhao, Zhuoyi Yang, Xiaotao Gu, Xiaohan Zhang, Guanyu Feng, Da Yin, Zihan Wang, Ji Qi, Xixuan Song, Peng Zhang, Debing Liu, Bin Xu, Juanzi Li, Yuxiao Dong, and Jie Tang. 2024. CogVLM2: Visual Language Models for Image and Video Understanding. (2024). arXiv preprint arXiv:2408.16500. [11] Yuan Hu, Jianlong Yuan, Congcong Wen, Xiaonan Lu, and Xiang Li. 2023. RSGPT: A Remote Sensing Vision Language Model and Benchmark. (2023). arXiv preprint arXiv:2307.15266. [12] Ling Huang, Wenqian Dong, Song Xiao, Jiahui Qu, Yuanbo Yang, and Yunsong Li. 2024. Language-Guided Visual Prompt Compensation for Multi-Modal Remote Sensing Image Classification with Modality Absence. In Proceedings of the 32nd ACM International Conference on Multimedia (ACM MM) . 5161–5170. [13] Zhong Ji, Changxu Meng, Yan Zhang, Haoran Wang, Yanwei Pang, and Jungong Han. 2024. Eliminate Before Align: A Remote Sensing Image-Text Retrieval Framework with Keyword Explicit Reasoning. In Proceedings of the 32nd ACM International Conference on Multimedia (ACM MM) . 1662–1671. [14] Chengjie Jiang, Yunqi Zhou, Jiafeng Yan, Jing Li, Jiayang Li, Yue Zhou, Hongjie He, and Jonathan Li. 2025. GRASP: Geospatial pixel Reasoning viA Structured Policy learning. (2025). arXiv preprint arXiv:2508.17102. [15] Kartik Kuckreja, Muhammad Sohail Danish, Muzammal Naseer, Abhijit Das, Salman Khan, and Fahad Shahbaz Khan. 2024. GeoChat:Grounded Large Vision-Language Model for Remote Sensing. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 27831–27840. [16] Bo Li, Yuanhan Zhang, Dong Guo, Renrui Zhang, Feng Li, Hao Zhang, Kaichen Zhang, Peiyuan Zhang, Yanwei Li, Ziwei Liu, and Chunyuan Li. 2024. LLaVA-OneVision: Easy Visual Task Transfer. (2024). arXiv preprint arXiv:2408.03326. [17] Jianhui Li, Chao Wu, Yingchao Piao, Yuchu Qin, Xiaoping Du, Lili Zhang, and Huadong Guo. 2023. How can we support the UN Sustainable Development Goals when open data is stagnant? Science Bulletin 68, 12 (2023), 1216–1218. [18] Ke Li, Di Wang, Ting Wang, Fuyu Dong, Yiming Zhang, Luyao Zhang, Xiangyu Wang, Shaofeng Li, and Quan Wang. 2026. RSVG-ZeroOV: Exploring a Training-Free Framework for Zero-Shot Open-Vocabulary Visual Grounding in Remote Sensing Images. In Proceedings of the Fortieth AAAI Conference on Artificial Intelligence . 6288–6296. [19] Ke Li, Di Wang, Haojie Xu, Haodi Zhong, and Cong Wang. 2024. Language-Guided Progressive Attention for Visual Grounding in Remote Sensing Images. 
+
+IEEE Transactions on Geoscience and Remote Sensing 62 (2024), 1–13. [20] Ke Li, Ting Wang, Di Wang, Yongshan Zhu, Yiming Zhang, Tao Lei, and Quan Wang. 2026. ProVG: Progressive Visual Grounding via Language Decoupling for Remote Sensing Imagery. (2026). arXiv preprint arXiv:2604.01893. [21] Qingyun Li, Shuran Ma, Junwei Luo, Yi Yu, Yue Zhou, Fengxiang Wang, Xudong Lu, Xiaoxing Wang, Xin He, Yushi Chen, and Xue Yang. 2026. Co-Training Vision Language Models for Remote Sensing Multi-task Learning. (2026). arXiv preprint arXiv:2511.21272. [22] Fan Liu, Delong Chen, Zhangqingyun Guan, Xiaocong Zhou, Jiale Zhu, Qiaolin Ye, Liyong Fu, and Jun Zhou. 2024. RemoteCLIP: A Vision Language Foundation Model for Remote Sensing. IEEE Transactions on Geoscience and Remote Sensing 
+
+62 (2024), 1–16. [23] Haotian Liu, Chunyuan Li, Yuheng Li, and Yong Jae Lee. 2024. Improved Baselines with Visual Instruction Tuning. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 26286–26296. [24] Haotian Liu, Chunyuan Li, Yuheng Li, Bo Li, Yuanhan Zhang, Sheng Shen, and Yong Jae Lee. 2024. LLaVA-NeXT: Improved reasoning, OCR, and world knowledge .Retrieved January 30, 2024 from https://llava-vl.github.io/blog/2024-01-30-llava-next/ [25] Haotian Liu, Chunyuan Li, Qingyang Wu, and Yong Jae Lee. 2023. Visual In-struction Tuning. In Proceedings of the Advances in Neural Information Processing Systems (NeurIPS) . 34892–34916. [26] Jiaqi Liu, Lang Sun, Ronghao Fu, and Bo Yang. 2026. Towards Faithful Reasoning in Remote Sensing: A Perceptually-Grounded GeoSpatial Chain-of-Thought for Vision-Language Models. (2026). arXiv preprint arXiv:2509.22221. [27] Ruixun Liu, Bowen Fu, Jiayi Song, Kaiyu Li, Wanchen Li, Lanxuan Xue, Hui Qiao, Weizhan Zhang, Deyu Meng, and Xiangyong Cao. 2025. ZoomEarth: Active Perception for Ultra-High-Resolution Geospatial Vision-Language Tasks. (2025). arXiv preprint arXiv:2511.12267. [28] Wang Liu, Puhong Duan, Xudong Kang, and Shutao Li. 2025. Squeezing Context into Patches: Towards Memory-Efficient Ultra-High Resolution Semantic Seg-mentation. In Proceedings of the Thirty-Fourth International Joint Conference on Artificial Intelligence (IJCAI) . 1603–1611. [29] Weiqi Liu, Yongshan Zhang, Xinxin Wang, and Lefei Zhang. 2025. Deep Multi-Level Contrastive Clustering for Multi-Modal Remote Sensing Images. In Pro-ceedings of the 33rd ACM International Conference on Multimedia (ACM MM) .1239–1247. [30] Xu Liu and Zhouhui Lian. 2024. RSUniVLM: A Unified Vision Language Model for Remote Sensing via Granularity-oriented Mixture of Experts. (2024). arXiv preprint arXiv:2412.05679. [31] Ye Liu, Shitao Song, Miaohui Wang, Hao Gao, and Jun Liu. 2025. DE-Unet: Dual-Encoder U-Net for Ultra-High Resolution Remote Sensing Image Segmentation. 
+
+IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing 
+
+18 (2025), 12290–12302. [32] Junwei Luo, Yingying Zhang, Xue Yang, Kang Wu, Qi Zhu, Lei Liang, Jingdong Chen, and Yansheng Li. 2025. When Large Vision-Language Model Meets Large Remote Sensing Imagery: Coarse-to-Fine Text-Guided Token Pruning. (2025). arXiv preprint arXiv:2503.07588. [33] Xianzhi Ma, Jianhui Li, Changhua Pei, and Hao Liu. 2025. GeoMag: A Vision-Language Model for Pixel-level Fine-Grained Remote Sensing Image Parsing. In 
+
+Proceedings of the 33rd ACM International Conference on Multimedia (ACM MM) .5441–5450. ACM MM, 2026, Rio de Janeiro, Brazil Xianzhi Ma, Shujun Wang, Xiaohan Li, Hao Liu, Changhua Pei, and Jianhui Li 
+
+[34] Li Mi, Manon Béchaz, Zeming Chen, Antoine Bosselut, and Devis Tuia. 2025. GeoExplorer: Active Geo-localization with Curiosity-Driven Exploration. In 
+
+Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) .6122–6131. [35] OpenAI. 2024. GPT-4o mini: advancing cost-efficient intelligence . Retrieved July 19, 2024 from https://openai.com/index/gpt-4o-mini-advancing-cost-efficient-intelligence/ [36] OpenAI. 2024. Hello GPT -4o . Retrieved May 13, 2024 from https://openai.com/ index/hello-gpt-4o/ [37] Ruizhe Ou, Yuan Hu, Fan Zhang, Jiaxin Chen, and Yu Liu. 2025. GeoPix: Multi-Modal Large Language Model for Pixel-level Image Understanding in Remote Sensing. (2025). arXiv preprint arXiv:2501.06828. [38] Yuwen Pan, Rui Sun, Yuan Wang, Tianzhu Zhang, and Yongdong Zhang. 2024. Rethinking the Implicit Optimization Paradigm with Dual Alignments for Re-ferring Remote Sensing Image Segmentation. In Proceedings of the 32nd ACM International Conference on Multimedia (ACM MM) . 2031–2040. [39] Chao Pang, Xingxing Weng, Jiang Wu, Jiayu Li, Yi Liu, Jiaxing Sun, Weijia Li, Shuai Wang, Litong Feng, Gui-Song Xia, and Conghui He. 2025. VHM: Versatile and Honest Vision Language Model for Remote Sensing Image Analysis. In 
+
+Proceedings of the Thirty-Ninth AAAI Conference on Artificial Intelligence . 6381– 6388. [40] Akashah Shabbir, Mohammed Zumri, Mohammed Bennamoun, Fahad S. Khan, and Salman Khan. 2025. GeoPixel: Pixel Grounding Large Multimodal Model in Remote Sensing. (2025). arXiv preprint arXiv:2501.13925. [41] Run Shao, Ziyu Li, Zhaoyang Zhang, Linrui Xu, Xinran He, Hongyuan Yuan, Bolei He, Yongxing Dai, Yiming Yan, Yijun Chen, Wang Guo, and Haifeng Li. 2025. Asking like Socrates: Socrates helps VLMs understand remote sensing images. (2025). arXiv preprint arXiv:2511.22396. [42] Haozhan Shen, Kangjia Zhao, Tiancheng Zhao, Ruochen Xu, Zilun Zhang, Ming-wei Zhu, and Jianwei Yin. 2025. ZoomEye: Enhancing Multimodal LLMs with Human-Like Zooming Capabilities through Tree-Based Image Exploration. (2025). arXiv preprint arXiv:2411.16044. [43] João Daniel Silva, João Magalhães, Devis Tuia, and Bruno Martins. 2024. Large Language Models for Captioning and Retrieving Remote Sensing Images. (2024). arXiv preprint arXiv:2402.06475. [44] Di Wang, Shunyu Liu, Wentao Jiang, Fengxiang Wang, Yi Liu, Xiaolei Qin, Zhim-ing Luo, Chaoyang Zhou, Haonan Guo, Jing Zhang, Bo Du, Dacheng Tao, and Liangpei Zhang. 2025. GeoZero: Incentivizing Reasoning from Scratch on Geospa-tial Scenes. (2025). arXiv preprint arXiv:2511.22645. [45] Fengxiang Wang, Mingshuo Chen, Yueying Li, Di Wang, Haotian Wang, Zonghao Guo, Zefan Wang, Boqi Shan, Long Lan, Yulin Wang, Hongzhen Wang, Wenjing Yang, Bo Du, and Jing Zhang. 2025. GeoLLaVA-8K: Scaling Remote-Sensing Multimodal Large Language Models to 8K Resolution. (2025). arXiv preprint arXiv:2505.21375. [46] Fengxiang Wang, Mingshuo Chen, Yueying Li, Yajie Yang, Yifan Zhang, Long Lan, Xue Yang, Hongda Sun, Yulin Wang, Di Wang, Jun Song, Jing Zhang, and Bo Du. 2026. GeoEyes: On-Demand Visual Focusing for Evidence-Grounded Understanding of Ultra-High-Resolution Remote Sensing Imagery. (2026). arXiv preprint arXiv:2602.14201. [47] Fengxiang Wang, Mingshuo Chen, Yueying Li, Yajie Yang, Yuhao Zhou, Di Wang, Yifan Zhang, Haoyu Wang, Haiyan Zhao, Hongda Sun, Long Lan, Jun Song, Yulin Wang, Jing Zhang, Wenlong Zhang, and Bo Du. 2026. Text Before Vision: Staged Knowledge Injection Matters for Agentic RLVR in Ultra-High-Resolution Remote Sensing Understanding. (2026). arXiv preprint arXiv:2602.14225. [48] Fengxiang Wang, Hongzhen Wang, Zonghao Guo, Di Wang, Yulin Wang, Ming-shuo Chen, Qiang Ma, Long Lan, Wenjing Yang, Jing Zhang, Zhiyuan Liu, and Maosong Sun. 2025. XLRS-Bench: Could Your Multimodal LLMs Understand Extremely Large Ultra-High-Resolution Remote Sensing Imagery?. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) .14325–14336. [49] Kang Wu, Yingying Zhang, Lixiang Ru, Bo Dang, Jiangwei Lao, Lei Yu, Junwei Luo, Zifan Zhu, Yue Sun, Jiahao Zhang, Qi Zhu, Jian Wang, Ming Yang, Jingdong Chen, Yongjun Zhang, and Yansheng Li. 2025. A semantic-enhanced multi-modal remote sensing foundation model for Earth observation. Nature Machine Intelligence 7 (2025), 1235–1249. [50] Kelu Yao, Nuo Xu, Rong Yang, Yingying Xu, Zhuoyan Gao, Titinunt Kitrungrot-sakul, Yi Ren, Pu Zhang, Jin Wang, Ning Wei, and Chao Li. 2025. Falcon: A Remote Sensing Vision-Language Foundation Model (Technical Report). (2025). arXiv preprint arXiv:2503.11070. [51] Liang Yao, Fan Liu, Delong Chen, Chuanyi Zhang, Yijun Wang, Ziyun Chen, Wei Xu, Shimin Di, and Yuhui Zheng. 2025. RemoteSAM: Towards Segment Anything for Earth Observation. In Proceedings of the 33rd ACM International Conference on Multimedia (ACM MM) . 3027–3036. [52] Liang Yao, Fan Liu, Hongbo Lu, Chuanyi Zhang, Rui Min, Shengxiang Xu, Shimin Di, and Pai Peng. 2026. RemoteReasoner: Towards Unifying Geospatial Reasoning Workflow. In Proceedings of the Fortieth AAAI Conference on Artificial Intelligence .11883–11891. [53] Liang Yao, Fan Liu, Shengxiang Xu, Chuanyi Zhang, Rui Min, Shimin Di, and Yuhui Zheng. 2026. RemoteZero: Geospatial Reasoning with Zero Human Anno-tations. (2026). arXiv preprint arXiv:2605.04451. [54] Liang Yao, Shengxiang Xu, Fan Liu, Chuanyi Zhang, Bishun Yao, Rui Min, Yongjun Li, Chaoqian Ouyang, Shimin Di, and Min-Ling Zhang. 2026. RemoteAgent: Bridging Vague Human Intents and Earth Observation with RL-based Agentic MLLMs. (2026). arXiv preprint arXiv:2604.07765. [55] Bo Yuan, Danpei Zhao, Zhuoran Liu, Wentao Li, and Tian Li. 2024. Continual Panoptic Perception: Towards Multi-modal Incremental Interpretation of Remote Sensing Images. In Proceedings of the 32nd ACM International Conference on Multimedia (ACM MM) . 2117–2126. [56] Yang Zhan, Zhitong Xiong, and Yuan Yuan. 2025. SkyEyeGPT: Unifying remote sensing vision-language tasks via instruction tuning with large language model. 
+
+ISPRS Journal of Photogrammetry and Remote Sensing 221 (2025), 64–77. [57] Pan Zhang, Xiaoyi Dong, Yuhang Zang, Yuhang Cao, Rui Qian, Lin Chen, Qipeng Guo, Haodong Duan, Bin Wang, Linke Ouyang, Songyang Zhang, Wenwei Zhang, Yining Li, Yang Gao, Peng Sun, Xinyue Zhang, Wei Li, Jingwen Li, Wenhai Wang, Hang Yan, Conghui He, Xingcheng Zhang, Kai Chen, Jifeng Dai, Yu Qiao, Dahua Lin, and Jiaqi Wang. 2024. InternLM-XComposer-2.5: A Versatile Large Vision Language Model Supporting Long-Contextual Input and Output. (2024). arXiv preprint arXiv:2407.03320. [58] Peirong Zhang, Yidan Zhang, Luxiao Xu, Jinliang Lin, Zonghao Guo, Fengxi-ang Wang, Xue Yang, Kaiwen Wei, and Lei Wang. 2025. GeoViS: Geospatially Rewarded Visual Search for Remote Sensing Visual Grounding. (2025). arXiv preprint arXiv:2512.02715. [59] Wei Zhang, Miaoxin Cai, Tong Zhang, Yin Zhuang, Jun Li, and Xuerui Mao. 2025. EarthMarker: A Visual Prompting Multimodal Large Language Model for Remote Sensing. IEEE Transactions on Geoscience and Remote Sensing 63 (2025), 1–19. [60] Wei Zhang, Miaoxin Cai, Tong Zhang, Yin Zhuang, and Xuerui Mao. 2024. Earth-GPT: A Universal Multimodal Large Language Model for Multisensor Image Comprehension in Remote Sensing Domain. IEEE Transactions on Geoscience and Remote Sensing 62 (2024), 1–20. [61] Xu Zhang, Junyao Ge, Yang Zheng, Kaitai Guo, and Jimin Liang. 2025. Bridging Semantics and Geometry: A Decoupled LVLM-SAM Framework for Reasoning Segmentation in Remote Sensing. (2025). arXiv preprint arXiv:2512.19302. [62] Yi-Fan Zhang, Huanyu Zhang, Haochen Tian, Chaoyou Fu, Shuangqing Zhang, Junfei Wu, Feng Li, Kun Wang, Qingsong Wen, Zhang Zhang, Liang Wang, Rong Jin, and Tieniu Tan. 2025. MME-RealWorld: Could Your Multimodal LLM Challenge High-Resolution Real-World Scenarios that are Difficult for Humans? (2025). arXiv preprint arXiv:2408.13257. [63] Zilun Zhang, Zian Guan, Tiancheng Zhao, Haozhan Shen, Tianyu Li, Yuxiang Cai, Zhonggen Su, Zhaojun Liu, Jianwei Yin, and Xiang Li. 2025. Geo-R1: Improving Few-Shot Geospatial Referring Expression Understanding with Reinforcement Fine-Tuning. (2025). arXiv preprint arXiv:2509.21976. [64] Zilun Zhang, Haozhan Shen, Tiancheng Zhao, Zian Guan, Bin Chen, Yuhao Wang, Xu Jia, Yuxiang Cai, Yongheng Shang, and Jianwei Yin. 2025. Enhancing Ultrahigh Resolution Remote Sensing Imagery Analysis With ImageRAG: A new framework. IEEE Geoscience and Remote Sensing Magazine 13, 3 (2025), 369–394. [65] Yang Zhao, Shusheng Li, and Xueshang Feng. 2025. Lightweight Remote Sensing Scene Classification on Edge Devices via Knowledge Distillation and Early-exit. In Proceedings of the 33rd ACM International Conference on Multimedia (ACM MM) . 11862–11870. [66] Siru Zhong, Xixuan Hao, Yibo Yan, Ying Zhang, Yangqiu Song, and Yuxuan Liang. 2024. UrbanCross: Enhancing Satellite Image-Text Retrieval with Cross-Domain Adaptation. In Proceedings of the 32nd ACM International Conference on Multimedia . 6307–6315. [67] Yue Zhou, Jue Chen, Zilun Zhang, Penghui Huang, Ran Ding, Zhentao Zou, PengFei Gao, Yuchen Wei, Ke Li, Xue Yang, Xue Jiang, Hongxin Yang, and Jonathan Li. 2026. DVGBench: Implicit-to-explicit visual grounding benchmark in UAV imagery with large vision–language models. ISPRS Journal of Photogram-metry and Remote Sensing 232 (2026), 831–847. [68] Yunqi Zhou, Chengjie Jiang, Chun Yuan, and Jing Li. 2025. Look Where It Matters: Training-Free Ultra-HR Remote Sensing VQA via Adaptive Zoom Search. (2025). arXiv preprint arXiv:2511.20460. [69] Jinguo Zhu, Weiyun Wang, Zhe Chen, Zhaoyang Liu, Shenglong Ye, Lixin Gu, Hao Tian, Yuchen Duan, Weijie Su, Jie Shao, Zhangwei Gao, Erfei Cui, Xuehui Wang, Yue Cao, Yangzhou Liu, Xingguang Wei, Hongjie Zhang, Haomin Wang, Weiye Xu, Hao Li, Jiahao Wang, Nianchen Deng, Songze Li, Yinan He, Tan Jiang, Jiapeng Luo, Yi Wang, Conghui He, Botian Shi, Xingcheng Zhang, Wenqi Shao, Junjun He, Yingtong Xiong, Wenwen Qu, Peng Sun, Penglong Jiao, Han Lv, Lijun Wu, Kaipeng Zhang, Huipeng Deng, Jiaye Ge, Kai Chen, Limin Wang, Min Dou, Lewei Lu, Xizhou Zhu, Tong Lu, Dahua Lin, Yu Qiao, Jifeng Dai, and Wenhai Wang. 2025. InternVL3: Exploring Advanced Training and Test-Time Recipes for Open-Source Multimodal Models. (2025). arXiv preprint arXiv:2504.10479.
