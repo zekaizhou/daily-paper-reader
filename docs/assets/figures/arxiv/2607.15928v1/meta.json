@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.15928v1/fig-001.webp",
+      "caption": "Figure 1: Overview of PEACE. Solid paths denote training and inference; dashed paths and the knowledge branch are used only",
+      "page": 3,
+      "index": 1,
+      "width": 1029,
+      "height": 538
+    },
+    {
+      "url": "assets/figures/arxiv/2607.15928v1/fig-002.webp",
+      "caption": "Figure 3: Grad-CAM++ on ZZU-pECG for RVH in panel (a) and LQTS in panel (b). Warm overlays are min-max normalized",
+      "page": 9,
+      "index": 2,
+      "width": 1029,
+      "height": 867
+    }
+  ]
+}

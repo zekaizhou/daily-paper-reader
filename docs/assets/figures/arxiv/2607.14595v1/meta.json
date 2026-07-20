@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.14595v1/fig-001.webp",
+      "caption": "Figure 4. Overview of dual reward feedback optimization. To enhance generalization in reward training, MagicPrompt integrates regularization signals from two domains. Pixel Space: Perceptual rewards (HPS, MPS) evaluate decoded frames to ensure visual fidelity. Latent Space: Complementary objectives enforce efficient denoising trajectories and robust conditioning via CFG.",
+      "page": 7,
+      "index": 1,
+      "width": 966,
+      "height": 296
+    },
+    {
+      "url": "assets/figures/arxiv/2607.14595v1/fig-002.webp",
+      "caption": "Figure 2. Comparison of PEFT paradigms. (a) Adapter-based methods insert auxiliary modules in parallel alongside the backbone. (b) Representation-based methods (e.g., LoRA) approximate weight updates via low-rank decomposition. (c) Prompt-Tuning methods add trainable soft prompts to each layer and combine with the layer input. (d) Our method employs attention-embedded prompt tuning, injecting trainable prompts directly into attention mechanisms.",
+      "page": 3,
+      "index": 2,
+      "width": 1009,
+      "height": 210
+    },
+    {
+      "url": "assets/figures/arxiv/2607.14595v1/fig-003.webp",
+      "caption": "Figure 5. Qualitative comparison with baselines. Our method demonstrates superior temporal coherence and visual fidelity across T2V, I2V, and Control2V tasks. Unlike baselines exhibiting motion blur and structural distortion, our method preserves fine details and ensures consistent motion dynamics.",
+      "page": 8,
+      "index": 3,
+      "width": 1027,
+      "height": 259
+    },
+    {
+      "url": "assets/figures/arxiv/2607.14595v1/fig-004.webp",
+      "caption": "Figure 6. New condition adaptation. The pre-trained model suffers from notable performance degradation on unseen new conditions, as it has not learned to model the novel condition prior. After tuning with our method, the model achieves substantial performance gains and effectively adapts to the target condition.",
+      "page": 9,
+      "index": 4,
+      "width": 1022,
+      "height": 227
+    },
+    {
+      "url": "assets/figures/arxiv/2607.14595v1/fig-005.webp",
+      "caption": "Figure 3. Framework overview of MagicPrompt. Visual soft prompt prefill with latent feature in the key and value in the self-attention module, and textual soft prompt combined with text embedding in the cross-attention module to reweight the attention distribution. To better align with human preference, the reward feedback optimization is guided by both pixel-space semantic reward and latent objectives.",
+      "page": 5,
+      "index": 5,
+      "width": 1022,
+      "height": 460
+    }
+  ]
+}

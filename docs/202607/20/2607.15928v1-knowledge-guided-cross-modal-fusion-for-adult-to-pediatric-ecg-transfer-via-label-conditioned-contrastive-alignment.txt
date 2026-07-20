@@ -1,0 +1,647 @@
+Title: Knowledge-Guided Cross-Modal Fusion for Adult-to-Pediatric ECG Transfer via Label-Conditioned Contrastive Alignment
+
+URL Source: https://arxiv.org/pdf/2607.15928v1
+
+Published Time: Mon, 20 Jul 2026 01:15:28 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# Knowledge-Guided Cross-Modal Fusion for Adult-to-Pediatric ECG Transfer via Label-Conditioned Contrastive Alignment 
+
+## Xinran Liu a,1 , Yuwen Li a,1 , Hongxiang Gao a, Heyang Xu a, Jianqing Li b, Zongmin Wang c and Chengyu Liu a,∗
+
+> a
+
+School of Instrument Science and Engineering, Southeast University, Nanjing, 210096, China 
+
+> b
+
+Nanjing Medical University, Nanjing, 211166, China 
+
+> c
+
+Zhengzhou University, Zhengzhou, 450001, China 
+
+A R T I C L E I N F O 
+
+Keywords :Electrocardiogram pediatric diagnosis transfer learning privileged information structured clinical knowledge 
+
+A B S T R A C T 
+
+Adult and pediatric electrocardiogram (ECG) interpretation relies on age-sensitive criteria, and models pretrained mainly on adult ECGs often transfer poorly to pediatric populations when pediatric labels are scarce. Existing multimodal ECG–text methods typically align waveforms and text at the global sample level, entangling evidence from co-occurring diagnoses and limiting transfer under this gap. We propose Pediatric-Adult ECG Alignment via Cross-modal Enhancement (PEACE), a knowledge-guided framework pretrained on the largely adult MIMIC-IV ECG corpus. PEACE describes each diagnosis along rhythm, morphology, and ST–T axes and, per recording, composes only positive-label descriptors into three axis tokens and a fused embedding. A label query network (LQN) uses diagnostic labels as queries to cross-attend over ECG tokens and axis tokens, while label set aware bidirectional contrastive learning (LSBC) aligns pooled ECG features with the fused embedding when recordings share diagnoses. Curriculum adaptive fusion (CAF) gates alignment strength according to smoothed classification loss and training progress, limiting disruption during early optimization. The knowledge branch is used only for training supervision; inference uses ECG signals alone. On ZZU-pECG, PEACE reaches macro average AUCs of 59.39%, 81.74%, and 91.56% under zero-shot, 50-shot, and full fine-tuning, with the clearest gains over foundation and knowledge-pretraining baselines under limited supervision; versus domain adaptation initializations, zero-shot improves substantially while 50-shot AUC is comparable to DANN. After fine-tuning on PTB-XL, PEACE reaches 96.90% macro average AUC over nine harmonized labels. Ablations confirm that label-conditioned knowledge alignment, rather than global text fusion, is the key driver of pediatric transfer gains. 
+
+## 1. Introduction 
+
+Adult and pediatric ECG interpretation depends on age sensitive physiological criteria. Models pretrained pre-dominantly on adult ECGs may therefore encode decision boundaries that transfer imperfectly to pediatric popula-tions, particularly when pediatric supervision is limited. We refer to this mismatch as a transfer gap from adult to pediatric populations involving both data distribution and diagnostic criteria: normal heart rate ranges, PR/QRS/QT interval thresholds, voltage criteria, conduction patterns, and repolarization norms vary substantially across pediatric age bands, so adult derived boundaries can misclassify normal pediatric variants as pathological or under-detect genuine pediatric abnormalities [ 1, 2, 3 ]. The gap is compounded by data scarcity: adult ECG datasets now contain hundreds of thousands to millions of recordings, whereas pediatric ECG cohorts remain much smaller and rarely provide paired free text interpretations for every tracing [ 4 , 5]. Structured diagnostic knowledge may provide an additional supervisory signal for mitigating this transfer gap, even when fully age specific pediatric knowledge is unavailable [6, 7]. Existing ECG representation learning and multimodal ECG and text models provide useful adult domain priors [ 8, 9 , 6 ], but most align waveforms and text through global 
+
+> ∗
+
+Corresponding author  
+
+> chengyu@seu.edu.cn
+
+(C. Liu) 
+
+> 1
+
+Xinran Liu and Yuwen Li contributed equally to this work. 
+
+sample level embeddings or require clinical knowledge at test time. Such designs are less suited to pediatric transfer for two reasons. First, multi-label ECG recordings often contain concurrent findings, so a global embedding cannot distinguish whether the transferable evidence arises from rhythm irregularity, QRS morphology, voltage criteria, or ST–T repolarization. Second, pediatric deployment cannot assume the availability of paired reports or auxiliary text input at inference. A useful fusion mechanism should therefore exploit knowledge guided supervision during training while preserving inference using only ECG signals. To mitigate this transfer gap, we propose PEACE, a knowledge guided cross modal fusion framework for ECG transfer from adult to pediatric domains. Label specific descriptors of general diagnostic structure along rhythm, morphology, and ST–T serve as privileged supervision used only during training; they are not fully age specific pediatric criteria. Positive label descriptors are composed into three axis tokens and a fused embedding; an LQN uses label queries over ECG and axis tokens; LSBC aligns pooled ECG features with the fused embedding when recordings share diagnostic labels; and CAF gates alignment strength during early optimization. Inference uses ECG signals alone. We validate PEACE on ZZU-pECG [5], which contains 11,643 children, and on PTB-XL [ 10 ], which is predominantly adult with nine harmonized labels that have nonzero mapped incidence; dataset details are in Section 4.1. Beyond macro 
+
+X. Liu et al.: Preprint submitted to Elsevier Page 1 of 13 arXiv:2607.15928v1 [cs.LG] 17 Jul 2026 PEACE: Adult-to-Pediatric ECG Transfer 
+
+average AUC, we report threshold dependent metrics, per class results in Table 5, ablations, and qualitative Grad-CAM++ maps for inspecting model focus. Taken together, this study asks whether structured clinical knowledge conditioned on labels can mitigate the transfer gap from adult to pediatric populations beyond domain adaptation initializations, global multimodal alignment, and naive ECG and text fusion, while retaining deployment time prediction using only ECG signals. The primary contributions are summarized as follows: 
+
+• Knowledge guided ECG transfer from adult to pediatric domains. We formulate pediatric ECG adaptation as privileged knowledge guided learning, in which structured diagnostic descriptors provide auxiliary supervision during transfer from adult to pediatric domains while inference uses ECG signals alone. 
+
+• Label conditioned representation and alignment of clinical knowledge. We organize diagnostic knowl-edge along rhythm, morphology, and ST–T axes, compose positive label descriptors per recording, probe ECG and axis tokens with label queries in LQN, and align pooled ECG features with the fused embedding via LSBC when recordings share diagnostic labels. 
+
+• Curriculum gated optimization under pediatric label scarcity. CAF progressively regulates knowledge guided alignment according to smoothed classification loss level and curriculum progress, supporting zero-shot, few-shot, and full fine-tuning transfer without introducing auxiliary text or knowledge inputs during deployment. 
+
+## 2. Related Work 
+
+2.1. ECG Representation Learning 
+
+ECG analysis evolved from foundational convolutional neural network (CNN) and recurrent neural network (RNN) architectures [ 11 , 12 , 13 ] to attention based Transformer paradigms [ 14 , 15 ]. Masked reconstruction and related self supervised objectives have also been explored for ECG waveforms, including masked auto encoding frameworks [ 16 ]. These methods provide strong waveform encoders, but they do not specify how label level clinical semantics should be fused when transferring from adult to pediatric ECGs. This motivates cross modal supervision that is more structured than standard waveform pretraining alone. 
+
+2.2. Multimodal ECG and Text Alignment 
+
+Early ECG and text integration relied on feature concate-nation or late fusion [ 17 ], while later work uses attention based or contrastive global alignment [ 6, 18 , 19 ]. Global sample level fusion does not indicate which waveform evidence supports which co occurring label [ 20 ]. PEACE instead uses label queries over ECG tokens and three axis privileged text tokens in LQN, and aligns pooled waveforms with a fused privileged embedding composed from each recording’s positive labels in LSBC. 
+
+2.3. Label Semantics and Label set aware Contrastive Learning 
+
+Contrastive learning pulls related samples together and separates unrelated ones. In medical and multi-label settings, prior work uses diagnostic hierarchies [ 21 , 22 ], multi task objectives [ 23 ], and bidirectional or group wise alignment [24 ]. Labels can index clinically organized evidence without a full ontology at deployment, yet most methods still use global embeddings or labels only to define pairs. Collapsing rhythm, morphology, and ST–T evidence before label conditioned interaction further risks entanglement under multi-label ECG classification. Our LSBC objective follows supervised contrastive learn-ing in spirit [ 25 ], but adapts it to multi-label ECG and knowledge transfer: positives share at least one diagnosis in the batch; the text side is a privileged embedding from three axis descriptors of positive labels rather than unpaired free text at test time; and CAF gates alignment intensity. Label level waveform probing is handled by LQN; LSBC provides sample level ECG and knowledge alignment under that curriculum. 
+
+2.4. Adult to pediatric transfer and domain adaptation 
+
+Pediatric ECG criteria differ from adult ones in rate, intervals, voltage, conduction, and repolarization [ 2, 26 ], limiting transfer from adult corpora [ 4, 27 ]. Prior work explores masked pretraining [ 16 ], self supervised alignment [ 7], knowledge injection [ 28 ], prompting [ 29 ], language supervision [ 30 ], and generic domain adaptation [ 31 , 32 , 33 ]. Our target is pediatric, strongly shifted, and label scarce: PEACE combines knowledge alignment conditioned on labels with curriculum gated optimization rather than global alignment alone [34, 35]. 
+
+## 3. Methodology 
+
+3.1. Overview 
+
+The PEACE framework targets age related waveform morphology shift between adult and pediatric ECGs. As illustrated in Figure 1, adult ECG pretraining provides the source domain initialization, while diagnostic labels provide two forms of supervision: multi-label classification targets and knowledge descriptors conditioned on labels. PEACE structures its components around complementary aspects of ECG interpretation: label query probing of ECG and three axis knowledge tokens through LQN, label set aware ECG and knowledge contrastive alignment through LSBC, and curriculum gated optimization through CAF. The knowledge branch is used only during training and is discarded at inference. 
+
+Notation. Batch size, ECG token length, and label count are 𝐵 , 𝑇 , and 𝐶 ; latent width is 𝑑 = 768 . The ECG encoder outputs 𝑿 ecg ∈ ℝ𝐵 ×𝑇 ×𝑑 ; global pooling yields ̄ 𝑿 ecg ∈   
+
+> X. Liu et al.: Preprint submitted to Elsevier Page 2 of 13 PEACE: Adult-to-Pediatric ECG Transfer
+> Figure 1: Overview of PEACE. Solid paths denote training and inference; dashed paths and the knowledge branch are used only during training, while deployment uses ECG signals alone. Positive label descriptors yield three axis tokens and a fused embedding for LSBC; labels serve as queries over ECG and text in two cross attention rounds within LQN. LSBC uses sample pair similarities under a shared label mask and is regulated by CAF; see Section 3.4.
+
+ℝ𝐵 ×𝑑 . Fixed class-name embeddings are 𝒁 lbl ∈ ℝ𝐶 ×𝑑 .For recording 𝑖 , the three axis encodings are stacked as 
+
+𝑿 axis  
+
+> 𝑖
+
+∈ ℝ3× 𝑑 for LQN, and fused to 𝒙 rep  
+
+> 𝑖
+
+∈ ℝ𝑑 for LSBC; see Section 3.2. We write Attn( 𝒒 , 𝑲 ) for multi-head cross attention with query 𝒒 and key/value sequence 𝑲 , and LN( ⋅)
+
+for layer normalization. LSBC uses temperature 𝜏 and cosine similarity 
+
+sim( 𝒖 , 𝒗 ) = 𝒖 ⊤𝒗 
+
+‖𝒖 ‖2‖𝒗 ‖2
+
+. (1) 
+
+3.2. Multimodal encoders 
+
+ECG Encoder. We use the resnet1d_wang model in torch_ ecg , a 1D ResNet [ 36 ], to map 12-lead ECGs to token features 
+
+𝑿 ecg ∈ ℝ𝐵 ×𝑇 ×𝑑 . Each token corresponds to a temporally indexed latent representation with a receptive field spanning local morphology and longer-range dynamics. Global average pooling yields ̄
+
+𝑿 ecg = 1
+
+𝑇 
+
+> 𝑇
+
+∑
+
+> 𝑡 =1
+
+𝑿 ecg [∶ , 𝑡, ∶] ∈ ℝ𝐵 ×𝑑 , (2) while the full token sequence is retained for LQN cross attention with label queries. 
+
+Knowledge composition conditioned on labels. For each diagnostic class 𝑐 , Gemini produces a fixed three axis descriptor along rhythm, morphology, and ST–T repolariza-tion axes; see Appendix A. The generation schema types the third axis as ischemia: ; we treat it as ST–T repolariza-tion throughout, covering ST–T, QT, strain, and secondary repolarization rather than coronary ischemia alone. These strings form a reusable class level bank  = { 𝑐 }𝐶 𝑐 =1 and are complementary evidence streams rather than mutually exclusive disease categories. Critically, PEACE does not 
+
+broadcast a full 𝐶 × 3 token tensor into every sample. For recording 𝑖 with multi hot labels 𝐲 𝑖 ∈ {0 , 1} 𝐶 , only positive label descriptors are activated, 
+
+𝑖 = compose ({𝑐 ∶ 𝑦 𝑖,𝑐 = 1} ) , (3) where compose concatenates the selected class descriptors into one privileged string that is re-segmented into the three axis fields, so multi-label positives enrich each axis span rather than producing 3 × |positives | LQN tokens. For all reported PEACE experiments, only these composed class descriptors were used as privileged text; MIMIC-IV free text diagnostic statements were not concatenated into the knowledge branch. The three axis spans are encoded separately with BioClinicalBERT [37], yielding 
+
+𝑿 axis  
+
+> 𝑖
+
+= stack 
+
+(
+
+𝒙 rhythm  
+
+> 𝑖
+
+, 𝒙 morph  
+
+> 𝑖
+
+, 𝒙 STT 
+
+> 𝑖
+
+)
+
+∈ ℝ3× 𝑑 . (4) These tokens are the knowledge side key and value memory for LQN. A lightweight fusion module that concatenates the axis tokens and applies an MLP by default summarizes them for LSBC, 
+
+𝒙 rep  
+
+> 𝑖
+
+= Fuse 
+
+(
+
+𝒙 rhythm  
+
+> 𝑖
+
+, 𝒙 morph  
+
+> 𝑖
+
+, 𝒙 STT 
+
+> 𝑖
+
+)
+
+∈ ℝ𝑑 , (5) yielding 𝑿 rep ∈ ℝ𝐵 ×𝑑 . ZZU-pECG lacks paired reports; fine-tuning composes the same fixed bank from pediatric multi hot labels.   
+
+> X. Liu et al.: Preprint submitted to Elsevier Page 3 of 13 PEACE: Adult-to-Pediatric ECG Transfer
+
+Descriptor generation and verification. For each diag-nostic label, Gemini was queried with a fixed instruction tem-plate whose stem asks the model to act as a professional elec-trocardiologist and to teach diagnosis of <LABEL> from 12-lead ECG in fewer than 50 words, together with an explicit three axis output schema rhythm: . . . ; morphology: . . . ; ischemia: . . . ,see Appendix A. Generated candidates were manually reviewed by members of the author team against the cited AHA/ACCF/HRS recommendations [ 38 , 39 ] and standard clinical ECG terminology; inconsistent, ambiguous, or non-standard descriptors were revised or regenerated. No formal dual annotator agreement study was conducted. The final descriptor set was fixed across all experiments. 
+
+Label embeddings. Each diagnostic class name is en-coded once with BioClinicalBERT to obtain 𝒁 lbl ∈ ℝ𝐶 ×𝑑 .A three-layer MLP preserves width 𝑑 = 768 on text features. LQN and prediction heads operate at this shared width. 
+
+3.3. Label Query Network: task-steered feature probing 
+
+Standard representations often suffer from feature entan-glement in multi-label scenarios, where markers for different pathologies overlap in a single vector. The LQN resolves this by using each diagnostic label embedding as a query and running two cross attention rounds: one over ECG tokens and one over the three privileged axis tokens. For each label 𝑐 ∈ {1 , … , 𝐶 } and recording 𝑖 ∈{1 , … , 𝐵 },̄
+
+𝒛 ecg  
+
+> 𝑖,𝑐
+
+= LN (Attn (𝒁 lbl [𝑐, ∶] , 𝑿 ecg [𝑖, ∶, ∶] )) ∈ ℝ𝑑 ,̄ 
+
+𝒛 rep  
+
+> 𝑖,𝑐
+
+= LN (Attn (𝒁 lbl [𝑐, ∶] , 𝑿 axis 
+
+> 𝑖
+
+)) ∈ ℝ𝑑 , (6) where 𝒁 lbl [𝑐, ∶] is the query and the second argument supplies keys and values. ECG keys and values use one token per time step; knowledge keys and values use the three axis tokens in 𝑿 axis  
+
+> 𝑖
+
+, so rhythm, morphology, and ST–T structure is preserved inside LQN rather than collapsed before attention. A two-layer MLP maps each of ̄ 𝒛 ecg  
+
+> 𝑖,𝑐
+
+and ̄ 𝒛 rep  
+
+> 𝑖,𝑐
+
+to a binary logit for label 𝑐 , yielding the ECG and knowledge branch multi-label losses ce ,ecg and ce ,rep . The fused vector 𝒙 rep 
+
+> 𝑖
+
+is reserved for LSBC; see Section 3.4. 
+
+3.4. Label set aware Bidirectional Contrastive Learning (LSBC) 
+
+LSBC aligns pooled ECG features with fused privileged knowledge when recordings share diagnostic labels. Let 
+
+𝐘 ∈ {0 , 1} 𝐵 ×𝐶 be the batch label matrix and define the sample pair positive mask 
+
+𝑀 𝑖𝑗 = 𝕀 ((𝐘𝐘 ⊤)𝑖𝑗 > 0) , (7) That is, recordings 𝑖 and 𝑗 share at least one positive diag-nosis, and the diagonal is retained. With temperature 𝜏 and similarities 𝑆 𝑖𝑗 = sim( ̄𝑿 ecg [𝑖, ∶] , 𝒙 rep  
+
+> 𝑗
+
+)∕ 𝜏 , the bidirectional InfoNCE style objective is 
+
+LSBC = 12𝐵 
+
+> 𝐵
+
+∑
+
+> 𝑖 =1
+
+[
+
+−log 
+
+∑𝑗 𝑀 𝑖𝑗 𝑒 𝑆 𝑖𝑗 
+
+∑𝑘 𝑒 𝑆 𝑖𝑘 
+
+−log 
+
+∑𝑗 𝑀 𝑗𝑖 𝑒 𝑆 𝑗𝑖 
+
+∑𝑘 𝑒 𝑆 𝑘𝑖 
+
+]
+
+.
+
+(8) Positives are therefore label set aware rather than restricted to a single paired index, while negatives are batch members that share no active label with the anchor. We use 𝜏 = 0 .055 
+
+in MIMIC-IV pretraining and 𝜏 = 0 .06 in ZZU fine-tuning. 
+
+3.5. Curriculum Adaptive Fusion: gated optimization 
+
+CAF combines an EMA-based loss level gate, a staged curriculum coefficient, and an easy positive fraction to regulate the effective LSBC weight. An exponential moving average EMA 𝑠 of the multi-label classification loss ce ,𝑠 is tracked at optimization step 𝑠 ,
+
+EMA 𝑠 = (1 − 𝛾 )EMA 𝑠 −1 + 𝛾 ce ,𝑠 , (9) with fixed decay 𝛾 = 0 .05 . LSBC is enabled only when this smoothed loss has fallen to or below a fixed threshold 𝜀 ,which acts as a loss level gate on the absolute EMA value: 
+
+𝑤 LSBC ,𝑠 = 𝜆 max ⋅ 𝛽 𝑡 ⋅ 𝑟 easy  
+
+> 𝑠
+
+⋅ 𝕀 (EMA 𝑠 ≤ 𝜀 ) , (10) where 𝜆 max is the maximum LSBC coefficient, 𝕀 [⋅] is the indicator function, and 𝑟 easy  
+
+> 𝑠
+
+is computed from ECG-branch predictions as the fraction of positive label instances in the current batch whose predicted probability exceeds 0.65 ; it is set to zero when the batch has no positives. Let 𝑡 ∈ [0 , 1] 
+
+denote curriculum progress as the epoch fraction; it sets the schedule coefficient 
+
+𝛽 𝑡 =
+
+⎧⎪⎨⎪⎩
+
+0.1 − 0 .1 ⋅ 𝑡  
+
+> 0.3
+
+, 𝑡 ∈ [0 , 0.3) ,
+
+0.3 ⋅ 𝑡 −0 .30.4 , 𝑡 ∈ [0 .3, 0.7) ,
+
+0.3 + 0 .7 ⋅ 𝑡 −0 .70.3 , 𝑡 ∈ [0 .7, 1] .
+
+(11) The first stage keeps alignment inactive or weak, depending on whether EMA 𝑠 has yet crossed 𝜀 , while the curricu-lum coefficient decays toward zero. The second stage re-introduces alignment once the loss level gate opens, and the final stage progressively strengthens it. Sensitivity of the default [0 .3, 0.7] breakpoints is reported in Table 4. 
+
+3.6. Final Training Objective 
+
+PEACE mixes multi-label classification and curriculum weighted LSBC as 
+
+ = (1 − 𝑤 LSBC ,𝑠 
+
+)ce + 𝑤 LSBC ,𝑠 LSBC , (12) where ce = 𝛼 ce ,ecg + (1 − 𝛼 )ce ,rep mixes the ECG and knowledge branch multi-label losses from LQN. Because the privileged text is composed from the training labels, ce ,rep is used as privileged descriptor side supervision rather than as a test time diagnostic head. The mix weight is 𝛼 , set to 0.65 
+
+in MIMIC-IV pretraining via the loss_ratio hyperparameter, and 𝑤 LSBC ,𝑠 already includes 𝜆 max , which is 0.12 in MIMIC-IV pretraining and 0.15 in ZZU full fine-tuning. Because 
+
+𝑤 LSBC ,𝑠 ≤ 𝜆 max ≤ 0.15 , the classification term retains at least 85% of its nominal coefficient throughout training. No text and single text controls quantify gains from structured knowledge content beyond training using only ECG signals.   
+
+> X. Liu et al.: Preprint submitted to Elsevier Page 4 of 13 PEACE: Adult-to-Pediatric ECG Transfer
+
+## 4. Experiments 
+
+4.1. Datasets 
+
+The PEACE model is pretrained on MIMIC-IV [ 4], a comprehensive adult ECG dataset comprising over 800,000 records. Evaluation is conducted on two target domains: pediatric ZZU-pECG [ 5 ], ages 0 to 14, and PTB-XL [ 10 ], which is predominantly adult with only a small pediatric subset. 
+
+Preprocessing and harmonization. All ECGs were standardized to 10-s, 12-lead signals at 500 Hz. For MIMIC-IV-ECG, free text diagnostic statements were mapped to the unified twelve label ontology after removing low quality or missing annotation records. For ZZU-pECG, database pro-vided diagnostic codes were converted to the same ontology, and waveforms were filtered using a 0.5 to 100 Hz band-pass filter and a 50 Hz notch filter, followed by amplitude normalization using statistics computed from the MIMIC-IV-ECG training split. For PTB-XL, Standard Communications Protocol (SCP) codes were harmonized to the same ontology and signals were standardized using training set scaling before patient level splitting. ZZU-pECG contains 11,643 children in the released database. After filtering and label mapping, we retained 7,593 valid ECG records for experiments, corresponding to 9,198 label instances due to multi-label annotation. Records are partitioned into training, validation, and test folds by patient identifier under multi-label stratification. For PTB-XL evaluation after supervised fine-tuning, SCP codes are harmonized to the same twelve label ontol-ogy; under our mapping, nine labels have nonzero mapped incidence: normal ECG (NORM), complete right bundle branch block (CRBBB), incomplete right bundle branch block (IRBBB), left anterior fascicular block (LAFB), left atrial enlargement (LAO/LAE), right atrial enlargement (RAO/RAE), left ventricular hypertrophy (LVH), right ven-tricular hypertrophy (RVH), and ST–T changes (STTC), totaling 17,818 label instances in the processed corpus. T-wave abnormality ( TAB_ ), low QRS voltage (LVOLT), and long QT syndrome (LQTS) have zero mapped PTB-XL instances and are excluded from the PTB-XL macro average so the headline metric is not averaged over absent heads. Excluding these three labels means the PTB-XL macro average AUC is not directly comparable in scope to the twelve label ZZU-pECG evaluation. It should be interpreted as evaluation on a predominantly adult public corpus with a small pediatric fraction over a subset of shared pathophysiological categories, rather than a full replication of the pediatric label space. The harmonized cohorts exhibit severe label imbalance and cross-dataset prevalence shift: for example, TAB_ is frequent in ZZU-pECG with 2,544 label instances but has no mapped support in PTB-XL under our harmonization, whereas STTC remains represented in all three cohorts. Class level descriptors 𝑐 follow the same bank used in training; see Appendix A. Deployment uses the ECG branch alone. 
+
+4.2. Experimental Settings 
+
+Architecture and Optimization. We adopt the 1D ResNet ECG encoder of Wang et al. [ 36 ] with latent width 𝑑 = 768 ,stem kernel 7, and residual kernels [5 , 3] . Inputs are of size 12 × 1000 , corresponding to 10-s, 12-lead signals at 500 Hz after temporal downsampling by 5. The text encoder is BioClinicalBERT with 12 transformer layers. Following the released configs, MIMIC-IV pretraining and ZZU full fine-tuning freeze encoder layers {0 , … , 8} , nine layers in total, whereas the 50-shot ZZU adaptation path freezes {0 , … , 9} ,ten layers in total; unfrozen text layers, projection heads, the ECG encoder, and the LQN are trained. Optimization uses AdamW with cosine annealing and class-balanced loss weighting. 
+
+Optimization hyperparameters. MIMIC-IV pretraining uses AdamW with 𝛽 1 = 0 .9, 𝛽 2 = 0 .999 , weight decay 
+
+1.2 × 10 −3 , initial learning rate 4 × 10 −4 , 5-epoch linear warmup from 1 × 10 −5 , cosine decay to 1 × 10 −6 over the remaining 95 epochs, batch size 1024 , and gradient clipping at 5.0, with 𝜏 = 0 .055 , 𝜆 max = 0 .12 , and 𝜀 = 0 .09 . ZZU full fine-tuning uses 𝜏 = 0 .06 , 𝜆 max = 0 .15 , 𝜀 = 0 .1, and learning rate 1 × 10 −4 for 20 epochs. CAF uses the EMA loss level gate above with 𝛾 = 0 .05 .
+
+Transfer Learning Regimes. We evaluate PEACE under three clinical deployment scenarios. 
+
+Zero-shot Transfer. The pretrained model remains frozen; AUC is computed from prediction scores, while validation-selected thresholds are used only for threshold dependent met-rics. Because the frozen checkpoint and evaluation procedure involve no stochastic components at test time, zero-shot AUC is identical across the five seed labels used elsewhere for fine-tuning variability, and is reported as a single deterministic value rather than mean ±std. 
+
+Few-shot Adaptation. For each of the 𝐶 = 12 labels, we sample up to 50 positive training instances, using all available positives if fewer than 50, and concatenate the selections into a training multiset of 600 entries. A recording selected for multiple labels may therefore appear more than once, preserving the per label shot budget. Accordingly, the 600 entries are label conditioned selections rather than 600 necessarily unique recordings. Fine-tuning runs for 20 epochs at learning rate 2.5 × 10 −5 with BioClinicalBERT layers 
+
+{0 , … , 9} frozen. We use 50 shots as a low resource yet clinically plausible budget: many pediatric ECG findings are relatively uncommon in routine practice, so assembling large expert-annotated cohorts is costly, whereas labeling on the order of tens of positives per class is closer to what a specialized clinic can realistically curate. Empirically, this budget also captures most of the transferable gain before returns diminish, as shown in Table 2 and Figure 2. 
+
+Full Supervised Fine-tuning. Training uses the full la-beled training split for 20 epochs at 1 × 10 −4 with layers   
+
+> X. Liu et al.: Preprint submitted to Elsevier Page 5 of 13
+
+PEACE: Adult-to-Pediatric ECG Transfer 
+
+Table 1 
+
+Main results on ZZU-pECG under zero-shot, 50-shot, and full fine-tuning, and on PTB-XL under full fine-tuning. Model Zero-shot 50-shot Full FT PTB-XL 
+
+AUC BAcc F1 AUC BAcc F1 AUC BAcc F1 Full fine-tuning AUC 
+
+Group A: Domain adaptation initializations and standard fusion baselines 
+
+DANN [40] 49.33 54.89 20.56 81.70 72.14 48.97 89.67 79.05 58.72 96.54 MMD [33] 49.33 54.89 20.56 80.62 71.41 46.67 89.94 79.92 59.57 96.51 Early fusion 51.88 55.85 20.87 80.69 72.02 44.77 88.87 78.03 57.07 96.69 Late fusion 50.55 55.32 19.58 78.22 69.84 42.41 89.03 79.48 56.77 96.60 
+
+Group B: ECG foundation and knowledge pretraining baselines 
+
+ST-MEM [16] 50.91 51.70 15.54 66.08 58.86 23.86 81.55 66.60 88.85 89.22 MERL [7] 58.58 51.34 4.57 70.65 59.65 26.35 80.97 65.94 33.72 92.49 KED [6] 57.77 53.57 17.30 50.66 51.10 14.97 80.54 63.91 25.97 89.10 
+
+Proposed multimodal fusion framework conditioned on labels 
+
+PEACE 59.39 52.30 17.30 81.74 69.52 37.59 91.56 80.50 59.08 96.90 
+
+ΔAUC vs. Group A best +7.51 – – +0.04 – – +1.62 – – +0.21 
+
+ΔAUC vs. Group B best +0.81 – – +11.09 – – +10.01 – – +4.41  
+
+> Macro averages in %. Bold: best in each column. Shaded row: proposed method. ΔAUC : PEACE minus the best non-PEACE AUC in that baseline group. PTB-XL is a predominantly adult full fine-tuning setting and is not label-matched to ZZU-pECG. Zero-shot uses a deterministic frozen checkpoint estimate; see Section 4.2. Fifty-shot and full fine-tuning report means over seeds 42–46, with PEACE mean ±std in Table 3. DANN and MMD use adult initializations; zero-shot omits target domain unlabeled adaptation; see Section 4.3.
+
+{0 , … , 8} frozen, and we keep the checkpoint with the highest macro average validation AUC. 
+
+Baseline models. To evaluate PEACE from both ECG representation learning and multimodal fusion perspectives, we organize the baselines into two groups. 
+
+Group A: Domain adaptation initializations and stan-dard fusion baselines. DANN [ 40 ] and MMD [ 33 ] provide competitive domain adaptive ECG initializations with the same ResNet1D backbone as PEACE and are transferred under the same pediatric label budgets and fine-tuning epochs as the other supervised transfer settings. Their zero-shot entries correspondingly evaluate the adult-pretrained ini-tialization without unlabeled ZZU-pECG adaptation, which explains near-chance AUCs before pediatric fine-tuning. Early fusion concatenates ResNet1D and BioClinicalBERT embeddings into an MLP classifier; Late fusion averages ECG and text logits. Both fusion baselines encode the fixed class level descriptor bank  used by PEACE, but omit label query interaction, LSBC, and CAF. At test time, no baseline is provided with descriptors composed from the ground-truth labels of the evaluated recording. Instead, Early fusion and Late fusion use text features derived from the full fixed descriptor bank, independent of the sample multi hot annotation, and combine them with ECG features by concatenation or logit averaging, respectively; PEACE uses ECG signals alone at inference. 
+
+Group B: ECG foundation and knowledge pretraining baselines. ST-MEM [ 16 ] provides a masked ECG represen-tation learning reference. MERL [ 7] evaluates global multi-modal alignment. KED [ 6] evaluates knowledge enhanced ECG representation learning with textual-signal alignment. This grouping asks whether PEACE improves over strong domain adaptive ECG initializations and naive fusion, and whether fusion conditioned on labels improves over existing knowledge or foundation-model pretraining. 
+
+Evaluation metrics. We adopt macro average AUC as the primary metric; it summarizes ranking performance across operating points and is computed directly from prediction scores without committing to a decision threshold. We addi-tionally report macro balanced accuracy, denoted BAcc and defined as the macro average of (Sensitivity +Specif icity)∕2 
+
+per label, and macro F1 using validation-tuned per class thresholds. Table 1 summarizes these metrics together with PTB-XL macro average AUC after full fine-tuning. 
+
+Evaluation protocol and reproducibility. Fifty-shot and full fine-tuning experiments are repeated with five random seeds 42–46; zero-shot evaluation uses a single frozen pretrained checkpoint and is deterministic under the fixed test split; see Section 4.2. We use patient level train/vali-dation/test splits at an 8:1:1 ratio on ZZU-pECG and PTB-XL. Checkpoints are selected according to the highest macro average validation AUC. For threshold dependent metrics, including macro F1, specificity, and balanced accuracy, per class decision thresholds are tuned on the validation split to maximize validation macro F1 and are then fixed for test evaluation. Macro-average AUC is computed directly from 
+
+X. Liu et al.: Preprint submitted to Elsevier Page 6 of 13 PEACE: Adult-to-Pediatric ECG Transfer 
+
+prediction scores and is used as the primary threshold free metric. Optimization schedules for pretraining and transfer follow Section 4.2. For comparisons based on five stochastic runs, differences smaller than the observed between seed variability are not interpreted as evidence of superiority. Statistical testing is applied only when matched seed level outputs are available for both methods; otherwise, we report the numerical difference without a significance claim. For large numerical margins, we report the effect size together with the available seed variability but do not infer statistical significance without matched run level outputs. Reproducibil-ity artifacts are summarized in the Data and code availability statement. 
+
+4.3. Results and Analyses 
+
+We consolidate pediatric transfer metrics on ZZU-pECG under zero-shot, 50-shot, and full fine-tuning, together with PTB-XL evaluation after PTB-XL fine-tuning, in Table 1. PEACE achieves the best macro AUC across the primary ZZU-pECG transfer regimes, with the largest gains appearing under 50-shot and full fine-tuning against Group B. This pattern indicates that the proposed fusion strategy is most beneficial when limited pediatric supervision is available, rather than merely improving supervised validation on PTB-XL. 
+
+Comparison with domain adaptation initializations and standard fusion baselines Group A evaluates whether strong domain adaptive ECG initializations or simple ECG and text fusion suffice without knowledge alignment con-ditioned on labels. DANN and MMD are adversarial or distribution-matching adapters that ordinarily consume unla-beled target domain batches during domain alignment; under the zero-shot protocol here, those target domain updates are unavailable, so the reported zero-shot AUCs are frozen adult initializations evaluated on ZZU-pECG and accordingly fall near chance at 49.33%. All four baselines in this group obtain zero-shot AUCs between 49.33% and 51.88% on ZZU-pECG, whereas PEACE reaches 59.39%, yielding a 7.51 percentage point gain over the strongest Group A baseline. Under 50-shot adaptation, PEACE reaches 81.74% AUC, compared with 81.70% for DANN. The 0.04 percentage point difference is negligible relative to PEACE’s between seed std in Table 3, and we therefore treat the two methods as comparable rather than claiming superiority. Because DANN obtains higher threshold dependent BAcc and F1 in this regime, we discuss threshold dependent discrepancies in Section 4.6. Under full fine-tuning, PEACE achieves 91.56% AUC and 80.50% BAcc, outperforming the best Group A results by 1.62 and 0.58 percentage points, respectively. PTB-XL AUC after full fine-tuning is close across Group A baselines and PEACE, ranging from 96.51% to 96.90%. This pattern is expected: PEACE is pretrained on the almost entirely adult MIMIC-IV ECG corpus, and PTB-XL is likewise a predominantly adult target, so the setting is closer to adult to adult transfer than to pediatric adaptation on ZZU-pECG. Under such age matched transfer, conventional supervised fine-tuning can already recover strong performance; thus, the main evidence from Group A lies in pediatric transfer on ZZU-pECG, especially the zero-shot initialization gap and the full fine-tuning improvement. 
+
+Comparison with ECG foundation and knowledge pretraining baselines PEACE’s advantage is more pro-nounced against Group B. At zero-shot, PEACE achieves 59.39% AUC, modestly surpassing MERL at 58.58% and KED at 57.77%, and substantially exceeding ST-MEM at 50.91%. The gap widens sharply under 50-shot adaptation: PEACE reaches 81.74% AUC, compared with 70.65% for MERL, 66.08% for ST-MEM, and 50.66% for KED. Notably, KED decreases from 57.77% in zero-shot evaluation to 50.66% after 50-shot adaptation, indicating non monotonic behavior under the present low resource protocol. We did not conduct a dedicated stability analysis and therefore do not assign a causal explanation to this decrease. The 11.09 percentage point gain over the strongest Group B baseline indicates that PEACE shows stronger low resource adaptation performance. Under full fine-tuning, PEACE obtains 91.56% AUC, outperforming the strongest Group B baseline by 10.01 percentage points. On PTB-XL, PEACE reaches 96.90% AUC, compared with 92.49% for MERL, 89.22% for ST-MEM, and 89.10% for KED. These results are consistent with PEACE retaining strong discriminative ability on the predominantly adult PTB-XL corpus alongside pediatric adaptation on ZZU-pECG, although this work does not directly probe representation level transferability. Overall, the Group B comparisons support fusion conditioned on labels over the evaluated global multimodal, masked pretraining, and knowledge enhanced baselines. 
+
+Implication for multimodal fusion The contrast between PEACE and the Early fusion and Late fusion baselines is particularly important from a multimodal fusion perspective. All three methods use ECG and clinical information derived from text, but they differ in how the modalities interact. Early fusion performs feature concatenation, Late fusion combines independent modality logits, whereas PEACE uses diagnostic labels as queries over ECG and three axis knowledge tokens and aligns pooled ECG representations with privileged knowledge conditioned on each sample through LSBC under CAF. The AUC gains observed across the three ZZU-pECG transfer regimes suggest that the benefit is not solely attributable to adding a text branch, but also to the proposed interaction conditioned on labels and curriculum gated alignment mechanism. 
+
+Few-shot sample efficiency Figure 2 visualizes the sample-efficiency trend reported in Table 2. PEACE exhibits three regimes: a cold start regime below 10 shots, rapid adaptation between 10 and 50 shots, and saturation beyond 50 shots. The gain from 20-shot to 50-shot is substantially larger than that from 50-shot to 100-shot, indicating that 50-shot provides a practical annotation budget that captures most of the benefit of pediatric supervision.   
+
+> X. Liu et al.: Preprint submitted to Elsevier Page 7 of 13
+
+PEACE: Adult-to-Pediatric ECG Transfer 
+
+Table 2 
+
+Few-shot macro AUC in % on ZZU-pECG versus shots per class 
+
+𝑁 . Δ gain and Rel. imp. are consecutive increments relative to the previous shot budget. Configuration AUC, mean ±std Δ gain Rel. imp. 5-shot 64.85 ±4.48 – –10-shot 66.13 ±3.33 +1.28 +1.97% 20-shot 73.10 ±1.64 +6.97 +10.54% 50-shot 81.74 ±1.34 +8.64 +11.82% 
+
+100-shot 84.53 ±1.17 +2.79 +3.41% 
+
+Table 3 
+
+Ablation on ZZU-pECG, macro AUC in percent. Zero-shot uses a deterministic frozen checkpoint estimate; see Section 4.2. Fifty-shot and full fine-tuning report mean ±std over seeds 42–46. Configuration Zero-shot 50-shot Full FT No text 46.01 66.37 ±1.80 66.86 ±3.89 Without LSBC 56.23 77.74 ±0.33 89.63 ±0.86 Without CAF 47.10 77.69 ±0.81 90.45 ±0.35 Single text PEACE 49.20 74.30 ±1.50 88.70 ±1.10 Full PEACE 59.39 81.74 ±1.34 91.56 ±0.96 5 10 20 50 100 
+
+> Shots per class
+> 60
+> 65
+> 70
+> 75
+> 80
+> 85
+> Macro-average AUC (%)
+> PEACE
+
+Figure 2: Few-shot sample efficiency on ZZU-pECG as macro AUC versus shots. 
+
+4.4. Ablation Studies 
+
+Table 3 reports module ablations and knowledge su-pervision controls on ZZU-pECG. No text removes the knowledge descriptor branch. Removing LSBC removes label set aware bidirectional contrastive learning. Removing CAF removes curriculum gating of the alignment loss during the corresponding MIMIC-IV pretraining and pediatric fine-tuning runs, so zero-shot differences reflect a different frozen checkpoint rather than inference time gating. Single text PEACE replaces the three axis knowledge descriptor triplet with one fused descriptor per label. Full PEACE achieves the highest AUC across regimes. The No text variant shows the largest degradation. Remov-ing LSBC or CAF reduces AUC, with the largest effects under zero-shot and few-shot transfer. For the Without CAF configuration, the zero-shot drop indicates that curriculum gating during pretraining shapes the transferable initialization. 
+
+Table 4 
+
+CAF breakpoint sensitivity for 50-shot transfer on ZZU-pECG. CAF breakpoints Macro-average AUC in % 
+
+[0 .2, 0.6] 78.2 Default [0 .3, 0.7] 81.74 
+
+[0 .4, 0.8] 78.8 
+
+> Values are means over five seeds under each breakpoint schedule and are reported as a limited sensitivity check rather than a variance-controlled comparison.
+
+Replacing three axis descriptors with a single fused descriptor also lowers performance. The ablations therefore support complementary roles for structured descriptors, label set aware alignment, and curriculum gated optimization. Across the tested breakpoints, the 50-shot AUC ranges from 78.2% to 81.74% in Table 4. Among the three schedules examined, the default [0 .3, 0.7] setting produced the highest observed AUC. 
+
+4.5. Interpretability Analyses 
+
+As a qualitative check of temporal focus, Figure 3 shows Grad-CAM++ [ 41 ] maps for representative RVH and LQTS recordings under the same preprocessing and checkpoint selection as Section 4.2. Saliency concentrates near QRS dominant regions for RVH and near QRS-to-T / repolarization intervals for LQTS, which is consistent with evidence commonly inspected for these findings. These maps are illustrative single record visualizations only; they do not establish localization faithfulness or causality of LQN or LSBC. An optional heuristic window comparison against length matched random blocks is reported in Appendix B and is likewise not used as evidence of clinical grounding. 
+
+4.6. Threshold-dependent metrics under severe imbalance 
+
+Because macro AUC is threshold free whereas BAcc and macro F1 depend on validation-selected operating points, these metrics may rank models differently under severe multi-label imbalance. In Table 1, DANN obtains higher 50-shot BAcc and F1 despite a slightly lower AUC than PEACE, while ST-MEM obtains a higher full fine-tuning macro F1 but substantially lower macro AUC and BAcc. These discrepancies suggest that threshold dependent metrics can reflect favorable operating point calibration rather than uniformly better ranking performance. We therefore use macro AUC as the primary metric and report BAcc and macro F1 as complementary measures of threshold specific behavior. 
+
+## 5. Discussion 
+
+5.1. Adult to adult PTB-XL transfer versus pediatric adaptation 
+
+The strong and mutually close PTB-XL AUCs of Group A baselines and PEACE after full fine-tuning should be read 
+
+X. Liu et al.: Preprint submitted to Elsevier Page 8 of 13 PEACE: Adult-to-Pediatric ECG Transfer  
+
+> (a) RVH
+> (b) LQTS
+> Figure 3: Grad-CAM++ on ZZU-pECG for RVH in panel (a) and LQTS in panel (b). Warm overlays are min-max normalized Grad-CAM++ scores for the corresponding class head; gray curves show the 12-lead waveforms on the selected PEACE checkpoint.
+
+mainly as adult to adult transfer: the encoder is pretrained on almost entirely adult MIMIC-IV ECG records and then fine-tuned on predominantly adult PTB-XL, which still includes only a small pediatric subset. Relative to pediatric ZZU-pECG, this age matched setting is far less shifted, so strong performance is expected even without PEACE-specific fusion. The empirical benefit of knowledge guided fusion is therefore most evident under pediatric domain shift and label scarcity on ZZU-pECG, particularly in zero-shot and 50-shot transfer, rather than under fully supervised PTB-XL fine-tuning. 
+
+5.2. Cross-population findings and practical scope 
+
+Table 5 shows per label trajectories: PEACE improves with pediatric supervision, while NORM and LVH remain weakest at zero-shot, so the model is best viewed as a transferable initialization that gains discrimination after limited fine-tuning. Curriculum gating is most useful under scarce labels, as shown in Table 3; macro F1 and macro AUC need not rank models identically, as discussed in Section 4.6. Conduction- and hypertrophy-related labels such as IRBBB, LVH, and RVH show large gains after fine-tuning. Age-stratified evaluation across neonatal to school-age groups remains an important next step. Per-label results in Table 5 further show that, under full fine-tuning, PEACE exceeds the strongest Group B baseline for most pediatric diagnostic categories, with particularly clear gains on morphology- and conduction-sensitive labels such as IRBBB, LAFB, LVH, and RVH. These class level trends complement the macro average results in Table 1 and suggest that the benefit of alignment conditioned on labels is not restricted to a single high prevalence label. 
+
+Implications for knowledge based decision support 
+
+Beyond aggregate multi-label scores, PEACE organizes diag-nostic evidence along rhythm, morphology, and ST–T axes that mirror how clinicians read ECGs. This axis-structured   
+
+> X. Liu et al.: Preprint submitted to Elsevier Page 9 of 13
+
+PEACE: Adult-to-Pediatric ECG Transfer 
+
+Table 5 
+
+Per-class AUC in % on ZZU-pECG across evaluation regimes.                                                                                                                                                                            
+
+> Label Zero-shot 50-shot Full FT
+> PEACE KED MERL ST-MEM PEACE KED MERL ST-MEM PEACE KED MERL ST-MEM CRBBB 67.86 47.14 87.42 48.86 96.97 55.89 94.68 89.59 99.94 94.46 98.21 97.08 IRBBB 83.82 56.89 58.25 49.18 90.78 60.18 65.61 60.67 96.60 87.12 81.00 82.38 LAFB 69.60 46.40 66.01 56.68 95.28 56.76 76.11 82.04 99.31 87.14 89.44 94.36 LAO/LAE 66.65 61.02 44.31 50.79 79.23 51.28 63.58 50.00 92.85 78.54 69.24 67.97 LQTS 51.61 53.48 64.71 51.34 76.03 55.27 60.87 67.61 87.21 70.37 77.82 81.80 LVH 35.93 48.08 37.97 50.32 80.93 37.95 71.70 59.29 90.23 75.07 74.48 71.89 LVOLT 60.53 66.65 64.04 53.60 71.04 41.97 56.48 56.64 86.33 74.73 73.61 75.93 NORM 46.16 52.90 48.83 47.32 80.04 53.51 73.08 70.79 89.90 80.90 82.09 80.42 RAO/RAE 59.67 75.46 56.80 46.64 86.45 43.35 76.75 56.59 87.10 84.13 84.89 82.00 RVH 55.51 73.03 73.55 49.32 85.72 47.49 82.68 69.88 97.67 91.44 91.73 90.79 STTC 58.45 52.43 51.77 55.67 77.80 49.62 68.13 74.08 86.80 74.21 78.85 83.68
+> TAB_ 56.90 59.91 49.28 51.22 60.63 54.66 58.18 55.77 84.83 68.35 70.23 70.33
+> Avg. 59.39 57.77 58.58 50.91 81.74 50.66 70.65 66.08 91.56 80.54 80.97 81.55
+> Note: AUC values are reported in %. Bold indicates the best result for each label within each evaluation regime. Label abbreviations follow Section 4.1.
+
+representation can support future knowledge based interfaces that group candidate findings and reference material by com-plementary clinical dimensions, while keeping the waveform itself as the primary evidence source. Such interfaces are a natural next step for expert in the loop pediatric ECG assistance built on the present transfer framework. 
+
+5.3. Limitations 
+
+Several limitations remain. The Gemini descriptors en-code general diagnostic structure rather than age specific pediatric criteria, and residual correlations between labels and identity may persist. Privileged text is composed from positive training labels, so knowledge side LQN losses are not test time diagnostic heads. PEACE lacks explicit develop-mental stage modeling, and all evaluations are retrospective. Group A zero-shot entries for DANN and MMD evaluate frozen adult initializations without unlabeled target domain adaptation; they are therefore not claims about the full unsupervised domain adaptation protocols of those methods. The main Group A evidence is the supervised 50-shot and full fine-tuning comparison under a shared pediatric protocol. Matched seed level outputs are not available for every baseline, so we report numerical gaps and PEACE seed variability without claiming statistical significance except where matched runs exist. Grad-CAM++ maps and the optional heuristic window table in Appendix B are informal visualization aids only; they do not establish localization faithfulness or support for LQN/LSBC causality. Continuous age aware transfer, pediatric specific descriptor redesign, and expert reviewed evidence grounding are left to future work. 
+
+## 6. Conclusion 
+
+This work demonstrates that structured clinical knowl-edge conditioned on labels can guide the transfer of adult-scale ECG representations to pediatric diagnosis while pre-serving inference using only ECG signals. PEACE represents diagnostic knowledge along rhythm, morphology, and ST–T evidence axes, uses diagnostic labels as queries over ECG and three axis knowledge tokens in LQN, aligns pooled ECG representations with privileged knowledge conditioned on each sample through LSBC, and regulates this alignment through CAF. Across pediatric transfer regimes, PEACE shows its clearest advantages over ECG foundation and knowledge pre-training baselines when pediatric supervision is limited. The ablation results indicate complementary contributions from structured knowledge descriptors, label set aware alignment, and curriculum gated optimization. The resulting framework provides a representation learning basis for knowledge based pediatric ECG systems in which diagnostic evidence can be organized by clinically meaningful axes. 
+
+## Declaration of generative AI and AI-assisted technologies in the manuscript preparation process 
+
+During the preparation of this work, the authors used generative AI tools to assist with language polishing and manuscript organization. After using these tools, the authors reviewed and edited the content and take full responsibility for the content of the publication. Figures in this manuscript were created by the authors and were not generated by generative AI tools. Gemini was additionally used as a methodological compo-nent to generate label-level knowledge descriptors for training time supervision. Its use, prompt design, human verification, and role in model training are described in Section 3.2 and Appendix A. 
+
+## Declaration of competing interest 
+
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper. 
+
+X. Liu et al.: Preprint submitted to Elsevier Page 10 of 13 PEACE: Adult-to-Pediatric ECG Transfer 
+
+## Data and code availability 
+
+MIMIC-IV-ECG is available via PhysioNet upon ap-proved credentialed access following the official application process. PTB-XL and ZZU-pECG are available from their re-spective repositories subject to the original access conditions. Raw ECG waveforms are not redistributed by the authors. 
+
+## Funding 
+
+This work was supported in part by the National Natural Science Foundation of China under Grant 62571123; in part by the Basic Research Program of Jiangsu Province under Grant BK20252010; in part by the Fundamental Research Funds for the Central Universities under Grant 2242026RCB0024. 
+
+## CRediT authorship contribution statement 
+
+Xinran Liu: Conceptualization, Methodology, Software, Writing - original draft. Yuwen Li: Methodology, Investiga-tion, Writing - review & editing. Hongxiang Gao: Investi-gation, Validation. Heyang Xu: Data curation, Validation. 
+
+Jianqing Li: Supervision, Resources. Zongmin Wang: 
+
+Resources, Supervision. Chengyu Liu: Conceptualization, Supervision, Funding acquisition, Writing - review & editing. 
+
+## References 
+
+[1] Antônio H Ribeiro, Manoel Horta Ribeiro, Gabriela MM Paixão, Derick M Oliveira, Paulo R Gomes, Jéssica A Canazart, Milton PS Ferreira, Carl R Andersson, Peter W Macfarlane, Wagner Meira Jr, et al. Automatic diagnosis of the 12-lead ecg using a deep neural network. Nature communications , 11(1):1760, 2020. [2] David M Leone, Donnchadh O’Sullivan, and Katia Bravo-Jaimes. Ar-tificial intelligence in pediatric electrocardiography: A comprehensive review. Children , 12(1):25, 2024. [3] Jintai Chen, Shuai Huang, Ying Zhang, Qing Chang, Yixiao Zhang, Dantong Li, Jia Qiu, Lianting Hu, Xiaoting Peng, Yunmei Du, et al. Congenital heart disease detection by pediatric electrocardiogram based deep learning integrated with human concepts. Nature Commu-nications , 15(1):976, 2024. [4] Brian Gow, Tom Pollard, Larry A Nathanson, Alistair Johnson, Benjamin Moody, Chrystinne Fernandes, Nathaniel Greenbaum, Jonathan W Waks, Parastou Eslami, Tanner Carbonati, Ashish Chaud-hari, Elizabeth Herbst, Dana Moukheiber, Seth Berkowitz, Roger Mark, and Steven Horng. MIMIC-IV-ECG: Diagnostic Electrocardiogram Matched Subset. PhysioNet , September 2023. doi: 10.13026/ 4nqg-sb35. URL https://doi.org/10.13026/4nqg-sb35 . Version 1.0. [5] Jian Tan, Haoyi Fan, Jiawei Luo, Yanjie Zhou, Ning Wang, Xizheng Wang, Guizhi Liu, Chengyu Liu, and Zongmin Wang. A pediatric ecg database with disease diagnosis covering 11643 children. Scientific Data , 12(1):867, 2025. [6] Yuanyuan Tian, Zhiyuan Li, Yanrui Jin, Mengxiao Wang, Xiaoyang Wei, Liqun Zhao, Yunqing Liu, Jinlei Liu, and Chengliang Liu. Foundation model of ecg diagnosis: Diagnostics and explanations of any form and rhythm on ecg. Cell Reports Medicine , 5(12), 2024. [7] Che Liu, Zhongwei Wan, Cheng Ouyang, Anand Shah, Wenjia Bai, and Rossella Arcucci. Zero-shot ecg classification with multimodal learning and test-time clinical knowledge enhancement. In Forty-first International Conference on Machine Learning , 2024. [8] Tsai-Min Chen, Yuan-Hong Tsai, Huan-Hsin Tseng, Kai-Chun Liu, Jhih-Yu Chen, Chih-Han Huang, Guo-Yuan Li, Chun-Yen Shen, and Yu Tsao. Srecg: Ecg signal super-resolution framework for portable/wearable devices in cardiac arrhythmias classification. IEEE Transactions on Consumer Electronics , 69(3):250–260, 2023. [9] Kai Yang, Massimo Hong, Jiahuan Zhang, Yizhen Luo, Suyuan Zhao, Ou Zhang, Xiaomao Yu, Jiawen Zhou, Liuqing Yang, Ping Zhang, et al. Ecg-lm: Understanding electrocardiogram with a large language model. Health Data Science , 5:0221, 2025. [10] Patrick Wagner, Nils Strodthoff, Ralf-Dieter Bousseljot, Dieter Kreiseler, Fatima I Lunze, Wojciech Samek, and Tobias Schaeffter. Ptb-xl, a large publicly available electrocardiography dataset. Scientific data , 7(1):1–15, 2020. [11] Serkan Kiranyaz, Turker Ince, and Moncef Gabbouj. Real-time patient-specific ecg classification by 1-d convolutional neural networks. IEEE transactions on biomedical engineering , 63(3):664–675, 2015. [12] Özal Yildirim. A novel wavelet sequence based on deep bidirectional lstm network model for ecg signal classification. Computers in biology and medicine , 96:189–202, 2018. [13] Aiyun Chen, Fei Wang, Wenhan Liu, Sheng Chang, Hao Wang, Jin He, and Qijun Huang. Multi-information fusion neural networks for arrhythmia automatic detection. Computer methods and programs in biomedicine , 193:105479, 2020. [14] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N Gomez, Ł ukasz Kaiser, and Illia Polosukhin. Attention is all you need. In I. Guyon, U. Von Luxburg, S. Bengio, H. Wallach, R. Fergus, S. Vishwanathan, and R. Garnett, editors, Advances in Neural Information Processing Systems , volume 30. Curran Associates, Inc., 2017. [15] Taymaz Akan, Sait Alp, and Mohammad Alfrad Nobel Bhuiyan. Ecgformer: Leveraging transformer for ecg heartbeat arrhythmia classification. In 2023 International Conference on Computational Science and Computational Intelligence (CSCI) , pages 1412–1417. IEEE, 2023. [16] Yeongyeon Na, Minje Park, Yunwon Tae, and Sunghoon Joo. Guiding masked representation learning to capture spatio-temporal relationship of electrocardiogram. In International Conference on Learning Representations , 2024. [17] Sravan Kumar Lalam, Hari Krishna Kunderu, Shayan Ghosh, Harish Kumar, Samir Awasthi, Ashim Prasad, Francisco Lopez-Jimenez, Zachi I Attia, Samuel Asirvatham, Paul Friedman, et al. Ecg representation learning with multi-modal ehr data. Transactions on Machine Learning Research , 2023. [18] Jun Li, Aaron D Aguirre, Valdery Moura Junior, Jiarui Jin, Che Liu, Lanhai Zhong, Chenxi Sun, Gari Clifford, M Brandon Westover, and Shenda Hong. An electrocardiogram foundation model built on over 10 million recordings. NEJM AI , 2(7):AIoa2401033, 2025. [19] Zifeng Wang, Zhenbang Wu, Dinesh Agarwal, and Jimeng Sun. Medclip: Contrastive learning from unpaired medical images and text. In Proceedings of the Conference on Empirical Methods in Natural Language Processing. Conference on Empirical Methods in Natural Language Processing , volume 2022, page 3876, 2022. [20] Vadim Gliner, Idan Levy, Kenta Tsutsui, Moshe Rav Acha, Jorge Schliamser, Assaf Schuster, and Yael Yaniv. Clinically meaningful interpretability of an ai model for ecg classification. NPJ Digital Medicine , 8(1):109, 2025. [21] Rui Li and Jing Gao. Multi-modal contrastive learning for healthcare data analytics. In 2022 IEEE 10th International Conference on Healthcare Informatics (ICHI) , pages 120–127. IEEE, 2022. [22] Chang Lu, Chandan Reddy, Ping Wang, and Yue Ning. Towards semi-structured automatic icd coding via tree-based contrastive learning. In Advances in Neural Information Processing Systems , volume 36, pages 68300–68315. Curran Associates, Inc., 2023. [23] Zhenyu Hou, Yukuo Cen, Ziding Liu, Dongxue Wu, Baoyan Wang, Xuanhe Li, Lei Hong, and Jie Tang. Mtdiag: an effective multi-task framework for automatic diagnosis. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 37, pages 14241–14248, 2023. [24] Jie Xiong, Yu Li, and Xi Niu. Big: A bidirectional group-wise contrastive learning method for multi-label text classification. Expert Systems with Applications , page 127977, 2025. 
+
+X. Liu et al.: Preprint submitted to Elsevier Page 11 of 13 PEACE: Adult-to-Pediatric ECG Transfer 
+
+[25] Prannay Khosla, Piotr Teterwak, Chen Wang, Aaron Sarna, Yonglong Tian, Phillip Isola, Aaron Maschinot, Ce Liu, and Dilip Krishnan. Supervised contrastive learning. Advances in neural information processing systems , 33:18661–18673, 2020. [26] David F Dickinson. The normal ecg in childhood and adolescence. 
+
+Heart , 91(12):1626–1630, 2005. [27] Chuang Han, Wenge Que, Zhizhong Wang, Songwei Wang, Yanting Li, and Li Shi. A review on intelligent auxiliary diagnosis methods based on electrocardiograms for myocardial infarction. Sheng wu yi xue Gong Cheng xue za zhi= Journal of Biomedical Engineering= Shengwu Yixue Gongchengxue Zazhi , 40(5):1019–1026, 2023. [28] Jialu Tang, Hung Manh Pham, Ignace De Lathauwer, Henk S Schipper, Yuan Lu, Dong Ma, and Aaqib Saeed. Interpretable multimodal zero shot ecg diagnosis via structured clinical knowledge alignment. npj Cardiovascular Health , 3(1):1, 2026. [29] Ning Wang, Haiyan Wang, Jian Tan, Panpan Feng, Shihua Li, Zongmin Wang, and Bing Zhou. Ecg-text multi-modal learning for zero-shot detection via time-frequency alignment and medical prompt learning. 
+
+Expert Systems with Applications , page 131064, 2025. [30] Xue Zhou, Tianhui Li, Hiromasa Hayama, Keijiro Nakamura, Shing-Hong Liu, Wenxi Chen, and Xin Zhu. Diagnosis of cardiac conditions from 12-lead electrocardiogram through natural language supervision. 
+
+npj Digital Medicine , 8(1):697, 2025. [31] Ziyang He, Yufei Chen, Shuaiying Yuan, Jianhui Zhao, Zhiyong Yuan, Kemal Polat, Adi Alhudhaif, Fayadh Alenezi, and Arwa Hamid. A novel unsupervised domain adaptation framework based on graph convolutional network and multi-level feature alignment for inter-subject ecg classification. Expert Systems with Applications , 221: 119711, 2023. [32] Wei Fan, Yujuan Si, Meiqi Sun, Lin Zhou, Weiyi Yang, Adi Alhudhaif, and Fayadh Alenezi. Class-specific weighted broad learning system-based domain adaptation for patient-specific ecg classification. Expert Systems with Applications , 273:126824, 2025. [33] Mingsheng Long, Yue Cao, Jianmin Wang, and Michael Jordan. Learning transferable features with deep adaptation networks. In 
+
+International conference on machine learning , pages 97–105. PMLR, 2015. [34] Mingying Xu, Kui Peng, Jie Liu, Qing Zhang, Linqi Song, and Yinqiao Li. Multimodal named entity recognition based on topic prompt and multi-curriculum denoising. Information Fusion , page 103405, 2025. [35] Che Liu, Cheng Ouyang, Zhongwei Wan, Haozhe Wang, Wenjia Bai, and Rossella Arcucci. Knowledge-enhanced multimodal ECG representation learning with arbitrary-lead inputs. In Findings of the Association for Computational Linguistics: EMNLP 2025 , pages 7298–7316, 2025. [36] Nils Strodthoff, Patrick Wagner, Tobias Schaeffter, and Wojciech Samek. Deep learning for ecg analysis: Benchmarks and insights from ptb-xl. IEEE journal of biomedical and health informatics , 25 (5):1519–1528, 2020. [37] Emily Alsentzer, John Murphy, William Boag, Wei-Hung Weng, Di Jindi, Tristan Naumann, and Matthew McDermott. Publicly available clinical bert embeddings. In Proceedings of the 2nd clinical natural language processing workshop , pages 72–78, 2019. [38] Borys Surawicz, Rory Childers, Barbara J Deal, and Leonard S Gettes. Aha/accf/hrs recommendations for the standardization and interpretation of the electrocardiogram: part iii: intraventricular con-duction disturbances a scientific statement from the american heart association electrocardiography and arrhythmias committee, council on clinical cardiology; the american college of cardiology foundation; and the heart rhythm society endorsed by the international society for computerized electrocardiology. Journal of the American College of Cardiology , 53(11):976–981, 2009. [39] Pentti M. Rautaharju, Borys Surawicz, and Leonard S. Gettes. Aha/ac-cf/hrs recommendations for the standardization and interpretation of the electrocardiogram. Circulation , 119(10):e241–e250, 2009. doi: 10.1161/CIRCULATIONAHA.108.191096. [40] Yaroslav Ganin, Evgeniya Ustinova, Hana Ajakan, Pascal Germain, Hugo Larochelle, François Laviolette, Mario March, and Victor Lempitsky. Domain-adversarial training of neural networks. Journal of machine learning research , 17(59):1–35, 2016. [41] Aditya Chattopadhay, Anirban Sarkar, Prantik Howlader, and Vi-neeth N Balasubramanian. Grad-cam++: Generalized gradient-based visual explanations for deep convolutional networks. In 2018 IEEE winter conference on applications of computer vision (WACV) , pages 839–847. IEEE, 2018. 
+
+## A. Label-Specific Knowledge Descriptors 
+
+The following label-level knowledge descriptors were used as privileged auxiliary supervision during training. They are not patient-specific diagnostic reports and are not intended to serve as pediatric diagnostic criteria. Numeric thresholds in some templates reflect adult-oriented textbook wording retained for reproducibility; pediatric-aware rewording is left to future work. 
+
+Prompt template. For each diagnostic label name <LABEL> ,Gemini was queried with the following fixed instruction, consisting of a stem plus a three axis schema:  
+
+> I want you to play the role of a professional Electrocardiologist, and I need you to teach me how to diagnose <LABEL> from 12-lead ECG, such as what leads or what features to focus on, etc. Your answer must be less than 50 words in total across the three axes. Structure the answer as three short clinical axes in one line, separated by “; ”: rhythm:
+
+<rate, regularity, sinus organization >;morphology: <QRS/P-wave/axis/voltage/conduction and key leads >;ischemia: <ST-T, QT, strain, or secondary repolarization; if none, state absence of acute territorial ischemia >.Output only that single line. Do not use bullets or JSON. 
+
+Human verification followed Section 3.2. The final de-scriptor strings are listed below. The prompt keeps the raw schema token ischemia: ; listed descriptors and the main text write this axis as ST–T repolarization. 
+
+• CRBBB : rhythm: Regular sinus rhythm showing stable atrioventricular conduction; morphology: QRS ≥ 120 ms with characteristic rsR’ or rSR’ in right precordial leads V1-V2 and slurred terminal S wave in I and V6; ST–T repolarization: Secondary T-wave inversion in V1-V3 without territorial ST-segment elevation or reciprocal changes. 
+
+• IRBBB : rhythm: Normal sinus rhythm with consistent R-R intervals; morphology: QRS duration 100-119 ms exhibiting rSr’ or rsR’ in V1-V2 and narrow terminal S in I and V6; ST–T repolarization: Absence of acute ST–T changes; no pathologic Q waves or ST-segment deviation in contiguous leads. 
+
+• LAFB : rhythm: Sinus rhythm with normal heart rate; morphology: Marked left axis deviation −45 to −90 
+
+degrees, qR pattern in lateral leads I and aVL, and rS pattern in inferior leads II, III, aVF; ST–T repolariza-tion: Negative for acute ischemic ST-segment deviation or localized T-wave inversion. 
+
+X. Liu et al.: Preprint submitted to Elsevier Page 12 of 13 PEACE: Adult-to-Pediatric ECG Transfer 
+
+• LAO/LAE : rhythm: Sinus rhythm at a regular rate; morphology: P mitrale with notched P wave in lead II or terminal negative P component in V1 ≥ 1 mm deep and 
+
+≥ 40 ms duration; ST–T repolarization: ST-segments are isoelectric; no pathologic Q waves suggesting old myocardial infarction. 
+
+• LQTS : rhythm: Sinus rhythm with prolonged ven-tricular repolarization; morphology: Prolonged QTc interval > 470 ms measured in lead II or V5-V6 with normal QRS duration; ST–T repolarization: Absence of acute ST–T abnormalities; T-waves may be broad but lack a specific ischemic territorial pattern. 
+
+• LVH : rhythm: Regular sinus rhythm; morphology: Increased QRS voltage (S V1 + R V5-V6 > 35 mm) with left axis deviation; ST–T repolarization: Asymmetric downsloping ST-segment depression and T-wave inversion in lateral leads I, aVL, V5-V6 repre-senting a left ventricular strain pattern. 
+
+• LVOLT : rhythm: Sinus rhythm with attenuated signal amplitude; morphology: QRS voltage < 5 mm in all limb leads and < 10 mm in all precordial leads; ST–T repolarization: No evidence of territorial ST-elevation or depression; T-waves are concordant but low in amplitude. 
+
+• NORM : rhythm: Normal sinus rhythm 60-100 bpm with consistent P-P intervals; morphology: Normal P wave, PR interval, QRS duration, and QRS axis; ST–T repolarization: No diagnostic ST-segment elevation, depression, or T-wave inversion; no pathologic Q waves in any lead. 
+
+• RAO/RAE : rhythm: Sinus rhythm with prominent atrial signals; morphology: Tall peaked P wave > 2.5 mm in inferior leads II, III, aVF or initial positive P in V1 > 1.5 mm; ST–T repolarization: Negative for acute myocardial injury or primary repolarization abnormalities. 
+
+• RVH : rhythm: Sinus rhythm with rightward QRS vec-tor; morphology: Right axis deviation with dominant R wave in V1 (R/S > 1) and deep S wave in lateral leads V5-V6; ST–T repolarization: ST-segment depression and T-wave inversion in right precordial leads V1-V3 consistent with right ventricular strain. 
+
+• STTC : rhythm: Stable sinus rhythm; morphology: Normal QRS morphology and axis; ST–T repolariza-tion: Nonspecific ST–T abnormalities including minor ST-segment flattening or T-wave inversion without a specific coronary artery territory or reciprocal ST-elevation. 
+
+• TAB_ : rhythm: Sinus rhythm with normal intervals; morphology: QRS duration and P-wave morphology are unremarkable; ST–T repolarization: Generalized T-wave flattening or inversion in contiguous leads                                              
+
+> Table 6
+> Heuristic Grad-CAM++ saliency comparison on ZZU-pECG under full fine-tuning. Label Region 𝑛 𝑆 desc 𝑆 rand Δ
+> LQTS ST–T 36 0.572 0.452 +0 .120
+> RAO/RAE P15 0.371 0.264 +0 .107
+> LAO/LAE P12 0.346 0.244 +0 .102
+> IRBBB QRS 30 0.330 0.236 +0 .094
+> RVH QRS 52 0.280 0.244 +0 .036
+> LAFB QRS 27 0.201 0.202 −0 .001
+> LVH QRS 17 0.224 0.252 −0 .028
+> STTC ST–T 95 0.487 0.517 −0 .030
+
+without significant ST-segment deviation, excluding acute coronary syndromes or localized injury. 
+
+## B. Heuristic waveform region saliency 
+
+This appendix reports an optional, non validated com-parison of Grad-CAM++ mass inside heuristically defined P, QRS, and ST–T windows versus length matched random blocks on usable label-positive ZZU-pECG test recordings under the full fine-tuning checkpoint. Region choice follows the descriptor: atrial findings map to P; conduction, hyper-trophy, and low voltage findings map to QRS; repolarization findings map to ST–T. Intervals use Lead II R-peak detection with scipy.signal.find_peaks and fixed relative windows, without a clinical delineator or expert boundary review. Let 
+
+𝐴 𝑖,𝑐, 𝓁 ,𝑡 ≥ 0 denote Grad-CAM++ saliency on a common within-recording scale. Define 
+
+𝑆 desc  
+
+> 𝑖,𝑐
+
+=
+
+∑12 
+
+> 𝓁 =1
+
+∑
+
+> 𝑡 ∈Ω desc
+> 𝑖,𝑐
+
+𝐴 𝑖,𝑐, 𝓁 ,𝑡 
+
+∑12 
+
+> 𝓁 =1
+
+∑𝑡 𝐴 𝑖,𝑐, 𝓁 ,𝑡 
+
+, (13) and compute 𝑆 rand  
+
+> 𝑖,𝑐
+
+as the mean over 𝑁 rand = 32 length matched random blocks with the same normalized expression. We report 
+
+Δ𝑐 = 1
+
+𝑁 𝑐 𝑁 𝑐 ∑
+
+> 𝑖 =1
+
+(
+
+𝑆 desc  
+
+> 𝑖,𝑐
+
+− 𝑆 rand 
+
+> 𝑖,𝑐
+
+)
+
+. (14) Table 6 shows heterogeneous mean Δ values and should not be over-interpreted; the comparison is not a localization or faithfulness metric.

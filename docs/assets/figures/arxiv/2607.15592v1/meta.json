@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.15592v1/fig-001.webp",
+      "caption": "Table 1: MKGC performance comparison on MKG-W, MKG-Y and DB15K datasets. The best results are marked in bold, the second-best results are underlined.",
+      "page": 6,
+      "index": 1,
+      "width": 1052,
+      "height": 644
+    },
+    {
+      "url": "assets/figures/arxiv/2607.15592v1/fig-002.webp",
+      "caption": "Figure 1: Core challenges of MKGC. Structural, textual, and visual features exhibit cross-modal semantic heterogeneity and relation-dependent multimodal cue selection. Solid lines indicate intra-modal relations, while dashed lines indicate inter-modal relations. As a result, raw multimodal representations do not form a reliable unified reasoning space for relation-conditioned entity completion.",
+      "page": 2,
+      "index": 2,
+      "width": 506,
+      "height": 452
+    },
+    {
+      "url": "assets/figures/arxiv/2607.15592v1/fig-003.webp",
+      "caption": "Figure 5: Sensitivity analysis of M2GDT with respect to four hyperparameters on the MKG-W dataset: (a) diffusion steps, (b) number of Transformer blocks, (c) MLLM alignment weight, and (d) diffusion loss weight.",
+      "page": 7,
+      "index": 3,
+      "width": 494,
+      "height": 375
+    },
+    {
+      "url": "assets/figures/arxiv/2607.15592v1/fig-004.webp",
+      "caption": "Figure 2: Comparison between the proposed method and existing methods. Existing methods directly denoise under raw heterogeneous multimodal conditions, which entangles semantic alignmentwith entity generation. In contrast, M2GDT first aligns multimodal representations with an MLLM semantic anchor and then performs structure-aware diffusion generation with decoupled supervision.",
+      "page": 3,
+      "index": 4,
+      "width": 506,
+      "height": 348
+    },
+    {
+      "url": "assets/figures/arxiv/2607.15592v1/fig-005.webp",
+      "caption": "Figure 6: Evolution of cosine similarity for text, vision, structure, and average cross-modal alignment during training on the MKG-W dataset.",
+      "page": 8,
+      "index": 5,
+      "width": 531,
+      "height": 296
+    },
+    {
+      "url": "assets/figures/arxiv/2607.15592v1/fig-006.webp",
+      "caption": "Figure 3: Overview of the M2GDT framework. RASR-MoE first performs relation-adaptive semantic routing over heterogeneous multimodal inputs. A frozen semantic anchor then aligns the routed features into calibrated condition embeddings, which are combined with timestep embeddings for diffusion denoising. Starting from a noisy latent, KGDT iteratively predicts noise and refines the latent toward the target entity representation. The right panels show the architectures of KGDT and RASR-MoE.",
+      "page": 4,
+      "index": 6,
+      "width": 948,
+      "height": 509
+    },
+    {
+      "url": "assets/figures/arxiv/2607.15592v1/fig-007.webp",
+      "caption": "Figure 4: Illustration of the proposed anchor-guided alignment mechanism. The encoder outputs are aligned to frozen anchor references through feature-level similarity losses, producing a semantically calibrated condition for diffusion.",
+      "page": 5,
+      "index": 7,
+      "width": 506,
+      "height": 317
+    }
+  ]
+}

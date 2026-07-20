@@ -6,73 +6,73 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-19
-- 运行时间：2026-07-19 20:54:48 UTC
+- 最新运行日期：2026-07-20
+- 运行时间：2026-07-20 21:29:44 UTC
 - 运行状态：成功
 - 本次总论文数：17
 - 精读区：6
 - 速读区：11
 
 ### 今日简报（AI）
-今日精选 17 篇前沿论文，深度解析多模态大模型在序列推荐与多领域分类中的适配与优化。
-重点推荐流感知侧边适配技术与多专家领域校准方案，两项研究均凭借对复杂场景的精准建模获得满分评价。
-建议进一步探索 LoRA 在工业机器人及联邦学习环境下多模态模型微调的实战应用。
-- 详情：[/202607/19/README](/202607/19/README)
+今日精选 17 篇前沿论文，深度聚焦视觉语言模型（VLM）在复杂装配理解与工业视觉中的落地突破。
+重点关注通过组合上下文微调提升视频动作理解，以及利用 CoT 蒸馏让小型 VLM 在工业少样本场景下实现性能飞跃。
+建议关注 VLM 的轻量化与垂直领域适配，探索如何将大模型能力高效迁移至工业实操环节。
+- 详情：[/202607/20/README](/202607/20/README)
 
 ### 精读区论文标签
-1. [Stream-aware Side Adaptation for Large Pre-trained Multimodal Embedding Models in Sequential Recommendation](/202607/19/2607.10909v1-stream-aware-side-adaptation-for-large-pre-trained-multimodal-embedding-models-in-sequential-recommendation)  
+1. [Compositional Context Fine-Tuning Vision-Language Model for Complex Assembly Action Understanding from Videos](/202607/20/2607.10797v1-compositional-context-fine-tuning-vision-language-model-for-complex-assembly-action-understanding-from-videos)  
    标签：评分：10.0/10、query:vlm-da
+   evidence：通过微调将视觉语言模型（VLM）适配到挑战性领域
+2. [Answer-Conditioned Chain-of-Thought Distillation for Few-Shot Industrial Vision with Small VLMs](/202607/20/2607.10666v1-answer-conditioned-chain-of-thought-distillation-for-few-shot-industrial-vision-with-small-vlms)  
+   标签：评分：9.0/10、query:vlm-da
+   evidence：利用极少数据将小型VLM适配到新的工业任务
+3. [Stream-aware Side Adaptation for Large Pre-trained Multimodal Embedding Models in Sequential Recommendation](/202607/20/2607.10909v1-stream-aware-side-adaptation-for-large-pre-trained-multimodal-embedding-models-in-sequential-recommendation)  
+   标签：评分：9.0/10、query:vlm-da
    evidence：多模态模型的侧边适配以解决领域失配问题
-2. [MED-DSLC: Multi-Expert-Domain Classification via Domain Supervision and Logit Calibration](/202607/19/2607.10985v1-med-dslc-multi-expert-domain-classification-via-domain-supervision-and-logit-calibration)  
-   标签：评分：10.0/10、query:vlm-da
-   evidence：VLM对细粒度领域的适应以及专门专家的合并
-3. [Generalize LMMs to Versatile Visual Modalities via Fabricated Modality Synthesis](/202607/19/2607.10308v1-generalize-lmms-to-versatile-visual-modalities-via-fabricated-modality-synthesis)  
+4. [MED-DSLC: Multi-Expert-Domain Classification via Domain Supervision and Logit Calibration](/202607/20/2607.10985v1-med-dslc-multi-expert-domain-classification-via-domain-supervision-and-logit-calibration)  
    标签：评分：9.0/10、query:vlm-da
-   evidence：通过模态合成和微调使多模态大模型泛化到未见视觉模态
-4. [Benchmarking the Robustness of Foundation Models for Mammography under Domain Shift](/202607/19/2607.10358v1-benchmarking-the-robustness-of-foundation-models-for-mammography-under-domain-shift)  
+   evidence：VLM对细粒度领域的自适应以及合并专门的LoRA
+5. [U-shaped Multi-granularity Learning for Vision-Language Models](/202607/20/2607.14966v1-u-shaped-multi-granularity-learning-for-vision-language-models)  
    标签：评分：9.0/10、query:vlm-da
-   evidence：在领域偏移下基准测试乳腺摄影专用视觉语言模型
-5. [Compositional Context Fine-Tuning Vision-Language Model for Complex Assembly Action Understanding from Videos](/202607/19/2607.10797v1-compositional-context-fine-tuning-vision-language-model-for-complex-assembly-action-understanding-from-videos)  
-   标签：评分：9.0/10、query:vlm-da
-   evidence：针对复杂装配动作领域微调VLM
-6. [U-shaped Multi-granularity Learning for Vision-Language Models](/202607/19/2607.14966v1-u-shaped-multi-granularity-learning-for-vision-language-models)  
-   标签：评分：9.0/10、query:vlm-da
-   evidence：视觉语言模型中用于跨任务泛化的多粒度提示学习
+   evidence：用于视觉语言模型的多粒度提示学习框架，旨在提高跨任务泛化能力
+6. [PFAdapter: Hierarchical LoRA Decomposition for Personalized Federated MLLMs](/202607/20/2607.12111v1-pfadapter-hierarchical-lora-decomposition-for-personalized-federated-mllms)  
+   标签：评分：8.0/10、query:vlm-da
+   evidence：MLLM的联邦微调，用于本地自适应和领域不变特征
 
 ### 速读区论文标签
-1. [On the Efficiency of LoRA Fine-Tuning for Vision-Language-Action Models in Industrial Robotic Manipulation](/202607/19/2607.10172v1-on-the-efficiency-of-lora-fine-tuning-for-vision-language-action-models-in-industrial-robotic-manipulation)  
+1. [Continual Learning with Elastic Regularization and Synthetic Replay for Federated MLLM Fine-Tuning](/202607/20/2607.12112v1-continual-learning-with-elastic-regularization-and-synthetic-replay-for-federated-mllm-fine-tuning)  
    标签：评分：8.0/10、query:vlm-da
-   evidence：针对工业领域自适应的视觉-语言-动作模型LoRA微调研究
-2. [Continual Learning with Elastic Regularization and Synthetic Replay for Federated MLLM Fine-Tuning](/202607/19/2607.12112v1-continual-learning-with-elastic-regularization-and-synthetic-replay-for-federated-mllm-fine-tuning)  
-   标签：评分：8.0/10、query:vlm-da
-   evidence：多模态大模型的联邦微调以适应不断演变的数据流
-3. [Label-Free Target-Domain Adaptation for Unconstrained Event-Image Feature Matching via Dual-Stage Distillation](/202607/19/2607.10082v1-label-free-target-domain-adaptation-for-unconstrained-event-image-feature-matching-via-dual-stage-distillation)  
+   evidence：多模态大模型的联邦微调以适应演变的数据流
+2. [Implicit Fine-tuning via Context Engineering: A Curriculum Learning Framework for Multimodal Entity Alignment](/202607/20/2607.10532v1-implicit-fine-tuning-via-context-engineering-a-curriculum-learning-framework-for-multimodal-entity-alignment)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：用于跨模态特征匹配的无标签目标域自适应
-4. [CVKD-UDA: Cross-View Knowledge Distillation for 3D Unsupervised Domain Adaptive Segmentation](/202607/19/2607.10087v1-cvkd-uda-cross-view-knowledge-distillation-for-3d-unsupervised-domain-adaptive-segmentation)  
+   evidence：多模态任务中上下文工程与微调的等价性
+3. [UMoE:Unlocking Every Expert in Domain-Specific Training](/202607/20/2607.11444v1-umoeunlocking-every-expert-in-domain-specific-training)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：3D无监督领域自适应（UDA）分割
-5. [3D-DefectBench: A Controlled Factorial Study of Vision-Language Model Evaluation Pipelines for Fine-Grained 3D Generation Defects](/202607/19/2607.10826v1-3d-defectbench-a-controlled-factorial-study-of-vision-language-model-evaluation-pipelines-for-fine-grained-3d-generation-defects)  
+   evidence：MoE模型的领域特定后训练
+4. [Anomalous Frame Detection Using VLM-Based Description Comparison for Extracting Expert-Specific Actions and Contextual Decision-Making Scenes with Intra-Video Self-Similarity](/202607/20/2607.11957v1-anomalous-frame-detection-using-vlm-based-description-comparison-for-extracting-expert-specific-actions-and-contextual-decision-making-scenes-with-intra-video-self-similarity)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：用于 3D 缺陷检测的视觉语言模型评估
-6. [Instance-Enriched Semantic Maps for Visual Language Navigation](/202607/19/2607.12630v1-instance-enriched-semantic-maps-for-visual-language-navigation)  
+   evidence：基于VLM的描述比较用于专家知识迁移
+5. [IoUPD: IoU-Aware Privileged Distillation for Visual Grounding with Multimodal Large Language Models](/202607/20/2607.15732v1-ioupd-iou-aware-privileged-distillation-for-visual-grounding-with-multimodal-large-language-models)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：利用大语言模型进行推理和开放词汇分割
-7. [VTM-Nav: Hierarchical Visual-Topological Memory for Cross-Episode Object-Goal Navigation](/202607/19/2607.14514v1-vtm-nav-hierarchical-visual-topological-memory-for-cross-episode-object-goal-navigation)  
+   evidence：使用多模态大语言模型进行视觉定位
+6. [Knowledge-Guided Cross-Modal Fusion for Adult-to-Pediatric ECG Transfer via Label-Conditioned Contrastive Alignment](/202607/20/2607.15928v1-knowledge-guided-cross-modal-fusion-for-adult-to-pediatric-ecg-transfer-via-label-conditioned-contrastive-alignment)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：利用视觉语言模型 (VLM) 进行开放词汇语义推理
-8. [Parameter-efficient Prompt Tuning of Vision Foundation Model With Adaptive Focal Loss for Interpretable MCI Screening](/202607/19/2607.15047v1-parameter-efficient-prompt-tuning-of-vision-foundation-model-with-adaptive-focal-loss-for-interpretable-mci-screening)  
+   evidence：成人到儿童心电图迁移的跨模态对齐
+7. [More with Less: a Large Scale Remote Sensing VLM with a Simple Recipe](/202607/20/2607.15942v1-more-with-less-a-large-scale-remote-sensing-vlm-with-a-simple-recipe)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：视觉基础模型的参数高效提示微调用于医学筛查
-9. [WeaveEarth: Structured Evidence Construction and Reasoning for Training-Free UHR Remote Sensing Understanding](/202607/19/2607.10120v1-weaveearth-structured-evidence-construction-and-reasoning-for-training-free-uhr-remote-sensing-understanding)  
+   evidence：针对遥感基准和跨域任务微调VLM
+8. [Seeing the End at Step Zero: Accelerating Diffusion MLLMs via MLP Sparsity-Aware Truncation](/202607/20/2607.14557v1-seeing-the-end-at-step-zero-accelerating-diffusion-mllms-via-mlp-sparsity-aware-truncation)  
    标签：评分：6.0/10、query:vlm-da
-   evidence：用于遥感图像理解的视觉语言模型
-10. [Anomalous Frame Detection Using VLM-Based Description Comparison for Extracting Expert-Specific Actions and Contextual Decision-Making Scenes with Intra-Video Self-Similarity](/202607/19/2607.11957v1-anomalous-frame-detection-using-vlm-based-description-comparison-for-extracting-expert-specific-actions-and-contextual-decision-making-scenes-with-intra-video-self-similarity)  
+   evidence：通过截断加速扩散多模态大语言模型
+9. [MagicPrompt: Ultra-Lightweight Prompt Tuning for Video Generation](/202607/20/2607.14595v1-magicprompt-ultra-lightweight-prompt-tuning-for-video-generation)  
    标签：评分：6.0/10、query:vlm-da
-   evidence：基于VLM的描述比较用于提取专家特定动作
-11. [VisCo: Leveraging Large Language Models as Intrinsic Encoders for Visual Token Compression](/202607/19/2607.12756v1-visco-leveraging-large-language-models-as-intrinsic-encoders-for-visual-token-compression)  
+   evidence：针对大规模生成模型的轻量级提示微调
+10. [Ask Twice, Look Twice: Prompt Echoing Resolves the Question-First Paradox in Vision-Language Models](/202607/20/2607.15565v1-ask-twice-look-twice-prompt-echoing-resolves-the-question-first-paradox-in-vision-language-models)  
    标签：评分：6.0/10、query:vlm-da
-   evidence：利用LLM作为VLM标记压缩的编码器
+   evidence：视觉语言模型（VLM）中的提示策略
+11. [MGDT: MLLM-Guided Diffusion Transformer with Relation-Adaptive Mixture-of-Experts for Multimodal Knowledge Graph Completion](/202607/20/2607.15592v1-mgdt-mllm-guided-diffusion-transformer-with-relation-adaptive-mixture-of-experts-for-multimodal-knowledge-graph-completion)  
+   标签：评分：6.0/10、query:vlm-da
+   evidence：多模态大模型引导的扩散Transformer
 
 
 <div class="dpr-home-promo-card">
