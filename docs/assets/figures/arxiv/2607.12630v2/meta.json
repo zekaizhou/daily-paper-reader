@@ -1,0 +1,94 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.12630v2/fig-001.webp",
+      "caption": "Figure 8: Example of the prompt used for instance-level captioning with LLaMA 3.2 Vision.",
+      "page": 21,
+      "index": 1,
+      "width": 560,
+      "height": 216
+    },
+    {
+      "url": "assets/figures/arxiv/2607.12630v2/fig-002.webp",
+      "caption": "Figure 1: Instance-Enriched Semantic Map is an open-vocabulary 2.5D map representation built upon Instance-Level 2.5D",
+      "page": 2,
+      "index": 2,
+      "width": 973,
+      "height": 536
+    },
+    {
+      "url": "assets/figures/arxiv/2607.12630v2/fig-003.webp",
+      "caption": "Figure 9: Example of the result with LLaMA 3.2 Vision.",
+      "page": 22,
+      "index": 3,
+      "width": 564,
+      "height": 311
+    },
+    {
+      "url": "assets/figures/arxiv/2607.12630v2/fig-004.webp",
+      "caption": "Figure 3: Example of instance-level caption annotations. Each detected object instance is associated with semantic",
+      "page": 10,
+      "index": 4,
+      "width": 536,
+      "height": 771
+    },
+    {
+      "url": "assets/figures/arxiv/2607.12630v2/fig-005.webp",
+      "caption": "Table 3",
+      "page": 14,
+      "index": 5,
+      "width": 970,
+      "height": 187
+    },
+    {
+      "url": "assets/figures/arxiv/2607.12630v2/fig-006.webp",
+      "caption": "Figure 11: Example of a navigation query.",
+      "page": 23,
+      "index": 6,
+      "width": 522,
+      "height": 419
+    },
+    {
+      "url": "assets/figures/arxiv/2607.12630v2/fig-007.webp",
+      "caption": "Figure 4: Instance-level 2.5D open-vocabulary mapping results on two scenes from the Replica dataset. For each scene, the",
+      "page": 13,
+      "index": 7,
+      "width": 973,
+      "height": 540
+    },
+    {
+      "url": "assets/figures/arxiv/2607.12630v2/fig-008.webp",
+      "caption": "Figure 7: Qualitative navigation result for the abstract query, \"Navigate to the red seating object in the office,\" on scene",
+      "page": 17,
+      "index": 8,
+      "width": 950,
+      "height": 556
+    },
+    {
+      "url": "assets/figures/arxiv/2607.12630v2/fig-009.webp",
+      "caption": "Figure 2: System overview. The proposed framework consists of four main components. The upper section covers Instance-",
+      "page": 5,
+      "index": 9,
+      "width": 970,
+      "height": 557
+    },
+    {
+      "url": "assets/figures/arxiv/2607.12630v2/fig-010.webp",
+      "caption": "Table 4",
+      "page": 16,
+      "index": 10,
+      "width": 963,
+      "height": 331
+    },
+    {
+      "url": "assets/figures/arxiv/2607.12630v2/fig-011.webp",
+      "caption": "Figure 6: Room segmentation results on two scenes from the MP3D dataset. The top row shows the colorized top-",
+      "page": 16,
+      "index": 11,
+      "width": 952,
+      "height": 204
+    }
+  ]
+}

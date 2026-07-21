@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.17340v1/fig-001.webp",
+      "caption": "Fig. 3: Overview of OKR. To expand model capacity without conflicts, OKR incrementally constructs independent domain-specific subspaces by injecting dedicated LoRAs into the feature extractor. At session t, only the new LoRA (purple) is trainable, while previously ones (blue) remain frozen. During training and inference, all branches are seamlessly fused for holistic decision-making without redundant forward passes. To further suppress knowledge interference during weight fusion, we devise a gradient-based orthogonal refreshing strategy where At and Bt are updated by projecting the gradient ∇wLt onto the orthogonal complement of the approximated historical subspace Mt, yielding the modified gradient ∇wL ′ t. Moreover, we enforce topology-aware consistency to align class prototypes across domains, mitigating semantic fragmentation.",
+      "page": 6,
+      "index": 1,
+      "width": 723,
+      "height": 246
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17340v1/fig-002.webp",
+      "caption": "Table 1: Comparison results on Pascal VOC and BDD100K series. The best and second exemplar-free methods are in bold and underline.",
+      "page": 11,
+      "index": 2,
+      "width": 721,
+      "height": 325
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17340v1/fig-003.webp",
+      "caption": "Fig. 1: (a) Previous methods suffer from inter-domain interference due to shared parameter overwriting. (b) OKR enables conflict-free adaptation by expanding dedicated LoRA branches for each session. Through orthogonal knowledge refreshing, it projects gradients orthogonally to the fused historical subspace, preserving prior knowledge while bypassing domain routing. (c) OKR achieves superior performance, delivering a significant +17.6% mAP gain on Comic dataset.",
+      "page": 2,
+      "index": 3,
+      "width": 725,
+      "height": 227
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17340v1/fig-004.webp",
+      "caption": "Fig. 5: Further analysis of OKR. (a) OKR remains robust under different ranks of the expandable LoRA subspaces. (b) Topology-aware consistency preserves semantic topology across domain increments. (c) GOR maintains stable optimization, with similar training loss curves with and without orthogonal refreshing.",
+      "page": 14,
+      "index": 4,
+      "width": 725,
+      "height": 217
+    }
+  ]
+}

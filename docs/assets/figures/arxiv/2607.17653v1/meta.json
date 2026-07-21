@@ -1,0 +1,86 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.17653v1/fig-001.webp",
+      "caption": "Fig. 6: scorei vs. ratei. Comparison of GMM-based unknown sample separation using scorei and ratei on VisDA. Real denotes the actual number of unknown samples.",
+      "page": 11,
+      "index": 1,
+      "width": 410,
+      "height": 308
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17653v1/fig-002.webp",
+      "caption": "Fig. 5: Rationality of cv. Each bar represents a target domain, with digits showing cv values under different label shifts.",
+      "page": 10,
+      "index": 2,
+      "width": 516,
+      "height": 266
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17653v1/fig-003.webp",
+      "caption": "Fig. 11: Visualization of regions vital for classification.",
+      "page": 14,
+      "index": 3,
+      "width": 516,
+      "height": 260
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17653v1/fig-004.webp",
+      "caption": "Fig. 10: Confusion matrices for the PDA task Cl→Ar.",
+      "page": 14,
+      "index": 4,
+      "width": 533,
+      "height": 231
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17653v1/fig-005.webp",
+      "caption": "TABLE XI: Known-class text labels and representative examples of LLM-generated unknown-class text labels under the OPDA setting. For Office-31, Office-Home, and VisDA, all known and unknown class labels are reported, whereas for the large-scale benchmark DomainNet, only representative examples of both known and unknown class labels are shown for clarity.",
+      "page": 13,
+      "index": 5,
+      "width": 1064,
+      "height": 522
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17653v1/fig-006.webp",
+      "caption": "Fig. 8: Hyperparameter sensitivity under the OPDA setting. (a) Sensitivity to scaling factor t. (b) K has minimal impact. (c) Optimal α reflects target-private class ratio. (d) β is benchmark-specific.",
+      "page": 13,
+      "index": 6,
+      "width": 1095,
+      "height": 271
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17653v1/fig-007.webp",
+      "caption": "Fig. 9: t-SNE visualization for the OPDA task S→R on VisDA.",
+      "page": 13,
+      "index": 7,
+      "width": 533,
+      "height": 233
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17653v1/fig-008.webp",
+      "caption": "TABLE IV: H-score (%) comparison under the OPDA setting on Office-31, DomainNet, and VisDA.",
+      "page": 8,
+      "index": 8,
+      "width": 868,
+      "height": 338
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17653v1/fig-009.webp",
+      "caption": "Fig. 3: LLM prompt for unknown-category text generation.",
+      "page": 4,
+      "index": 9,
+      "width": 516,
+      "height": 382
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17653v1/fig-010.webp",
+      "caption": "Fig. 7: (a) H-score curves for 4 tasks on Office-Home under the OPDA setting. (b) Robustness comparison on the Rl→Cl task as the number of target-private categories increases.",
+      "page": 12,
+      "index": 10,
+      "width": 537,
+      "height": 247
+    }
+  ]
+}

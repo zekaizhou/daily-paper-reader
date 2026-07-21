@@ -6,73 +6,76 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-20
-- 运行时间：2026-07-20 21:29:44 UTC
+- 最新运行日期：2026-07-21
+- 运行时间：2026-07-21 21:24:08 UTC
 - 运行状态：成功
-- 本次总论文数：17
-- 精读区：6
+- 本次总论文数：18
+- 精读区：7
 - 速读区：11
 
 ### 今日简报（AI）
-今日精选 17 篇前沿论文，深度聚焦视觉语言模型（VLM）在复杂装配理解与工业视觉中的落地突破。
-重点关注通过组合上下文微调提升视频动作理解，以及利用 CoT 蒸馏让小型 VLM 在工业少样本场景下实现性能飞跃。
-建议关注 VLM 的轻量化与垂直领域适配，探索如何将大模型能力高效迁移至工业实操环节。
-- 详情：[/202607/20/README](/202607/20/README)
+今日聚焦 18 篇 AI 前沿进展，深度剖析多专家系统（MoE）与多模态大模型的自适应演进。
+满分论文揭示了通过逻辑校准优化领域分类，以及 MVLM 在无需训练下实现测试时模态泛化的新路径。
+建议进一步探索 UMoE 与分层 LoRA 技术，以应对特定领域
+- 详情：[/202607/21/README](/202607/21/README)
 
 ### 精读区论文标签
-1. [Compositional Context Fine-Tuning Vision-Language Model for Complex Assembly Action Understanding from Videos](/202607/20/2607.10797v1-compositional-context-fine-tuning-vision-language-model-for-complex-assembly-action-understanding-from-videos)  
+1. [MED-DSLC: Multi-Expert-Domain Classification via Domain Supervision and Logit Calibration](/202607/21/2607.10985v1-med-dslc-multi-expert-domain-classification-via-domain-supervision-and-logit-calibration)  
    标签：评分：10.0/10、query:vlm-da
-   evidence：通过微调将视觉语言模型（VLM）适配到挑战性领域
-2. [Answer-Conditioned Chain-of-Thought Distillation for Few-Shot Industrial Vision with Small VLMs](/202607/20/2607.10666v1-answer-conditioned-chain-of-thought-distillation-for-few-shot-industrial-vision-with-small-vlms)  
+   evidence：VLM对细粒度领域的适配及域外鲁棒性
+2. [Can Experts Adapt Without Training? On Test-Time Modality Generalization in MVLMs](/202607/21/2607.16726v1-can-experts-adapt-without-training-on-test-time-modality-generalization-in-mvlms)  
+   标签：评分：10.0/10、query:vlm-da
+   evidence：MVLM 中的测试时模态泛化与领域偏移
+3. [DA-MergeLoRA: Hypernetwork-Based LoRA Merging for Few-Shot Test-Time Domain Adaptation](/202607/21/2607.17467v1-da-mergelora-hypernetwork-based-lora-merging-for-few-shot-test-time-domain-adaptation)  
+   标签：评分：10.0/10、query:vlm-da
+   evidence：针对 CLIP 视觉编码器的测试时领域自适应
+4. [LFM: Leveraging Foundation Models for Source-Free Universal Domain Adaptation](/202607/21/2607.17653v1-lfm-leveraging-foundation-models-for-source-free-universal-domain-adaptation)  
+   标签：评分：10.0/10、query:vlm-da
+   evidence：使用VLM进行无源通用领域自适应
+5. [Memory-Supported Synergistic Adaptation for Training-Free Test-Time Medical Image Segmentation](/202607/21/2607.17693v1-memory-supported-synergistic-adaptation-for-training-free-test-time-medical-image-segmentation)  
+   标签：评分：10.0/10、query:vlm-da
+   evidence：使用 VLM 进行医学分割的测试时自适应 (TTA)
+6. [Continual Learning with Elastic Regularization and Synthetic Replay for Federated MLLM Fine-Tuning](/202607/21/2607.12112v1-continual-learning-with-elastic-regularization-and-synthetic-replay-for-federated-mllm-fine-tuning)  
    标签：评分：9.0/10、query:vlm-da
-   evidence：利用极少数据将小型VLM适配到新的工业任务
-3. [Stream-aware Side Adaptation for Large Pre-trained Multimodal Embedding Models in Sequential Recommendation](/202607/20/2607.10909v1-stream-aware-side-adaptation-for-large-pre-trained-multimodal-embedding-models-in-sequential-recommendation)  
+   evidence：联邦MLLM微调以适应不断演变的数据流
+7. [Simple Domain Generalization for Strong Pixel-Level Image Tampering Detection in Modern VLMs](/202607/21/2607.18230v1-simple-domain-generalization-for-strong-pixel-level-image-tampering-detection-in-modern-vlms)  
    标签：评分：9.0/10、query:vlm-da
-   evidence：多模态模型的侧边适配以解决领域失配问题
-4. [MED-DSLC: Multi-Expert-Domain Classification via Domain Supervision and Logit Calibration](/202607/20/2607.10985v1-med-dslc-multi-expert-domain-classification-via-domain-supervision-and-logit-calibration)  
-   标签：评分：9.0/10、query:vlm-da
-   evidence：VLM对细粒度领域的自适应以及合并专门的LoRA
-5. [U-shaped Multi-granularity Learning for Vision-Language Models](/202607/20/2607.14966v1-u-shaped-multi-granularity-learning-for-vision-language-models)  
-   标签：评分：9.0/10、query:vlm-da
-   evidence：用于视觉语言模型的多粒度提示学习框架，旨在提高跨任务泛化能力
-6. [PFAdapter: Hierarchical LoRA Decomposition for Personalized Federated MLLMs](/202607/20/2607.12111v1-pfadapter-hierarchical-lora-decomposition-for-personalized-federated-mllms)  
-   标签：评分：8.0/10、query:vlm-da
-   evidence：MLLM的联邦微调，用于本地自适应和领域不变特征
+   evidence：现代视觉语言模型中像素级图像篡改检测的领域泛化
 
 ### 速读区论文标签
-1. [Continual Learning with Elastic Regularization and Synthetic Replay for Federated MLLM Fine-Tuning](/202607/20/2607.12112v1-continual-learning-with-elastic-regularization-and-synthetic-replay-for-federated-mllm-fine-tuning)  
+1. [UMoE:Unlocking Every Expert in Domain-Specific Training](/202607/21/2607.11444v1-umoeunlocking-every-expert-in-domain-specific-training)  
    标签：评分：8.0/10、query:vlm-da
-   evidence：多模态大模型的联邦微调以适应演变的数据流
-2. [Implicit Fine-tuning via Context Engineering: A Curriculum Learning Framework for Multimodal Entity Alignment](/202607/20/2607.10532v1-implicit-fine-tuning-via-context-engineering-a-curriculum-learning-framework-for-multimodal-entity-alignment)  
+   evidence：MoE模型的领域特定后训练和专家池重新对齐
+2. [PFAdapter: Hierarchical LoRA Decomposition for Personalized Federated MLLMs](/202607/21/2607.12111v1-pfadapter-hierarchical-lora-decomposition-for-personalized-federated-mllms)  
+   标签：评分：8.0/10、query:vlm-da
+   evidence：解决了异构环境下多模态大模型的本地自适应和领域不变特征提取问题
+3. [U-shaped Multi-granularity Learning for Vision-Language Models](/202607/21/2607.14966v1-u-shaped-multi-granularity-learning-for-vision-language-models)  
+   标签：评分：8.0/10、query:vlm-da
+   evidence：VLM的提示学习与跨任务泛化
+4. [TopoTuner: Topological Finetuning of Large Language Models](/202607/21/2607.16637v1-topotuner-topological-finetuning-of-large-language-models)  
+   标签：评分：8.0/10、query:vlm-da
+   evidence：转移冻结配置以在域外数据集上高效微调模型
+5. [DADiff: Diffusion-Driven Cross-Domain Policy Adaptation for Reinforcement Learning](/202607/21/2607.16090v1-dadiff-diffusion-driven-cross-domain-policy-adaptation-for-reinforcement-learning)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：多模态任务中上下文工程与微调的等价性
-3. [UMoE:Unlocking Every Expert in Domain-Specific Training](/202607/20/2607.11444v1-umoeunlocking-every-expert-in-domain-specific-training)  
+   evidence：使用基于扩散的框架解决跨域策略自适应问题
+6. [How Do VLMs Fail? Vision-Operation Misalignment in Compositional VQA](/202607/21/2607.16094v1-how-do-vlms-fail-vision-operation-misalignment-in-compositional-vqa)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：MoE模型的领域特定后训练
-4. [Anomalous Frame Detection Using VLM-Based Description Comparison for Extracting Expert-Specific Actions and Contextual Decision-Making Scenes with Intra-Video Self-Similarity](/202607/20/2607.11957v1-anomalous-frame-detection-using-vlm-based-description-comparison-for-extracting-expert-specific-actions-and-contextual-decision-making-scenes-with-intra-video-self-similarity)  
+   evidence：分析视觉语言模型 (VLM) 的失败机制
+7. [Orthogonal Knowledge Refreshing for Domain-Incremental Object Detection](/202607/21/2607.17340v1-orthogonal-knowledge-refreshing-for-domain-incremental-object-detection)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：基于VLM的描述比较用于专家知识迁移
-5. [IoUPD: IoU-Aware Privileged Distillation for Visual Grounding with Multimodal Large Language Models](/202607/20/2607.15732v1-ioupd-iou-aware-privileged-distillation-for-visual-grounding-with-multimodal-large-language-models)  
+   evidence：使用参数高效微调进行域增量自适应
+8. [Measuring and Improving Complex-Atomic Answer Consistency in Endoscopic VQA](/202607/21/2607.17834v1-measuring-and-improving-complex-atomic-answer-consistency-in-endoscopic-vqa)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：使用多模态大语言模型进行视觉定位
-6. [Knowledge-Guided Cross-Modal Fusion for Adult-to-Pediatric ECG Transfer via Label-Conditioned Contrastive Alignment](/202607/20/2607.15928v1-knowledge-guided-cross-modal-fusion-for-adult-to-pediatric-ecg-transfer-via-label-conditioned-contrastive-alignment)  
-   标签：评分：7.0/10、query:vlm-da
-   evidence：成人到儿童心电图迁移的跨模态对齐
-7. [More with Less: a Large Scale Remote Sensing VLM with a Simple Recipe](/202607/20/2607.15942v1-more-with-less-a-large-scale-remote-sensing-vlm-with-a-simple-recipe)  
-   标签：评分：7.0/10、query:vlm-da
-   evidence：针对遥感基准和跨域任务微调VLM
-8. [Seeing the End at Step Zero: Accelerating Diffusion MLLMs via MLP Sparsity-Aware Truncation](/202607/20/2607.14557v1-seeing-the-end-at-step-zero-accelerating-diffusion-mllms-via-mlp-sparsity-aware-truncation)  
+   evidence：内窥镜适配的VLM与一致性评估
+9. [Instance-Enriched Semantic Maps for Visual Language Navigation](/202607/21/2607.12630v2-instance-enriched-semantic-maps-for-visual-language-navigation)  
    标签：评分：6.0/10、query:vlm-da
-   evidence：通过截断加速扩散多模态大语言模型
-9. [MagicPrompt: Ultra-Lightweight Prompt Tuning for Video Generation](/202607/20/2607.14595v1-magicprompt-ultra-lightweight-prompt-tuning-for-video-generation)  
+   evidence：利用多模态大语言模型进行导航推理
+10. [VisCo: Leveraging Large Language Models as Intrinsic Encoders for Visual Token Compression](/202607/21/2607.12756v1-visco-leveraging-large-language-models-as-intrinsic-encoders-for-visual-token-compression)  
    标签：评分：6.0/10、query:vlm-da
-   evidence：针对大规模生成模型的轻量级提示微调
-10. [Ask Twice, Look Twice: Prompt Echoing Resolves the Question-First Paradox in Vision-Language Models](/202607/20/2607.15565v1-ask-twice-look-twice-prompt-echoing-resolves-the-question-first-paradox-in-vision-language-models)  
+   evidence：VLM 的视觉令牌压缩
+11. [Attention-Free and Lightweight Token Reduction for Efficient Vision-Language Models](/202607/21/2607.13500v1-attention-free-and-lightweight-token-reduction-for-efficient-vision-language-models)  
    标签：评分：6.0/10、query:vlm-da
-   evidence：视觉语言模型（VLM）中的提示策略
-11. [MGDT: MLLM-Guided Diffusion Transformer with Relation-Adaptive Mixture-of-Experts for Multimodal Knowledge Graph Completion](/202607/20/2607.15592v1-mgdt-mllm-guided-diffusion-transformer-with-relation-adaptive-mixture-of-experts-for-multimodal-knowledge-graph-completion)  
-   标签：评分：6.0/10、query:vlm-da
-   evidence：多模态大模型引导的扩散Transformer
+   evidence：高效视觉语言模型
 
 
 <div class="dpr-home-promo-card">
