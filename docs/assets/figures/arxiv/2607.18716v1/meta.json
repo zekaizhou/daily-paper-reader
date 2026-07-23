@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.18716v1/fig-001.webp",
+      "caption": "Figure 1: Overview of DAER for continual Video-MLLM adaptation over evolving domains. DAER routes inputs from sequentially arriving video domains to domain-specific expert pools. Moreover similar domains can be adaptively merged for improved parameter efficiency.",
+      "page": 1,
+      "index": 1,
+      "width": 492,
+      "height": 257
+    },
+    {
+      "url": "assets/figures/arxiv/2607.18716v1/fig-002.webp",
+      "caption": "Figure 3: Results under the 20-task continual learning setting. Each original domain is further divided into two sequential sub-tasks, yielding a 20-task stream.",
+      "page": 6,
+      "index": 2,
+      "width": 488,
+      "height": 317
+    },
+    {
+      "url": "assets/figures/arxiv/2607.18716v1/fig-003.webp",
+      "caption": "Figure 4: Ablation study on four important components.",
+      "page": 7,
+      "index": 3,
+      "width": 1014,
+      "height": 262
+    },
+    {
+      "url": "assets/figures/arxiv/2607.18716v1/fig-004.webp",
+      "caption": "Figure 5: Sensitivity study on four critical hyper-parameters.",
+      "page": 7,
+      "index": 4,
+      "width": 1013,
+      "height": 218
+    },
+    {
+      "url": "assets/figures/arxiv/2607.18716v1/fig-005.webp",
+      "caption": "Table 6: Detailed Component Analysis of DAER.",
+      "page": 13,
+      "index": 5,
+      "width": 1044,
+      "height": 277
+    },
+    {
+      "url": "assets/figures/arxiv/2607.18716v1/fig-006.webp",
+      "caption": "Figure 7: Qualitative comparison between DAM and the proposed DAER on representative VidQA examples.",
+      "page": 8,
+      "index": 6,
+      "width": 492,
+      "height": 472
+    },
+    {
+      "url": "assets/figures/arxiv/2607.18716v1/fig-007.webp",
+      "caption": "Figure 2: Illustration of the DAER framework for continual Video-MLLM adaptation over evolving domains. DAER performs inter-domain routing to identify the most relevant domain, intra-domain routing to activate domain-specific experts and adaptive domain merging to reduce redundancy across similar domains.",
+      "page": 4,
+      "index": 7,
+      "width": 1052,
+      "height": 624
+    }
+  ]
+}

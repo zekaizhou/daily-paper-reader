@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.16514v1/fig-001.webp",
+      "caption": "Table 4 | Flagship MLLMs as direct portion estimators. Each model recognizes foods and estimates per-food grams directly (open-vocabulary, same decomposition prompt and matcher) on 100 multi-food dishes. Mass cov. = mass-weighted recall; higher is better. Per-food MAE: lower is better. Our model inherits Gemini-3.5-Flash recognition through the pipeline’s extraction prompt (name, box, density—no gram estimation), so its coverage differs slightly from the Gemini-3.5-Flash row, whose detections come from the directestimation prompt: same model, different prompt.",
+      "page": 11,
+      "index": 1,
+      "width": 636,
+      "height": 225
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16514v1/fig-002.webp",
+      "caption": "Table 3 | Ablations on Nutrition5k. One component removed at a time from the full model; per-food MAE (grams, three-seed average) on the held-out test, broken down by single-food dishes, multi-food dishes, and all dishes (total), each with Δ vs. the full model. Lower is better.",
+      "page": 10,
+      "index": 2,
+      "width": 876,
+      "height": 199
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16514v1/fig-003.webp",
+      "caption": "Figure 1 | Geometry-enhanced MLLM architecture. A frozen MLLM (Gemini-3.5-Flash) extracts per-food name, bounding box, and density range from the RGB image; a frozen DINOv2 ViT-S/14 supplies patch tokens. The image×food encoder and an image-only encoder feed structured heads that produce an exclusive per-patch ownership partition, a per-food density anchored to the MLLM range, and a per-patch height field. Volume estimate for food 𝑛 is the sum across all patches 𝑝: 𝑣𝑛 = ∑ 𝑝 𝑜𝑛,𝑝 ℎ𝑝 and per-food mass estimate is 𝑚𝑛 = 𝑣𝑛 · 𝜌𝑛 .",
+      "page": 3,
+      "index": 3,
+      "width": 884,
+      "height": 246
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16514v1/fig-004.webp",
+      "caption": "Figure 2 | Image×Food encoder block. Each of the 𝐿=4 layers is a Transformer decoder-style block: multi-head self -attention over the food query tokens (food↔food), multi-head cross-attention from the foods into the per-food geometry-aware patch memory mem𝑛,𝑝 (keys/values, built once from the frozen DINOv2 patch tokens and per-food box geometry), and a feed-forward sublayer, each wrapped by a residual connection and layer normalization. The stack outputs contextualized per-food tokens 𝑍𝑛 : the density head reads 𝑍𝑛 alone, while the ownership head scores each (mem𝑛,𝑝 , 𝑍𝑛) pair.",
+      "page": 4,
+      "index": 4,
+      "width": 632,
+      "height": 546
+    }
+  ]
+}

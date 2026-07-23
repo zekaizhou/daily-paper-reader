@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.18072v1/fig-001.webp",
+      "caption": "Figure 2: Visualization results of the RetinaMNIST and TissueMNIST datasets. The Original Data 1 and Original Data 2 are in the source domain for training the SGN. The Rotated Data 1 and Rotated Data 2 are in the target domain. The Generated Data is obtained in the data generation stage.",
+      "page": 9,
+      "index": 1,
+      "width": 534,
+      "height": 335
+    },
+    {
+      "url": "assets/figures/arxiv/2607.18072v1/fig-002.webp",
+      "caption": "Table 3: Benchmark results (F1 score for classifiers) on tabular datasets",
+      "page": 10,
+      "index": 2,
+      "width": 822,
+      "height": 233
+    },
+    {
+      "url": "assets/figures/arxiv/2607.18072v1/fig-003.webp",
+      "caption": "Table 2: Benchmark results (R2 for regressors) on tabular datasets",
+      "page": 10,
+      "index": 3,
+      "width": 818,
+      "height": 404
+    },
+    {
+      "url": "assets/figures/arxiv/2607.18072v1/fig-004.webp",
+      "caption": "Table 1: Classification accuracy",
+      "page": 8,
+      "index": 4,
+      "width": 846,
+      "height": 213
+    },
+    {
+      "url": "assets/figures/arxiv/2607.18072v1/fig-005.webp",
+      "caption": "Figure 1: An illustration of the SGN paradigm, which consists of two stages. In the training stage, the encoder and decoder learn the transformation between the original data space and latent space, where the latent space satisfies the similarity requirement defined in Equation 1. In the data generation stage, the encoder takes two data points with the same label and produces two latent representations; then, the decoder generates a data point by a linear combination of these latent representations as inputs.",
+      "page": 4,
+      "index": 5,
+      "width": 538,
+      "height": 368
+    }
+  ]
+}
