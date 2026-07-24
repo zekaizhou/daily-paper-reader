@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.20367v1/fig-001.webp",
+      "caption": "Table 1: Average test accuracy for Spawrious by data split.",
+      "page": 7,
+      "index": 1,
+      "width": 968,
+      "height": 444
+    },
+    {
+      "url": "assets/figures/arxiv/2607.20367v1/fig-002.webp",
+      "caption": "Table 2: Average test accuracy for Office-Home by data split.",
+      "page": 7,
+      "index": 2,
+      "width": 940,
+      "height": 445
+    },
+    {
+      "url": "assets/figures/arxiv/2607.20367v1/fig-003.webp",
+      "caption": "Table 4: Average wall-clock training times by dataset (seconds).",
+      "page": 8,
+      "index": 3,
+      "width": 977,
+      "height": 454
+    },
+    {
+      "url": "assets/figures/arxiv/2607.20367v1/fig-004.webp",
+      "caption": "Table 3: Average test accuracy for Humpbacks by data split.",
+      "page": 8,
+      "index": 4,
+      "width": 672,
+      "height": 444
+    },
+    {
+      "url": "assets/figures/arxiv/2607.20367v1/fig-005.webp",
+      "caption": "Figure 1: Estimator variance vs k for six sampling algorithms.",
+      "page": 5,
+      "index": 5,
+      "width": 488,
+      "height": 393
+    }
+  ]
+}

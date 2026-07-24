@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.20889v1/fig-001.webp",
+      "caption": "Fig. 3. Schema-conditioned 3D scene parsing for object boxes and lights. Top: box parsing. A colored point cloud is paired with a task prompt and a Bbox schema, enabling the model to generate structured object layouts of the form Bbox(class, x, y, z, yaw, sx, sy, sz). This represents category-aware, orientation-aware 3D object localization as autoregressive layout-code prediction. Bottom: light parsing. Using the same point-cloud-conditioned generation framework, the model is instead prompted with a Light schema and predicts parametric light tuples Light(x, y, z, r, g, b, I), capturing light position, color, and intensity. The figure highlights that box detection and light estimation are not modeled as separate detection heads, but as two schema-specific instances of a unified SpatialLM-style 3D-to-code generation task.",
+      "page": 7,
+      "index": 1,
+      "width": 468,
+      "height": 266
+    },
+    {
+      "url": "assets/figures/arxiv/2607.20889v1/fig-002.webp",
+      "caption": "Fig. 4. Case studies of image-conditioned 3D scene generation. Given a single input image, our method reconstructs coherent 3D scenes with plausible object layouts, geometry, and lighting across diverse environments.",
+      "page": 8,
+      "index": 2,
+      "width": 1064,
+      "height": 612
+    },
+    {
+      "url": "assets/figures/arxiv/2607.20889v1/fig-003.webp",
+      "caption": "Table 1. Scale and annotation coverage of major 3D scene datasets. Values are reported as total (mean per scene); † marks numbers we derive from the public release. “Lights” is checked only when the dataset publishes per-light parametric annotation (position, type, intensity, temperature) with countable instances; baked HDR textures and intrinsic decompositions do not count. “Labels” is checked only when free-form / open-vocabulary text descriptions are provided per object.",
+      "page": 4,
+      "index": 3,
+      "width": 1064,
+      "height": 313
+    },
+    {
+      "url": "assets/figures/arxiv/2607.20889v1/fig-004.webp",
+      "caption": "Table 13. Field roles in the structured Verifier report 𝑟𝑡 . A circle marks a primary field; a bullet marks a field that should remain empty or only carry non-critical residual notes.",
+      "page": 17,
+      "index": 4,
+      "width": 489,
+      "height": 333
+    },
+    {
+      "url": "assets/figures/arxiv/2607.20889v1/fig-005.webp",
+      "caption": "Fig. 5. Qualitative inference results from Lumera-Light. Lumera-Light predicts engine-native parametric lights, shown against ground-truth light layouts in game-scale point clouds.",
+      "page": 12,
+      "index": 5,
+      "width": 882,
+      "height": 442
+    },
+    {
+      "url": "assets/figures/arxiv/2607.20889v1/fig-006.webp",
+      "caption": "Fig. 6. Qualitative inference results from Lumera-Box. 3D box parsing comparisons against SpatialLM, N3D-VLM, and WildDet3D, where Lumera-Box recovers denser and more spatially aligned editable object layouts.",
+      "page": 12,
+      "index": 6,
+      "width": 990,
+      "height": 473
+    },
+    {
+      "url": "assets/figures/arxiv/2607.20889v1/fig-007.webp",
+      "caption": "Table 10. Main light-prediction metrics under the sanitized protocol, using a 0.5m threshold unless otherwise stated. Arrows mark metric direction. The benchmark contains no empty GT scenes, so empty-scene accuracy is not applicable.",
+      "page": 16,
+      "index": 7,
+      "width": 406,
+      "height": 506
+    }
+  ]
+}
