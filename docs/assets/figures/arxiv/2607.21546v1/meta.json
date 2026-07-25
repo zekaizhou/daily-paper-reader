@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.21546v1/fig-001.webp",
+      "caption": "Table 2. Segmentation performance on MM-WHS (MRI → CT). Dice (%, ↑) and HD95 (mm, ↓) per cardiac structure and mean.",
+      "page": 7,
+      "index": 1,
+      "width": 610,
+      "height": 214
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21546v1/fig-002.webp",
+      "caption": "Table 3. Comparison with existing methods on MM-WHS (MRI → CT) under a common lightweight 3D CNN backbone. Dice (%, ↑) and HD95 (mm, ↓) per cardiac structure and mean. Bold indicates best result per column.",
+      "page": 8,
+      "index": 2,
+      "width": 610,
+      "height": 352
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21546v1/fig-003.webp",
+      "caption": "Table 4. Ablation study on MM-WHS (MRI → CT). Dice (%, ↑) and HD95 (mm, ↓) per cardiac structure and 7-structure mean. Bold indicates best result per column.",
+      "page": 9,
+      "index": 3,
+      "width": 712,
+      "height": 454
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21546v1/fig-004.webp",
+      "caption": "Fig. 1. Overview of UnDA: Phase 1 trains the anchor model on source-domain images; a presence head supervises the class token pool via LBCE-pres, producing classdiscriminative token representations. Phase 2 freezes the anchor to generate per-class uncertainty maps and update prototype memory Pc; the target encoder produces class tokens refined by an MLP residual adapter and aligned via prototypical contrastive loss LpNCE and uncertainty-weighted optimal transport LUCT-OT.",
+      "page": 3,
+      "index": 4,
+      "width": 733,
+      "height": 337
+    }
+  ]
+}

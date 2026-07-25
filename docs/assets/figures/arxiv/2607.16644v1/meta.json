@@ -1,0 +1,70 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.16644v1/fig-001.webp",
+      "caption": "Table 6. Full unseen corrupted-query results. The table reports mAP, Rank-1, Rank-5, and mINP for all methods and datasets.",
+      "page": 11,
+      "index": 1,
+      "width": 714,
+      "height": 423
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16644v1/fig-002.webp",
+      "caption": "Table 4. Expert composition and learned routing ablation.",
+      "page": 7,
+      "index": 2,
+      "width": 495,
+      "height": 615
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16644v1/fig-003.webp",
+      "caption": "Table 3. Progressive component ablation.",
+      "page": 7,
+      "index": 3,
+      "width": 492,
+      "height": 477
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16644v1/fig-004.webp",
+      "caption": "Table 1. Main results under standard and corrupted-query settings.",
+      "page": 7,
+      "index": 4,
+      "width": 714,
+      "height": 500
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16644v1/fig-005.webp",
+      "caption": "Figure 2. Condition-wise average routing weights of the soft top-2 router. Rows denote unchanged and corrupted input conditions, while columns denote the three residual experts.",
+      "page": 8,
+      "index": 5,
+      "width": 496,
+      "height": 611
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16644v1/fig-006.webp",
+      "caption": "Figure 3. Unseen corrupted-query evaluation. (a) Absolute mAP under unseen corrupted-query conditions across four animal ReID datasets. (b) DARA’s CQ mAP gains over Std-FT and AugMixFT.",
+      "page": 8,
+      "index": 6,
+      "width": 496,
+      "height": 467
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16644v1/fig-007.webp",
+      "caption": "Figure 1. Overall framework of DARA for corruption-robust animal Re-ID. During training, each original image is paired with a corrupted view. A frozen teacher provides original-image references, while the student uses degradation-aware low-rank residual experts on a staged compact Re-ID backbone to adapt its embeddings. Original-to-corrupted distillation preserves both individual embeddings and retrieval relations, together with standard Re-ID supervision on the student. At inference time, only the adapted student is used.",
+      "page": 4,
+      "index": 7,
+      "width": 991,
+      "height": 554
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16644v1/fig-008.webp",
+      "caption": "Table 7. Supplementary robustness results under different corruption locations, reported for completeness.",
+      "page": 12,
+      "index": 8,
+      "width": 1014,
+      "height": 500
+    }
+  ]
+}

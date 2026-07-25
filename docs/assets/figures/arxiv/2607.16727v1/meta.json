@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.16727v1/fig-001.webp",
+      "caption": "Figure 1: Overview of the CART framework. Given an image and question, the MLLM generates interleaved reasoning steps and symbolic constraint anchors. The Constraint Propagation Module (CPM) verifies each anchor via a neural grounding head and Boolean Constraint Propagation. When a violation is detected, the backtrack controller reverts to the last consistent checkpoint and resumes generation with a <RETRY> token.",
+      "page": 3,
+      "index": 1,
+      "width": 1056,
+      "height": 550
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16727v1/fig-002.webp",
+      "caption": "Table 3: Inference latency profiling across backbone scales and batch sizes on a single A100-80GB GPU. Overhead factor is the ratio of CART latency to base autoregressive latency, showing that the constraint propagationmodule adds atmost 18% wall-clock overhead. Bold = lowest overhead per backbone.",
+      "page": 7,
+      "index": 2,
+      "width": 502,
+      "height": 240
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16727v1/fig-003.webp",
+      "caption": "Table 2: Ablation studies on LLaVA-NeXT-13B. Top block: subtractive ablations removing individual CART components. Middle block: additive build-up from fine-tuned baseline. Bottom block: sensitivity to retry budget 𝐵 and visual grounding threshold 𝜏𝑣 . Snowball rate, constraint violation rate (CVR), mean trace length, and per-instance latency are measured on a 2,000-instance diagnostic subset of GQA-testdev. Bold = best in column.",
+      "page": 7,
+      "index": 3,
+      "width": 836,
+      "height": 577
+    }
+  ]
+}
