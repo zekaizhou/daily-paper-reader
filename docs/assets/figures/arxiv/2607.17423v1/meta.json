@@ -1,0 +1,102 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.17423v1/fig-001.webp",
+      "caption": "Figure 3. Overlap plateaus and matching artifacts in temporal interval-set rewards. (a) tIoU ties the near miss A and distant error B at zero, whereasRTW ranks them by temporal proximity. (b) tIoU favors the single-moment prediction A, whileRTW favors B, which also recovers part of the second target moment. MUSEG addresses these failures with NGIoU under one-to-one matching [25], but introduces new artifacts: (c) fragmentation forces P2 into a false cross-event match; (d) identical merged support receives differentRNGIoU scores solely because the prediction is partitioned differently.",
+      "page": 6,
+      "index": 1,
+      "width": 858,
+      "height": 350
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17423v1/fig-002.webp",
+      "caption": "Table 13.Model-specific overrides. Input configurations that deviate from Table 12. TL denotes the three TimeLens-Bench datasets.",
+      "page": 21,
+      "index": 2,
+      "width": 866,
+      "height": 236
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17423v1/fig-003.webp",
+      "caption": "Table 14. Dataset-side prompt templates. Exact templates used in the standard temporal grounding evaluation; {query} is replaced by the benchmark query.",
+      "page": 21,
+      "index": 3,
+      "width": 864,
+      "height": 419
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17423v1/fig-004.webp",
+      "caption": "Figure 1. TimeLens2 as a generalist video temporal-grounding model. Top: mIoU across seven benchmarks covering diverse evaluation dimensions. Bottom: Representative queries from each benchmark.",
+      "page": 2,
+      "index": 4,
+      "width": 866,
+      "height": 281
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17423v1/fig-005.webp",
+      "caption": "Table 11. Full temporal grounding results across IoU thresholds.",
+      "page": 18,
+      "index": 5,
+      "width": 874,
+      "height": 1319
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17423v1/fig-006.webp",
+      "caption": "Table 1. Comparison with proprietary and open-source models on temporal video grounding benchmarks. Metrics are R1@0.5 and mIoU (%). TL denotes evaluation on TimeLens-Bench [53]; †marks the VUE-TR vision subsets, and ‡ the MomentSeeker text-only query subset.",
+      "page": 8,
+      "index": 6,
+      "width": 870,
+      "height": 584
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17423v1/fig-007.webp",
+      "caption": "Figure 2. TimeLens2-93K construction pipeline and corpus profile. Steps 1–3 construct caption-derived queries and coarse proposals; Steps 4–6 relocalize proposals with independent agents, verify interval sets, and refine their boundaries. The right column summarizes the retained corpus.",
+      "page": 4,
+      "index": 7,
+      "width": 860,
+      "height": 463
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17423v1/fig-008.webp",
+      "caption": "Figure 6. Additional qualitative results on all seven benchmarks. Each row pairs five frames near the target evidence with the query, the temporal reasoning challenge, and full-video timelines showing the ground truth and predictions from four models. The TimeLens2 variants consistently recover the intended evidence, whereas the baselines select distractors, miss events, overextend boundaries, or fragment their predictions.",
+      "page": 19,
+      "index": 8,
+      "width": 866,
+      "height": 906
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17423v1/fig-009.webp",
+      "caption": "Table 10. Factorized interface diversity used during SFT. Independent sampling from 27 grounding requests and 28 response specifications defines 756 possible pairings while the query and target intervals remain fixed. Counts in each response axis partition the same 28 specifications; examples render two intervals.",
+      "page": 17,
+      "index": 9,
+      "width": 870,
+      "height": 392
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17423v1/fig-010.webp",
+      "caption": "Figure 4. Qualitative comparison on temporal grounding. Each panel shows five target frames, the query, and a full-video ruler from 0 to the video duration; colored spans follow the shared legend. Dense labels summarize many short windows after merging small display gaps.",
+      "page": 9,
+      "index": 10,
+      "width": 866,
+      "height": 510
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17423v1/fig-011.webp",
+      "caption": "Table 2. Effect of TimeLens2-93K in supervised training. Qwen3-VL-4B mIoU (%) under different data recipes; Avg. is unweighted. Sizes are videos / QA turns in thousands, with QA turns counted frommulti-turn annotations. Shading marks the core corpus and final mixture.",
+      "page": 9,
+      "index": 11,
+      "width": 879,
+      "height": 333
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17423v1/fig-012.webp",
+      "caption": "Table 12. Standard input configuration. Exact arguments for the seven temporal grounding benchmarks.",
+      "page": 20,
+      "index": 12,
+      "width": 744,
+      "height": 225
+    }
+  ]
+}

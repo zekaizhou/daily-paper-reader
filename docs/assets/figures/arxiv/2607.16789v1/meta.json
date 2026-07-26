@@ -1,0 +1,70 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.16789v1/fig-001.webp",
+      "caption": "Figure 2. Visualization of subspaces learned by MultiLoReFT on Simulation I. Each panel shows a 2D PCA projection of the shared or modality-specific representations, colored by the underlying generative label. For the shared label (left columns), clear clustering emerges in the shared subspace while modality-specific subspaces remain unstructured. For the modality I and II labels, the corresponding modality-specific subspace captures the structure, whereas the shared subspaces remain agnostic.",
+      "page": 6,
+      "index": 1,
+      "width": 487,
+      "height": 414
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16789v1/fig-002.webp",
+      "caption": "Table 1. Decoupling of shared and modality-specific information on simulated data. Logistic-regression accuracy is reported for each representation component when predicting ground-truth generative factors. Larger ∆ indicates stronger separation across components.",
+      "page": 7,
+      "index": 2,
+      "width": 767,
+      "height": 390
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16789v1/fig-003.webp",
+      "caption": "Table 2. Decoupling of shared and modality-specific information on real-world datasets (Crema-D and Flickr30). Performance is reported for each representation component (zs, zm1, zm2) on downstream labels corresponding to shared and modality-specific factors.",
+      "page": 7,
+      "index": 3,
+      "width": 989,
+      "height": 414
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16789v1/fig-004.webp",
+      "caption": "Table 4. Ablation of the MultiLoReFT objective. The first row is the full model. The next three rows remove the indicated loss term (one at a time). The final row trains with fixed loss weights instead of automatic weighting via GradNorm.",
+      "page": 14,
+      "index": 4,
+      "width": 837,
+      "height": 494
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16789v1/fig-005.webp",
+      "caption": "Figure 1. Overview of MultiLoReFT. Pretrained unimodal encoders (with frozen parameters) produce representations h1 and h2, which are fine-tuned through low-rank projections into shared (Rs) and modality-specific (Rm1, Rm2) subspaces. Nonlinear transforms (fs1, fs2, fm1, fm2) learn the representation edit in the lower-rank space that needs to be subtracted from the projection of the representations. Once edited in the low-rank space, the representations are projected back to form the fine-tuned representations Φ1 and Φ2. The right panel illustrates the decoupling of information into shared (zs) and modality-unique (zm1, zm2) components. zs is computed as the mean of the shared projections across available modalities, using both when present and a single projection when only one is available.",
+      "page": 3,
+      "index": 5,
+      "width": 1015,
+      "height": 365
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16789v1/fig-006.webp",
+      "caption": "Figure 3. (a) PCA visualizations of MultiLoReFT representations on Crema-D and Flickr30. Task-relevant information is concentrated in the corresponding modality-specific components, while other components remain closer to random structure, illustrating effective disentanglement. (b) An example image from Flickt30 dataset with its closest samples in the image-specific subspace and shared subspace.",
+      "page": 8,
+      "index": 6,
+      "width": 1017,
+      "height": 509
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16789v1/fig-007.webp",
+      "caption": "Table 3. Multimodal prediction performance across multiple datasets. Results compare fusion of MultiLoReFT representations Φ against existing disentanglement-based and classical fusion baselines built on pretrained unimodal embeddings.",
+      "page": 9,
+      "index": 7,
+      "width": 867,
+      "height": 331
+    },
+    {
+      "url": "assets/figures/arxiv/2607.16789v1/fig-008.webp",
+      "caption": "Table 6. The effect of Unimodal encoder strength on multimodal Performance on Crema-D dataset for emotion detection. Encoders I setup uses relatively simpler video and audio encoders while Encoders II setup uses more advanced pretrained models.",
+      "page": 16,
+      "index": 8,
+      "width": 504,
+      "height": 261
+    }
+  ]
+}

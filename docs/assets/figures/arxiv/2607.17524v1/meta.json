@@ -1,0 +1,142 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.17524v1/fig-001.webp",
+      "caption": "Figure 3: Factuality scores under different LoRA insertion ranges. Left: Sliding window over layer ranges, where darker colors indicate higher scores. Right: Plots for representative window sizes (k = 3, 6, 12), illustrating that performance peaks in middle layers.",
+      "page": 6,
+      "index": 1,
+      "width": 826,
+      "height": 290
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17524v1/fig-002.webp",
+      "caption": "Figure 8: Factuality scores under full-summary evaluation across different backbone models in both in-distribution (ID) and out-of-distribution (OOD) settings. Dashed lines indicate the base model performance for each backbone.",
+      "page": 15,
+      "index": 2,
+      "width": 826,
+      "height": 254
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17524v1/fig-003.webp",
+      "caption": "Figure 1: Overview of TOPL training and its representation-space interpretation. Left: Training pipeline. Given a document, a query, and a response containing both factual and non-factual tokens, the inputs are processed by a large language model (LLM) with LoRA adapters to obtain token-level hidden representations. Instead of performing standard next-token prediction with a language modeling head, TOPL replaces the objective with a binary reward head that predicts whether each token is factual or non-factual. Right: Representation-space interpretation. Inside the hidden representation space of the LLM, LoRA-A acts as a conditional projection mechanism that separates factual and non-factual token representations within a low-rank subspace, while LoRA-B defines steering directions that shift hidden states toward different behavioral regions. The illustrated example corresponds to a rank-2 LoRA decomposition, where each rank component can be interpreted as an independent conditional steering direction.",
+      "page": 2,
+      "index": 3,
+      "width": 826,
+      "height": 426
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17524v1/fig-004.webp",
+      "caption": "Figure 4: Factuality scores under different label settings. Top: Qwen3-8B results under various data configurations. With a similar number of training tokens, varying the ratio of good and bad tokens has only a minor effect, while using only one type leads to noticeable degradation. Bottom left: Original vs. Random settings on Llama-3.1-8B. Bottom right: Original vs. Random settings on Gemma-3-4B. Random labeling substantially degrades performance for both models, in contrast to Qwen3-8B (top), which still outperforms the base model.",
+      "page": 7,
+      "index": 4,
+      "width": 582,
+      "height": 486
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17524v1/fig-005.webp",
+      "caption": "Table 1: Comparison of LoRA-A separability and out-of-distribution performance on Qwen38B. TOPL achieves significantly higher separability in the LoRA-A subspace, which aligns with better generalization under distribution shift.",
+      "page": 10,
+      "index": 5,
+      "width": 826,
+      "height": 234
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17524v1/fig-006.webp",
+      "caption": "Figure 7: Comparison between sentence-level and full-summary evaluation scores on 300 samples. Each point represents a generated summary. The dashed line indicates equality. Sentence-level evaluation generally assigns higher scores, while maintaining a strong rank correlation (Spearman = 0.79).",
+      "page": 14,
+      "index": 6,
+      "width": 498,
+      "height": 500
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17524v1/fig-007.webp",
+      "caption": "Table 9: Training hyperparameters for TDPO Training across different backbone models.",
+      "page": 18,
+      "index": 7,
+      "width": 610,
+      "height": 235
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17524v1/fig-008.webp",
+      "caption": "Figure 9: LoRA-A and LoRA-B analysis for DPO and SOPL. Top row: SOPL; bottom row: DPO. Left column: LoRA-A separability heatmaps. Right column: LoRA-B steering curves under different scaling factors λ. While both methods exhibit relatively weak LoRA-A separability compared to TOPL, they still demonstrate clear LoRA-B steering behavior.",
+      "page": 19,
+      "index": 8,
+      "width": 826,
+      "height": 492
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17524v1/fig-009.webp",
+      "caption": "Table 12: Token-level supervision statistics for label sensitivity settings. We report the total number of supervised tokens and the proportion of positive (factual) and negative (hallucinated) labels for each configuration.",
+      "page": 19,
+      "index": 9,
+      "width": 826,
+      "height": 286
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17524v1/fig-010.webp",
+      "caption": "Table 7: Training hyperparameters for TLDR across different backbone models.",
+      "page": 17,
+      "index": 10,
+      "width": 610,
+      "height": 235
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17524v1/fig-011.webp",
+      "caption": "Table 8: Training hyperparameters for Token-Level Unlikelihood Training across different backbone models.",
+      "page": 17,
+      "index": 11,
+      "width": 610,
+      "height": 236
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17524v1/fig-012.webp",
+      "caption": "Table 6: Training hyperparameters for DPO across different backbone models.",
+      "page": 17,
+      "index": 12,
+      "width": 610,
+      "height": 235
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17524v1/fig-013.webp",
+      "caption": "Figure 6: Comparison of LoRA-based representations across training methods and parameter types. Top row: TOPL; bottom row: SFT. Left column: LoRA-A; right column: LoRA-B. LoRA-A heatmaps (left) show the separability (AUROC) between factual and non-factual tokens across layers and modules, where higher values indicate stronger discriminative structure. TOPL exhibits substantially higher separability in the middle and later layers compared to SFT. LoRA-B plots (right) show the effect of scaling the LoRA updates, illustrating how different training methods respond to steering strength. The lines labeled as “best TOPL” and “best SFT” correspond to the models obtained after merging all LoRA updates (i.e., before applying any steering). TOPL displays a clear and consistent response to the scaling factor λ.",
+      "page": 9,
+      "index": 13,
+      "width": 826,
+      "height": 492
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17524v1/fig-014.webp",
+      "caption": "Figure 2: OOD factuality scores across different backbone models. TOPL consistently ranks among the strongest methods and achieves the best average performance across backbone models. Dashed lines indicate the base model performance for each backbone.",
+      "page": 5,
+      "index": 14,
+      "width": 622,
+      "height": 275
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17524v1/fig-015.webp",
+      "caption": "Table 4: Training hyperparameters for SFT across different backbone models.",
+      "page": 16,
+      "index": 15,
+      "width": 610,
+      "height": 236
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17524v1/fig-016.webp",
+      "caption": "Table 5: Training hyperparameters for SOPL across different backbone models.",
+      "page": 16,
+      "index": 16,
+      "width": 610,
+      "height": 236
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17524v1/fig-017.webp",
+      "caption": "Table 3: Training hyperparameters for TOPL across different backbone models.",
+      "page": 16,
+      "index": 17,
+      "width": 610,
+      "height": 235
+    }
+  ]
+}
