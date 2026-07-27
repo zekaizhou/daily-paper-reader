@@ -6,82 +6,82 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-26
-- 运行时间：2026-07-26 20:11:26 UTC
+- 最新运行日期：2026-07-27
+- 运行时间：2026-07-27 21:38:49 UTC
 - 运行状态：成功
 - 本次总论文数：20
 - 精读区：9
 - 速读区：11
 
 ### 今日简报（AI）
-今日精选 20 篇多模态前沿进展，深度解析 MVLM 在零训练下的模态泛化与测试时域自适应（TTA）突破。
-满分研究证实了专家模型无需重训即可实现跨模态迁移，并提出通过超网络合并 LoRA 以强化少样本环境下的领域表现。
-建议重点关注多模态大模型在图像防伪与视觉导航中的鲁棒性提升，探索对抗微调等实战优化路径。
-- 详情：[/202607/26/README](/202607/26/README)
+今日精选20篇前沿成果，深度聚焦大模型驱动的领域自适应（Domain Adaptation）与多模态感知技术。
+满分论文DA-MergeLoRA与LFM通过超网络与基础模型，为少样本及无源场景下的领域迁移提供了突破性方案。
+建议优先研读LoRA合并与视觉导航相关文献，探索基础模型在提升系统鲁棒性与跨模态检索中的实战价值。
+- 详情：[/202607/27/README](/202607/27/README)
 
 ### 精读区论文标签
-1. [Can Experts Adapt Without Training? On Test-Time Modality Generalization in MVLMs](/202607/26/2607.16726v1-can-experts-adapt-without-training-on-test-time-modality-generalization-in-mvlms)  
+1. [DA-MergeLoRA: Hypernetwork-Based LoRA Merging for Few-Shot Test-Time Domain Adaptation](/202607/27/2607.17467v1-da-mergelora-hypernetwork-based-lora-merging-for-few-shot-test-time-domain-adaptation)  
    标签：评分：10.0/10、query:vlm-da
-   evidence：医学VLM中的测试时模态泛化与适配
-2. [DA-MergeLoRA: Hypernetwork-Based LoRA Merging for Few-Shot Test-Time Domain Adaptation](/202607/26/2607.17467v1-da-mergelora-hypernetwork-based-lora-merging-for-few-shot-test-time-domain-adaptation)  
+   evidence：在CLIP视觉编码器上使用LoRA微调进行少样本测试时领域自适应
+2. [LFM: Leveraging Foundation Models for Source-Free Universal Domain Adaptation](/202607/27/2607.17653v1-lfm-leveraging-foundation-models-for-source-free-universal-domain-adaptation)  
    标签：评分：10.0/10、query:vlm-da
-   evidence：CLIP中用于少样本测试时领域自适应的LoRA合并
-3. [LFM: Leveraging Foundation Models for Source-Free Universal Domain Adaptation](/202607/26/2607.17653v1-lfm-leveraging-foundation-models-for-source-free-universal-domain-adaptation)  
+   evidence：利用视觉语言模型（VLM）通过计算目标样本与标签之间的相似度来实现无源通用领域自适应。
+3. [Continual Video-MLLM Adaptation over Evolving Domains](/202607/27/2607.18716v1-continual-video-mllm-adaptation-over-evolving-domains)  
    标签：评分：10.0/10、query:vlm-da
-   evidence：使用视觉语言模型进行无源通用领域自适应
-4. [PRiSM: Prototype Regularization for Few-Shot VLMs](/202607/26/2607.17820v1-prism-prototype-regularization-for-few-shot-vlms)  
-   标签：评分：10.0/10、query:vlm-da
-   evidence：视觉语言模型（VLM）的少样本自适应方法
-5. [Continual Video-MLLM Adaptation over Evolving Domains](/202607/26/2607.18716v1-continual-video-mllm-adaptation-over-evolving-domains)  
-   标签：评分：10.0/10、query:vlm-da
-   evidence：使用参数高效框架在演进领域中进行持续视频MLLM自适应。
-6. [PRiSM: Prototype Regularization for Few-Shot VLMs](/202607/26/2607.17820v2-prism-prototype-regularization-for-few-shot-vlms)  
+   evidence：使用专家路由在演进领域中进行持续视频多模态大模型适配
+4. [PRiSM: Prototype Regularization for Few-Shot VLMs](/202607/27/2607.17820v1-prism-prototype-regularization-for-few-shot-vlms)  
    标签：评分：9.0/10、query:vlm-da
-   evidence：视觉语言模型（VLM）的少样本自适应方法，采用原型正则化。
-7. [DINO-VPT: Hierarchical Visual Prompt Tuning for Joint Physical-Digital Face Anti-Spoofing](/202607/26/2607.20900v1-dino-vpt-hierarchical-visual-prompt-tuning-for-joint-physical-digital-face-anti-spoofing)  
+   evidence：讨论了视觉语言模型（VLM）的免训练少样本自适应方法。
+5. [PRiSM: Prototype Regularization for Few-Shot VLMs](/202607/27/2607.17820v2-prism-prototype-regularization-for-few-shot-vlms)  
    标签：评分：9.0/10、query:vlm-da
-   evidence：用于VLM泛化的视觉提示微调
-8. [DINOde: Continuous Vision-Text Alignment for Open-Vocabulary Semantic Segmentation](/202607/26/2607.21371v1-dinode-continuous-vision-text-alignment-for-open-vocabulary-semantic-segmentation)  
+   evidence：视觉语言模型 (VLM) 的少样本自适应方法
+6. [Simple Domain Generalization for Strong Pixel-Level Image Tampering Detection in Modern VLMs](/202607/27/2607.18230v1-simple-domain-generalization-for-strong-pixel-level-image-tampering-detection-in-modern-vlms)  
    标签：评分：9.0/10、query:vlm-da
-   evidence：对齐视觉-文本嵌入以用于开放词汇任务
-9. [Towards Privacy-Preserving Federated Prompt Tuning under Data Heterogeneity: A Subspace-Decomposed Expert Approach](/202607/26/2607.21417v1-towards-privacy-preserving-federated-prompt-tuning-under-data-heterogeneity-a-subspace-decomposed-expert-approach)  
+   evidence：现代VLM中图像篡改检测的领域泛化
+7. [Towards Privacy-Preserving Federated Prompt Tuning under Data Heterogeneity: A Subspace-Decomposed Expert Approach](/202607/27/2607.21417v1-towards-privacy-preserving-federated-prompt-tuning-under-data-heterogeneity-a-subspace-decomposed-expert-approach)  
    标签：评分：9.0/10、query:vlm-da
-   evidence：数据异构下VLM协作适配的联邦提示微调
+   evidence：数据异构下VLM适配的联邦提示微调
+8. [UnDA: Unpaired Domain Alignment for Cross-Modal Knowledge Transfer in Medical Imaging](/202607/27/2607.21546v1-unda-unpaired-domain-alignment-for-cross-modal-knowledge-transfer-in-medical-imaging)  
+   标签：评分：9.0/10、query:vlm-da
+   evidence：用于跨模态知识迁移的非配对领域对齐
+9. [Rethinking Layer-Wise Information Allocation for Vision Foundation Model Adaptation](/202607/27/2607.21973v1-rethinking-layer-wise-information-allocation-for-vision-foundation-model-adaptation)  
+   标签：评分：9.0/10、query:vlm-da
+   evidence：视觉基础模型的提示适配与视觉提示微调
 
 ### 速读区论文标签
-1. [PGN: Design and Implementation of a Vision-Language Navigation System Based on Pangu Multimodal Foundation Model](/202607/26/2607.17806v1-pgn-design-and-implementation-of-a-vision-language-navigation-system-based-on-pangu-multimodal-foundation-model)  
+1. [PGN: Design and Implementation of a Vision-Language Navigation System Based on Pangu Multimodal Foundation Model](/202607/27/2607.17806v1-pgn-design-and-implementation-of-a-vision-language-navigation-system-based-on-pangu-multimodal-foundation-model)  
    标签：评分：8.0/10、query:vlm-da
-   evidence：将多模态大语言模型适配到视觉语言导航任务。
-2. [Simple Domain Generalization for Strong Pixel-Level Image Tampering Detection in Modern VLMs](/202607/26/2607.18230v1-simple-domain-generalization-for-strong-pixel-level-image-tampering-detection-in-modern-vlms)  
+   evidence：将多模态大语言模型应用于视觉语言导航任务
+2. [Dual Adversarial Fine-tuning for Enhancing Robustness of Large Vision Language Model](/202607/27/2607.18958v1-dual-adversarial-fine-tuning-for-enhancing-robustness-of-large-vision-language-model)  
    标签：评分：8.0/10、query:vlm-da
-   evidence：现代视觉语言模型中像素级图像篡改检测的领域泛化
-3. [Dual Adversarial Fine-tuning for Enhancing Robustness of Large Vision Language Model](/202607/26/2607.18958v1-dual-adversarial-fine-tuning-for-enhancing-robustness-of-large-vision-language-model)  
+   evidence：提出双对抗微调以增强大型视觉语言模型的鲁棒性。
+3. [Mitigating Modality and Language-Style Gaps for Zero-Shot Video Moment Retrieval](/202607/27/2607.19027v1-mitigating-modality-and-language-style-gaps-for-zero-shot-video-moment-retrieval)  
    标签：评分：8.0/10、query:vlm-da
-   evidence：针对LVLM的鲁棒性和跨任务泛化能力进行微调
-4. [Test-Time Training for Modality Order Consistency in Vision-Language Models](/202607/26/2607.20351v1-test-time-training-for-modality-order-consistency-in-vision-language-models)  
-   标签：评分：8.0/10、query:vlm-da
-   evidence：视觉语言模型的测试时训练以实现一致性
-5. [MultiLoReFT: Decoupling Shared and Modality-Specific Subspaces in Multimodal Learning via Low-Rank Representation Fine-Tuning](/202607/26/2607.16789v1-multiloreft-decoupling-shared-and-modality-specific-subspaces-in-multimodal-learning-via-low-rank-representation-fine-tuning)  
+   evidence：缓解预训练视觉语言模型中的模态间隙
+4. [Orthogonal Knowledge Refreshing for Domain-Incremental Object Detection](/202607/27/2607.17340v1-orthogonal-knowledge-refreshing-for-domain-incremental-object-detection)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：用于多模态学习适配的低秩表示微调
-6. [Orthogonal Knowledge Refreshing for Domain-Incremental Object Detection](/202607/26/2607.17340v1-orthogonal-knowledge-refreshing-for-domain-incremental-object-detection)  
+   evidence：使用参数高效微调进行域增量自适应
+5. [TimeLens2: Generalist Video Temporal Grounding with Multimodal LLMs](/202607/27/2607.17423v1-timelens2-generalist-video-temporal-grounding-with-multimodal-llms)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：使用参数高效微调进行领域增量自适应
-7. [TimeLens2: Generalist Video Temporal Grounding with Multimodal LLMs](/202607/26/2607.17423v1-timelens2-generalist-video-temporal-grounding-with-multimodal-llms)  
+   evidence：使用多模态大语言模型进行通用视频时序定位
+6. [One Model, Many Graphs: Learning over Attributed Graphs across Heterogeneous Modalities with Vision-Language Models](/202607/27/2607.19128v1-one-model-many-graphs-learning-over-attributed-graphs-across-heterogeneous-modalities-with-vision-language-models)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：跨领域的视频多模态大语言模型（MLLM）。
-8. [Token-Level Off-Policy Learning for Faithful Generation Under Distribution Shift](/202607/26/2607.17524v1-token-level-off-policy-learning-for-faithful-generation-under-distribution-shift)  
+   evidence：使用VLM作为骨干网络进行跨图泛化和模态自适应
+7. [Memory-Augmented Multimodal Large Language Models for Small Object Understanding in Streaming Aerial Videos](/202607/27/2607.19857v1-memory-augmented-multimodal-large-language-models-for-small-object-understanding-in-streaming-aerial-videos)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：分布偏移下的泛化能力
-9. [TopoTuner: Topological Finetuning of Large Language Models](/202607/26/2607.16637v1-topotuner-topological-finetuning-of-large-language-models)  
+   evidence：用于航空视频理解的多模态大语言模型 (MLLM)
+8. [Test-Time Training for Modality Order Consistency in Vision-Language Models](/202607/27/2607.20351v1-test-time-training-for-modality-order-consistency-in-vision-language-models)  
+   标签：评分：7.0/10、query:vlm-da
+   evidence：视觉语言模型的模态顺序一致性测试时训练
+9. [Searching for Task-Specific Vision Paths: Evolutionary Block Pruning Across Vision-Language Models](/202607/27/2607.17052v1-searching-for-task-specific-vision-paths-evolutionary-block-pruning-across-vision-language-models)  
    标签：评分：6.0/10、query:vlm-da
-   evidence：用于将模型适配到域外数据集的微调框架。
-10. [DARA: Degradation-Aware Low-Rank Residual Adaptation with Original-to-Corrupted Distillation for Corruption-Robust Animal Re-Identification](/202607/26/2607.16644v1-dara-degradation-aware-low-rank-residual-adaptation-with-original-to-corrupted-distillation-for-corruption-robust-animal-re-identification)  
+   evidence：VLM中视觉路径的特定任务适配
+10. [Selectivity Matters: Source Node Influence Pruning for Unsupervised Graph Domain Adaptation](/202607/27/2607.17668v1-selectivity-matters-source-node-influence-pruning-for-unsupervised-graph-domain-adaptation)  
    标签：评分：6.0/10、query:vlm-da
-   evidence：视觉退化适应与特征空间修复
-11. [Constraint-Anchored Reasoning Traces](/202607/26/2607.16727v1-constraint-anchored-reasoning-traces)  
+   evidence：无监督图域自适应技术
+11. [Learning to Detect Cross-Modal Negation: An Analysis of Latent Representations and an Attention-Based Solution](/202607/27/2607.17712v1-learning-to-detect-cross-modal-negation-an-analysis-of-latent-representations-and-an-attention-based-solution)  
    标签：评分：6.0/10、query:vlm-da
-   evidence：改进多模态大语言模型的推理能力
+   evidence：标准视觉语言模型 (VLM) 潜在表示的分析
 
 
 <div class="dpr-home-promo-card">

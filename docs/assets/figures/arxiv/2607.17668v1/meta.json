@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.17668v1/fig-001.webp",
+      "caption": "Fig. 1. Conceptual comparison between existing feature-level alignment methods and our proposed pruning approach. The red dashed ellipse highlights how structural outliers distort the shared feature space and cause negative transfer, which is mitigated by our selective source node utilization.",
+      "page": 1,
+      "index": 1,
+      "width": 420,
+      "height": 331
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17668v1/fig-002.webp",
+      "caption": "TABLE III OVERALL PERFORMANCE (MICRO-F1 / MACRO-F1) OF NODE CLASSIFICATION TASK ON SOCIAL NETWORKS.",
+      "page": 8,
+      "index": 2,
+      "width": 516,
+      "height": 429
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17668v1/fig-003.webp",
+      "caption": "TABLE II OVERALL PERFORMANCE (MICRO-F1 / MACRO-F1) OF NODE CLASSIFICATION TASK ACROSS SIX TRANSFER SCENARIOS ON CITATION NETWORKS.",
+      "page": 8,
+      "index": 3,
+      "width": 1070,
+      "height": 529
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17668v1/fig-004.webp",
+      "caption": "Fig. 3. Performance comparison curves between “Structural Pruning” and “Random Pruning” under different pruning ratios across the source (ACMv9) and target (DBLPv7) domains.",
+      "page": 4,
+      "index": 4,
+      "width": 520,
+      "height": 238
+    },
+    {
+      "url": "assets/figures/arxiv/2607.17668v1/fig-005.webp",
+      "caption": "TABLE IV ABLATION STUDY ON CROSS-NETWORK NODE CLASSIFICATION ACROSS SIX TRANSFER SCENARIOS WITHIN CITATION NETWORK DATASETS.",
+      "page": 9,
+      "index": 5,
+      "width": 1070,
+      "height": 182
+    }
+  ]
+}

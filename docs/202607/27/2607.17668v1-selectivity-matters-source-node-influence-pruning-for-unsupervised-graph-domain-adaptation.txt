@@ -1,0 +1,685 @@
+Title: Selectivity Matters: Source Node Influence Pruning for Unsupervised Graph Domain Adaptation
+
+URL Source: https://arxiv.org/pdf/2607.17668v1
+
+Published Time: Tue, 21 Jul 2026 01:36:32 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+> THIS WORK IS A PREPRINT AND HAS BEEN SUBMITTED FOR PEER REVIEW. 1
+
+# Selectivity Matters: Source Node Influence Pruning for Unsupervised Graph Domain Adaptation 
+
+Ridong Han, Member, IEEE, Yawen Shen, Zhongnian Li, Tongfeng Sun, Xinzheng Xu, and Abdulmotaleb El Saddik, Fellow, IEEE 
+
+Abstract —Unsupervised Graph Domain Adaptation (UGDA) aims to facilitate knowledge transfer from a labeled source graph to an unlabeled target graph by mitigating cross-domain distribu-tion shifts. Existing methods primarily focus on node-level feature alignment in latent spaces, relying on the implicit assumption that all source nodes contribute positively to the alignment. However, this assumption often fails because a node’s semantic information is intrinsically coupled with its topological graph structure. Due to structural shifts, source nodes with severe structural deviations (e.g., structural outliers) lack semantic counterparts in the target graph, and forcing alignment on them introduces severe noise and causes negative transfer. To bridge this gap, we argue that selective source node utilization is superior to full-graph training, thereby shifting the research paradigm from feature-level alignment to data-level refinement. To this end, we propose Source Node Influence Pruning (SNIP), a novel model-agnostic, data-centric refinement framework. Specifically, SNIP quantifies the structural discrepancy between individual source nodes and the target domain by integrating multiple centrality measures, assigning each source node an influence score. A rank-based normalization mechanism is further employed to eliminate scale variations across different measures, allowing SNIP to effectively identify and filter out structurally incompatible nodes with low influence scores. As a plug-and-play method, SNIP constructs a refined “sub-source” graph that is inherently more beneficial for subsequent alignment. Comprehensive experiments across eight transfer scenarios on five real-world datasets demonstrate that SNIP consistently outperforms competitive baselines and significantly enhances adaptation performance, validating the superiority of selective node utilization over full-graph training. The code is available at https://github.com/RidongHan/SNIP. 
+
+Index Terms —Unsupervised Graph Domain Adaptation, Data-Centric Refinement, Source Node Pruning, Negative Transfer 
+
+I. I NTRODUCTION 
+
+# THE widespread adoption of Graph Neural Networks (GNNs) [1], [2] in social network analysis, bioinfor-matics, and recommender systems has highlighted the ne-cessity of addressing distributional discrepancies in graph-structured data. These discrepancies, arising from varying data acquisition protocols or evolving topological structures, 
+
+Ridong Han, Yawen Shen, Zhongnian Li, Tongfeng Sun, and Xinzheng Xu are with the School of Computer Science and Technology / School of Artificial Intelligence, China University of Mining and Technology, Xuzhou 221116, China, and with the Mine Digitization Engineering Research Center of the Ministry of Education, Xuzhou 221116, China, and also with the Jiangsu Provincial Industrial Technology Engineering Center for Intelligent Sensing and Emergency IoT in Underground Space, Xuzhou 221116, China (e-mails: 
+
+{hanrd, ts24170117p31, zhongnianli, suntf, xxzheng }@cumt.edu.cn). Abdulmotaleb El Saddik is with the School of Electrical Engineering and Computer Science, University of Ottawa, Ottawa, Ontario KiN5N6, Canada (email: elsaddik@uottawa.ca). Corresponding author: Xinzheng Xu (e-mail: xxzheng@cumt.edu.cn). (a) Existing methods (b) Our proposed method 
+
+Target Graph Source Graph 
+
+Shar ed 
+
+Encoder 
+
+Alignment 
+
+Component 
+
+Alignment 
+
+Component 
+
+Shared 
+
+Encoder 
+
+Target Graph Source Graph 
+
+Fig. 1. Conceptual comparison between existing feature-level alignment methods and our proposed pruning approach. The red dashed ellipse highlights how structural outliers distort the shared feature space and cause negative transfer, which is mitigated by our selective source node utilization. 
+
+severely degrade model generalization. Unsupervised Graph Domain Adaptation (UGDA) [3], [4] aims to mitigate these distributional shifts, facilitating knowledge transfer from a labeled source graph to an unlabeled target graph. Existing UGDA methods primarily focus on feature-level alignment in latent spaces, typically employing regularization techniques such as Maximum Mean Discrepancy (MMD) [5], graph subtree discrepancy [6], or adversarial learning [7] to enforce cross-domain consistency. While effective at mitigating feature-level shifts, these methods fundamentally rely on the implicit assumption that all source nodes contribute positively to cross-domain knowledge transfer , which is often invalid in practice. By treating the source graph as a whole, these methods attempt to force a global alignment with the target domain. However, in graph-structured data, a node’s semantic information is intrinsically coupled with its topo-logical structure. Due to pronounced structural shifts, source nodes exhibiting extreme topological properties, such as highly central hubs or structural outliers, often lack corresponding semantic counterparts in the target domain. Consequently, forcing the alignment on these structurally incompatible nodes inevitably injects significant noise, thereby distorting cross-domain representations and exacerbating negative transfer. As illustrated in Fig. 1, existing feature-level alignment methods typically utilize the entire source graph for alignment, which are highly vulnerable to the structurally incompatible nodes. For instance, outlier nodes in the feature space (circled in red dashed ellipse) can easily disturb the alignment process arXiv:2607.17668v1 [cs.LG] 20 Jul 2026 THIS WORK IS A PREPRINT AND HAS BEEN SUBMITTED FOR PEER REVIEW. 2
+
+and cause the shared encoder to learn distorted representations for the target domain, degrading adaptation performance. In contrast, we argue that a “clean” source domain is a funda-mental prerequisite for effective adaptation. In other words, 
+
+selective source node utilization is superior to full-graph training . Guided by this philosophy, our goal is to identify and prune source nodes that are topologically incompatible with the target structure, thereby establishing a robust foundation for subsequent feature-based alignment. To this end, we shift the research paradigm from conven-tional feature-level alignment to data-level refinement , moving from the question of “ how to align ” to “ what to align ”. In this paper, we propose a novel data-centric refinement strategy named Source Node Influence Pruning (SNIP). Instead of in-discriminately utilizing all source nodes, SNIP actively filters out structural noise by leveraging the target domain’s global topological statistics as a reference benchmark. To achieve this, SNIP first quantifies the structural discrepancy between individual source nodes and the target domain to compute node influence scores, by integrating multi-dimensional centrality measures such as degree centrality and betweenness centrality. To mitigate the intrinsic scale variations among multiple centrality measures, a rank-based normalization mechanism is introduced, which converts the absolute values of each centrality measure into their corresponding relative percentile ranks within the source graph, thereby mapping diverse cen-trality measures into a uniform, non-parametric ordinal scale. Subsequently, SNIP ranks all source nodes based on their calibrated influence scores (i.e., the scores processed via the rank-based normalization mechanism), and filters out struc-turally incompatible source nodes with low influence scores. This process effectively eliminates source nodes that diverge significantly from the target domain’s profile, constructing a refined “sub-source” graph that is inherently more beneficial to cross-domain alignment. Notably, since SNIP operates only at the data level and remains entirely model-agnostic, it can serve as a seam-less, plug-and-play module for any existing UGDA method. We conduct extensive experiments using multiple backbone models on five real-world datasets, comprising three citation networks (i.e., ACMv9, Citationv1, and DBLPv7) and two Twitch gamer networks (i.e., Germany and England). Results demonstrate that SNIP consistently outperforms competitive baselines, significantly enhancing adaptation performance. In particular, across six transfer scenarios on three citation net-works, SNIP improves AdaGCN by an average of 3.01% in Micro F1 and 4.62% in Macro F1, while achieving gains of 1.32% and 2.23% with A2GNN, respectively. Subsequently, ablation studies confirm the necessity and effectiveness of each component within SNIP. Furthermore, sensitivity analyses val-idate that SNIP maintains high robustness across a wide range of hyper-parameters, while embedding visualizations offer direct qualitative evidence that our data-centric refinement effectively mitigates representation distortion and eliminates negative transfer. Our contributions are summarized as follows:  
+
+> •
+
+Data-Centric Refinement : We challenge the conven-tional “align-all” paradigm, and propose an active source domain refinement framework. By identifying and prun-ing structural outliers, as a primary source of negative knowledge transfer, we shift the focus from “how to align” to “what to align”.  
+
+> •
+
+Plug-and-Play Method : We introduce a lightweight pruning strategy named SNIP, which can be seamlessly integrated into existing baselines to enhance their perfor-mance with minimal computational overhead.  
+
+> •
+
+Empirical Validation : Extensive experiments on five public datasets demonstrate that pruning a calculated pro-portion of structurally incompatible source nodes yields significant improvements, thereby confirming the neces-sity of structural filtering in graph domain adaptation. II. R ELATED WORK 
+
+Unsupervised Graph Domain Adaptation . With the wide application of graph neural networks, Unsupervised Graph Domain Adaptation (UGDA) has become a key technol-ogy for addressing cross-domain distribution shifts in graph-structured data. The field has evolved from basic feature alignment to more sophisticated structural integration and theory-driven frameworks. Early studies primarily focused on learning domain-invariant node representations. UDAGCN [8] introduced adversarial training to align node-level represen-tations across domains, while ACDNE [9] used dual-stream feature extractors to jointly capture node attributes and local topological properties. ASN [10] further employed adversarial separation networks to extract domain-invariant features. Subsequent studies increasingly emphasized the role of graph structure in domain adaptation. JHGDA [11] explored the impact of graph hierarchy on class-conditional distribu-tions, and GRADE [6] derived generalization error bounds based on the Weisfeiler-Lehman operator and used them to guide subtree-level alignment. More recent studies have further explored how graph propagation, structural proper-ties, and target-domain representations affect cross-domain generalization. A2GNN [12] demonstrated the effectiveness of asymmetric message propagation in the source and target domains. PairAlign [13] decoupled the alignment of structural and label shifts. TDSS [14] improved target-side smooth-ness through Laplacian smoothing and neighborhood sam-pling, thereby reducing structural discrepancies. TASSC [15] integrated topological and semantic consistency to enhance target representation learning, while DAGNN [16] extended asymmetric graph adaptation [12] by disentangling domain-invariant and domain-specific representations and introducing topology-aware distribution alignment. In addition to these model-centric approaches, GraphAlign [17] explored data-centric UGDA by generating a completely new, compact, and transferable graph. Following the principles of distribution alignment and graph rescaling, It jointly optimizes the features and topology of the generated graph to reduce its discrepancy from the target graph, while preserving source-domain knowl-edge through gradient matching and graph regularization. Despite these advances, existing methods generally treat source nodes as equally transferable and therefore overlook the heterogeneous contributions of individual source nodes to cross-domain transfer. To fill this gap, we propose SNIP, THIS WORK IS A PREPRINT AND HAS BEEN SUBMITTED FOR PEER REVIEW. 3
+
+a source node influence pruning framework that evaluates node-level structural compatibility and removes source nodes that are structurally incompatible with the target domain. Unlike GraphAlign [17], which synthesizes a new graph by jointly optimizing its features and structure, SNIP preserves authentic source-domain data and selectively retains a subset of source nodes together with their topology. By explicitly quantifying the structural compatibility of individual source nodes, SNIP provides a lightweight, interpretable, model-agnostic, and plug-and-play data refinement strategy rather than a graph generation or condensation method. 
+
+Node Centrality . Node centrality [18] is a key metric in network science used to quantify the importance of nodes in complex networks. Common indicators, such as degree [19], betweenness [20], closeness [21], and eigenvector [22] cen-trality, describe a node’s structural influence across multiple dimensions, ranging from local connectivity to global path dependence. In Graph Neural Networks (GNNs), centrality metrics is commonly used for positional encoding and enhanc-ing attention mechanisms [23]. However, this study adopts a distinct approach: rather than merely utilizing centrality to identify key nodes for representation enhancement, we treat it as a structural distribution detector. By measuring the structural discrepancy between source nodes from the average structural characteristics of the target domain, we quantify the transfer difficulty of nodes in the structural dimension. This provides a theoretical basis for subsequent pruning strategies. 
+
+Graph Pruning . Graph pruning [24] has traditionally been used to reduce computational complexity and eliminate ran-dom noise. Advances in graph augmentation techniques have led to methods like DropEdge and graph sparsification [25], which effectively mitigate over-smoothing and enhance model generalization. However, existing pruning schemes primarily rely on random dropping or simple attention-based weights. These methods are developed without considering domain shift. This oversight may result in the pruning of nodes es-sential for cross-domain alignment and the retention of nodes that impede the domain adaptation. By introducing a rank-based normalization mechanism to integrate multi-dimensional structural metrics, we selectively remove source nodes that exacerbate the domain gap. Consequently, this approach pro-motes more robust structural-level alignment across domains. III. P RELIMINARIES 
+
+Notations. Let G = ( V, E) denotes an undirected, unweighted graph comprising n = |V| nodes and m = |E| edges, where 
+
+V and E represent the node set and edge set, respectively. We present the graph data as a tuple G = ( A, X, Y). Specifically, 
+
+A ∈ Rn×n denotes the symmetric adjacency matrix, where 
+
+Ai,j = 1 if an edge ei,j ∈ E exists between node vi and 
+
+vj , and Ai,j = 0 otherwise. Furthermore, the node attribute matrix is denoted by X = [ x1, x 2, · · · , x n]T ∈ Rn×d, where 
+
+xv ∈ Rd represents the feature vector of node v ∈ V,and d represents the feature dimension. Analogously, Y =[y1, y 2, · · · , y n]T ∈ Rn×C denotes the ground-truth label matrix, with C representing the total number of categories. 1 2 3 4 5 
+
+> Log of Node Degree (log(d+1))
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> Probability Density  Source: ACMv9
+> Target: DBLPv7
+> Fig. 2. Kernel Density Estimation (KDE) curves of log-transformed node degree distributions across source (ACMv9) and target (DBLPv7) domains.
+
+Problem Definition. Unsupervised Graph Domain Adapta-tion (UGDA) facilitates knowledge transfer from a labeled source graph Gs = (As, Xs, Ys) to an unlabeled target graph Gt = ( At, Xt). This paradigm typically operates under the generalized covariate shift assumption [26], [27]: both graphs follow different feature distributions yet share the same conditional distribution of labels, i.e., Ps(Xs)̸ = Pt(Xt) and 
+
+Ps(Ys|Xs) = Pt(Yt|Xt). Given that ground-truth labels are accessible solely for the source graph Gs, the ultimate objective of UGDA is to collaboratively leverage both Gs
+
+and Gt to train a robust graph neural network. By effectively mitigating cross-domain distribution shifts, this network is expected to yield high-fidelity node representations, thereby accurately predicting labels Yt for the target graph Gt.IV. M ETHODOLOGY 
+
+This section begins with empirical and statistical analyses substantiating our motivation. Guided by the insights obtained, we introduce a data-centric refinement framework termed Source Node Influence Pruning (SNIP). Finally, we provide a theoretical analysis of the proposed approach. 
+
+A. Empirical Analysis 
+
+Observation 1: Significant Cross-Domain Distributional Shifts. We investigate cross-domain differences by visualizing the topological properties of the source (ACMv9) and target (DBLPv7) domains. Fig. 2 illustrates the Kernel Density Estimation (KDE) curves of log-transformed node degrees. It is observable that the curves of ACMv9 and DBLPv7 exhibit significant deviations in peak positions and overall distribution shapes , reflecting significant distributional shifts between domains. Even assuming perfect feature alignment, such structural mismatches persist. Enforcing alignment on nodes with deviant structures, such as outliers with extreme degrees, can induce negative transfer. Consequently, selective source node utilization is essential to retain only source nodes structurally compatible with the target domain. 
+
+Observation 2: Negative Transfer Caused by Structurally Incompatible Nodes. To validate the hypothesis that selective source node utilization is critical, we conduct a preliminary ex-periment utilizing Degree Centrality as the structural measure to prune a specified proportion of source nodes that exhibit significant discrepancies with the target domain, a strategy THIS WORK IS A PREPRINT AND HAS BEEN SUBMITTED FOR PEER REVIEW. 473               
+
+> 74
+> 75
+> 76
+> 77
+> 78
+> 010 20 30 40 50 60
+> Macro -F1
+> Pruning Ratio (%)
+> Structural Pruning
+> Random Pruning 74
+> 75
+> 76
+> 77
+> 78
+> 79
+> 80
+> 010 20 30 40 50 60
+> Micro -F1
+> Pruning Ratio (%)
+> Structural Pruning
+> Random Pruning
+> Fig. 3. Performance comparison curves between “Structural Pruning” and “Random Pruning” under different pruning ratios across the source (ACMv9) and target (DBLPv7) domains.
+
+referred to as “Structural Pruning”. Specific model details and experimental settings are provided in Section V-A. We com-pare “Structural Pruning” against “Random Pruning” under various pruning ratios across the source (ACMv9) and target (DBLPv7) domains, as illustrated in Fig. 3. Random pruning exhibits performance decay as the pruning ratio increases, reflecting the indiscriminate removal of essential structural information. Conversely, structural pruning demonstrates an initial performance improvement followed by a decline and yields improved Micro-F1 and Macro-F1 scores, reflecting the negative transfer phenomenon caused by structurally incom-patible nodes . Although pruning inevitably sacrifices some structural information, the above results indicate that the benefits of filtering structural noise outweigh the loss of raw topological structure. These findings empirically support the premise that selective source node utilization is superior to full-graph training. Identifying and filtering out structurally incompatible source nodes significantly improves graph adap-tation performance in the target domain. 
+
+B. Source Node Influence Pruning Framework 
+
+The aforementioned empirical analysis presents the sig-nificant cross-domain distributional shifts and highlight the motivation and necessity of selective source node utiliza-tion. Building upon these insights, we propose Source Node 
+
+Influence Pruning ( SNIP ), a lightweight, data-centric pruning strategy explicitly designed to filter out source nodes that are structurally incompatible with the target domain. By dis-carding these noisy nodes, SNIP prevents negative knowledge transfer effectively. As illustrated in Fig. 4, SNIP comprises three stages: (1) Node Influence Measurement , which quan-tifies the structural discrepancy between individual source nodes and the target domain to assign node influence scores, using multi-dimensional centrality measures; (2) Rank-based Normalization , which is a robust normalization mechanism to mitigate scale variation across multiple centrality measures; (3) 
+
+Structure Pruning , which dynamically removes outlier nodes to mitigate negative knowledge transfer. The refined source graph is then utilized to train the GNN encoder, ensuring the model focuses on transferable structural patterns. The following parts detail the above three stages, along with specific implementation and optimization settings. Source Graph    
+
+> Target Graph
+> Node
+> Influence
+> Measurement
+> Rank-based
+> Normalization
+> New Source Graph
+> Target Graph
+> Alignment
+> Component
+> Encoder
+> Node
+> Node
+> Node
+> …
+> 1
+> 2
+> n
+> Score
+> Structure
+> Pruning
+> ... PPPT
+> Fig. 4. The overall pipeline of Source Node Influence Pruning (SNIP) framework. It filters out structurally incompatible source nodes through three cascaded steps, i.e., Node Influence Measurement, Rank-based Normalization, and Structure Pruning, and then feeds the refined source graph into the encoder and alignment component for transferable feature learning.
+
+Node Influence Measurement. To filter out source nodes that are structurally incompatible with the target domain, we employ node influence scores as the primary pruning criterion. Consequently, the accurate measurement of node influence is critical. To this end, we characterize node topological information via four complementary perspectives of centrality: 
+
+Degree (d), Betweenness (b), Closeness (c), and Eigenvector (e). By integrating these measures, we are able to capture diverse structural attributes, ranging from local connectivity and rout-ing bottlenecks to global accessibility and influential neigh-borhoods. Since these measures represent well-established foundational concepts in graph theory and complex network analysis, we omit their standard definitions here to maintain brevity. Further details are provided in Section V-A. Given source graph Gs = ( Vs, Es) and target graph Gt =(Vt, Et), we first compute the four centrality metrics for all nodes of both graphs. Subsequently, we derive the global mean value for each centrality i ∈ {d, b, c, e } within the target domain Gt. Let ¯Cti denotes this global mean, defined as: 
+
+¯Cti = 1
+
+|V t|
+
+X
+
+> vt∈V t
+
+Cti (vt), (1) where Cti (vt) denotes the value of centrality i for target node vt, and |V t| is the number of target nodes. Then, we quantify the cross-domain structural discrepancy ∆Ci(v) for each source node v ∈ V s, defined as: 
+
+∆Csi (v) = |Csi (v) − ¯Cti |, (2) where Csi (v) denotes the value of centrality i for source node 
+
+v, and “ | · | ” represents taking the absolute value. Intuitively, the higher the value of structural discrepancy 
+
+∆Csi (v) for source node v, the lower its node influence. Source nodes with high ∆Csi values may be identified as structural outliers incompatible with the target domain’s topology, which are more likely to induce negative transfer, as their neighbor-hood structures differ fundamentally from those in the target domain. Therefore, the node influence score of centrality i for source node v can be defined as: 
+
+Ssi (v) = 1∆Csi (v) , (3) Although computing certain global measures (e.g., between-ness centrality) may be time-consuming in the worst case, they are executed only once as a one-off offline pre-processing step, THIS WORK IS A PREPRINT AND HAS BEEN SUBMITTED FOR PEER REVIEW. 5
+
+introducing zero overhead to the training phase. Furthermore, the indicators are flexible, for large-scale graphs, computa-tionally intensive indicators can be seamlessly replaced with highly efficient, linear-time measures to guarantee scalability. 
+
+Rank-based Normalization. Directly aggregating four raw node influence scores is problematic due to the vastly different scales of centrality metrics (e.g., degree is often an integer while betweenness is a small fraction). To ensure numerical robustness, we employ a Rank-based Normalization (RN) mechanism. For each centrality type i, all source nodes are first sorted by ascending order based on their difference node influence scores Ssi (v). Then, we can map these node influence scores into a normalized interval [0 , 1] , defined as: 
+
+ˆRi(v) = Ri(v) − 1
+
+|V s| − 1 , (4) where Ri(v) ∈ { 1, . . . , |V s|} denotes the rank of node v in terms of centrality i, and ˆRi(v) can serve as the new node influence score of centrality i for source node v.
+
+Structure Pruning. To comprehensively utilize the above four centrality metrics, the final node influence score is defined as the weighted sum of all normalized centrality ranks: 
+
+S(v) = X
+
+> i∈{ d,b,c,e }
+
+wi · ˆRi(v), (5) where wi is the weight coefficient for centrality i. A higher 
+
+S(v) indicates that node v exhibits a topological pattern more similar to the target domain. All nodes in Vs are sorted in descending order of S(v) scores. According to a predefined pruning ratio r, the last ⌊r · |V s|⌋ nodes in the sorted sequence are removed from the source graph. This adaptive pruning process refines the source domain by retaining only those nodes that are structurally compatible with the target domain, thereby facilitating more effective domain adaptation. The overall process of SNIP is shown in Algorithm 1. Since our SNIP operates only at the data level, it remains entirely model-agnostic, and can serve as a plug-and-play module for any existing baseline models, such as, AdaGCN [28], A2GNN [12], etc. Taking the A2GNN backbone as an example, the overall objective based on Maximum Mean Discrepancy (MMD) [29] can be formulated as follows: 
+
+Ltotal = Lcls + α · L mmd , (6) where Lcls represents the cross-entropy loss for node classifi-cation on source graph, and Lmmd focuses on minimizing the distribution discrepancy between source and target features. The hyper-parameter α balances the trade-off between classi-fication accuracy and domain alignment. 
+
+C. Theoretical Analysis 
+
+In this subsection, we theoretically analyze how the Source Node Influence Pruning strategy affects the target-domain gen-eralization bound. We first revisit the graph domain adaptation bound adopted in prior studies [30], [31]. We then compare the complete target-risk upper bounds before and after source-node pruning and derive a sufficient condition under which SNIP strictly tightens the risk bound. 
+
+Algorithm 1 Source Node Influence Pruning 
+
+Input : Source graph Gs = (Vs, Es), Target graph Gt =(Vt, Et), weight coefficients {wd, w b, w c, w e} for different centrality metrics, and pruning ratio r.
+
+Output : Set of nodes to be removed Vprune . 
+
+> 1:
+
+For source graph Gs, compute node-level centrality scores: Degree Csd (v), Betweenness Csb (v), Closeness Csc (v), and Eigenvector Cse (v) for each node v ∈ V s. 
+
+> 2:
+
+For target graph Gt, compute the global mean centrality values: ¯Ctd, ¯Ctb , ¯Ctc, ¯Cte. 
+
+> 3:
+
+For each node v ∈ V s and each metric i ∈ { d, b, c, e }, cal-culate the structural discrepancy from the target domain: 
+
+∆Csi (v) = |Csi (v)− ¯Cti |, deriving the node influence score 
+
+Ssi (v) = 1∆Csi (v) . 
+
+> 4:
+
+for each metric i ∈ { d, b, c, e } do  
+
+> 5:
+
+Generate ranks Ri(v) for all Ssi (v) in ascending order.  
+
+> 6:
+
+Normalize the ranks to the range [0 , 1] :
+
+ˆRi(v) = Ri(v)−1 
+
+> |V s|− 1
+
+. 
+
+> 7:
+
+end for  
+
+> 8:
+
+For each node v ∈ V s, calculate the final node influence score S(v) using the predefined weights: 
+
+S(v) = wd · ˆRd(v) + wb · ˆRb(v) + wc · ˆRc(v) + we · ˆRe(v). 
+
+> 9:
+
+Sort all nodes v ∈ V s in descending order based on S(v). 
+
+> 10:
+
+Determine the number of source nodes to be pruned: 
+
+Nremove = ⌊r · |V s|⌋ . 
+
+> 11:
+
+Identify Vprune as the last Nremove nodes in the sorted list (nodes with the lowest influence scores).  
+
+> 12:
+
+return Vprune .
+
+Theorem 1. Let f and c denote the feature extractor and classifier, respectively, and let h = c ◦ f ∈ H be a graph neural network hypothesis, where H is the hypothesis space of GNNs. Suppose that f and c are Kf - and Kc-Lipschitz continuous, where Kf and Kc are Lipschitz constants. Then, with probability at least 1 − δ, the target domain risk ϵt(h, ˆh)
+
+satisfies the following inequality [30], [31]: 
+
+ϵt(h, ˆh) ≤ bϵs(h, ˆh) + 2 Kf KcW1
+
+ Ps, Pt
+
+
+
++ R (ns, d, δ ) + ω, (7) where bϵs(h, ˆh) denotes the empirical source-domain risk, ˆh is the labeling function, W1(Ps, Pt) is the 1-Wasserstein distance between source- and target domain distributions, and 
+
+R(ns, d, δ ) = 
+
+s
+
+4dns
+
+log 
+
+ en s
+
+d
+
+
+
++ 1
+
+ns
+
+log 
+
+ 1
+
+δ
+
+
+
+(8) is the finite-sample complexity term. Here ns is the number of source nodes, d is the pseudo-dimension of the hypothesis, and ω is the joint error of the ideal hypothesis. Theorem 1 indicates that reducing the source-target dis-crepancy (i.e., W1(Ps, Pt)) can tighten the target-risk upper bound. However, discrepancy reduction alone is insufficient to establish the theoretical benefit of our Source Node Influence Pruning. Pruning also reduces the effective source sample size and may change the empirical source risk, the complexity term and the ideal joint error. Therefore, the complete upper bounds before and after pruning must be compared. THIS WORK IS A PREPRINT AND HAS BEEN SUBMITTED FOR PEER REVIEW. 6
+
+By filtering out k structural anomalies Vprune ⊆ V s, SNIP yields a sub-source graph Gs 
+
+> sub
+
+= Gs \V prune with n′ 
+
+> s
+
+= ns −k
+
+retained nodes. Let P′ 
+
+> s
+
+denote the corresponding distribution induced by Gs
+
+> sub
+
+. Applying Theorem 1 to the full source graph gives the upper bound 
+
+Bfull = bϵs(hfull , ˆh) + 2 Kfull  
+
+> f
+
+Kfull  
+
+> c
+
+W1(Ps, Pt)+ R(ns, d, δ ) + ωfull , (9) whereas applying it to the retained sub-source graph gives 
+
+Bsub = bϵ′
+
+> s
+
+(hsub , ˆh) + 2 Ksub  
+
+> f
+
+Ksub  
+
+> c
+
+W1(P′
+
+> s
+
+, Pt)+ R(n′
+
+> s
+
+, d, δ ) + ωsub . (10) We define the reduction in the discrepancy-related term as the alignemnt gain :
+
+Talign = 2 
+
+h
+
+Kfull  
+
+> f
+
+Kfull  
+
+> c
+
+W1(Ps, Pt)
+
+− Ksub  
+
+> f
+
+Ksub  
+
+> c
+
+W1(P′
+
+> s
+
+, Pt)
+
+i
+
+.
+
+(11) The remaining changes are defined as the pruning cost term: 
+
+Tprune = bϵ′
+
+> s
+
+(hsub , ˆh) − bϵs(hfull , ˆh)+ R(n′
+
+> s
+
+, d, δ ) − R (ns, d, δ )+ ωsub − ωfull .
+
+(12) The pruning cost accounts for the changes in empirical source risk, finite-sample complexity, and ideal joint error. In partic-ular, because n′ 
+
+> s
+
+< n s, pruning generally increases the finite-sample complexity term R(·, d, δ ).
+
+Proposition 1. Our Source Node Influence Pruning strategy strictly tightens the target-risk upper bound if 
+
+Talign > Tprune . (13) 
+
+Proof. Subtracting Eq. (9) from Eq. (10) yields 
+
+Bsub − B full = Tprune − T align . (14) Therefore, Talign > Tprune implies Bsub < Bfull . □
+
+Proposition 1 shows that our source-node pruning strategy does not unconditionally improve the generalization bound. Instead, the alignment gain induced by pruning must compen-sate for the finite-sample complexity penalty and the potential changes in the empirical source risk and ideal joint error. We next relate this sufficient condition in Proposition 1 to the node-selection mechanism of SNIP. According to Eqs. 2 and 3 in Section IV-B, the influence score Ssi (v) of each source node v is defined as a monotonically decreasing function of its cross-domain structural discrepancy ∆Ci(v). Consequently, source nodes that are structurally closer to the target domain receive higher influence scores, whereas source nodes with larger structural discrepancies receive lower scores. Our SNIP ranks the source nodes in descending order of their influence scores and prunes a predefined proportion of nodes from the end of the ranking. Since the influence score decreases monotonically with the structural discrepancy, this procedure is equivalent to preferentially pruning source nodes with the largest structural discrepancies across domains, Therefore, under a fixed pruning ratio, SNIP is designed to promote a positive discrepancy reduction and thereby increase the alignment gain Talign as much as possible. For a simplified interpretation, suppose that the models be-fore and after pruning share the same Lipschitz constant upper bounds Kf and Kc, and that pruning introduces negligible changes in the empirical source risk and the ideal joint error. A sufficient condition to tighten the target-risk upper bound is 
+
+2Kf Kc
+
+W1(Ps, Pt) − W1(P′
+
+> s
+
+, Pt)
+
+> R(n′
+
+> s
+
+, d, δ ) − R (ns, d, δ ). (15) This provides a direct interpretation of our SNIP strat-egy: source-node pruning is beneficial when the reduction in the source-target discrepancy outweighs the finite-sample penalty caused by the reduced source node size. This result also explains why an appropriate pruning ratio is necessary. For detailed results, see Fig. 3 in Section IV-A and Fig. 6 in Section V-D. Insufficient pruning may retain structurally incompatible source nodes, whereas excessive pruning may discard informative nodes and introduce a pruning cost that exceeds the attainable alignment gain. V. E XPERIMENTS AND RESULTS 
+
+In this section, we first outline the experimental settings, followed by a comprehensive comparison between our method and all baseline models on the cross-network node classi-fication task. Next, we conduct an ablation study to inves-tigate the contribution of each component within our SNIP framework, along with sensitivity analyses regarding its key hyper-parameters. Lastly, we present t-SNE visualizations to illustrate the representations learned by our SNIP method. 
+
+A. Experimental Settings 
+
+Datasets. We evaluate the performance of our SNIP method on five real-world datasets, including three citation networks from ArnetMiner [32] 1: ACMv9 (A), Citationv1 (C), and DBLPv7 (D), alongside two social networks from the Twitch gamer networks [33] 2: Germany (DE) and England (EN). In the citation datasets, nodes represent academic papers and edges indicate citation relationships, whereas in the social networks, nodes and edges constitute users and their social connections, respectively. The detailed statistical properties of these datasets are summarized in Table I. Specifically, we construct six cross-domain adaptation scenarios on the citation networks, including A →C, A →D, C →A, C →D, D →A, and D →C, as well as two cross-domain adaptation scenarios on the social networks: DE →EN and EN →DE. 
+
+Baselines. To comprehensively evaluate the performance of our SNIP framework, we compare it against a wide range of state-of-the-art baselines, which can be broadly categorized into three representative groups: (1) Hypothesis transfer methods based on unsupervised graph representation learning, including DeepWalk [34], node2vec [35], and ANRL [36]. These methods typically learn node embeddings in an unsupervised manner based solely                      
+
+> 1https://github.com/yuntaodu/ASN/tree/main/data
+> 2https://snap.stanford.edu/data/twitch-social-networks.html THIS WORK IS A PREPRINT AND HAS BEEN SUBMITTED FOR PEER REVIEW. 7
+> TABLE I DETAILED STATISTICAL PROPERTIES OF THE CITATION AND SOCIAL NETWORK DATASETS .Types Datasets #Node #Edge #Feat #Label ACMv9 9,360 15,556 6,775 5Citation Networks Citationv1 8,935 15,098 DBLPv7 5,484 8,117 Social Networks Germany 9,498 153,138 3,170 2England 7,126 35,324
+
+on graph topology or node attributes, and directly apply the classifiers trained on the source domain to evaluate target node representations without explicitly handling domain shifts; (2) Source-only GNN-based methods, including GAT [37], GSAGE [38], SGC [39], GIN [40] and GCN [1]. These models are trained in a supervised manner on the source graph and then directly applied to the target graph for inference; (3) Graph domain adaptation methods, including CDNE [5], AdaGCN [28], ACDNE [9], UDAGCN [8], ASN [10], GRADE [6], StruRW [41], SpecReg [31], PairAlign [13], A2GNN [12], TDSS [14], TASSC [15], and DAGNN [16]. These methods employ adversarial training, structural rewiring, or spectral regularization to align two graphs, repre-senting the most competitive baselines. 
+
+Implementation Details. We train our proposed SNIP model using the pruned source nodes alongside all target nodes, while model evaluation is conducted exclusively on the target-domain nodes. Specifically, SNIP is implemented based on the PyTorch framework [42] and optimized using the Adam optimizer over a maximum of 250 epochs. To prevent over-fitting, we implement an early stopping mechanism. For the model architecture, we adopt AdaGCN [28] and A2GNN [12] as our default backbone networks. All of them use the official standard configurations, and A2GNN leverages aGaussian kernel to compute the Maximum Mean Discrep-ancy (MMD) [29] for cross-domain alignment. To identify the optimal configuration, a comprehensive grid search is performed over two primary sets of hyper-parameters: the node pruning ratio r ∈ {10% , 15% , 20% , 25% }, and the trade-off coefficients {wd, w b, w c, w e} for the joint centrality metrics in Eq. 5, which are thoroughly sampled from the list 
+
+[0 , 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] . All subsequent experiments are deployed on a single NVIDIA GeForce RTX 3090 GPU. We report both Micro-F1 and Macro-F1 scores, averaged over three independent runs with distinct random seeds to ensure statistical stability. 
+
+Definitions of Influence Measurement Indicators. Since our SNIP framework computes node influence scores based on multiple structural indicators, we briefly introduce the candidate structural indicators considered in this paper below:  
+
+> •
+
+Degree Centrality indicates the direct connectivity of a node in the graph, measured by the number of edges directly connected to the node.  
+
+> •
+
+Betweenness Centrality indicates the extent to which a node serves as a bridge or intermediary between other nodes, measured by the number or proportion of shortest paths between node pairs that pass through the node.  
+
+> •
+
+Closeness Centrality indicates how efficiently a node can reach all other nodes in the graph, measured by the reciprocal of the average shortest-path distance from the node to all other reachable nodes.  
+
+> •
+
+Eigenvector Centrality indicates the influence of a node by considering not only its connections but also the importance of its connected neighbors, measured by the corresponding value of the node in the principal eigen-vector of the adjacency matrix.  
+
+> •
+
+PageRank indicates the global importance of a node under a random-walk-based propagation process, measured by the probability that a random walker visits the node.  
+
+> •
+
+Clustering Coefficient indicates the local clustering or cohesiveness around a node, measured by the ratio of existing edges among the node’s neighbors to the total number of possible edges among those neighbors.  
+
+> •
+
+K-Core Number indicates the structural coreness of a node within the graph, measured by the largest integer 
+
+K such that the node belongs to a K-core subgraph.  
+
+> •
+
+Average Neighbor Degree indicates the average connec-tivity level and structural density of a node’s local neigh-borhood, measured by the mean degree of all neighboring nodes that are directly connected to the node. 
+
+B. Main Results 
+
+We conduct experiments on two types of networks: citation networks and social networks. The main results comparing SNIP with all baseline methods are presented in Table II and Table III, respectively, where the performance of all baselines is reported by Liu et al. [12] and Chen et al. [14]. The key observations are summarized as follows: 
+
+(1) Incorporating SNIP consistently enhances baseline performance across diverse backbones. As quantified in Table II and Table III, our SNIP demonstrates excellent compatibility as a plug-and-play strategy. When deployed on AdaGCN and A2GNN, SNIP delivers consistent performance improvements across all metrics. Specifically, under the A2GNN backbone (SNIP A2GNN ), it yields an average improvement of 2.23% in Macro-F1 and 1.32% in Micro-F1 across different cross-domain adaptation scenarios on citation networks in Table II, achieving an overall average of 78.95% for Macro-F1 and 79.27% for Micro-F1. Notably, it achieves optimal or highly comparable performance against the state-of-the-art model TDSS in several scenarios, such as A →D, C →A and D →A. A horizontal comparison in Table II shows that SNIP A2GNN ranks first in 8 out of 12 metric values and second in the remaining four, surpassed only by TDSS. Similarly, our SNIP A2GNN yields an average improvement of 1.17% in Macro-F1 and 1.22% in Micro-F1 across different scenarios (i.e., DE →EN and EN →DE) on social networks in Table III, achieving an overall average of 61.10% for Macro-F1 and 62.94% for Micro-F1. The same findings are obtained for both citation networks and social networks, confirming the strong generalization performance of our proposed SNIP framework. This robust scalability is further substantiated by its inte-gration with AdaGCN backbone (SNIP AdaGCN ). As shown in THIS WORK IS A PREPRINT AND HAS BEEN SUBMITTED FOR PEER REVIEW. 8
+
+TABLE II OVERALL PERFORMANCE (M ICRO -F1 / M ACRO -F1) OF NODE CLASSIFICATION TASK ACROSS SIX TRANSFER SCENARIOS ON CITATION NETWORKS .Methods A→C A→D C→A C→D D→A D→C Avg. Micro Macro Micro Macro Micro Macro Micro Macro Micro Macro Micro Macro Micro Macro DeepWalk 21.05 17.72 25.94 19.87 21.94 19.33 22.57 17.51 26.23 19.83 29.46 22.76 24.53 19.56 node2vec 29.89 25.84 24.54 19.50 21.76 17.99 28.95 24.98 28.61 22.05 21.16 16.22 25.82 21.08 ANRL 30.31 20.93 29.54 23.33 31.84 22.04 25.90 22.71 29.56 19.12 25.99 18.25 28.86 20.99 GAT 57.13 43.64 53.80 41.36 50.37 42.14 55.85 45.25 52.93 43.95 55.52 50.04 54.27 44.36 GSAGE 71.40 69.14 64.82 61.80 65.22 64.69 69.96 66.86 59.22 57.31 67.85 64.90 66.41 63.79 SGC 77.40 72.13 69.13 62.54 72.31 62.92 73.80 66.93 63.32 53.94 72.31 62.92 71.38 62.90 GCN 77.38 74.78 69.05 65.29 70.58 70.39 74.17 71.37 63.35 59.42 74.17 69.79 71.45 68.24 UDAGCN 72.15 60.33 66.95 64.83 66.80 67.22 71.77 69.46 58.16 55.89 73.28 61.12 68.18 63.14 GRADE 76.04 72.52 68.22 63.03 69.55 69.34 73.95 70.02 63.72 59.35 74.32 69.32 70.96 67.26 CDNE 78.76 76.83 71.58 69.24 74.22 75.06 74.36 71.34 69.62 70.45 78.88 77.36 74.57 73.38 StruRW 77.35 72.07 69.10 62.51 67.81 59.77 73.81 66.89 63.27 53.82 72.41 62.94 70.16 62.34 PairAlign 70.88 67.88 65.91 62.35 65.85 65.09 71.04 67.56 59.34 58.77 67.07 64.61 66.02 63.38 SpecReg 80.55 78.83 75.93 73.98 72.04 73.15 75.74 73.64 71.01 72.34 79.04 77.78 75.71 74.95 ACDNE 81.75 80.09 76.24 73.59 73.59 74.79 77.21 75.74 71.29 72.64 80.14 78.83 76.70 75.94 TDSS 83.20 81.40 79.54 78.13 76.94 78.33 78.96 77.55 74.89 76.46 82.29 80.75 79.54 79.06 TASSC 83.95 82.94 77.91 76.11 75.41 77.11 78.40 77.23 74.16 75.68 83.19 82.11 78.84 78.53 DAGNN 83.41 81.65 79.06 76.87 76.32 78.15 78.93 77.49 74.81 76.24 82.24 80.17 79.13 78.43 AdaGCN 79.32 76.51 75.04 71.39 69.67 69.47 75.59 72.34 69.67 69.47 78.20 74.22 74.91 72.45 
+
+SNIP AdaGCN 83.03 81.16 76.86 75.05 76.60 77.26 76.74 75.34 73.59 74.06 80.67 79.55 77.92 77.07 
+
+Improv.(%) +3.71 +4.65 +1.82 +3.66 +6.93 +7.79 +1.15 +3.00 +3.92 +4.59 +2.47 +5.33 +3.01 +4.62 A2GNN 82.75 80.86 77.84 75.18 74.63 76.31 78.28 75.90 73.44 74.94 81.09 78.84 77.95 76.72 
+
+SNIP A2GNN 83.13 82.09 79.10 78.32 77.05 78.35 79.27 78.05 75.11 76.71 82.00 80.18 79.27 78.95 
+
+Improv.(%) +0.38 +1.23 +1.26 +3.14 +2.42 +2.04 +0.99 +2.15 +1.67 +1.77 +0.91 +1.34 +1.32 +2.23 TABLE III OVERALL PERFORMANCE (M ICRO -F1 / M ACRO -F1) OF NODE CLASSIFICATION TASK ON SOCIAL NETWORKS .Methods DE →EN EN →DE Avg. Micro Macro Micro Macro Micro Macro node2vec 52.64 46.96 54.61 50.10 53.62 48.53 DeepWalk 52.18 46.54 55.08 49.97 53.63 48.25 GAT 54.84 49.50 43.65 40.08 49.24 44.79 GCN 54.77 54.55 62.03 51.04 58.40 52.79 GIN 52.39 49.91 55.26 44.26 53.82 47.08 UDAGCN 59.74 58.19 58.69 56.35 59.21 57.27 ACDNE 58.08 56.31 58.79 57.92 58.43 57.11 ASN 55.45 51.21 60.45 45.90 57.95 48.55 GRADE 56.40 56.38 61.18 56.83 58.79 56.60 SpecReg 56.43 50.30 61.45 46.13 58.94 48.21 TASSC 58.74 57.08 64.38 62.25 61.56 59.67 DAGNN 61.05 60.28 65.42 62.93 63.24 61.61 AdaGCN 56.03 54.57 59.99 58.87 58.01 56.72 
+
+SNIP AdaGCN 56.65 55.31 62.70 60.41 59.67 57.86 
+
+Improv.(%) +0.62 +0.74 +2.71 +1.54 +1.66 +1.14 A2GNN 59.54 58.44 63.90 61.42 61.72 59.93 
+
+SNIP A2GNN 60.67 59.13 65.21 63.08 62.94 61.10 
+
+Improv.(%) +1.13 +0.69 +1.31 +1.66 +1.22 +1.17 
+
+Table II, SNIP AdaGCN triggers dramatic performance enhance-ments compared to the vanilla AdaGCN model, outperform-ing it on every evaluation metrics. On average, SNIP AdaGCN 
+
+yields an improvement of 4.62% in Macro-F1 and 3.01% in Micro-F1 across six cross-domain adaptation scenarios. The largest improvement is witnessed in the C →A scenario, where SNIP AdaGCN brings an extraordinary gain of 7.79% in Macro-F1 and 6.93% in Micro-F1. Furthermore, this strength extends naturally into the social networks in Table III. Our SNIP AdaGCN 
+
+brings an average improvement of 1.14% in Macro-F1 and 1.66% in Micro-F1, achieving consistent positive improve-ments across all evaluation metrics for the DE →EN and EN →DE transfer scenarios, despite the inherently complex and dense nature of social linkages. These consistent gains across distinct backbones and do-mains are attributed to the proposed source node influence pruning strategy. By unifying four complementary centrality metrics, our SNIP approach enables more precise regulation of individual node influence. This design successfully filters out distributional noise and structural anomalies, thereby sig-nificantly enhancing the generalization capability and discrim-inative power of the learned graph representations. 
+
+(2) Graph domain adaptation methods outperform traditional hypothesis transfer methods and source-only GNN-based methods. As demonstrated by Table II and Ta-ble III, vanilla GNN architectures (e.g., GCN, GAT, and GIN) and traditional embedding techniques (e.g., DeepWalk and node2vec) suffer from severe performance degradation when facing cross-domain distribution shifts. For instance, in the citation networks (Table II), unsupervised embedding methods (e.g., DeepWalk and node2vec) struggle heavily, yielding an average Micro-F1 of only around 25%. While source-only GNN-based models capture localized neighborhood structures and perform slightly better, their generalization capabilities remain strictly constrained. The underlying reason is that they typically presume the training (source) and testing (target) graphs share identical feature and topological distributions. This assumption is frequently invalidated in practical cross-domain scenarios where distinct distribution discrepancies exist, thereby leading to substantial performance degradation. In contrast, graph domain adaptation methods are explicitly designed to mitigate such domain shifts. By simultaneously THIS WORK IS A PREPRINT AND HAS BEEN SUBMITTED FOR PEER REVIEW. 9                                                                                                             
+
+> TABLE IV ABLATION STUDY ON CROSS -NETWORK NODE CLASSIFICATION ACROSS SIX TRANSFER SCENARIOS WITHIN CITATION NETWORK DATASETS .Methods A→CA→DC→AC→DD→AD→CAvg. Micro Macro Micro Macro Micro Macro Micro Macro Micro Macro Micro Macro Micro Macro SNIP A2GNN 83.13 82.09 79.10 78.32 77.05 78.35 79.27 78.05 75.11 76.71 82.00 80.18 79.27 78.95
+> ∼w/o. D 82.89 81.99 77.57 75.92 76.70 78.23 79.05 77.33 72.80 74.07 81.96 80.11 78.50 77.94
+> ∼w/o. B 82.94 81.58 78.28 76.05 76.37 77.89 79.21 77.98 74.96 76.63 82.04 80.53 78.97 78.44
+> ∼w/o. C 82.70 81.69 77.77 75.02 76.40 77.99 78.98 77.43 74.55 76.30 81.78 80.04 78.70 78.07
+> ∼w/o. E 81.30 79.66 78.45 76.78 75.40 76.74 77.70 76.17 74.66 76.27 81.82 79.76 78.22 77.56
+> ∼w/o. R 80.82 79.08 77.44 75.46 74.73 75.85 73.80 66.93 73.97 75.00 81.43 79.47 77.03 75.29
+
+reconciling node attribute-level shifts and graph topological discrepancies, these specialized frameworks dynamically map graph representations into a shared, domain-invariant latent subspace. Consequently, they successfully preserve the seman-tic discriminative power across domain boundaries. In summary, these findings provide empirical evidence that SNIP significantly enhances the generalization capability of various GNN architectures. The consistent improvements across different scenarios and backbones highlight the effec-tiveness of SNIP in advancing graph domain adaptation. 
+
+C. Ablation Study 
+
+In this section, we conduct an ablation study to assess the individual effects of each core component within SNIP, by systematically removing key components one by one. Specifi-cally, our SNIP based on the A2GNN backbone (SNIP A2GNN )is compared with several derived variants, each eliminating a specific component such as a particular centrality metric or the rank-based normalization mechanism. The results are presented in terms of Micro-F1 and Macro-F1 scores across multiple cross-domain adaptation scenarios. To this end, we implement and evaluate the following five ablation variants:  
+
+> •
+
+∼ w/o. D: Degree Centrality is removed.  
+
+> •
+
+∼ w/o. B: Betweenness Centrality is removed.  
+
+> •
+
+∼ w/o. C: Closeness Centrality is removed.  
+
+> •
+
+∼ w/o. E: Eigenvector Centrality is removed.  
+
+> •
+
+∼ w/o. R: Rank-based Normalization is removed. As illustrated in Table IV, the full SNIP framework consis-tently outperforms all of its variants on average, demonstrating the effectiveness of each module within SNIP. Specifically, (1) Removing degree centrality (i.e., ∼ w/o. D) results in a noticeable performance drop compared to the full model, with an average reduction of 0.77% in Micro-F1 and 1.01% in Macro-F1. This underscores that local connectivity attributes captured by degree distributions remain critical for identifying structurally incompatible nodes. (2) Deleting betweenness cen-trality (i.e., ∼ w/o. B) induces a marginal performance decline, where Micro-F1 drops by 0.3% and Macro-F1 by 0.51%. This implies that although betweenness centrality is important, its absence does not significantly harm performance, suggesting that other centrality measures can somewhat compensate for the missing information. (3) When closeness centrality is removed (i.e., ∼ w/o. C), the performance also decreases, driving down Micro-F1 and Macro-F1 by 0.57% and 0.88%, respectively, showing the necessity of tracking global reach-ability within the graph topology. (4) The variant without eigenvector centrality (i.e., ∼ w/o. E) leads to a notable per-formance decline, particularly reducing Macro-F1 by 1.39%. This drop indicates that removing eigenvector centrality seems to have a more pronounced effect on the model’s ability to leverage global network structure. (5) Finally, the variant discarding the Rank-based Normalization mechanism (i.e., ∼
+
+w/o. R) exhibits the most severe performance degradation, with Micro-F1 and Macro-F1 dropping substantially by 2.24% and 3.66%, respectively. This empirical evidence validates that the Rank-based Normalization plays a crucial role in performance optimization. Without it, the raw centrality values would vary vastly in scale, hindering the accurate measurement of node influence, disrupting the subsequent pruning process, and causing a failure in cross-domain alignment. Based on the above analysis, this ablation study demon-strates that each designed component, contributes to the suc-cess of cross-domain node classification task. Among these, the Rank-based Normalization mechanism and eigenvector centrality have the most pronounced impact on cross-domain adaptation performance, whereas betweenness centrality has a comparatively smaller effect. 
+
+D. Sensitivity analysis 
+
+In this section, we investigate the sensitivity of our model with respect to the selection of structural indicators (e.g., various centrality measures) for calculating node influence, the trade-off coefficient α, and the pruning ratio r.
+
+Impact of Structural Indicator Selection . In our SNIP framework, the quantification of node influence scores in-herently depends on the combination of selected structural indicators. To justify our selection rationale, we systematically compare two distinct configurations using A2GNN as the backbone. The default configuration combines degree cen-trality (D), betweenness centrality (B), closeness centrality (C), and eigenvector centrality (E). Conversely, the alternative configuration includes PageRank (PR), Clustering Coefficient (CC), K-Core Number (KC), and Average Neighbor Degree (AD), which primarily emphasize core-periphery structure, localized clustering or specific random-walk dynamics. Specif-ically, PageRank measures node importance through localized random-walk-based propagation; the Clustering Coefficient reflects how tightly neighbor nodes are connected; the K-core number characterizes a node’s position in the graph’s core–periphery hierarchy; and the Average Neighbor Degree measures the mean connectivity density of a node’s immediate neighborhood. Further details are provided in Section V-A. THIS WORK IS A PREPRINT AND HAS BEEN SUBMITTED FOR PEER REVIEW. 10                                                                                             
+
+> TABLE V PERFORMANCE COMPARISON OF DIFFERENT STRUCTURAL INDICATOR CONFIGURATIONS ACROSS SIX CROSS -DOMAIN TRANSFER SCENARIOS .Methods A→CA→DC→AC→DD→AD→CAvg. Micro Macro Micro Macro Micro Macro Micro Macro Micro Macro Micro Macro Micro Macro A2GNN (Backbone) 82.75 80.86 77.84 75.18 74.63 76.31 78.28 75.90 73.44 74.94 81.09 78.84 77.95 76.72 Default (D, B, C, E) 83.13 82.09 79.10 78.32 77.05 78.35 79.27 78.05 75.11 76.71 82.00 80.18 79.27 78.95
+> Alternative (PR, CC, KC, AD) 83.25 81.86 78.48 77.06 76.74 78.12 79.17 77.75 75.29 76.80 81.65 79.51 79.09 78.52 70
+> 72
+> 74
+> 76
+> 78
+> 80
+> 82
+> 84
+> 12345678910
+> Macro -F1
+> Trade -off Coefficient α
+> D->A C->A
+> A->D C->D
+> A->C D->C 70
+> 72
+> 74
+> 76
+> 78
+> 80
+> 82
+> 84
+> 86
+> 12345678910
+> Micro -F1
+> Trade -off Coefficient α
+> D->A C->A
+> A->D C->D
+> A->C D->C
+> Fig. 5. Sensitivity of Micro-F1 and Macro-F1 scores under different weights of αacross six cross-domain adaptation scenarios.
+
+As reported in Table V, the empirical results across six cross-domain transfer scenarios validate the superiority of our default indicator configuration. Specifically, the default config-uration yields the highest average classification performance, delivering a Micro-F1 of 79.27% and a Macro-F1 of 78.95%, which outperforms the alternative configuration by margins of 
+
+0.18% and 0.43% , respectively. Crucially, it is worth highlighting that the selection of structural indicators within our SNIP framework is intrinsi-cally decoupled and flexible, rather than rigidly fixed. The alternative configuration achieves superior scores in certain metrics (such as the Micro-F1 of A →C and D →A), indicating that indicator substitution is feasible and demonstrating the high modularity of our SNIP approach. Since any custom set of graph structural indicators can be seamlessly integrated without altering the core components, our SNIP framework exhibits excellent architectural extensibility. Consequently, when dealing with large-scale graphs where the calculation of global centrality metrics (e.g., betweenness) can be very time-consuming, researchers can flexibly deploy highly paralleliz-able or localized linear-time metrics (e.g., Average Neighbor Degree or PageRank approximations) as alternatives, which can still deliver competitive performance. This plug-and-play property successfully ensures the scalability of our approach. 
+
+Impact of trade-off coefficient α of MMD loss . We explore the parametric sensitivity of α across six distinct transfer sce-narios, where α governs the regularization strength of cross-domain alignment. For this analysis, we vary α within the list of [1 , 2, · · · , 10] to observe its comprehensive impact, based on our SNIP with the A2GNN backbone (i.e., SNIP A2GNN ). As illustrated in Fig. 5, when α is set to 0, the cross-domain alignment mechanism is totally removed, the model relies solely on the source graph for supervision, and the objec-tive function simplifies to the vanilla classification loss, i.e., 
+
+Ltotal = Lcls . Under this zero-alignment configuration, a no-50                
+
+> 55
+> 60
+> 65
+> 70
+> 75
+> 80
+> 85
+> 00.1 0.2 0.3 0.4 0.5
+> Macro -F1
+> Pruning Rat io r
+> D->A
+> C->A
+> A->D
+> C->D
+> A->C
+> D->C 50
+> 55
+> 60
+> 65
+> 70
+> 75
+> 80
+> 85
+> 00.1 0.2 0.3 0.4 0.5
+> Micro -F1
+> Pruning Rat io r
+> D->A
+> C->A
+> A->D
+> C->D
+> A->C
+> D->C
+> Fig. 6. Comparisons of Micro-F1 and Macro-F1 scores with different pruning rates on six cross-domain adaptation scenarios.
+
+table performance degradation is observed across all scenarios. This sharp decline clearly highlights that minimizing cross-domain distribution discrepancy is necessary for mitigating topological shifts and ensuring robust generalization. 
+
+Impact of Pruning Ratio r. We analyze the sensitivity of the model’s performance with respect to the pruning ratio 
+
+r, which controls the proportion of nodes to be removed during the structural pruning process, thereby directly im-pacting the graph topological structure and the dynamics of information propagation. Specifically, r is varied within the list [0 , 0.1, 0.2, 0.3, 0.4, 0.5, 0.6] with a step size of 0.1, and the corresponding performance based on our SNIP with the A2GNN backbone (i.e., SNIP A2GNN ) is measured via Micro-F1 and Macro-F1 scores. As illustrated in Fig. 6, when 
+
+r < 0.1, the impact of pruning remains marginal, likely due to the preservation of redundant structural noise. Within the interval [0 .1, 0.3] , both Micro-F1 and Macro-F1 scores reach a peak performance. However, when r > 0.3, further increasing the pruning ratio results in a significant performance degradation. This degradation indicates that excessive pruning can disrupt the graph’s intrinsic connectivity and semantic structure. Consequently, these analyses indicate that a pruning rate within the range [0 .1, 0.3] strikes an optimal trade-off between noise elimination and structural preservation. 
+
+E. Visualization Analysis 
+
+To qualitatively examine the distribution alignment and fea-ture discriminability between the source and target domains, we employ t-SNE [43] to project the high-dimensional node embeddings into a two-dimensional visual space. We conduct this evaluation on the challenging C →A transfer scenario (Citationv1 as the source domain and ACMv9 as the target domain), where each color corresponds to a specific semantic category. As illustrated in Fig. 7, the representations learned by SNIP A2GNN exhibit significantly clearer decision boundaries THIS WORK IS A PREPRINT AND HAS BEEN SUBMITTED FOR PEER REVIEW. 11 (a) A2GNN (b) SNIP 
+
+Fig. 7. T-SNE visualizations of the learned node representations under the C→A cross-domain adaptation scenario, comparing our proposed SNIP A2GNN 
+
+(right) and the baseline model A2GNN (left). 
+
+and superior cluster separation compared to the baseline A2GNN. Notably, our SNIP framework achieves remarkable intra-class cohesiveness and sharper inter-class margins, ef-fectively minimizing inter-cluster overlap. This visualization strongly suggests that SNIP successfully enhances class dis-criminability within the shared latent embedding space. By filtering out structurally incompatible nodes that typically corrupts domain alignment, SNIP generates superior feature representations and yields robust generalization capabilities. VI. C ONCLUSION 
+
+In summary, this study proposes Source Node Influence Pruning (SNIP), a novel data-refinement framework for Un-supervised Graph Domain Adaptation (UGDA). SNIP is de-signed to identify and remove source nodes that are struc-turally incompatible with the target domain, thereby alleviating cross-domain structural distribution shifts and reducing their adverse effects on knowledge transfer. Specifically, SNIP first calculates the influence scores of source nodes by integrating multiple centrality-based structural measures. It then ranks all source nodes in descending order according to their influence scores and removes a predefined proportion of nodes with the lowest scores. By selectively preserving source nodes that are more structurally compatible with the target domain, SNIP constructs a refined source graph that provides a cleaner and more reliable foundation for subsequent feature-level cross-domain alignment, ultimately improving adaptation perfor-mance. Notably, SNIP operates entirely at the data level and is independent of any specific model architecture. It can therefore be integrated into existing UGDA backbones in a seamless and plug-and-play manner, offering strong flexibility and scalabil-ity. Substantial experiments with different backbone networks across multiple transfer scenarios on five real-world datasets confirm that SNIP significantly improves graph domain adap-tation performance, effectively mitigating the negative transfer caused by structural anomalies and provide a practical and general solution for cross-domain node classification. ACKNOWLEDGMENTS 
+
+This work was supported by “the Fundamental Re-search Funds for the Central Universities” under Grant No. 2025QN1154. We sincerely appreciate the reviewers’ time, effort, and constructive feedback on this manuscript. REFERENCES [1] T. N. Kipf and M. Welling, “Semi-supervised classification with graph convolutional networks,” in Proceedings of the 5th International Conference on Learning Representations, ICLR , 2017. [Online]. Available: https://openreview.net/forum?id=SJU4ayYgl [2] C. Yang, Q. Wu, J. Wang, and J. Yan, “Graph neural networks are inherently good generalizers: Insights by bridging gnns and mlps,” in Proceedings of the Eleventh International Conference on Learning Representations, ICLR , 2023. [Online]. Available: https://openreview.net/forum?id=dqnNW2omZL6 [3] B. Shi, Y. Wang, F. Guo, B. Xu, H. Shen, and X. Cheng, “Domain adaptation for graph representation learning: Challenges, progress, and prospects,” Journal of Computer Science and Technology ,vol. 40, no. 2, pp. 283–300, 2025. [Online]. Available: https: //doi.org/10.1007/s11390-024-4465-x [4] G. Wilson and D. J. Cook, “A survey of unsupervised deep domain adaptation,” ACM Transactions on Intelligent Systems and Technology , vol. 11, no. 5, pp. 51:1–51:46, 2020. [Online]. Available: https://doi.org/10.1145/3400066 [5] X. Shen, Q. Dai, S. Mao, F. Chung, and K. Choi, “Network together: Node classification via cross-network deep network embedding,” 
+
+IEEE Transactions on Neural Networks and Learning Systems ,vol. 32, no. 5, pp. 1935–1948, 2021. [Online]. Available: https: //doi.org/10.1109/TNNLS.2020.2995483 [6] J. Wu, J. He, and E. A. Ainsworth, “Non-iid transfer learning on graphs,” in Proceedings of the Thirty-Seventh AAAI Conference on Artificial Intelligence, AAAI , 2023, pp. 10 342–10 350. [Online]. Available: https://doi.org/10.1609/aaai.v37i9.26231 [7] Z. Xiao, H. Wang, Y. Jin, L. Feng, G. Chen, F. Huang, and J. Zhao, “SPA: A graph spectral alignment perspective for domain adaptation,” in Advances in Neural Information Processing Systems 36: Annual Conference on Neural Information Processing Systems , 2023, pp. 37 252–37 272. [Online]. Available: http://papers.nips.cc/paper \ files/paper/2023/hash/ 754e80f98b2a141942f45a0eeb258a3c-Abstract-Conference.html [8] M. Wu, S. Pan, C. Zhou, X. Chang, and X. Zhu, “Unsupervised domain adaptive graph convolutional networks,” in Proceedings of the web conference 2020, WWW , 2020, pp. 1457–1467. [Online]. Available: https://doi.org/10.1145/3366423.3380219 [9] X. Shen, Q. Dai, F. Chung, W. Lu, and K. Choi, “Adversarial deep network embedding for cross-network node classification,” in 
+
+Proceedings of the Thirty-Fourth AAAI Conference on Artificial Intelligence, AAAI , 2020, pp. 2991–2999. [Online]. Available: https: //doi.org/10.1609/aaai.v34i03.5692 [10] X. Zhang, Y. Du, R. Xie, and C. Wang, “Adversarial separation network for cross-network node classification,” in Proceedings of the 30th ACM International Conference on Information and Knowledge Management, CIKM , 2021, pp. 2618–2626. [Online]. Available: https://doi.org/10.1145/3459637.3482228 [11] B. Shi, Y. Wang, F. Guo, J. Shao, H. Shen, and X. Cheng, “Improving graph domain adaptation with network hierarchy,” in 
+
+Proceedings of the 32nd ACM International Conference on Information and Knowledge Management, CIKM , 2023, pp. 2249–2258. [Online]. Available: https://doi.org/10.1145/3583780.3614928 [12] M. Liu, Z. Fang, Z. Zhang, M. Gu, S. Zhou, X. Wang, and J. Bu, “Rethinking propagation for unsupervised graph domain adaptation,” in Proceedings of the Thirty-Eighth AAAI Conference on Artificial Intelligence, AAAI , 2024, pp. 13 963–13 971. [Online]. Available: https://doi.org/10.1609/aaai.v38i12.29304 [13] S. Liu, D. Zou, H. Zhao, and P. Li, “Pairwise alignment improves graph domain adaptation,” in Proceedings of the Forty-first International Conference on Machine Learning, ICML , 2024. [Online]. Available: https://openreview.net/forum?id=ttnbM598vZ [14] W. Chen, G. Ye, Y. Wang, Z. Zhang, L. Zhang, D. Wang, Z. Zhang, and F. Zhuang, “Smoothness really matters: A simple yet effective approach for unsupervised graph domain adaptation,” in Proceedings of the AAAI Conference on Artificial Intelligence, AAAI , 2025, pp. 15 875–15 883. [Online]. Available: https://doi.org/10.1609/aaai.v39i15.33743 [15] Y. Zou, Y. Lu, N. Li, X. Zhu, L. Du, M. Yan, and Y. Ma, “Target-adaptive structure-semantic consistency for unsupervised graph domain adaptation,” in Proceedings of the European Conference on Machine Learning and Knowledge Discovery in Databases, ECML-PKDD , ser. Lecture Notes in Computer Science, vol. 16020. Springer, 2025, pp. 182–198. [Online]. Available: https://doi.org/10. 1007/978-3-662-72243-5 \ 11 THIS WORK IS A PREPRINT AND HAS BEEN SUBMITTED FOR PEER REVIEW. 12 
+
+[16] X. Yang, J. Zhai, and J. Chen, “DAGNN: disentangled asymmetric graph neural network for unsupervised graph domain adaptation,” 
+
+Knowledge-Based Systems , vol. 346, p. 116191, 2026. [Online]. Available: https://doi.org/10.1016/j.knosys.2026.116191 [17] R. Huang, J. Xu, X. Jiang, R. An, and Y. Yang, “Can modifying data address graph domain adaptation?” in Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining, KDD . ACM, 2024, pp. 1131–1142. [Online]. Available: https://doi.org/10.1145/3637528.3672058 [18] J. Park, C. Tran, W. Shin, and X. Cao, “Centrality-based node feature augmentation for robust network alignment,” IEEE Transactions on Network Science and Engineering , vol. 13, pp. 1510–1526, 2026. [Online]. Available: https://doi.org/10.1109/TNSE.2025.3596908 [19] P. Br´ odka, K. Skibicki, P. Kazienko, and K. Musial, “A degree centrality in multi-layered social network,” in Proceedings of the International Conference on Computational Aspects of Social Networks, CASoN , 2011, pp. 237–242. [Online]. Available: https: //doi.org/10.1109/CASON.2011.6085951 [20] S. K. Maurya, X. Liu, and T. Murata, “Fast approximations of betweenness centrality with graph neural networks,” in Proceedings of the 28th ACM International Conference on Information and Knowledge Management, CIKM , 2019, pp. 2149–2152. [Online]. Available: https://doi.org/10.1145/3357384.3358080 [21] Z. Liu, J. Ye, and Z. Zou, “Closeness centrality on uncertain graphs,” 
+
+ACM Transactions on the Web , vol. 17, no. 4, pp. 29:1–29:29, 2023. [Online]. Available: https://doi.org/10.1145/3604912 [22] H. R. Frost, “Eigenvector centrality for multilayer networks with dependent node importance,” in Proceedings of the Twelfth International Conference on Complex Networks and their Applications , vol. 1143, 2023, pp. 3–14. [Online]. Available: https://doi.org/10.1007/ 978-3-031-53472-0 \ 1[23] Y. Li, S. Fu, Y. Zeng, H. Feng, R. Peng, J. Wang, and S. Zhang, “Centrality-based relation aware heterogeneous graph neural network,” 
+
+Knowledge-Based Systems , vol. 283, p. 111174, 2024. [Online]. Available: https://doi.org/10.1016/j.knosys.2023.111174 [24] F. Lin, X. Zhu, Z. Zhao, D. Huang, Y. Yu, X. Li, Z. Zheng, T. Xu, and E. Chen, “Knowledge graph pruning for recommendation,” ACM Transactions on Information Systems , vol. 44, no. 1, pp. 20:1–20:28, 2026. [Online]. Available: https://doi.org/10.1145/3769107 [25] Y. Rong, W. Huang, T. Xu, and J. Huang, “Dropedge: Towards deep graph convolutional networks on node classification,” in Proceedings of the 8th International Conference on Learning Representations, ICLR ,2020. [Online]. Available: https://openreview.net/forum?id=Hkx1qkrKPr [26] S. Ben-David, J. Blitzer, K. Crammer, and F. Pereira, “Analysis of representations for domain adaptation,” in Advances in Neural Information Processing Systems 19, Proceedings of the Twentieth Annual Conference on Neural Information Processing Systems, NIPS ,2006, pp. 137–144. [Online]. Available: https://proceedings.neurips.cc/ paper/2006/hash/b1b0432ceafb0ce714426e9114852ac7-Abstract.html [27] S. Ben-David, J. Blitzer, K. Crammer, A. Kulesza, F. Pereira, and J. W. Vaughan, “A theory of learning from different domains,” Machine Learning , vol. 79, no. 1-2, pp. 151–175, 2010. [Online]. Available: https://doi.org/10.1007/s10994-009-5152-4 [28] Q. Dai, X. Wu, J. Xiao, X. Shen, and D. Wang, “Graph transfer learning via adversarial domain adaptation with graph convolution,” IEEE Transactions on Knowledge and Data Engineering ,vol. 35, no. 5, pp. 4908–4922, 2023. [Online]. Available: https: //doi.org/10.1109/TKDE.2022.3144250 [29] A. Gretton, K. M. Borgwardt, M. J. Rasch, B. Sch¨ olkopf, and A. J. Smola, “A kernel two-sample test,” Journal of Machine Learning Research , vol. 13, pp. 723–773, 2012. [Online]. Available: https://dl.acm.org/doi/10.5555/2503308.2188410 [30] J. Shen, Y. Qu, W. Zhang, and Y. Yu, “Wasserstein distance guided representation learning for domain adaptation,” in Proceedings of the Thirty-Second AAAI Conference on Artificial Intelligence, AAAI . AAAI Press, 2018, pp. 4058–4065. [Online]. Available: https://doi.org/10.1609/aaai.v32i1.11784 [31] Y. You, T. Chen, Z. Wang, and Y. Shen, “Graph domain adaptation via theory-grounded spectral regularization,” in Proceedings of the Eleventh International Conference on Learning Representations, ICLR , 2023. [Online]. Available: https://openreview.net/forum?id=OysfLgrk8mk [32] J. Tang, J. Zhang, L. Yao, J. Li, L. Zhang, and Z. Su, “Arnetminer: extraction and mining of academic social networks,” in Proceedings of the 14th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining , 2008, pp. 990–998. [Online]. Available: https://doi.org/10.1145/1401890.1402008 [33] B. Rozemberczki, C. Allen, and R. Sarkar, “Multi-scale attributed node embedding,” Journal of Complex Networks , vol. 9, no. 2, 2021. [Online]. Available: https://doi.org/10.1093/comnet/cnab014 [34] B. Perozzi, R. Al-Rfou, and S. Skiena, “Deepwalk: online learning of social representations,” in Proceedings of the 20th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, KDD , 2014, pp. 701–710. [Online]. Available: https://doi.org/10.1145/ 2623330.2623732 [35] A. Grover and J. Leskovec, “node2vec: Scalable feature learning for networks,” in Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining , 2016, pp. 855–864. [Online]. Available: https://doi.org/10.1145/2939672.2939754 [36] Z. Zhang, H. Yang, J. Bu, S. Zhou, P. Yu, J. Zhang, M. Ester, and C. Wang, “ANRL: attributed network representation learning via deep neural networks,” in Proceedings of the Twenty-Seventh International Joint Conference on Artificial Intelligence, IJCAI , 2018, pp. 3155–3161. [Online]. Available: https://doi.org/10.24963/ijcai.2018/438 [37] P. Velickovic, G. Cucurull, A. Casanova, A. Romero, P. Li` o, and Y. Bengio, “Graph attention networks,” in Proceedings of the 6th International Conference on Learning Representations, ICLR , 2018. [Online]. Available: https://openreview.net/forum?id=rJXMpikCZ [38] W. L. Hamilton, Z. Ying, and J. Leskovec, “Inductive representation learning on large graphs,” in Advances in Neural Information Processing Systems 30: Annual Conference on Neural Information Processing Systems , 2017, pp. 1024– 1034. [Online]. Available: https://proceedings.neurips.cc/paper/2017/ hash/5dd9db5e033da9c6fb5ba83c7a7ebea9-Abstract.html [39] F. Wu, A. H. S. Jr., T. Zhang, C. Fifty, T. Yu, and K. Q. Weinberger, “Simplifying graph convolutional networks,” in Proceedings of the 36th International Conference on Machine Learning, ICML , vol. 97, 2019, pp. 6861–6871. [Online]. Available: http://proceedings.mlr.press/ v97/wu19e.html [40] K. Xu, W. Hu, J. Leskovec, and S. Jegelka, “How powerful are graph neural networks?” in Proceedings of the 7th International Conference on Learning Representations, ICLR . OpenReview.net, 2019. [Online]. Available: https://openreview.net/forum?id=ryGs6iA5Km [41] S. Liu, T. Li, Y. Feng, N. Tran, H. Zhao, Q. Qiu, and P. Li, “Structural re-weighting improves graph domain adaptation,” in Proceedings of the 2023 International Conference on Machine Learning, ICML , vol. 202, 2023, pp. 21 778–21 793. [Online]. Available: https://proceedings.mlr.press/v202/liu23u.html [42] A. Paszke, S. Gross, F. Massa, A. Lerer, J. Bradbury, G. Chanan, T. Killeen, Z. Lin, N. Gimelshein, L. Antiga, A. Desmaison, A. K¨ opf, E. Z. Yang, Z. DeVito, M. Raison, A. Tejani, S. Chilamkurthy, B. Steiner, L. Fang, J. Bai, and S. Chintala, “Pytorch: An imperative style, high-performance deep learning library,” in Advances in Neural Information Processing Systems 32: Annual Conference on Neural Information Processing Systems , 2019, pp. 8024–8035. [Online]. Available: https://proceedings.neurips.cc/paper/ 2019/hash/bdbca288fee7f92f2bfa9f7012727740-Abstract.html [43] G. E. Hinton and S. T. Roweis, “Stochastic neighbor embedding,” in 
+
+Advances in Neural Information Processing Systems 15, NIPS , 2002, pp. 833–840. [Online]. Available: https://proceedings.neurips.cc/paper/ 2002/hash/6150ccc6069bea6b5716254057a194ef-Abstract.html

@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.21973v1/fig-001.webp",
+      "caption": "Table 1: Comparison of fine-tuning methods with ViT-Base/16 backbone. Bold and underlined indicate best and second-best results. We report mean accuracy across datasets for each benchmark (FGVC: 5 datasets, HTA: 10 datasets, VTAB-1k: 19 datasets), for each VTAB-1k category (Natural, Specialized, and Structured). Please see Appendix for per-task results. Same for Table 2.",
+      "page": 6,
+      "index": 1,
+      "width": 1056,
+      "height": 473
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21973v1/fig-002.webp",
+      "caption": "Table 2: Comparison of the fine-tuning methods under different pretraining paradigms. We report VTAB-1k [82] accuracy using ViT-Base [14] as the frozen backbone, pretrained with MAE [20] and MoCo v3 [8] use the same settings.",
+      "page": 6,
+      "index": 2,
+      "width": 864,
+      "height": 327
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21973v1/fig-003.webp",
+      "caption": "Figure 3: Average attention logits across transformer depth. We compare the layer-wise attention patterns of VPT and PIB on ViT-Base/16 over 256 VTAB-1k samples. VPT exhibits more fragmented and less stable attention evolution across depth, especially in middle and late layers. In contrast, PIB yields a smoother and more structured attention pattern, indicating a more coherent layer-wise refinement process.",
+      "page": 7,
+      "index": 3,
+      "width": 1056,
+      "height": 361
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21973v1/fig-004.webp",
+      "caption": "Figure 5: Qualitative visualization of prompt attention. Comparedwith VPT and ViaPT, ourmethod producesmore concentrated and semantically aligned responses on the foreground object, while reducing scattered activation on background regions. This pattern is consistent across both vehicle and bird categories, suggesting that PIB encourages prompt-conditioned representations to preserve task-relevant evidence and suppress redundant or nuisance-heavy information.",
+      "page": 8,
+      "index": 4,
+      "width": 1056,
+      "height": 313
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21973v1/fig-005.webp",
+      "caption": "Figure 2: Overview of our proposed Prompted Information Bottleneck (PIB). A: prompt-based adaptation inserts trainable prompts into a frozen vision backbone without explicitly regulating what information should be preserved or suppressed, which may lead to redundant detail propagation, unstable cross-layer refinement, and early weakening of useful semantic cues. B: PIB introduces an IB-inspired layer-wise objective through complementary compression and sufficiency surrogates, while enforcing a minimal-sufficient path across depth from local evidence retention to semantic discrimination. C: PIB yields smoother redundancy reduction, stronger class separability, and a more ordered cross-layer path.",
+      "page": 4,
+      "index": 5,
+      "width": 1056,
+      "height": 448
+    }
+  ]
+}
