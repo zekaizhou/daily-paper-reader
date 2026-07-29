@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.25794v1/fig-001.webp",
+      "caption": "Fig. 4. Effect of data selection and caption refinement. Nearest-5k selection narrows the visual domain gap, while VLM-generated captions reduce the text-space distribution gap. Panel (c) shows an aligned training pair after both stages.",
+      "page": 6,
+      "index": 1,
+      "width": 1072,
+      "height": 311
+    },
+    {
+      "url": "assets/figures/arxiv/2607.25794v1/fig-002.webp",
+      "caption": "Fig. 1. t-SNE visualization of the source-to-target domain gap in the available training data, illustrated using Dishcovery Mission II challenge [3]. The example pair in (c) further shows that web captions can be weakly aligned with the visible food content.",
+      "page": 2,
+      "index": 2,
+      "width": 1058,
+      "height": 311
+    },
+    {
+      "url": "assets/figures/arxiv/2607.25794v1/fig-003.webp",
+      "caption": "Fig. 2. Overview of the proposed three-stage data-centric food image–text retrieval framework.",
+      "page": 3,
+      "index": 3,
+      "width": 973,
+      "height": 375
+    },
+    {
+      "url": "assets/figures/arxiv/2607.25794v1/fig-004.webp",
+      "caption": "TABLE I THE EFFECTS OF DATA SELECTION AND CAPTION REFINEMENT ACROSS FINE-TUNING METHODS",
+      "page": 4,
+      "index": 4,
+      "width": 882,
+      "height": 325
+    },
+    {
+      "url": "assets/figures/arxiv/2607.25794v1/fig-005.webp",
+      "caption": "Fig. 3. Hierarchical VLM-assisted multi-expert decision-level fusion.",
+      "page": 5,
+      "index": 5,
+      "width": 512,
+      "height": 260
+    }
+  ]
+}
