@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.26947v1/fig-001.webp",
+      "caption": "Table 1: Main results of LLaVA-1.5-7B on UCIT. The middle columns for each task report performance after finetuning on the final task. The bold denotes the highest result. ∗ denotes results from our re-implementation; all other numbers are taken from MCITlib [18]. HiDE and DISCO with PMA significantly outperform their corresponding vanilla methods.",
+      "page": 6,
+      "index": 1,
+      "width": 1048,
+      "height": 342
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26947v1/fig-002.webp",
+      "caption": "Table 2: Main results of the InternVL-Chat-7B model on the UCIT benchmark.",
+      "page": 6,
+      "index": 2,
+      "width": 1048,
+      "height": 341
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26947v1/fig-003.webp",
+      "caption": "Table 4: Main results of the InternVL-Chat-7B model on the MLLM-DCL benchmark.",
+      "page": 7,
+      "index": 3,
+      "width": 998,
+      "height": 400
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26947v1/fig-004.webp",
+      "caption": "Table 3: Main results of the LLaVA-1.5-7B model on the MLLM-DCL benchmark.",
+      "page": 7,
+      "index": 4,
+      "width": 998,
+      "height": 402
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26947v1/fig-005.webp",
+      "caption": "Figure 4: Projector usage analysis under the DISCO+PMA setting on UCIT with LLaVA-1.5-7B. Early tasks trigger projector expert expansion and mainly use their newly created experts, while later tasks reuse previously learned experts.",
+      "page": 8,
+      "index": 5,
+      "width": 506,
+      "height": 252
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26947v1/fig-006.webp",
+      "caption": "Figure 3: Effect of the z-score threshold 𝜏 on performance and projector growth under the DISCO+PMA setting on UCIT with LLaVA-1.5-7B. An intermediate threshold (𝜏 = 1.4) achieves the best MAA performance with sub-linear growth.",
+      "page": 8,
+      "index": 6,
+      "width": 506,
+      "height": 294
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26947v1/fig-007.webp",
+      "caption": "Figure 2: Overview of PMA. Lightweight RDs detect multimodal distribution shifts and determine whether to trigger projector expansion or reuse existing projector experts. An expandable router (R𝑡 ) mixes projector experts without task IDs, while the frozen pre-trained projector (P0) serves as a stable alignment anchor. PMA is method-agnostic and integrates seamlessly with existing PEFT-based MCIT methods that primarily focus on the LLM side, enabling progressive projector-side adaptation with sub-linear parameter growth.",
+      "page": 4,
+      "index": 7,
+      "width": 1056,
+      "height": 431
+    }
+  ]
+}

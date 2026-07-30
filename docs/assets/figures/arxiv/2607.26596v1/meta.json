@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.26596v1/fig-001.webp",
+      "caption": "Figure 1: Architecture of Decoupled Visual Processing (DVP). Input tokens pass through shared decoder layers [0, 16], then are split by modality. Visual tokens are processed by a single trainable transformer block (shown in orange), while textual tokens pass through the original frozen decoder layers [17, 31]. The outputs are concatenated before the language modeling head. Only the single transformer block is trained during instruction tuning.",
+      "page": 3,
+      "index": 1,
+      "width": 950,
+      "height": 198
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26596v1/fig-002.webp",
+      "caption": "Table 1: Main results on multimodal benchmarks. Bold indicates the best performance and underline indicates the second best. DVP (Efficient Training) achieves competitive performance while training only ∼3.1% of the total model parameters. The single transformer block that processes visual tokens is the only trainable component.",
+      "page": 6,
+      "index": 2,
+      "width": 896,
+      "height": 181
+    }
+  ]
+}

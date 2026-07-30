@@ -1,0 +1,566 @@
+Title: Online Variance Reduction for Domain Adaptation on Streaming Data
+
+URL Source: https://arxiv.org/pdf/2607.20374v1
+
+Published Time: Thu, 23 Jul 2026 01:12:23 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# Online Variance Reduction for Domain Adaptation on Streaming Data 
+
+Andrea Napoli 
+
+Department of Electronics and Computer Science University of Southampton, UK 
+
+## Abstract 
+
+This paper studies the problem of stochastic variance reduction (SVR) for the maximum mean discrepancy (MMD) and correlation alignment (CORAL) loss functions. Although various offline SVR algorithms for these losses have been proposed, these are incompatible with online, distributed, or incremental learning settings. This paper presents Adaptive vaRiance Reduction via Online reWeighting (ARROW), the first online SVR algorithm for the MMD and CORAL for streamed data. The method maintains moving average references of the alignment statistics, and adaptively reweights incoming minibatches so that the minibatch and reference statistics are aligned. Further, we propose a relaxed reweighting scheme so that the ensuing weight-optimisation problem is tractable. In experiments and simulations, we show that ARROW performs competitively with offline algorithms in terms of runtime, degree of variance reduction achieved, and target domain accuracy. 
+
+## 1 Introduction 
+
+Domain shift remains a key challenge when deploying machine learning models to the real world (Gulrajani & Lopez-Paz, 2021; Koh et al., 2021). Unsupervised domain adaptation (UDA) aims to address this by minimising a “domain discrepancy” loss during training, which characterises the mismatch between the source and target feature distributions. Two widely used objectives are the correlation alignment (CORAL) loss, which matches covariance matrices (Sun & Saenko, 2016), and the maximum mean discrepancy (MMD), which aligns kernel mean embeddings (Tzeng et al., 2014; Long et al., 2015; Li et al., 2018). Although theoretically well-grounded (Ben-David et al., 2006; 2010; Redko et al., 2022), estimating these discrepancies in practice is extremely noisy, especially in minibatch optimisation settings. This high variance can destabilise training, and these methods have frequently been observed to perform worse than with no domain alignment at all (Dubey et al., 2021; Gao et al., 2023; Gulrajani & Lopez-Paz, 2021; Koh et al., 2021; Napoli & White, 2023; 2024b; Wang et al., 2019). Consequentially, a recent paper found that stochastic variance reduction (SVR) can function as an effective stabiliser for these methods, resulting in significant gains in target domain performance (Napoli & White, 2026b). However, most classical SVR methods require the losses to possess finite-sum structure, which the MMD and CORAL terms lack. Thus, a line of research has emerged developing SVR techniques which are compatible with, or even spe-cialised for, the kinds of non-additive losses found in UDA. The first work to do so proposed diverse sampling of minibatches (Napoli & White, 2024b); this also helps to balance the data (Napoli & White, 2024a). Out-side of UDA, diverse sampling has also previously been found to be beneficial to other nonadditive objectives, such as contrastive losses (Wu & Liu, 2023; Ochieng, 2025), as well as minibatch optimisation more broadly (Zhang et al., 2017; 2019; Bardenet et al., 2021; Jiang et al., 2024). However, as well as being computa-tionally rather slow, the effectiveness of this approach is limited by the relatively weak connection between diversity and variance. The first dedicated SVR technique for UDA was VaRDASS (Napoli & White, 2026b), which leveraged strat-ified sampling. VaRDASS forms the strata using discrepancy-specific clustering objectives, which directly minimises variance for the MMD and CORAL (with respect to the strata). The computational cost is also 1arXiv:2607.20374v1 [cs.LG] 22 Jul 2026 negligible once the strata are constructed. Stratified sampling has also been previously explored for mini-batch optimisation outside of UDA (Zhao & Zhang, 2014; Liu et al., 2020; Fu & Zhang, 2017; Lu et al., 2021). Diverse and stratified sampling both reduce variance by inducing negative correlation between observations within domains. However, the variance can be reduced further by inducing positive correlation across domains, as well as dependencies across training steps. To achieve this, Napoli & White (2026a) proposed ORDERED, which directly optimises variance with respect to the training data sampling order. ORDERED starts with a random data sequence and then iteratively exchanges datapoints between minibatches such that the variance is reduced. This is a type of deterministic minibatch sequencing, which also includes techniques such as curriculum learning (Bengio et al., 2009) and anti-clustering (Papenberg & Klau, 2021; Baumann et al., 2026). However, the improvement in variance reduction comes at significant computational cost. Additionally, the optimisation procedure relies on a greedy heuristic which is sensitive to local minima, so the solution quality also retains room for improvement. Most recently, Napoli (2026) proposed PSDA, which constructs sampling dependencies between datapoints so as to reduce the expected discrepancy gradient error, conditional on those datapoints being jointly ob-served. The dependencies are constructed in pairs using linear assignments, rendering the method fast and scalable. The underlying idea, known as paired or antithetic sampling, has also been explored for minibatch optimisation outside of UDA (Liu & Xu, 2018). All these preceding methods rely on modifying the data sampling process. Although this has advantages in terms of convenience, there are also certain disadvantages. Firstly, the datasets need to be fully accessible at all times before and during training. This is unacceptable in many settings, such as online, distributed, or incremental learning paradigms – and is especially problematic in UDA, where continual adaptation to domain shift is often required. Secondly, features for the full dataset are periodically re-extracted throughout training, which can entail significant overhead cost. Lastly, even linearly-scaling implementations of these algorithms may still be too slow for extremely large datasets. This paper presents Adaptive vaRiance Reduction via Online reWeighting (ARROW), the first online SVR algorithm specialised for the MMD and CORAL. The method maintains exponentially weighted moving averages (EWMAs) of the adaptation statistics (kernel mean embeddings and covariances respectively), and aligns the minibatch statistics with the EWMA references using weighted losses. The resulting minibatch gradients are thus aligned to a variance-reduced “full” gradient implied by the reference statistics. As well as not requiring the full dataset, the use of EWMAs allows the reference statistics to track the true population statistics as the latter vary during training, or as the input distributions shift. Further, we propose relaxed reweighting schemes based on linear combinations, yielding unconstrained quadratic weight-optimisation problems that can be readily solved using standard techniques. In experiments and simulations, we assess ARROW in terms of runtime, degree of variance reduction achieved, and target domain accuracy, demonstrating competitiveness with offline algorithms on all three criteria. 
+
+## 2 Method 
+
+2.1 Preliminaries 
+
+Let xs, y s denote the source input data and labels and xt the unlabelled target data. We assume a model 
+
+h comprising a feature extractor f and prediction head g, such that h = g ◦ f , with corresponding feature representations zs = f (xs) , zt = f (xt). Since the target data are unlabelled, UDA optimises a supervised task loss on the source data, together with a distribution-matching regulariser which aligns the two feature distributions: 
+
+L = Ltask (h (xs) , y s) + λL disc (zs, z t) , (1) where λ > 0 is a trade-off parameter. 2This paper considers two specific options for Ldisc , the MMD and CORAL. The (squared) MMD loss is defined as 
+
+LMMD = ∥μs − μt∥2 
+
+> H
+
+, (2) where μs= E [ϕ (zs)] , μ t= E [ϕ (zt)] , H is a reproducing kernel Hilbert space (RKHS), and ϕ : Z → H is an implicit mapping. H is associated with a unique positive-definite kernel κ : Z × Z→ R for which the reproducing property κ(z, z ′) = ⟨ϕ(z), ϕ (z′)⟩H is satisfied. On the other hand, CORAL aims to minimise the (squared) Frobenius distance between the source and target feature covariance matrices: 
+
+LCORAL = ∥Σs − Σt∥2 
+
+> F
+
+. (3) Define the kernel mean difference DMMD = μs − μt and covariance difference DCORAL = Σ s − Σt. We will also use D to refer generically to both quantities, and ∥·∥ for the associated norm. We consider a data streaming setting in which the training data arrive in minibatches over time (from potentially time-varying distributions). We will assume for simplicity that all minibatches share the same size k. Specifically, at timestep m, we receive training data {( xms,i , y ms,i 
+
+)} ki=1 and {xmt,j 
+
+}kj=1 , and compute stochastic losses ̂ Lm 
+
+> task
+
+and ̂ Lm
+
+> disc
+
+. For both the MMD and CORAL, we use the V-statistic estimators ̂ Lm 
+
+> disc
+
+=
+
+∥∥∥̂ Dm
+
+∥∥∥2
+
+, with ̂ Dm 
+
+> MMD
+
+=̂μ ms −̂μ mt and ̂ Dm 
+
+> CORAL
+
+=̂ Σms −̂ Σmt respectively. We then compute stochastic gradients ̂ ∇Lm 
+
+> disc
+
+and ̂ ∇Lm
+
+> task
+
+, which are noisy estimates of the corresponding full gradients. Since the discrepancy gradients are the main source of instability during training, our aim is to use SVR to reduce the discrepancy gradient error at each timestep, 
+
+∥∥∥̂ ∇Lm 
+
+> disc
+
+− ∇ Lm
+
+> disc
+
+∥∥∥2
+
+. Since, by the chain rule, ̂ ∇Lm 
+
+> disc
+
+− ∇ Lm 
+
+> disc
+
+∝̂ Dm − Dm, we can do this by minimising 
+
+∥∥∥̂ Dm − Dm
+
+∥∥∥2
+
+directly (subject to some smoothness conditions discussed in Zhao & Zhang (2014); Liu et al. (2020)). For ARROW, this entails substituting an instance-weighted difference ̂ Dmw , where the weights are optimised at each training step. In addition, since Dm is unknown and time-varying, we instead align to an EWMA estimate ˜Dm which is maintained online: 
+
+min 
+
+∥∥∥̂ Dmw − ˜Dm
+
+∥∥∥2
+
+. (4) The procedure differs for the MMD and CORAL. 
+
+2.2 MMD 
+
+The EWMA of the kernel mean difference can be represented by the recurrence relation 
+
+˜D0MMD =̂ D0MMD (5) 
+
+˜Dm 
+
+> MMD
+
+= (1 − α) ˜Dm−1MMD + α̂ Dm
+
+> MMD
+
+, (6) where α ∈ (0 , 1] is the decay factor. However, since the explicit RKHS embeddings are unavailable, this needs to be computed by expanding the recurrence into a closed-form summation and storing a buffer of historical minibatches, for which the cross-kernels with the current minibatch can be evaluated. Minibatches with sufficiently small coefficients can be discarded to control memory growth. We define ̂ Dm 
+
+> MMD ,w
+
+as a linear combination of RKHS embeddings: ̂
+
+Dm 
+
+> MMD ,w
+
+=̂μ ms,w −̂μ mt,w , (7) ̂
+
+μ ms,w =
+
+> k
+
+∑
+
+> i=1
+
+uiϕ (zms,i 
+
+),̂ μ mt,w =
+
+> k
+
+∑
+
+> j=1
+
+vj ϕ (zmt,j 
+
+), (8) with weight vectors u, v ∈ Rk (note that we are omitting the m superscripts here for notational convenience). Unlike in KMM, where the kernel means are convex combinations of RKHS embeddings, we do not impose any constraints on u and v, since the weights do not need to resemble a probability distribution (thus ̂μ ms,w 
+
+3and ̂μ mt,w are technically no longer “means”). This increases the power of our optimisation: with arbitrary weights, we can perfectly align 
+
+∥∥∥̂ Dm 
+
+> MMD ,w
+
+− ˜Dm
+
+> MMD
+
+∥∥∥2
+
+> H
+
+= 0 as long as ˜DmM M D is contained in the linear span (as opposed to the convex hull) of ϕ (zms,i 
+
+) and ϕ (zmt,j 
+
+).We can obtain the required objective function in terms of kernel evaluations by separating 
+
+∥∥∥̂ Dm 
+
+> MMD ,w
+
+− ˜Dm
+
+> MMD
+
+∥∥∥2
+
+> H
+
+= ∥∥̂ μ ms,w −̂μ mt,w 
+
+∥∥2 
+
+> H
+
++
+
+∥∥∥ ˜Dm
+
+> MMD
+
+∥∥∥2
+
+> H
+
+− 2
+
+〈̂ 
+
+μ ms,w −̂μ mt,w , ˜Dm
+
+> MMD
+
+〉
+
+> H
+
+. (9) First, we observe that 
+
+∥∥∥ ˜Dm
+
+> MMD
+
+∥∥∥2
+
+> H
+
+is a constant that does not affect the optimisation. Then, we have 
+
+∥∥̂ μ ms,w −̂μ mt,w 
+
+∥∥2 
+
+> H
+
+= uT Kmss u + vT Kmtt v − 2uT Kmst v, (10) 
+
+Kmss,i,j = κ (zms,i , z ms,j 
+
+) , Kmtt,i,j = κ (zmt,i , z mt,j 
+
+) , Kmst,i,j = κ (zms,i , z mt,j 
+
+) , (11) and 〈̂ 
+
+μ ms,w −̂μ mt,w , ˜Dm
+
+> MMD
+
+〉
+
+> H
+
+= uT bs − vT bt, (12) 
+
+bs,i = α
+
+> m
+
+∑
+
+> l=1
+
+(1 − α)m−lk∑
+
+> j=1
+
+κ (zms,i , z ls,j 
+
+) − κ (zms,i , z lt,j 
+
+) + (1 − α)mk∑
+
+> j=1
+
+κ (zms,i , z 0
+
+> s,j
+
+) − κ (zms,i , z 0
+
+> t,j
+
+), (13) 
+
+bt,i = α
+
+> m
+
+∑
+
+> l=1
+
+(1 − α)m−lk∑
+
+> j=1
+
+κ (zmt,i , z ls,j 
+
+) − κ (zmt,i , z lt,j 
+
+) + (1 − α)mk∑
+
+> j=1
+
+κ (zmt,i , z 0
+
+> s,j
+
+) − κ (zmt,i , z 0
+
+> t,j
+
+). (14) Since the kernel is positive-definite by definition, we thus have the convex quadratic optimisation 
+
+min  
+
+> u,v
+
+uT Kmss u + vT Kmtt v − 2uT Kmst v − 2 (uT bs − vT bt
+
+), (15) which can be solved efficiently using standard methods. 
+
+2.3 CORAL 
+
+For CORAL, we need to maintain EWMAs of both the means and covariances to correctly update ˜Dm
+
+> CORAL
+
+.The mean updates are 
+
+˜c0 
+
+> s
+
+=̂c 0
+
+> s
+
+, (16) 
+
+˜cms = (1 − α)˜cm−1 
+
+> s
+
++ α̂c ms , (17) and the covariances are given by 
+
+˜Σ0 
+
+> s
+
+=̂ Σ0
+
+> s
+
+, (18) 
+
+˜Σms = (1 − α)˜Σm−1 
+
+> s
+
++ α̂ Σms + (1 − α)α (̂ 
+
+c ms − ˜cm−1
+
+> s
+
+) (̂ 
+
+c ms − ˜cm−1
+
+> s
+
+)T , (19) where the latter term corrects for the shift in mean between updates. We now need weighted “covariance” expressions which can be plugged into ̂ Dm
+
+> CORAL ,w
+
+. However, using the standard weighted covariance formulae would yield a quartic weight-optimisation problem, which is NP-hard. Therefore, we propose instead a relaxation comprising linear combinations of outer products: ̂
+
+Dm 
+
+> CORAL ,w
+
+=̂ Σms,w −̂ Σmt,w , (20) ̂
+
+Σms,w =
+
+> k
+
+∑
+
+> i=1
+
+ui
+
+(zms,i −̂c ms
+
+) ( zms,i −̂c ms
+
+)T , (21) ̂
+
+Σmt,w =
+
+> k
+
+∑
+
+> j=1
+
+vj
+
+(zmt,j −̂c mt
+
+) ( zmt,j −̂c mt
+
+)T , (22) 40 20 40 60 80 100 120 
+
+Minibatch size (k) 
+
+> 10 -10
+> 10 -8
+> 10 -6
+> 10 -4
+> 10 -2
+> 10 0
+> Estimator variance
+> Uniform random k-means++ VaRDASS ORDERED PSDA ARROW
+
+Figure 1: Estimator variance vs k for six sampling algorithms. with fixed (unweighted) centres ̂c ms ,̂c mt . Thus, we obtain a tractable linear least squares problem 
+
+min 
+
+> u,v
+
+∥∥∥̂ Dm 
+
+> CORAL ,w
+
+− ˜Dm
+
+> CORAL
+
+∥∥∥2
+
+> F
+
+, (23) which is solvable to 0 if the linear span of the outer products contains ˜Dm
+
+> CORAL
+
+.
+
+## 3 Experiments 
+
+In this section, we evaluate ARROW on three criteria: degree of variance reduction achieved, target domain accuracy, and training speed. For all experiments, we set α = 0 .1, and limit the MMD minibatch buffer to coefficients above 0.01 (so storing a maximum of 22 minibatches). 
+
+3.1 Estimator variance 
+
+We use Monte Carlo simulations to compare the estimator variance for different SVR methods across different values of k (Figure 1). Specifically, we compute E
+
+∥∥∥̂ D − D
+
+∥∥∥2
+
+using a linear kernel (that is, estimating the squared Euclidean distance between distribution means) between a source and target dataset comprising 2D standard normal data with ns = nt = 4 , 000 . The experiment is run using 1,000 samples, and the EWMAs are updated with every sample as in realistic online conditions. In addition to ARROW, we compare uniform random sampling, diverse sampling using k-means++ (Arthur & Vassilvitskii, 2007; Napoli & White, 2024b), stratified sampling (VaRDASS) (Napoli & White, 2026b), order-aware sampling (ORDERED) (Napoli & White, 2026a), and paired sampling (PSDA) (Napoli, 2026). The graph shows that ARROW performs comparably to VaRDASS, slightly outperforming it for lower values of k.
+
+3.2 Target domain accuracy 
+
+Next, we evaluate ARROW in realistic training conditions, to assess whether the observed reduction in vari-ance translates to an increase in test accuracy. Experiments are conducted using the DomainBed framework (Gulrajani & Lopez-Paz, 2021) on the following domain shift benchmarks. 
+
+Spawrious (Lynch et al., 2023) classification of 4 dog breeds across images with different background environments (desert, jungle, snow etc.). This benchmark comprises 6 data splits of varying difficulty, 6 domains and 18,664 examples. 5Office-Home (Venkateswara et al., 2017) image classification of 65 categories of everyday objects with different image styles (Art, Clipart, Product, and Real World). This benchmark comprises 12 data splits, 4 domains and 15,500 examples. 
+
+Humpbacks (Napoli & White, 2023) detection of humpback whale vocalisations in underwater acoustic recordings across data from different acoustic monitoring programs. This benchmark comprises 4 data splits, 4 domains and 8,000 examples. The domain discrepancies are measured between the union of all training data and a held-out subset of the evaluation set. For the MMD, we use a radial basis function (RBF) mixture kernel (Li et al., 2018), given by κ(z, z ′) = ∑ 
+
+> γ∈G
+
+e−γ∥z−z′∥2
+
+with G = {0.001 , 0.01 , 0.1, 1, 10 }. For Spawrious and Office-Home, we use a ResNet-18 (He et al., 2015) backbone pre-trained on ImageNet. For Humpbacks, we use the audio frontend and architecture described in Napoli & White (2023). Models are trained using the Adam optimiser (Kingma & Ba, 2014) for 3,000 iterations. Hyperparameters, including the learning rate, weight decay, minibatch size 
+
+k, and UDA trade-off parameter, are tuned with a random search of size 10 using an in-distribution (training domain) validation set, independently for each sampler. In particular, the random search distribution for k is 
+
+k ∼ 2Uniform (3 ,7) . The entire set of experiments is repeated 5 times for reproducibility, using different random seeds for hyperparameters, weight initialisations, and dataset splits. All other hyperparameter choices and training details follow the DomainBed default options. In addition to ARROW, six variance-reduced samplers are compared: k-means++, DPP (Zhang et al., 2017; Napoli & White, 2024b), anticlustering (Baumann et al., 2026), VaRDASS, ORDERED, and PSDA, as well as PSDA and ARROW together. We also compare several baseline UDA methods: DANN (Ganin et al., 2015), CDAN (Long et al., 2017), SDAT (Rangwani et al., 2022), ELS (Zhang et al., 2023), ARM (Zhang et al., 2020), and MCC (Jin et al., 2020), plus non-adaptive training via ERM (Vapnik, 1998). Tables 1, 2, and 3 show the average test accuracy and standard errors over the 5 repeats and each of the data splits, for each method. The results support the notion that SVR significantly boosts the performance of the MMD and CORAL for UDA. This allows these classical and simple techniques to outperform substantially more modern and complicated methods. Overall, ARROW performs comparably to state-of-the-art offline SVR methods, despite not achieving as much variance reduction in the Monte Carlo simulations. This indicates that, even in an offline setting, there is a clear advantage to continuously tracking the alignment statistics, rather than updating them periodically. The gains in accuracy are not always additive (i.e., PSDA + ARROW does not always outperform each method individually), suggesting there could be some more complex interaction mechanisms at play. It was also observed that there is significant sensitivity in the accuracy incurred by the model selection process, which could also explain this phenomenon. 
+
+3.3 Training speed 
+
+Overall wall-clock training times are reported for each sampler and dataset in Table 4. These are averaged over all data splits, hyperparameters, and repeats from the previous experiment, including both CORAL and MMD. Again, ARROW performs comparatively to preceding techniques on these mid-scale datasets. Although, being an online technique, we note that the runtime is completely independent of dataset size, so ARROW may be the only viable option on extremely large datasets. 
+
+## 4 Conclusion 
+
+This paper introduced ARROW, the first online SVR method for the MMD and CORAL losses, based on a novel framework of instance reweighting and exponential moving averages. We demonstrate competitiveness with offline methods in terms of variance reduction, speed, and target-domain performance. Future work could include extending this framework to other losses, both for UDA and more generally. 6Table 1: Average test accuracy for Spawrious by data split. 
+
+Method O2O-Easy O2O-Medium O2O-Hard M2M-Easy M2M-Medium M2M-Hard Average 
+
+ERM 68.6 ± 1.7 62.6 ± 0.8 62.1 ± 0.7 70.2 ± 1.8 45.0 ± 1.3 43.0 ± 1.2 58.6 ± 0.5 DANN 91.4 ± 3.0 57.1 ± 3.5 71.1 ± 3.2 91.1 ± 0.1 54.8 ± 4.4 39.8 ± 3.4 67.5 ± 1.3 CDAN 91.9 ± 1.7 57.0 ± 3.0 70.3 ± 2.2 92.9 ± 0.9 58.3 ± 3.8 44.3 ± 7.7 69.1 ± 1.6 CDAN + SDAT 92.9 ± 1.4 54.3 ± 3.5 73.7 ± 6.6 83.3 ± 3.0 60.3 ± 4.3 53.0 ± 6.0 69.6 ± 1.8 CDAN + ELS 89.8 ± 1.9 58.4 ± 2.1 67.3 ± 1.5 89.9 ± 2.2 62.3 ± 2.3 56.1 ± 10.2 70.6 ± 1.9 ARM 70.2 ± 2.9 58.6 ± 2.1 60.6 ± 0.2 68.7 ± 1.6 42.2 ± 1.8 41.7 ± 1.0 57.0 ± 0.7 MCC 87.6 ± 1.9 51.0 ± 0.8 54.0 ± 6.3 77.5 ± 2.4 46.4 ± 0.5 42.7 ± 1.2 59.9 ± 1.2 CORAL 70.7 ± 2.3 58.4 ± 1.9 64.1 ± 0.6 78.6 ± 1.5 54.1 ± 1.2 49.2 ± 0.7 62.5 ± 0.6 + k-means++ 82.8 ± 3.5 58.2 ± 2.4 61.4 ± 4.1 75.5 ± 2.7 54.7 ± 2.7 48.6 ± 1.1 63.5 ± 1.2 + DPP 79.8 ± 3.4 59.8 ± 2.3 67.8 ± 2.0 79.6 ± 2.3 58.5 ± 1.4 49.4 ± 1.9 65.8 ± 0.9 + Anticlustering 89.1 ± 4.7 57.6 ± 3.3 73.7 ± 6.1 87.5 ± 2.2 51.4 ± 3.2 47.5 ± 2.5 67.8 ± 1.6 + VaRDASS 90.1 ± 2.2 62.2 ± 1.0 79.6 ± 2.8 77.0 ± 2.7 51.7 ± 1.6 45.8 ± 0.4 67.7 ± 0.8 + ORDERED 88.2 ± 2.2 61.6 ± 1.6 78.1 ± 3.5 84.1 ± 5.0 60.5 ± 2.6 50.5 ± 2.1 70.5 ± 1.3 + PSDA 92.4 ± 2.2 53.7 ± 1.7 73.9 ± 7.2 86.0 ± 1.8 60.9 ± 1.7 54.0 ± 1.3 70.2 ± 1.4 + ARROW 85.1 ± 1.4 54.7 ± 1.9 78.1 ± 4.4 79.2 ± 2.5 60.8 ± 4.5 50.1 ± 0.9 68.0 ± 1.2 + PSDA + ARROW 84.7 ± 4.8 58.8 ± 2.6 79.5 ± 6.1 81.9 ± 0.9 65.7 ± 3.9 64.8 ± 6.8 72.6 ± 1.9 
+
+MMD 79.2 ± 3.3 61.9 ± 1.2 65.5 ± 3.4 76.2 ± 3.4 55.3 ± 3.4 48.1 ± 0.7 64.4 ± 1.1 + k-means++ 83.7 ± 6.3 58.6 ± 2.4 68.4 ± 4.5 79.3 ± 2.7 60.0 ± 3.0 52.5 ± 4.5 67.1 ± 1.7 + DPP 83.6 ± 4.5 62.9 ± 0.9 63.5 ± 3.2 79.1 ± 3.1 57.4 ± 4.0 45.6 ± 1.7 65.4 ± 1.3 + Anticlustering 74.5 ± 6.0 61.7 ± 1.0 85.9 ± 5.7 75.4 ± 4.1 63.7 ± 10.8 44.6 ± 3.0 67.6 ± 2.4 + VaRDASS 94.2 ± 1.8 61.5 ± 1.4 72.7 ± 4.5 76.9 ± 4.3 75.9 ± 10.6 48.1 ± 5.1 71.6 ± 2.2 + ORDERED 93.5 ± 1.3 56.4 ± 2.4 85.1 ± 1.9 88.6 ± 0.8 70.5 ± 7.8 62.1 ± 10.9 76.1 ± 2.3 
+
++ PSDA 87.2 ± 6.7 62.4 ± 5.5 77.4 ± 8.9 86.6 ± 5.5 60.9 ± 11.2 67.5 ± 13.0 73.7 ± 3.6 + ARROW 82.6 ± 7.0 56.5 ± 2.2 65.8 ± 1.9 78.0 ± 6.4 61.3 ± 4.1 46.8 ± 3.4 65.2 ± 1.9 + PSDA + ARROW 84.2 ± 8.3 60.0 ± 3.1 64.0 ± 3.4 82.5 ± 5.2 62.9 ± 6.0 51.3 ± 4.2 67.5 ± 2.2 
+
+Table 2: Average test accuracy for Office-Home by data split. 
+
+Method C-A A-C P-A A-P R-A A-R P-C C-P R-C C-R R-P P-R Average 
+
+ERM 32.9 33.9 30.7 45.7 49.1 57.5 34.2 46.2 36.5 51.8 63.2 59.6 45.1 ± 0.4 DANN 31.1 34.9 28.9 39.9 46.9 50.5 31.7 46.8 39.7 48.7 63.4 52.7 42.9 ± 0.4 CDAN 36.8 31.2 30.0 40.5 47.3 52.9 33.3 44.4 42.6 49.3 60.7 54.8 43.7 ± 0.5 CDAN + SDAT 36.0 36.1 30.9 41.9 48.0 54.5 37.8 45.7 43.5 50.5 66.9 55.7 45.6 ± 0.2 CDAN + ELS 35.1 30.7 29.3 38.3 45.7 52.9 33.6 44.3 41.6 46.7 62.7 55.2 43.0 ± 0.3 ARM 34.2 31.3 30.0 43.1 49.2 56.5 32.6 46.4 35.6 47.6 63.1 56.0 43.8 ± 0.2 MCC 33.8 38.3 34.3 50.7 49.9 58.7 36.4 54.1 44.2 55.6 69.1 59.8 48.7 ± 0.3 CORAL 39.4 35.2 34.7 40.8 57.1 56.8 35.8 48.3 43.2 49.5 68.9 60.0 47.5 ± 0.1 + k-means++ 41.5 40.3 40.0 46.1 53.3 56.7 40.1 51.0 45.6 55.7 70.6 64.1 50.4 ± 0.5 + DPP 40.8 36.0 36.9 40.5 54.5 56.3 35.8 48.7 43.5 49.6 68.9 61.0 47.7 ± 0.2 + Anticlustering 39.2 37.2 36.8 40.4 56.5 56.8 38.4 49.9 45.4 54.2 70.1 62.6 49.0 ± 0.2 + VaRDASS 39.7 35.6 36.6 42.8 55.7 57.9 39.3 50.3 47.3 52.8 71.6 62.3 49.3 ± 0.4 + ORDERED 41.9 37.3 39.6 44.9 58.6 58.3 42.2 51.4 47.4 55.8 71.5 64.0 51.1 ± 0.4 + PSDA 44.2 40.3 41.2 46.2 58.7 60.0 44.5 54.0 50.6 55.9 71.9 65.1 52.7 ± 0.4 
+
++ ARROW 40.5 37.1 35.4 44.1 57.8 57.5 39.6 50.5 45.4 54.1 68.9 60.6 49.3 ± 0.3 + PSDA + ARROW 44.2 39.7 38.9 48.3 57.7 60.4 42.9 53.2 50.7 55.9 69.1 64.0 52.1 ± 0.3 MMD 32.4 35.4 31.5 47.0 49.5 55.7 32.2 48.4 41.7 49.3 66.6 56.0 45.5 ± 0.3 + k-means++ 33.6 33.7 32.4 43.9 51.8 53.4 31.9 48.0 39.3 52.5 66.2 55.5 45.2 ± 0.2 + DPP 31.6 34.9 31.0 45.2 51.0 56.3 33.4 51.2 39.2 50.1 67.2 59.0 45.9 ± 0.4 + Anticlustering 35.1 33.2 33.0 44.6 50.1 57.2 33.3 48.4 36.6 51.0 63.8 58.3 45.4 ± 0.5 + VaRDASS 33.8 33.5 32.4 45.8 50.4 57.0 32.5 49.8 37.7 51.8 65.3 58.8 45.7 ± 0.2 + ORDERED 35.9 36.4 33.2 47.1 48.7 55.7 32.7 49.8 39.0 52.3 66.2 59.8 46.4 ± 0.2 + PSDA 33.5 35.1 31.6 45.8 51.8 57.3 33.4 49.1 38.5 52.0 65.4 61.5 46.3 ± 0.3 + ARROW 36.8 35.8 30.3 45.2 51.4 56.0 32.6 50.5 43.9 53.2 66.5 59.6 46.8 ± 0.2 + PSDA + ARROW 36.3 35.8 33.6 46.2 52.8 57.1 33.8 50.8 41.1 52.1 66.7 60.2 47.2 ± 0.3 
+
+## 5 Acknowledgements 
+
+The author acknowledges the use of the IRIDIS High Performance Computing Facility, and associated support services at the University of Southampton, in the completion of this work. 
+
+## References 
+
+David Arthur and Sergei Vassilvitskii. k-means++: The Advantages of Careful Seeding. Proceedings of the eighteenth annual ACM-SIAM symposium on Discrete algorithms , 2007. 
+
+7Table 3: Average test accuracy for Humpbacks by data split.                                                                                                                                                                                                                                                                                                                                                                                             
+
+> Method Domain 1 Domain 2 Domain 3 Domain 4 Average
+> ERM 70.3 ±2.7 92.0 ±1.9 78.1 ±3.0 96.2 ±0.6 84.2 ±1.1 DANN 60.5 ±4.2 90.1 ±2.1 63.9 ±6.1 76.1 ±11.1 72.6 ±3.4 CDAN 61.6 ±4.2 82.2 ±4.7 73.5 ±3.0 84.4 ±0.6 75.4 ±1.7 CDAN + SDAT 63.7 ±3.0 81.2 ±6.7 63.6 ±3.7 78.9 ±3.2 71.8 ±2.2 CDAN + ELS 62.7 ±2.4 85.6 ±3.4 70.8 ±2.2 83.9 ±2.3 75.8 ±1.3 ARM 78.8 ±3.4 95.9 ±1.0 72.4 ±3.6 89.6 ±2.0 84.2 ±1.4 MCC 70.0 ±5.9 87.7 ±4.9 76.1 ±4.1 97.1 ±0.5 82.7 ±2.2 CORAL 77.2 ±1.4 87.7 ±3.4 83.6 ±4.2 92.7 ±1.9 85.3 ±1.5 + k-means++ 79.1 ±1.7 97.8 ±0.6 85.4 ±4.6 93.8 ±1.0 89.1 ±1.3 + DPP 81.0 ±1.9 97.4 ±1.0 84.4 ±5.1 94.9 ±1.2 89.5 ±1.4 + Anticlustering 78.8 ±1.6 95.6 ±2.0 87.0 ±5.9 93.1 ±2.5 88.6 ±1.7 + VaRDASS 78.4 ±2.8 95.1 ±1.6 85.3 ±4.2 94.4 ±1.2 88.3 ±1.3 + ORDERED 79.8 ±1.9 98.0 ±0.9 92.0 ±3.1 93.8 ±1.8 90.9 ±1.0 + PSDA 80.7 ±1.4 97.5 ±0.9 89.9 ±2.9 96.0 ±0.7 91.0 ±0.9 + ARROW 83.3 ±0.5 97.9 ±0.3 97.4 ±1.7 93.4 ±1.0 93.0 ±0.5
+> + PSDA + ARROW 81.3 ±0.4 97.6 ±0.4 97.6 ±1.6 93.0 ±1.1 92.4 ±0.5 MMD 78.3 ±2.5 95.0 ±1.2 83.3 ±4.2 94.3 ±1.1 87.7 ±1.3 + k-means++ 79.7 ±1.9 97.6 ±0.4 79.5 ±5.7 96.7 ±0.3 88.4 ±1.5 + DPP 83.4 ±1.0 97.9 ±0.6 83.4 ±5.9 96.6 ±0.6 90.3 ±1.5 + Anticlustering 80.5 ±2.4 95.2 ±0.9 92.3 ±4.7 93.8 ±0.5 90.5 ±1.3 + VaRDASS 79.2 ±1.1 98.4 ±0.5 95.5 ±1.2 95.0 ±1.0 92.0 ±0.5 + ORDERED 78.9 ±2.0 98.1 ±0.3 94.8 ±2.6 95.5 ±1.0 91.8 ±0.9 + PSDA 80.2 ±2.3 97.3 ±0.7 95.3 ±0.9 95.6 ±0.6 92.1 ±0.7 + ARROW 81.3 ±0.9 97.2 ±0.5 98.9 ±0.7 93.3 ±0.7 92.7 ±0.4
+> + PSDA + ARROW 81.5 ±0.9 97.2 ±0.4 98.8 ±0.8 91.7 ±0.9 92.3 ±0.4
+
+Table 4: Average wall-clock training times by dataset (seconds). 
+
+Sampler Spawrious Office-Home Humpbacks 
+
+Uniform random 393 ± 9 501 ± 18 30 ± 1k-means++ 2312 ± 151 997 ± 28 345 ± 15 DPP 4123 ± 109 1095 ± 32 731 ± 19 Anticlustering 1403 ± 24 818 ± 25 124 ± 2VaRDASS 2958 ± 21 1166 ± 45 528 ± 9ORDERED 3900 ± 83 2579 ± 97 1944 ± 43 PSDA 1329 ± 13 604 ± 20 286 ± 3ARROW 756 ± 20 1093 ± 31 221 ± 6PSDA + ARROW 1596 ± 25 1262 ± 44 224 ± 8
+
+Remi Bardenet, Subhroshekhar Ghosh, and Meixia Lin. Determinantal point processes based on orthogonal polynomials for sampling minibatches in SGD. NeurIPS , 20:16226–16237, 12 2021. ISSN 10495258. URL 
+
+https://arxiv.org/abs/2112.06007v1 .Philipp Baumann, Olivier Goldschmidt, Dorit S. Hochbaum, and Jason Yang. A Fast and Effective Method for Euclidean Anticlustering: The Assignment-Based-Anticlustering Algorithm. arXiv , 1 2026. URL http://arxiv. org/abs/2601.06351 .Shai Ben-David, John Blitzer, Koby Crammer, and Fernando Pereira. Analysis of Representations for Domain Adaptation. NeurIPS , 19, 2006. Shai Ben-David, John Blitzer, Koby Crammer, Alex Kulesza, Fernando Pereira, and Jennifer Wortman Vaughan. A theory of learning from different domains. Machine Learning , 79(1-2):151–175, 10 2010. ISSN 15730565. doi: 10. 1007/S10994-009-5152-4/METRICS. URL https://link.springer.com/article/10.1007/s10994-009-5152-4 .Yoshua Bengio, Jérome Louradour, Ronan Collobert, and Jason Weston. Curriculum learning. ICML , 382, 2009. doi: 10.1145/1553374.1553380. URL https://dl.acm.org/doi/10.1145/1553374.1553380 .Abhimanyu Dubey, Vignesh Ramanathan, Alex Pentland, and Dhruv Mahajan. Adaptive Methods for Real-World Domain Generalization. CVPR , 2021. ISSN 10636919. doi: 10.1109/CVPR46437.2021.01411. URL https: //arxiv.org/abs/2103.15796v2 .
+
+8Tianfan Fu and Zhihua Zhang. CPSG-MCMC: Clustering-Based Preprocessing method for Stochastic Gradient MCMC. AISTATS , pp. 841–850, 4 2017. ISSN 2640-3498. URL https://proceedings.mlr.press/v54/fu17a. html .Yaroslav Ganin, Evgeniya Ustinova, Hana Ajakan, Pascal Germain, Hugo Larochelle, François Laviolette, Mario Marchand, and Victor Lempitsky. Domain-Adversarial Training of Neural Networks. JMLR , 2015. ISSN 21916594. Irena Gao, Shiori Sagawa, Pang Wei Koh, Tatsunori Hashimoto, and Percy Liang. Out-of-Distribution Robustness via Targeted Augmentations. ICML , 10 2023. Ishaan Gulrajani and David Lopez-Paz. In Search of Lost Domain Generalization. ICLR , 2021. Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep Residual Learning for Image Recognition. Pro-ceedings of the IEEE Computer Society Conference on Computer Vision and Pattern Recognition , 2016-December: 770–778, 12 2015. ISSN 10636919. doi: 10.48550/arxiv.1512.03385. URL https://arxiv.org/abs/1512.03385v1 .Wenyu Jiang, Hao Cheng, MingCai Chen, Chongjun Wang, and Hongxin Wei. DOS: Diverse Outlier Sampling for Out-of-Distribution Detection. ICLR , 2024. Ying Jin, Ximei Wang, Mingsheng Long, and Jianmin Wang. Minimum Class Confusion for Versatile Domain Adaptation. ECCV , 12366 LNCS:464–480, 12 2020. ISSN 16113349. doi: 10.1007/978-3-030-58589-1{\_}28. URL 
+
+https://arxiv.org/pdf/1912.03699 .Diederik P. Kingma and Jimmy Lei Ba. Adam: A Method for Stochastic Optimization. 3rd International Conference on Learning Representations, ICLR 2015 - Conference Track Proceedings , 12 2014. doi: 10.48550/arxiv.1412.6980. URL https://arxiv.org/abs/1412.6980v9 .Pang Wei Koh, Shiori Sagawa, Henrik Marklund, Sang Michael Xie, Marvin Zhang, Akshay Balsubramani, Weihua Hu, Michihiro Yasunaga, Richard Lanas Phillips, Irena Gao, Tony Lee, Etienne David, Ian Stavness, Wei Guo, Berton A. Earnshaw, Imran S. Haque, Sara Beery, Jure Leskovec, Anshul Kundaje, Emma Pierson, Sergey Levine, Chelsea Finn, and Percy Liang. WILDS: A Benchmark of in-the-Wild Distribution Shifts. ICML , 2021. Haoliang Li, Sinno Jialin Pan, Shiqi Wang, and Alex C. Kot. Domain Generalization with Adversarial Feature Learning. CVPR , pp. 5400–5409, 12 2018. ISSN 10636919. doi: 10.1109/CVPR.2018.00566. Jingchang Liu and Linli Xu. Accelerating Stochastic Gradient Descent Using Antithetic Sampling. arXiv , 10 2018. URL https://arxiv.org/abs/1810.03124v1 .Weijie Liu, Hui Qian, Chao Zhang, Zebang Shen, Jiahao Xie, and Nenggan Zheng. Accelerating Stratified Sampling SGD by Reconstructing Strata. IJCAI , 2020. Mingsheng Long, Yue Cao, Jianmin Wang, and Michael Jordan. Learning Transferable Features with Deep Adaptation Networks. In Francis Bach and David Blei (eds.), Proceedings of the 32nd International Conference on Machine Learning , volume 37 of Proceedings of Machine Learning Research , pp. 97–105, Lille, France, 2015. PMLR. URL 
+
+https://proceedings.mlr.press/v37/long15.html .Mingsheng Long, Zhangjie Cao, Jianmin Wang, and Michael I. Jordan. Conditional Adversarial Domain Adaptation. 
+
+Advances in Neural Information Processing Systems , 2018-December:1640–1650, 5 2017. ISSN 10495258. URL 
+
+https://arxiv.org/abs/1705.10667v4 .Yucheng Lu, Youngsuk Park, Lifan Chen, Yuyang Wang, Christopher De Sa, and Dean Foster. Variance Reduced Training with Stratified Sampling for Forecasting Models. ICML , 139:7145–7155, 3 2021. ISSN 26403498. URL 
+
+https://arxiv.org/abs/2103.02062v2 .Aengus Lynch, Gbètondji J-S Dovonon, Jean Kaddour, and Ricardo Silva. Spawrious: A Benchmark for Fine Control of Spurious Correlation Biases. arXiv , 3 2023. URL https://arxiv.org/abs/2303.05470v3 .Andrea Napoli. Variance-reduced Domain Adaptation using Paired Sampling. arXiv , 2026. Andrea Napoli and Paul White. Unsupervised Domain Adaptation for the Cross-Dataset Detection of Humpback Whale Calls. DCASE , 2023. Andrea Napoli and Paul White. Diversity-Based Sampling for Imbalanced Domain Adaptation. EUSIPCO , 2024a. 
+
+9Andrea Napoli and Paul White. Improving Domain Generalisation with Diversity-based Sampling. DCASE , 2024b. URL http://arxiv.org/abs/2410.04235 .Andrea Napoli and Paul White. Order Matters: Improving Domain Adaptation by Reordering Data. arXiv , 2026a. Andrea Napoli and Paul White. Variance Matters: Improving Domain Adaptation via Stratified Sampling. TMLR ,2026b. Peter Ochieng. Diversity Is All You Need for Contrastive Learning: Spectral Bounds on Gradient Magnitudes. 
+
+NeurIPS , 2025. Martin Papenberg and Gunnar W. Klau. Using anticlustering to partition data sets into equivalent parts. Psychological methods , 26(2):161–174, 2021. ISSN 1082989X. doi: 10.1037/met0000301. URL https://pubmed.ncbi.nlm.nih. gov/32567870/ .Harsh Rangwani, Sumukh K Aithal, Mayank Mishra, Arihant Jain, and R Venkatesh Babu. A Closer Look at Smooth-ness in Domain Adversarial Training. Proceedings of the 39th International Conference on Machine Learning , 2022. URL https://github.com/val-iisc/SDAT. 
+
+Ievgen Redko, Emilie Morvant, Amaury Habrard, Marc Sebban, and Younès Bennani. A survey on domain adaptation theory: learning bounds and theoretical guarantees. arXiv , 2022. Baochen Sun and Kate Saenko. Deep CORAL: Correlation Alignment for Deep Domain Adaptation. ECCV , 9915 LNCS:443–450, 7 2016. ISSN 16113349. URL https://arxiv.org/abs/1607.01719v1 .Eric Tzeng, Judy Hoffman, Ning Zhang, Kate Saenko, and Trevor Darrell. Deep Domain Confusion: Maximizing for Domain Invariance. arXiv , 12 2014. URL https://arxiv.org/abs/1412.3474v1 .Vladimir Vapnik. Statistical Learning Theory . Wiley, New York, US, 1998. Hemanth Venkateswara, Jose Eusebio, Shayok Chakraborty, and Sethuraman Panchanathan. Deep Hashing Network for Unsupervised Domain Adaptation. CVPR 2017 , 2017. doi: 10.1109/CVPR.2017.572. URL https://arxiv. org/abs/1706.07522v1 .Zirui Wang, Zihang Dai, Barnabas Poczos, and Jaime Carbonell. Characterizing and Avoiding Negative Transfer. 
+
+CVPR , 2019-June:11285–11294, 11 2019. ISSN 10636919. doi: 10.1109/CVPR.2019.01155. URL https://arxiv. org/abs/1811.09751v4 .Lilei Wu and Jie Liu. Contrastive Learning with Diverse Samples. Frontiers in Artificial Intelligence and Applications ,372:2672–2679, 9 2023. ISSN 18798314. Cheng Zhang, Hedvig Kjellström, and Stephan Mandt. Determinantal Point Processes for Mini-Batch Diversification. 
+
+Uncertainty in Artificial Intelligence , 2017. Cheng Zhang, Cengiz Öztireli, Stephan Mandt, and Giampiero Salvi. Active Mini-Batch Sampling Using Repulsive Point Processes. AAAI , 33(01):5741–5748, 7 2019. ISSN 2374-3468. doi: 10.1609/AAAI.V33I01.33015741. URL 
+
+https://ojs.aaai.org/index.php/AAAI/article/view/4520 .Marvin Zhang, Henrik Marklund, Nikita Dhawan, Abhishek Gupta, Sergey Levine, and Chelsea Finn. Adaptive Risk Minimization: Learning to Adapt to Domain Shift. Advances in Neural Information Processing Systems , 28: 23664–23678, 7 2020. ISSN 10495258. URL https://arxiv.org/abs/2007.02931v4 .YiFan Zhang, Xue Wang, Jian Liang, Zhang Zhang, Liang Wang, Rong Jin, and Tieniu Tan. Free Lunch for Domain Adversarial Training: Environment Label Smoothing. ICLR , 2 2023. URL http://arxiv.org/abs/2302.00194 .Peilin Zhao and Tong Zhang. Accelerating Minibatch Stochastic Gradient Descent using Stratified Sampling. arXiv ,5 2014. URL https://arxiv.org/abs/1405.3080v1 .
+
+10

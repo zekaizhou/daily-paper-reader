@@ -1,0 +1,102 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.26993v1/fig-001.webp",
+      "caption": "Table 4. Cross-domain ACER (%) for InternViT-6B and DeepPixBiS. The highest transferability is observed for InternViT-6B when",
+      "page": 6,
+      "index": 1,
+      "width": 497,
+      "height": 335
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26993v1/fig-002.webp",
+      "caption": "Table 9. Cross-dataset test ACER (%) — continued.",
+      "page": 15,
+      "index": 2,
+      "width": 721,
+      "height": 769
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26993v1/fig-003.webp",
+      "caption": "Figure 3. Comparison of the overall classification performance (intra-dataset and cross-dataset transfer measured in ACERall (%), Equation (2)) vs. GFLOPs per model. InternViT-6B has the second largest number of parameters and highest GFLOPs, while also achieving the best overall detection performance. Note that InternViT-6B processes images at approximately twice the resolution (see table 1), which is typically associated with a higher number of GFLOPs [43]. Although CLIP-B/32 has fewer GFLOPs than DeepPixBiS, its model size is much larger. CLIP-B/32 is also outperforming FSFM-FAS (backbone: CLIP-B/16), the specialized foundation model, on detection accuracy. Points are colored by model family. Lower ACER is better.",
+      "page": 7,
+      "index": 3,
+      "width": 1035,
+      "height": 452
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26993v1/fig-004.webp",
+      "caption": "Table 8. Cross-dataset test ACER (%) — continued.",
+      "page": 14,
+      "index": 4,
+      "width": 721,
+      "height": 731
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26993v1/fig-005.webp",
+      "caption": "Figure 5. Combined summary",
+      "page": 13,
+      "index": 5,
+      "width": 1035,
+      "height": 386
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26993v1/fig-006.webp",
+      "caption": "Table 7. Cross-dataset test ACER (%) for MCIO leave-one-out training. Rows: training corpus; columns: test corpus. Bold: lowest ACER per column within the table. Avg./Std.: mean and population std. over the four test corpora per train source.",
+      "page": 13,
+      "index": 6,
+      "width": 721,
+      "height": 765
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26993v1/fig-007.webp",
+      "caption": "Figure 4. t-distributed stochastic neighbor embedding (t-SNE) of frozen embeddings (MCIO test, all corpora pooled). Bonafide: red. Attacks share the corpus hue. Umap plots in Appendix section F.",
+      "page": 8,
+      "index": 7,
+      "width": 498,
+      "height": 662
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26993v1/fig-008.webp",
+      "caption": "Table 5. Summary in the ACER (%) metric. Average over intra-",
+      "page": 8,
+      "index": 8,
+      "width": 496,
+      "height": 775
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26993v1/fig-009.webp",
+      "caption": "Figure 2. Examples face crops with the MTCNN detector [65]. Left column: bonafide. Right column: presentation attack (type: print). Rows - datasets: MSU-MFSD (M), CASIA-FASD (C), Replay-Attack (I), Oulu-NPU (O).",
+      "page": 4,
+      "index": 9,
+      "width": 498,
+      "height": 699
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26993v1/fig-010.webp",
+      "caption": "Figure 8. Top: t-SNE of frozen CLS embeddings (MCIO test samples, all corpora pooled; colored by dataset). Bottom: corresponding UMAP.",
+      "page": 17,
+      "index": 10,
+      "width": 1035,
+      "height": 667
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26993v1/fig-011.webp",
+      "caption": "Figure 7. t-SNE are in fig. 4. UMAP of frozen CLS embeddings (MCIO test samples, all corpora pooled; colored by dataset).",
+      "page": 17,
+      "index": 11,
+      "width": 1035,
+      "height": 330
+    },
+    {
+      "url": "assets/figures/arxiv/2607.26993v1/fig-012.webp",
+      "caption": "Table 10. Cross-dataset test ACER (%) — continued.",
+      "page": 16,
+      "index": 12,
+      "width": 721,
+      "height": 828
+    }
+  ]
+}
