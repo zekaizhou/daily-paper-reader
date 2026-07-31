@@ -1,0 +1,1568 @@
+Title: Three-Pronged Spectral Control for Federated Parameter Efficient Fine Tuning
+
+URL Source: https://arxiv.org/pdf/2607.20914v1
+
+Published Time: Fri, 24 Jul 2026 00:35:07 GMT
+
+Number of Pages: 18
+
+Markdown Content:
+# Three-Pronged Spectral Control for Federated Parameter Efficient Fine Tuning 
+
+Shiva Raj Pokhrel, Dipsan Bhattarai and Anwar Walid, Fellow, IEEE 
+
+Abstract —Federated parameter-efficient fine-tuning (PEFT) enables communication-efficient adaptation of large pretrained models on decentralized edge data, but it remains fragile under non-IID client heterogeneity. In low-rank adaptation (LoRA), different clients may learn locally useful but spectrally mis-aligned update subspaces, causing high-variance aggregation and poor global transfer. We propose TRISHUL , a spectral-control framework for robust federated PEFT. TRISHUL follows the FL no-raw-data-sharing setting but does not itself provide formal privacy guarantees. TRISHUL uses shared frozen multi-head low-rank bases to obtain algebraically exact aggregation of com-pact core updates, applies nuclear-norm proximal shrinkage to suppress client-specific high-rank spectral components before up-load, and allocates adaptation heads non-uniformly across layers using a concave water-filling budget rule derived from pretrained layer capacity. Because shrinkage is performed only on small core matrices, TRISHUL adds negligible computation and no extra per-round communication over the underlying multi-head PEFT protocol. Across vision and language benchmarks, including CIFAR-100, SVHN, 20 Newsgroups, MRQA, and GLUE with LLaMA3.2-1B, TRISHUL improves convergence, stability, and final performance over federated LoRA baselines, with greater gains under stronger heterogeneity. 1
+
+Index Terms —Federated Learning, Parameter-Efficient Fine-Tuning, Low-Rank Adaptation, Nuclear Norm Regularization, Non-IID Learning 
+
+I. I NTRODUCTION 
+
+Large pretrained models have become the foundation of modern artificial intelligence, but adapting them efficiently in privacy-sensitive and resource-constrained edge environments remains a major challenge. In many practical deployments, data are generated locally on mobile devices, sensors, and edge platforms, where direct data sharing is undesirable or impossible due to privacy, bandwidth, and regulatory con-straints. Federated learning (FL) addresses this challenge by enabling collaborative model training without centralizing raw data [1]. In parallel, parameter-efficient fine-tuning (PEFT), particularly low-rank adaptation (LoRA) [2], [3], has emerged as a scalable approach for adapting large models using only a small number of trainable parameters. The combination of FL and PEFT [4] therefore offers a promising paradigm for the communication-efficient and privacy-preserving adaptation of foundation models at the edge. Despite this promise, federated PEFT remains fundamen-tally challenging under realistic heterogeneous settings. Client 
+
+S. R. Pokhrel and D. Bhattarai are with the School of IT, Deakin University, Australia. A. Walid is with Columbia University, USA. Cor-responding author: S. R. Pokhrel; emails: {shiva.pokhrel@deakin.edu.au, s225219805@deakin.edu.au, aie13@columbia.edu }
+
+> 1
+
+See Trishul Github for implementation details. 
+
+data distributions are inherently non-IID, reflecting diverse user behaviors, environments, and tasks. This heterogeneity induces statistically inconsistent local updates, which can interfere destructively during aggregation and degrade global model performance. Classical federated optimization meth-ods such as FedAvg [1], FedProx [5] and SCAFFOLD [6] attempt to mitigate this issue through gradient correction, proximal regularization, or normalized aggregation. However, these approaches operate primarily at the level of optimization dynamics and do not explicitly control the structure of param-eter updates. The key problem is not only reducing trainable parameters, but ensuring that low-rank client updates remain geometrically compatible under aggregation. 
+
+A. Motivation and Challenges 
+
+Aforementioned limitations become critical in the context of LoRA. In PEFT, updates are constrained to low-dimensional subspaces, but under heterogeneous data, different clients may learn updates that occupy misaligned subspaces. Consequently, the aggregated update can exhibit spectral inconsistency ,where locally useful directions are globally incompatible. This phenomenon leads to high-variance updates and degraded transferability across clients. Recent methods such as multi-head LoRA [4] improve expressivity by introducing multiple subspaces per layer, but do not explicitly regulate the spectral geometry of these updates, leaving the aggregation instability unresolved. These observations motivate a spectral-control formulation of federated PEFT. Rather than viewing the problem solely through the lens of optimization, we argue that heterogeneous federated fine-tuning should explicitly control update geometry under communication and resource constraints. From this perspective, two coupled failure modes arise: (i) aggregation interference , caused by unstable and client-specific singular directions that increase the variance of aggregated updates, and (ii) capacity misallocation , arising from uniform dis-tribution of limited adaptation budget across layers despite significant variation in pretrained representational strength. Existing methods address these challenges only partially and in isolation. To address the gap, we propose TRISHUL , a three-pronged spectral-control framework for federated edge fine-tuning. It combines: (i) shared frozen multi-head bases for exact ag-gregation of compact core updates, (ii) nuclear-norm prox-imal shrinkage to suppress unstable client-specific spectral modes [7], [8], and (iii) concave water-filling to allocate a fixed adaptation budget across layers [9]. Together, these arXiv:2607.20914v1 [cs.LG] 23 Jul 2026 mechanisms improve aggregation fidelity and spectral stability without increasing per-round communication. 
+
+B. Novelty and Contributions 
+
+TRISHUL makes spectral inconsistency directly observable rather than inferring it from accuracy alone. We quantify client-update misalignment using principal-angle similarity, dominant singular-vector similarity, singular-value spectra, spectral entropy, effective rank, inter-client covariance, and aggregation variance. These diagnostics reveal whether non-IID clients learn incompatible low-rank subspaces and whether spectral shrinkage retains dominant shared modes while sup-pressing weak client-specific directions. TRISHUL uses pretrained layer Frobenius norm as a stable, zero-cost allocation proxy and performs all spectral operations on compact r×r core matrices. It therefore preserves the com-munication cost of the underlying multi-head PEFT protocol while adding negligible local SVD overhead. The design also exposes a clear bias–variance tradeoff: insufficient shrinkage retains noisy modes, whereas excessive shrinkage removes useful task-specific structure. The main contributions are:  
+
+> •
+
+We formulate heterogeneous federated PEFT as a
+
+spectral-control problem, identifying update-subspace misalignment and inefficient layer-wise capacity alloca-tion as coupled causes of aggregation instability. We introduce client-side nuclear-norm proximal shrinkage on compact core matrices, enabling direct suppression of weak singular modes before aggregation while preserving the spectral structure of the corresponding full update.  
+
+> •
+
+We combine shared-basis exact aggregation with a con-cave water-filling rule that allocates a fixed adapta-tion budget non-uniformly across layers without increas-ing per-round communication. We validate TRISHUL through accuracy, convergence, computational overhead, and direct spectral diagnostics, including subspace align-ment, singular-value decay, effective rank, spectral en-tropy, and inter-client aggregation variance. II. R ELATED WORK 
+
+A. FL under Heterogeneity 
+
+FL enables collaborative training across decentralized clients without sharing raw data [1]. A central challenge in FL is statistical heterogeneity, where client data distributions differ significantly, leading to biased and high-variance up-dates. A large body of work has focused on mitigating this issue through improved optimization strategies. FedProx [5] introduces proximal regularization to limit client drift, while SCAFFOLD [6] employs control variates to reduce client-gradient variance [3]. While effective, these methods operate primarily at the level of gradient dynamics and do not explicitly regulate the 
+
+structure of parameter updates. In particular, they do not account for the geometric or spectral properties of updates, which become critical when adaptation is constrained to low-dimensional subspaces. As a result, even when optimization 
+
+Fig. 1: Multi-head low-rank aggregation (Prong 1). Each client uploads only the scaled core products {sc,i Hc,i }, which are averaged per head on the server and broadcast back as 
+
+{ ˆH1, . . . , ˆH4}. Because Bi and Ai are frozen and shared, this per-head average recovers the exact mean update in the ambient parameter space (Eq. (7)), eliminating the factor-wise aggregation bias Ec[BcAc]̸ = Ec[Bc]Ec[Ac] that corrupts standard LoRA under non-IID data. Server-side scalars are reset to 1 after each round to prevent participation-frequency bias. TABLE I: TRISHUL relative to representative FL and PEFT methods.                                                       
+
+> Method FL PEFT Exact agg. Spectral shrink. Layer alloc. Edge heter. FedAvg [1] ✓––––Limited FedProx [5] ✓––––Limited SCAFFOLD [6] ✓––––Limited FLoRA [10] ✓✓Partial ––Partial FedEx-LoRA [11] ✓✓Partial –––Fed-SB [12] ✓✓–––✓
+> RAVAN [4] ✓✓✓–Limited Partial
+> TRISHUL ✓✓✓✓✓✓
+
+drift is reduced, aggregation can remain unstable due to structural misalignment of client updates. 
+
+B. PEFT in FL Settings 
+
+PEFT methods, such as LoRA [2], enable the adaptation of large models by restricting updates to low-rank subspaces. This paradigm is particularly attractive in federated settings due to its reduced communication and memory footprint. Recent work extends PEFT to FL by adapting low-rank updates across clients. For example, FLoRA [10] and related approaches [13]–[17] address heterogeneity through personal-ized adaptation, selective aggregation, or heterogeneous rank allocation. FedEx-LoRA [11] improves aggregation by aver-aging low-rank updates directly, while Fed-SB [12] focuses on communication-efficient fine-tuning. 2
+
+Recent centralized PEFT methods such as AdaLoRA [18], DoRA [19], VeRA [20], PiSSA [21], and orthogonal LoRA variants such as OLoRA [22] improve adaptation efficiency through adaptive rank allocation, weight decomposition, low-dimensional reparameterization, or improved initialization. These methods are complementary to TRISHUL. Their pri-mary focus is centralized parameterization quality or rank efficiency, whereas TRISHUL targets a federated failure mode: 
+
+> 2Exact agg. in this context (see Tab. I) is a precise aggregation in ambient update space under shared bases/cores, not generic parameter averaging.
+
+spectrally inconsistent client updates under non-IID data. In particular, TRISHUL regulates the geometry of client updates before aggregation and allocates adaptation capacity across layers under a federated communication budget. More recently, RAVAN [4] introduces a multi-head low-rank parameteriza-tion to increase representational flexibility and enable exact aggregation of low-rank updates. Their approach largely treat low-rank updates as independent local adaptations and do not explicitly control the spectral structure. Under non-IID data, different clients may learn updates that span misaligned subspaces, leading to spectral inconsistency and high-variance aggregation. Existing federated PEFT methods do not account for such limits. 
+
+C. Spectral Regularization and LoRA 
+
+Controlling the rank and spectral properties of model up-dates has been extensively studied in optimization and matrix recovery. Nuclear-norm regularization provides a convex sur-rogate for rank minimization and has been widely used in matrix completion and low-rank recovery [7], [23]. Proximal methods based on singular value thresholding (SVT) enable efficient optimization under nuclear-norm constraints [8], [24]. In deep learning, the spectral properties of the weights and updates have been shown to influence generalization and stability [25]. However, these techniques are typically applied in centralized settings and have not been explicitly adapted to federated PEFT. In particular, previous work does not exploit spectral regularization to mitigate aggregation variance arising from heterogeneous client updates. 
+
+D. Resource Allocation in Federated Setting 
+
+Efficient allocation of limited computational and commu-nication resources is a key concern in distributed learning systems. Prior work has explored adaptive communication strategies, model compression, and client selection to improve efficiency [9]. In federated PEFT, several methods consider heterogeneous resource constraints across clients [16], [17], including varying model capacity or partial updates. However, the allocation of adaptation capacity across model layers remains underexplored. Existing approaches typically assign uniform parameter budgets across layers, ignoring dif-ferences in pretrained representational strength. This can lead to inefficient use of limited adaptation capacity, particularly in deep transformer architectures, where layers contribute unevenly to downstream performance. 
+
+E. Our Proposed Approach 
+
+Our proposed TRISHUL differs from prior work by treating federated PEFT as a spectral-control problem rather than only an optimization-drift or parameter-efficiency problem. The shared-basis multi-head structure is used as an aggregation substrate, while the primary methodological distinction is that TRISHUL regularizes the singular spectrum of each client update before upload and assigns adaptation capacity across layers under a fixed communication budget. This separates TRISHUL from RAVAN and similar PEFT approaches, which provides exact multi-head aggregation but does not explicitly shrink client-specific singular directions. To the best of our knowledge, TRISHUL is among the first federated PEFT frameworks to jointly control update geometry, aggregation variance, and layer-wise capacity allocation within one spectral framework. III. D ESIGN DETAILS OF PROPOSED TRISHUL We present TRISHUL , a three-pronged spectral control framework for heterogeneous federated edge fine-tuning. TR-ISHUL is motivated by a central observation: in federated PEFT, performance degradation under non-IID data is driven not only by optimization drift, but also by the spectral in-consistency of client updates and the inefficient use of scarce adaptation capacity across layers. As shown in Fig. 2, TRISHUL addresses these issues through exact multi-head low-rank aggregation, nuclear-norm proximal spectral shrinkage, and concave water-filling head allocation. The first ensures algebraically faithful aggregation, the second suppresses unstable client-specific singular direc-tions before upload, and the third distributes a fixed adap-tation budget toward layers with higher pretrained capacity. TRISHUL introduces no additional per-round communication beyond the underlying multi-head core-upload protocol. 
+
+Fig. 2: Three TRISHUL mechanisms applied during local client adaptation before server aggregation. 
+
+A. Problem Formulation and Spectral-Control Objective 
+
+Let C = {1, . . . , C } denote the clients and let Dc be the local data distribution of client c. Federated fine-tuning minimizes 
+
+F (W) = 
+
+> C
+
+X
+
+> c=1
+
+pc Lc(W), pc = nc
+
+PCj=1 nj
+
+, (1) where nc is the local sample size and Lc is the empirical loss on client c. Non-IID heterogeneity means that Dc and Dc′ may differ substantially, so locally optimized PEFT updates need not occupy compatible low-dimensional subspaces. Since W0
+
+and the bases are frozen, the actual trainable variables are θ = Hl,i , s l,i . For a pretrained layer W0 
+
+> l
+
+, TRISHUL learns only an additive PEFT update 
+
+Wl = W0 
+
+> l
+
++ ∆ Wl, ∆Wl =
+
+> hl
+
+X
+
+> i=1
+
+sl,i Bl,i Hl,i Al,i . (2) The trainable communication budget (with state scalars folded and no added asymptotic cost) is 
+
+B =
+
+> L
+
+X
+
+> l=1
+
+hlr2, (3) because only the r ×r core products are communicated during federated training. TRISHUL therefore seeks to minimize the federated loss while controlling three coupled quantities: the algebraic fidelity of aggregation, the spectral complexity of each client update, and the allocation of the fixed budget B
+
+across layers. 
+
+B. Multi-Head Low-Rank Parameterization 
+
+Direct fine-tuning of all parameters of a large pretrained model on edge devices is generally infeasible. The memory footprint of full-parameter updates is too large, local opti-mization is too expensive, and repeated communication of dense weight updates is prohibitive under practical bandwidth constraints. PEFT addresses this difficulty by restricting adap-tation to a low-dimensional update space [2]. Among PEFT methods, LoRA has become a dominant approach due to its favorable memory and communication profile. However, its straightforward use in federated environments introduces an aggregation pathology that becomes increasingly severe under client heterogeneity. TRISHUL therefore builds on a multi-head low-rank parameterization that preserves PEFT efficiency while eliminating the factor-wise aggregation error of standard LoRA and creating a natural substrate for spectral regularization and adaptive capacity allocation. 
+
+1) Background: LoRA and Its Federated Limitation: LoRA adapts a pretrained weight matrix W ∈ Rd×d by adding a low-rank update of the form 
+
+W ← W + BA , B ∈ Rd×r , A ∈ Rr×d, r ≪ d. (4) This reduces the number of trainable parameters from d2 to 
+
+2dr , which substantially lowers local memory consumption and communication cost. In centralized training, the two factors B and A are optimized jointly, so their product directly represents the learned update. In federated training, however, each client independently optimizes local copies Bc and Ac,and the server must aggregate them across heterogeneous local data distributions. A natural but problematic strategy is to average the factors separately and reconstruct the update as ¯B ¯A. Under non-IID data, this induces a systematic aggregation bias because the factors are statistically dependent on the local client distribution: 
+
+Ec
+
+BcAc
+
+̸ = Ec[Bc] Ec[Ac]. (5) The discrepancy is governed by the cross-client covariance between Bc and Ac and generally grows as heterogeneity increases [4]. Consequently, factor-wise averaging underes-timates the true mean update and introduces a distribution-dependent distortion into the global model. This limitation is particularly harmful at the edge, where local data are highly personalized and strongly non-IID. Although stacking-based aggregation strategies partially alleviate this problem [10], they increase complexity and still do not regulate the spectral structure of the resulting updates. 
+
+2) Exact Multi-Head Adaptation: To eliminate the aggre-gation bias in (5), TRISHUL adopts a multi-head low-rank formulation inspired by recent federated PEFT designs [4]. For layer l, the model output is modified as 
+
+Wx ← Wx +
+
+> hl
+
+X
+
+> i=1
+
+si BiHiAix, (6) where hl is the number of adaptation heads assigned to layer 
+
+l, Bi ∈ Rd×r and Ai ∈ Rr×d are frozen basis matrices, 
+
+Hi ∈ Rr×r is a trainable core matrix, and si ∈ R is a trainable scalar. The frozen bases satisfy 
+
+B⊤ 
+
+> i
+
+Bi = Ir , AiA⊤ 
+
+> i
+
+= Ir ,
+
+and are mutually orthogonal across heads: 
+
+B⊤ 
+
+> i
+
+Bj = 0, AiA⊤ 
+
+> j
+
+= 0, i̸ = j. 
+
+These conditions ensure that each head spans a distinct low-dimensional subspace and that the collection of hl heads covers a rank-hlr adaptation space with maximal diversity for the chosen budget [4]. Since the bases are initialized once on the server, then frozen and shared identically across clients, they do not contribute to aggregation ambiguity. The trainable core matrix Hi captures all task-specific adap-tation inside the subspace defined by (Bi, Ai). This reduces trainable parameters per head to only r2, which is substantially smaller than directly adapting the ambient d × d matrix. The scalar si provides a lightweight mechanism to modulate the contribution of each head according to local task relevance. To prevent participation-frequency bias across rounds, the server resets all global scalars to 1 after aggregation. 
+
+3) Initialization of Frozen Bases: Because the frozen bases define the adaptation subspaces available throughout training, their initialization materially affects the expressive power and geometric diversity of the multi-head update family. TRISHUL considers three initialization strategies. 
+
+Gram–Schmidt orthogonalization constructs maximally sep-arated heads by iteratively projecting each new basis away from previously chosen directions. This yields exact inter-head orthogonality and is particularly effective in vision models, where broad spatial feature diversity benefits from highly separated adaptation subspaces. 
+
+Random normal initialization draws entries of Bi and Ai
+
+from N (0 , 1) and then applies QR orthogonalization. This produces orthonormal bases with random orientations and a softer diversity constraint. For language models, whose pretrained representations are often anisotropic, this softer structure can better align with the geometry of the underlying representation manifold [25]. 
+
+Shared-subspace initialization assigns multiple heads bases spanning the same underlying subspace, differing only by an invertible transformation. This reduces effective head diversity and serves mainly as a controlled ablation baseline. In all cases, the core matrices are initialized as Hi = 0 and the scalars as si = 1 , so the adaptation begins exactly from the pretrained model without any initial perturbation. 
+
+4) Key Properties for Edge Federated Learning: The multi-head formulation used by TRISHUL provides three properties that are especially important for federated edge deployment. 
+
+a) Exact aggregation.: Because Bi and Ai are frozen and shared across all clients, aggregation becomes exact at the level of the trainable core products. Let C(t) be the participating client set in round t. Then 
+
+1
+
+|C (t)|
+
+X
+
+> c∈C (t)
+> hl
+
+X
+
+> i=1
+
+Bi
+
+ s(t) 
+
+> c,i
+
+H(t)
+
+> c,i
+
+Ai
+
+=
+
+> hl
+
+X
+
+> i=1
+
+Bi
+
+ 1
+
+|C (t)|
+
+X
+
+> c∈C (t)
+
+s(t) 
+
+> c,i
+
+H(t)
+
+> c,i
+
+ Ai. (7) Thus the server only needs to average the small matrices 
+
+sc,i Hc,i , and the exact mean update in the ambient param-eter space is recovered without approximation. This directly resolves the factor-wise aggregation bias of standard LoRA. 
+
+b) Handling computational heterogeneity: Edge devices vary significantly in compute and memory capability. In the multi-head formulation, a constrained client may update only a subset of the assigned heads and freeze the remainder. Aggregation is then performed head-wise over only those clients that updated the corresponding head. This mechanism supports partial local adaptation without requiring protocol changes or additional coordination. 
+
+c) Communication efficiency: Each client uploads only the products {sc,l,i Hc,l,i } ∈ Rr×r. The pretrained weights and frozen basis matrices are not communicated during normal training. Consequently, the per-round upload cost remains PLl=1 hlr2 parameters, matching the underlying multi-head PEFT budget and preserving suitability for bandwidth-limited settings. 
+
+C. Client-Side Optimization with Nuclear-Norm 
+
+Although exact aggregation resolves the factorization bias of standard LoRA, it does not by itself prevent destructive interference among heterogeneous client updates. Under non-IID data, local fine-tuning tends to produce update directions that are highly specific to individual client distributions. When these directions are numerous and spectrally diffuse, their aggregation can have high variance even if the aggregation rule is exact. Standard drift-control methods, such as proximal penalties or control variates [5], [6], primarily constrain update magnitude or gradient dynamics. They do not explicitly control 
+
+Fig. 3: Proximal singular-value thresholding (Prong 2). Singu-lar values below τ = λη are removed, while dominant modes are retained with reduced magnitude. Because Bi and Ai are isometric, shrinkage on the r × r core corresponds to spectral regularization of the full update. the spectral complexity of the learned update itself. TRISHUL addresses this failure mode by imposing direct spectral regu-larization on the trainable core matrices. The central idea is to discourage unstable high-rank local adaptations while preserving dominant low-dimensional direc-tions that are more likely to transfer across clients. To achieve this, TRISHUL penalizes the nuclear norm 
+
+∥ · ∥ ∗ = X
+
+> j
+
+σj (·),
+
+which is the tightest convex surrogate for rank minimiza-tion [7], [23]. A key advantage of the multi-head parame-terization is that regularizing the small core matrix is exactly equivalent to regularizing the full-dimensional update. Since 
+
+Bi and Ai are orthonormal, they act as isometric embeddings and preserve singular values: 
+
+∥BiHc,i Ai∥∗ = ∥Hc,i ∥∗. (8) Therefore, imposing a nuclear-norm penalty on Hc,i directly constrains the spectral complexity of the full update in the ambient parameter space, while requiring only an r×r singular value decomposition. For client c, the local optimization problem becomes 
+
+min  
+
+> {Hc,i ,s c,i }
+
+Lc
+
+ {Hc,i , s c,i } + λ
+
+> hl
+
+X
+
+> i=1
+
+∥Hc,i ∥∗, (9) where Lc is the task loss on local data and λ > 0 controls the strength of spectral regularization. Because the nuclear norm is non-smooth, TRISHUL employs proximal gradient descent. Each local step consists of a standard gradient update on the task loss followed by a proximal singular-value thresholding (SVT) step: 
+
+Hgrad  
+
+> c,i
+
+= Hc,i − η∇Hc,i Lc, (10) 
+
+Hc,i ← prox λη ∥·∥ ∗
+
+ Hgrad 
+
+> c,i
+
+, (11) 
+
+sc,i ← sc,i − η∇sc,i Lc. (12) If X = U diag( σj )V⊤, then the proximal operator is 
+
+prox τ ∥·∥ ∗ (X) = U diag  max( σj − τ, 0) V⊤, τ = λη. 
+
+(13) Hence every singular value below the threshold τ is removed, while larger singular values are shrunk toward zero. This suppresses client-specific high-rank directions and retains only the dominant spectral modes. The variance-reduction effect follows from the rank control induced by SVT. Let 
+
+eHc,i = prox λη ∥·∥ ∗ (Hgrad  
+
+> c,i
+
+)
+
+denote the post-SVT core matrix and suppose |sc,i | ≤ smax 
+
+and ∥ eHc,i ∥2 ≤ Mi for all participating clients. If 
+
+ρi = {j : σj (Hgrad  
+
+> c,i
+
+) > λη }
+
+is the maximum retained rank after thresholding, then 
+
+∥ eHc,i ∥2 
+
+> F
+
+=
+
+> ρi
+
+X
+
+> j=1
+
+eσ 2 
+
+> j
+
+≤ ρiM 2 
+
+> i
+
+. (14) For m = |C (t)| independently sampled clients, the per-head aggregation variance satisfies 
+
+E 1
+
+m
+
+X
+
+> c∈C (t)
+
+
+
+sc,i eHc,i − E[sc,i eHc,i ]
+
+ 2
+
+> F
+
+≤ s2max ρiM 2
+
+> i
+
+m .
+
+(15) Thus, shrinking weak singular modes reduces the effective rank ρi and tightens the aggregation-variance bound. This also exposes the bias–variance tradeoff: moderate shrinkage sup-presses client-specific spectral noise, whereas overly aggres-sive shrinkage may remove task-relevant singular directions. 
+
+D. Concave Water-Filling Head Allocation 
+
+Exact aggregation and spectral regularization stabilize the uploaded updates, but they do not determine how a lim-ited adaptation budget should be distributed across layers. Uniformly assigning the same number of heads to every layer is rarely optimal because pretrained layers differ in norm, abstraction level, and downstream sensitivity [26], [27]. TRISHUL therefore uses a concave water-filling rule that allocates more heads to layers with larger pretrained capacity while preventing degenerate concentration of the entire budget in one layer. 
+
+Fig. 4: Concave water-filling head allocation (Prong 3). Each layer’s pretrained capacity score al = ∥Wl∥2 
+
+> F
+
++ ϵ is measured and used to solve the diminishing-return allocation problem in Eq. (17). High-capacity layers receive more adaptation heads, while the logarithmic utility prevents the full budget from collapsing onto a single layer. The resulting integer head counts are obtained by residual rounding of the continuous solution in Eq. (18). Let h = PLl=1 hl be the total head budget and define a positive layer-capacity score 
+
+al = ∥Wl∥2 
+
+> F
+
++ ϵ, ϵ > 0. (16) We allocate continuous heads by solving the strictly concave program 
+
+max 
+
+> {hl≥0}
+> L
+
+X
+
+> l=1
+
+al log(1 + hl)
+
+s.t. 
+
+> L
+
+X
+
+> l=1
+
+hl = h. (17) The logarithmic utility models diminishing returns: layers with larger al receive more capacity, but the marginal gain decreases as more heads are assigned. The KKT conditions give al
+
+1 + h∗
+
+> l
+
+− μ ≤ 0, h∗ 
+
+> l
+
+=
+
+ al
+
+μ − 1
+
+
+
+> +
+
+, (18) where [x]+ = max( x, 0) and the water level μ > 0 is chosen so that P 
+
+> l
+
+h∗ 
+
+> l
+
+= h. This is the standard water-filling form: layers below the water level receive no additional heads, while high-capacity layers receive capacity proportional to their excess above the threshold. Because head counts must be integer, TRISHUL uses the continuous solution only as a budget score. We set 
+
+bhl = ⌊h∗ 
+
+> l
+
+⌋ , R = h −
+
+> L
+
+X
+
+> l=1
+
+bhl, (19) and assign the remaining R heads to the layers with the largest fractional residues h∗ 
+
+> l
+
+− ⌊ h∗ 
+
+> l
+
+⌋. This preserves the total budget exactly and is computed once before federated training. The allocation is optimal for the concave utility in (17). Therefore, for the uniform allocation hunif  
+
+> l
+
+= h/L ,
+
+> L
+
+X
+
+> l=1
+
+al log(1 + h∗ 
+
+> l
+
+) ≥
+
+> L
+
+X
+
+> l=1
+
+al log(1 + hunif  
+
+> l
+
+), (20) with strict inequality whenever the uniform allocation violates the KKT conditions and the layer capacities are not identical. This provides a principled non-uniform allocation rule without adding runtime or communication overhead. 
+
+E. Server-Side Aggregation 
+
+After local training, each client uploads the compressed products {sc,l,i Hc,l,i } for the heads it updated. Let C(t) 
+
+> l,i
+
+be the set of clients that updated head i in layer l at round t. The server aggregates the uploaded cores using data-size weights 
+
+H(t+1)  
+
+> l,i
+
+= X
+
+> c∈C (t)
+> l,i
+
+ω(t)
+
+> c,l,i
+
+s(t)
+
+> c,l,i
+
+H(t)
+
+> c,l,i
+
+, ω(t) 
+
+> c,l,i
+
+= nc
+
+P
+
+> j∈C (t)
+> l,i
+
+nj
+
+.
+
+(21) When all clients have equal local sample sizes, (21) reduces to the equal-weight average used in the controlled simulations. The aggregation is head-wise, so clients with limited compute may update only a subset of heads without changing the protocol. The exactness of aggregation follows from the shared-basis structure. For any fixed set of weights ωc satisfying P 
+
+> c
+
+ωc =1,
+
+X
+
+> c∈C (t)
+
+ωchlX
+
+> i=1
+
+Bl,i (sc,l,i Hc,l,i )Al,i 
+
+=
+
+> hl
+
+X
+
+> i=1
+
+Bl,i 
+
+ X
+
+> c∈C (t)
+
+ωcsc,l,i Hc,l,i 
+
+ Al,i . (22) Thus the server recovers the exact weighted mean of the client updates in the ambient parameter space. This exactness removes algebraic factorization bias; it does not by itself eliminate statistical heterogeneity, which is why TRISHUL also applies client-side spectral shrinkage. After aggregation, all server-side scalars are reset to 1 to avoid round-to-round accumulation effects and participation-frequency bias. 
+
+F. Overall Algorithm 
+
+Algorithm 1 summarizes TRISHUL. The algorithm explic-itly separates one-time allocation and basis initialization from per-round client optimization and server aggregation. SVT is applied after each local gradient step on active heads; in practice, it can also be applied every few local steps to reduce overhead when r is large. 
+
+G. Complexity, Privacy Scope, and Deployment Considera-tions 
+
+TRISHUL has the same per-round communication order as the underlying multi-head PEFT protocol. For layer l,each active client uploads and downloads hlr2 trainable core parameters, so the total communicated trainable state is 
+
+O
+
+> L
+
+X
+
+> l=1
+
+hlr2
+
+!
+
+. (23) The additional local computation comes from SVD on r × r
+
+cores, yielding O(hlr3) per layer per proximal step. Since 
+
+r ≪ dl, this overhead is small compared with the forward and backward passes through the frozen pretrained model. 
+
+Algorithm 1 TRISHUL: Three-Pronged Spectral Control for Federated Edge Fine-Tuning 
+
+Require: Clients C, layers L, total head budget h, rank r,rounds T , local steps S, learning rate η, shrinkage λ, scalar bound smax .
+
+// Server initialization  
+
+> 1:
+
+Compute layer scores al = ∥W0 
+
+> l
+
+∥2 
+
+> F
+
++ ϵ. 
+
+> 2:
+
+Solve (17) and obtain integer {hl}Ll=1 using (19).  
+
+> 3:
+
+Initialize orthonormal bases Bl,i , Al,i ; set Hl,i ← 0 and 
+
+sl,i ← 1. 
+
+> 4:
+
+Freeze W0 
+
+> l
+
+, Bl,i , and Al,i . 
+
+> 5:
+
+for t = 1 , . . . , T do  
+
+> 6:
+
+Sample participating clients C(t) ⊆ C and broadcast 
+
+{Hl,i , s l,i }. 
+
+> 7:
+
+for each client c ∈ C (t) in parallel do  
+
+> 8:
+
+Select active-head mask m(t) 
+
+> c,l,i
+
+∈ { 0, 1} according to local compute budget.  
+
+> 9:
+
+Initialize Hc,l,i ← Hl,i and sc,l,i ← sl,i . 
+
+> 10:
+
+for τ = 1 , . . . , S do  
+
+> 11:
+
+for each active head (l, i ) with m(t) 
+
+> c,l,i
+
+= 1 do  
+
+> 12:
+
+Hgrad  
+
+> c,l,i
+
+← Hc,l,i − η∇Hc,l,i Lc. 
+
+> 13:
+
+Compute SVD Hgrad  
+
+> c,l,i
+
+= UΣV ⊤. 
+
+> 14:
+
+Hc,l,i ← U(Σ − λη I)+V⊤. 
+
+> 15:
+
+sc,l,i ← clip( sc,l,i − η∇sc,l,i Lc, 0, s max ). 
+
+> 16:
+
+end for  
+
+> 17:
+
+end for  
+
+> 18:
+
+Upload {m(t)
+
+> c,l,i
+
+sc,l,i Hc,l,i }. 
+
+> 19:
+
+end for  
+
+> 20:
+
+for each head (l, i ) with C(t)
+
+> l,i
+
+̸ = ∅ do  
+
+> 21:
+
+Aggregate H(t+1)  
+
+> l,i
+
+using (21).  
+
+> 22:
+
+Reset sl,i ← 1. 
+
+> 23:
+
+end for  
+
+> 24:
+
+end for 
+
+TRISHUL follows the standard FL assumption that raw client data are not shared. However, uploaded core matri-ces may still leak distributional or task-specific information; nuclear-norm shrinkage should not be interpreted as a formal privacy mechanism. TRISHUL is compatible with secure aggregation, update clipping, client-level differential privacy, encrypted aggregation, and post-quantum-secure communica-tion, but these mechanisms are orthogonal to the spectral-control contribution and are left for future work. The method naturally supports edge heterogeneity through active-head masks: constrained clients may update fewer heads, while the server aggregates each head over the clients that actually updated it. Real deployments may additionally require quantized uploads, straggler handling, intermittent connectivity support, and energy-aware client selection. IV. E XPERIMENTS 
+
+We evaluate TRISHUL on a diverse set of vision and language tasks under federated settings with both statisti-cal and computational heterogeneity. Our goal is to test whether explicit spectral control improves robustness, con-vergence, and final performance in realistic federated PEFT regimes. We compare TRISHUL against strong and repre-sentative federated PEFT baselines, including FedIT [28], FedEx-LoRA [11], FFA-LoRA [13], Fed-SB [12], RAVAN [4], and SCAFFOLD+LoRA [6], where the latter combines a classical variance-reduction strategy with LoRA. To ensure fair comparison, we follow the same experimental protocol as RAVAN wherever possible, including datasets, models, federated partitioning, and optimization settings, while varying only the TRISHUL-specific spectral regularization parameter 
+
+λ and retaining the proposed concave water-filling allocation and exact multi-head aggregation design. 
+
+A. Experimental Setup 1) Datasets and Models: For image classification, we use ViT-B/16 [26] with 85M parameters on CIFAR-100 [29] and SVHN [30]. CIFAR-100 contains 50K training and 10K test images across 100 classes, while SVHN contains 73K training and 26K test samples across 10 classes. These two benchmarks provide complementary visual regimes: CIFAR-100 is more semantically diverse and structurally difficult, whereas SVHN is less class-diverse but still useful for testing robustness under heterogeneity. For language tasks, we fine-tune T5-Base [27] with 224M parameters on 20 Newsgroups [31] and MRQA [32]. 20 News-groups contains approximately 11K training and 7.5K test documents spanning 20 topics, while MRQA contains 516K training and 58K test examples aggregated across six question-answering sources. These tasks test TRISHUL under both document classification and extractive question-answering set-tings. To assess scalability to foundation-scale models, we additionally evaluate on the GLUE benchmark [33] using LLaMA3.2-1B [34]. 
+
+2) Federated Partitioning: We simulate federated learning with |C| ∈ { 20 , 50 } clients. Under IID partitioning, each client receives an equal-sized random subset of the training data. Under non-IID partitioning, client-specific class proportions are sampled from a Dirichlet distribution with concentration parameter α = 0 .3. Smaller values of α produce stronger heterogeneity, so we additionally consider α ∈ { 0.1, 0.05 } in Section IV-C3. For MRQA, the Dirichlet split is applied over the six constituent sub-datasets. In each round, the server uni-formly samples three clients, and each selected client performs 
+
+S = 50 local iterations. The number of communication rounds is set to 50 for vision tasks, 100 for 20 Newsgroups, and 20 for MRQA and GLUE. Batch sizes and sequence lengths follow the settings used in RAVAN [4]. 
+
+3) Parameter Budget and Hyperparameter: We evaluate two trainable parameter budgets. The lower budget matches the trainable-parameter count of vanilla LoRA with rank r = 32 ,and the higher budget matches vanilla LoRA with rank r = 64 .For RAVAN and TRISHUL, the trainable state consists of 
+
+h = 4 heads with core matrices Hi ∈ Rr×r, with the total number of trainable parameters matched to the corresponding baseline budget. In Tables II and III, the column Budget 
+
+Fig. 5: Federated training curves on CIFAR-100 (left) and 20 Newsgroups (right) under non-IID data ( α = 0 .3) with 20 clients and the lower parameter budget ( r = 32 ). TRISHUL converges faster and reaches a higher final accuracy than all baselines in both settings. denotes the parameter-budget-equivalent rank reported by each method; it should not be interpreted as the literal matrix rank for all baselines. This ensures that performance differences primarily reflect spectral control and allocation quality rather than increased capacity. For TRISHUL, the spectral regularization coefficient is selected by grid search over λ ∈ { 0.001 , 0.01 , 0.1, 1.0}, with 
+
+λ = 0 .01 providing the best and most stable performance across tasks. The full sensitivity study is reported in Sec-tion IV-C2. Learning rates are tuned per method and per budget. Unless otherwise stated, all results are averaged over three random seeds. 
+
+4) Baseline implementation: For a fair and controlled comparison, we implemented all baselines within the same experimental codebase as TRISHUL rather than relying on separately released implementations. Each baseline was repro-duced from its corresponding paper and evaluated under the same federated protocol, data partitioning strategy, client sam-pling procedure, model backbone, parameter budget, number of communication rounds, local update steps, and evaluation pipeline used for TRISHUL. Method-specific hyperparameters were tuned following the ranges reported in the original papers where available, while shared training settings were kept identical across methods. This ensures that performance differences primarily reflect the adaptation and aggregation mechanisms of each method rather than implementation-level or experimental-protocol differences. 
+
+Implementation details for reproducibility. All reported results are averaged over three independent random seeds. Learning rates, weight decay, local batch sizes, sequence lengths, LoRA target modules, and method-specific hyper-parameter ranges are kept fixed across methods within each dataset-budget setting. For GLUE with LLaMA3.2-1B, the same prompt format, label verbalizers, maximum sequence length, and target adaptation modules are used across all PEFT baselines. Detailed seed values, hardware configuration, optimizer settings, and hyperparameter ranges will be released with the code to ensure exact reproducibility. B. Main Results: Vision and Language 1) Vision and Language Benchmarks: Tables II and III compare TRISHUL against all baselines on vision and lan-guage tasks. Across all datasets and parameter budgets, TR-ISHUL achieves the best performance, with gains that become more pronounced as client heterogeneity increases. This is consistent with the central claim of the paper: explicit spectral control is most valuable when local client updates are struc-turally inconsistent. On CIFAR-100, TRISHUL improves over the strongest competing baseline by 3.2–3.5% under non-IID partitions and by 0.7–0.8% under IID partitions. On SVHN, the gains are smaller under IID but still consistent, while under non-IID they increase to as much as 2.8% . On 20 Newsgroups, TRISHUL delivers non-IID gains of roughly 2.4–2.5% , sub-stantially larger than its IID gains, again indicating that the method is particularly effective when update spectra diverge across clients. On MRQA, the gains are smaller in absolute magnitude, but remain consistent across budgets and client counts, demonstrating that the method remains beneficial even on more structured language tasks. A key observation is that SCAFFOLD+LoRA, despite explicitly correcting optimization drift, remains consistently below TRISHUL under heterogeneous settings. This suggests that gradient-level stabilization alone is insufficient for feder-ated PEFT when the spectral geometry of updates is poorly aligned. By contrast, TRISHUL directly regularizes the up-date spectrum, suppressing unstable client-specific directions before aggregation. Figure 5 reports test accuracy versus communication rounds for CIFAR-100 and 20 Newsgroups under non-IID conditions with 20 clients and the lower parameter budget ( r = 32 ). In CIFAR-100, TRISHUL reaches 79 .41% by round 50, while the strongest baseline RAVAN plateaus at 76 .22% ; the gap opens as early as round 10, indicating that proximal shrinkage of the nuclear-norm reduces destructive interference from aggrega-tion from the first communication rounds. On 20 Newsgroups, TRISHUL converges to 68 .14% versus RAVAN’s 65 .73% by round 100, with a similarly early separation. In both settings, SCAFFOLD+LoRA, despite explicit gradient-variance correc-tion, converges more slowly than TRISHUL, suggesting that gradient-level stabilization alone is insufficient when client updates are spectrally misaligned. 
+
+2) Scaling to LLaMA3.2-1B on GLUE: Table IV shows that the benefits of TRISHUL persist at foundation-model scale. On the GLUE benchmark with LLaMA3.2-1B, TRISHUL achieves an average score of 84 .66% , outperforming all base-lines including SCAFFOLD+LoRA and Fed-SB. The largest individual gain occurs on RTE, where TRISHUL reaches 
+
+68 .05% , the best result among all compared methods. These results suggest that the proposed spectral control mechanism is not limited to moderate-scale models or a partic-ular modality. Instead, it appears to generalize across model families, tasks, and scales. This is important because large-model federated fine-tuning is precisely where communication efficiency and stable adaptation become most critical. 
+
+Fig. 6: Training time per communication round for TRISHUL and RAVAN [4] across three model scales: ViT-B/16 with 85M parameters, T5-Base with 224M parameters, and LLaMA3.2-1B with 1B parameters. The secondary axis shows the relative overhead of TRISHUL, which remains approximately around 
+
+1% or lower across all settings ( 1.09% , 0.96% , and 0.83% ,respectively). TABLE II: Performance comparison on CIFAR-100 and SVHN; Budget denotes the parameter-budget-equivalent rank, not necessarily the literal matrix rank for every baseline.                                                                                                                                                    
+
+> Method Budget CIFAR-100 (Acc.%) SVHN (Acc.%) 20 clients 50 clients 20 clients 50 clients IID Non-IID IID Non-IID IID Non-IID IID Non-IID Full-FT N/A 89.89 86.86 89.78 85.17 95.06 90.29 94.90 89.49 FedIT 32 83.49 68.66 81.75 68.15 88.66 84.00 91.67 77.53 FedEx-LoRA 32 80.56 67.45 77.82 66.58 91.94 84.30 91.51 81.63 FFA-LoRA 64 78.82 56.34 78.17 59.98 91.53 86.03 91.82 83.30 Fed-SB 221 79.27 71.48 79.06 69.51 90.94 82.25 92.74 85.30 SCAFFOLD+LoRA 32 82.17 73.45 81.93 72.18 92.31 87.64 92.85 86.47 RAVAN 110 84.42 76.22 84.02 73.80 94.13 90.02 93.75 89.17
+> TRISHUL 110 85.13 79.41 84.68 76.94 94.72 91.38 94.21 90.33
+> FedIT 64 83.82 71.01 84.04 73.23 91.39 84.68 92.06 79.31 FedEx-LoRA 64 79.38 50.47 79.42 57.86 91.16 74.04 92.01 74.84 FFA-LoRA 128 81.39 70.31 82.13 66.81 91.95 88.06 92.07 84.24 Fed-SB 313 83.03 73.12 83.90 71.13 92.29 86.89 92.78 82.46 SCAFFOLD+LoRA 64 83.54 74.82 83.21 73.96 92.88 88.41 93.14 87.23 RAVAN 156 85.04 77.20 85.55 77.81 93.92 89.41 94.28 84.34
+> TRISHUL 156 85.82 80.67 86.31 81.24 94.58 91.02 94.83 87.11
+
+Figure 6 shows that TRISHUL’s improvements come at negligible additional computational cost. Across ViT-B/16 (85M), T5-Base (224M), and LLaMA3.2-1B (1B), the per-round training time of TRISHUL remains close to that of RAVAN, with overheads of only 1.09% , 0.96% , and 0.83% ,respectively. The absolute per-round training times are 18.6 s, 31.5 s, and 85.4 s for TRISHUL, compared with 18.4 s, 31.2 s, and 84.7 s for RAVAN. This small increase is seen because TRISHUL performs an additional proximal SVD step during local optimization. Since the SVD is applied only to the small 
+
+r × r core matrices rather than to the full weight tensors, the additional computational cost is bounded by O(r3) per head per proximal step and remains insignificant at billion-parameter scale. 
+
+C. Ablation Studies and Analysis 
+
+We now examine the individual contributions of the three prongs of TRISHUL. Specifically, we isolate the effects of nuclear-norm spectral regularization, concave water-filling head allocation, trainable head scaling, basis initialization, and robustness under computational heterogeneity. Unless other-wise specified, all ablations are conducted with the lower TABLE III: Performance comparison on 20 Newsgroups and MRQA. “Budget” denotes the parameter-budget-equivalent rank, not necessarily the literal matrix rank for every baseline.                                                                                                                                                    
+
+> Method Budget 20 Newsgroups (Acc.%) MRQA (F1%) 20 clients 50 clients 20 clients 50 clients IID Non-IID IID Non-IID IID Non-IID IID Non-IID Full-FT N/A 71.34 69.29 71.71 70.13 62.19 62.25 62.41 62.51 FedIT 32 69.07 61.98 67.99 60.67 61.00 60.57 61.24 60.52 FedEx-LoRA 32 69.04 62.52 68.19 63.33 60.99 60.68 61.40 60.56 FFA-LoRA 64 68.11 62.36 68.00 64.86 60.31 60.40 61.21 60.14 Fed-SB 221 67.15 63.10 66.69 63.98 59.93 59.73 59.96 60.01 SCAFFOLD+LoRA 32 68.74 64.31 67.85 63.92 61.04 60.71 61.18 60.83 RAVAN 110 68.96 65.73 68.18 65.67 61.18 60.45 61.33 61.53
+> TRISHUL 110 69.82 68.14 68.93 68.02 61.72 61.23 61.86 62.27
+> FedIT 64 69.36 64.41 68.12 62.67 61.25 60.75 61.39 60.26 FedEx-LoRA 64 68.59 65.11 67.75 64.31 61.23 60.36 61.43 60.06 FFA-LoRA 128 69.33 66.22 68.42 64.86 61.50 60.50 61.66 60.12 Fed-SB 313 68.07 64.18 67.58 65.59 60.22 60.11 60.28 60.60 SCAFFOLD+LoRA 64 69.11 65.84 68.43 65.17 61.38 60.94 61.52 61.04 RAVAN 156 69.29 66.45 68.89 66.85 61.82 61.33 61.73 61.26
+> TRISHUL 156 70.18 68.94 69.77 69.31 62.35 62.01 62.28 62.09
+
+TABLE IV: GLUE benchmark results with LLaMA3.2-1B (20 clients, lower budget).                                                         
+
+> Method MNLI-MM MNLI-M QNLI QQP SST-2 RTE Avg. FedIT 84.24 84.62 82.74 85.96 94.61 65.70 82.97 FedEx-LoRA 84.15 84.70 82.74 86.07 94.61 65.34 82.94 FFA-LoRA 85.05 85.78 82.07 84.40 94.38 62.46 82.36 Fed-SB 84.88 85.23 82.84 84.23 94.95 67.15 83.21 SCAFFOLD+LoRA 84.63 85.01 83.17 85.44 94.82 66.58 83.28 RAVAN 85.24 85.65 84.00 86.11 95.18 67.15 83.90
+> TRISHUL 85.74 86.15 84.75 86.71 95.58 68.05 84.66
+
+parameter budget ( r = 32 ), 20 clients, and results averaged over three random seeds. For spectral diagnostics, we use the following definitions. Given singular values {σj }rj=1 of a client core matrix, let pj =
+
+σj / P
+
+k σk. Spectral entropy is 
+
+H(H) = − X
+
+j
+
+pj log pj , (24) and the effective rank is reff (H) = exp( H(H)) . For two top-k
+
+left singular subspaces U and V, principal-angle similarity is 
+
+Sangle (U, V) = 1
+
+k
+
+kX
+
+j=1 
+
+cos 2 θj (U, V), (25) where θj are the principal angles. Dominant-direction similar-ity is Sdom = |u⊤
+
+1 v1|. We also report normalized inter-client aggregation variance by dividing the empirical Frobenius vari-ance of uploaded core products by the corresponding RAVAN value at the first communication round. 
+
+1) Effect of Nuclear-Norm Regularization: The nuclear-norm penalty is designed to suppress unstable high-rank local update directions before server aggregation. Table V compares TRISHUL with and without this penalty. Across all tasks, the regularized version performs better, with the most substantial gains under non-IID data. On CIFAR-100, the improvement under non-IID reaches 3.07% , which is consistent with the theoretical variance bound in (15). These results support the hypothesis that local spectral shrinkage reduces destructive aggregation interference and improves transferability of client updates. 
+
+a) Effect of singular-value thresholding: To better under-stand why nuclear-norm shrinkage improves federated aggre-gation, we inspect the singular-value spectra before and after TABLE V: Ablation: effect of nuclear-norm penalty (lower budget, 20 clients).                       
+
+> Setting CIFAR-100 SVHN 20 Newsgroups IID Non-IID IID Non-IID IID Non-IID w/o penalty ( λ= 0 )84.12 76.34 94.02 90.21 68.87 65.96 w/ penalty ( λ= 0 .01 )85.13 79.41 94.72 91.38 69.82 68.14
+
+Fig. 7: Singular-value spectra of core matrices ( λ = 0 .01 ,
+
+r = 32 , CIFAR-100 non-IID). The left panel compares the spectrum before and after the proximal SVT step, showing that weak tail components corresponding to client-specific high-rank noise are zeroed out while dominant singular values are preserved. The right panel compares RAVAN and TRISHUL, showing that RAVAN retains a heavier tail beyond the top few modes, whereas TRISHUL produces a sharper spectrum with reduced tail energy. the proximal SVT step and compare the spectra of RAVAN and TRISHUL in Figure 7. The left panel shows that, under non-IID data, the pre-SVT spectrum contains a heavy tail of weak singular values corresponding to client-specific adaptation directions that do not transfer across clients; averaging these directions inflates aggregation noise. After the SVT step with 
+
+λ = 0 .01 , singular values below the threshold τ = λη are zeroed out entirely, producing a sharp spectrum concentrated on the dominant modes. The right panel compares RAVAN and TRISHUL directly: RAVAN retains substantially more tail energy, whereas TRISHUL’s spectrum drops off steeply after the top few modes, indicating stronger spectral control. This compression is what enables TRISHUL to achieve lower ag-gregation variance and higher cross-client subspace alignment in Figure 9 and Figure 8, respectively. 
+
+b) Direct spectral inconsistency analysis: To directly verify that TRISHUL reduces spectral inconsistency across heterogeneous clients, we track five complementary diag-nostics computed from the client-side core updates before aggregation on CIFAR-100 under non-IID partitioning ( α =0.3, 20 clients). Figure 8 shows that TRISHUL achieves consistently higher principal-angle similarity between client update subspaces across all 50 rounds, indicating that spec-tral shrinkage aligns the adaptation subspaces learned by different clients. Figure 8 provides complementary evidence at the level of individual directions: the cosine similarity between dominant singular vectors is higher for TRISHUL throughout training, meaning the surviving spectral modes are more globally shared and less client-specific. Figure 9 Fig. 8: Spectral alignment of client update subspaces across communication rounds (CIFAR-100, non-IID, α = 0 .3, 20 clients). The left panel shows principal-angle similarity be-tween client update subspaces: TRISHUL achieves consis-tently higher subspace alignment than both RAVAN and TRISHUL without shrinkage throughout training. The right panel shows dominant singular-vector cosine similarity across clients: TRISHUL yields more aligned dominant spectral directions at every communication round. TABLE VI: Sensitivity to λ (lower budget, 20 non-IID clients).                   
+
+> λCIFAR-100 (Acc.%) SVHN (Acc.%) 20 Newsgroups (Acc.%) 0 (no penalty) 76.34 90.21 65.96 0.001 77.82 90.74 66.83 0.01 (ours) 79.41 91.38 68.14
+> 0.1 78.13 90.95 67.42 1.0 74.27 88.63 63.71
+
+shows that TRISHUL’s updates have lower spectral entropy, reflecting energy concentrated in a few stable modes rather than spread across many noisy directions. Figure 9 shows that the effective rank of uploaded core matrices is consistently lower under TRISHUL than RAVAN, indicating that nuclear-norm shrinkage suppresses weak tail singular directions before server aggregation. Finally, Figure 9 shows that the normalized inter-client aggregation variance is substantially lower under TRISHUL, with the gap widening over training rounds. The version of TRISHUL without shrinkage ( λ = 0 ) falls between RAVAN and TRISHUL on all five metrics, isolating the contribution of the proximal SVT step. 
+
+2) Sensitivity to the Regularization Parameter λ: Table VI and Figure 10 reveal a clear optimum at λ = 0 .01 across all three datasets. At λ = 0 (no penalty), non-IID accuracy on CIFAR-100 is 76 .34% ; it rises to 79 .41% at λ = 0 .01 
+
+before falling back to 74 .27% at λ = 1 .0. The pattern is consistent on SVHN ( 90 .21% → 91 .38% → 88 .63% ) and 20 Newsgroups ( 65 .96% → 68 .14% → 63 .71% ). The method remains relatively stable across λ ∈ [0 .001 , 0.1] , suggesting modest tuning burden in practice. 
+
+a) Bias–variance tradeoff of spectral shrinkage: Fig-ure 11 plots CIFAR-100 accuracy against λ directly. Perfor-mance rises as λ increases from 0 to 0.01 , because shrink-age progressively removes client-specific noise directions that inflate aggregation variance. Beyond λ = 0 .01 , accuracy de-clines sharply: at λ = 1 .0 the threshold τ = λη is large enough to zero out task-relevant singular modes, introducing approx-imation bias that outweighs the variance reduction. Figure 11 shows the corresponding spectral entropy: entropy decreases 
+
+Fig. 9: Spectral diagnostics of client core updates across communication rounds (CIFAR-100, non-IID, α = 0 .3, 20 clients). The left panel shows spectral entropy: lower entropy under TRISHUL indicates that update energy becomes in-creasingly concentrated in a small number of stable dominant modes as training proceeds. The middle panel shows effective rank: TRISHUL maintains a substantially lower effective rank than RAVAN and TRISHUL without shrinkage, indicating that nuclear-norm proximal thresholding removes weak tail singular directions before server aggregation. The right panel shows normalized inter-client aggregation variance: TRISHUL achieves the lowest aggregation variance of the three compared settings, with the gap over RAVAN widening as training progresses. Together, these diagnostics show that TRISHUL produces spectrally compact, low-rank updates with reduced inter-client variance, consistent with the rank-controlled vari-ance mechanism in Eq. (15). 
+
+Fig. 10: Test accuracy versus regularization strength 
+
+λ ∈ {0, 0.001 , 0.01 , 0.1, 1.0} on CIFAR-100, SVHN, and 20 Newsgroups under non-IID data with 20 clients (lower budget, r = 32 ). A clear optimum occurs at λ = 0.01 
+
+on all three datasets. Performance is relatively stable across 
+
+λ ∈ [0 .001 , 0.1] , indicating modest sensitivity to the exact choice of regularization strength. monotonically with λ, showing progressive compression of the update spectrum. At λ = 1 .0 the entropy is minimal but accuracy is worst, illustrating that over-compression removes useful adaptation capacity. Together these figures provide an empirical validation of the bias–variance tradeoff. 
+
+3) Extreme Heterogeneity: To stress-test robustness, we evaluate all methods on CIFAR-100 with stronger non-IID partitions generated by α ∈ { 0.1, 0.05 }. Table VII and Fig-ure 12 show that TRISHUL’s advantage widens monotonically as non-IID severity increases. At α = 0 .3, TRISHUL leads the strongest baseline (RAVAN) by 3.2% (79 .41% vs. 76 .22% ). At α = 0 .1 the gap grows to 4.3% (73 .86% vs. 69 .54% ), and Fig. 11: Bias–variance tradeoff of spectral shrinkage on CIFAR-100 (non-IID, 20 clients, r = 32 ). The left panel shows accuracy versus λ: moderate shrinkage ( λ = 0.01 )improves accuracy by 3.07% over no penalty, while overly aggressive shrinkage ( λ = 1 .0) reduces accuracy below the unregularized baseline by zeroing out task-relevant singular modes and introducing approximation bias. The right panel shows spectral entropy versus λ: entropy decreases monotoni-cally as λ increases, reflecting progressive compression of the update spectrum. The regime λ ∈ [0 .001 , 0.1] achieves the best accuracy–entropy balance; beyond λ = 0 .1, entropy is suppressed too aggressively, removing task-relevant directions and degrading downstream performance. TABLE VII: Accuracy under extreme heterogeneity (CIFAR-100, 20 clients, lower budget, non-IID). 
+
+Method α = 0 .3 α = 0 .1 α = 0 .05 
+
+FedIT 68.66 61.43 55.27 FedEx-LoRA 67.45 59.82 53.14 FFA-LoRA 56.34 48.71 41.93 Fed-SB 71.48 64.17 58.42 SCAFFOLD+LoRA 73.45 67.82 62.14 RAVAN 76.22 69.54 63.81 
+
+TRISHUL 79.41 73.86 68.53 
+
+at α = 0 .05 it reaches 4.7% (68 .53% vs. 63 .81% ). Notably, FFA-LoRA collapses to 41 .93% at α = 0 .05 , and even SCAF-FOLD+LoRA, the strongest gradient-level method—reaches only 62 .14% , a gap of 6.4% behind TRISHUL. This monoton-ically increasing advantage supports the central thesis: spectral inconsistency of client updates is a failure mode that gradient-only corrections may not resolve, and explicit spectral control via nuclear-norm proximal shrinkage becomes increasingly essential as client distributions diverge. 
+
+a) Spectral behavior under stronger heterogeneity: Fig-ure 13 plots CIFAR-100 accuracy against a spectral in-consistency index for RAVAN and TRISHUL across α ∈{0.3, 0.1, 0.05 }. Both methods move toward the upper-left as 
+
+α increases (higher inconsistency, lower accuracy), but TR-ISHUL consistently occupies the upper-left relative to RAVAN at each heterogeneity level, higher accuracy at strictly lower spectral inconsistency, supporting the interpretation that im-proved spectral alignment contributes to TRISHUL’s accuracy gains. Figure 14 shows that principal-angle similarity falls for all methods as α decreases, but TRISHUL maintains substan-
+
+Fig. 12: CIFAR-100 test accuracy under increasing non-IID severity ( α ∈ { 0.3, 0.1, 0.05 }) with 20 clients and the lower parameter budget ( r = 32 ). TRISHUL’s advantage over the strongest baseline (RAVAN) grows from 3.2% at α = 0 .3
+
+to 4.7% at α = 0 .05 . SCAFFOLD+LoRA, despite explicit gradient-variance correction, trails TRISHUL by 6.4% at 
+
+α = 0 .05 , suggesting that gradient-level stabilization alone is insufficient under severe spectral misalignment of client updates. TABLE VIII: Ablation: head allocation strategies (lower bud-get, 20 clients).                                 
+
+> Allocation Strategy CIFAR-100 SVHN 20 Newsgroups IID Non-IID IID Non-IID IID Non-IID Uniform 84.41 77.82 94.23 90.88 68.96 66.91 Gradient-norm-based 84.63 78.14 94.38 91.02 69.14 67.23 Loss-curvature-based 84.57 78.41 94.41 91.17 69.27 67.58 Concave water-filling (TRISHUL) 85.13 79.41 94.72 91.38 69.82 68.14
+
+tially higher alignment at every level: at α = 0 .05 TRISHUL’s alignment is approximately 0.35 versus 0.15 for RAVAN and near zero for TRISHUL without shrinkage. Figure 14 shows that TRISHUL maintains lower spectral entropy than the other two settings at all three heterogeneity levels, with the entropy gap largest at α = 0 .05 , precisely where accuracy gains are greatest. 
+
+b) Layer-wise allocation behavior: Figures 15 and 16 visualize the concave water-filling allocation against uniform assignment in ViT-B/16 (12 transformer layers, total budget 
+
+h = 48 ). Uniform allocation assigns exactly 4 heads to every layer. Concave water-filling assigns between 2 and 6 heads depending on the pretrained capacity scores: layers with larger pretrained norms (e.g. layers 5-8 in ViT-B/16, which correspond to mid-network attention blocks with stronger representational capacity) receive up to 6 heads, while early and late layers with weaker norms receive as few as 2–3. This non-uniform distribution concentrates trainable capacity where it can be most productively absorbed, directly improving Fig. 13: Test accuracy versus spectral inconsistency index for RAVAN and TRISHUL across α ∈ { 0.3, 0.1, 0.05 } on CIFAR-100 (20 clients, lower budget). At every heterogeneity level, TRISHUL achieves higher accuracy at lower spectral inconsistency, providing direct empirical evidence that im-proved spectral alignment across clients is a proximate cause of TRISHUL’s performance gains. 
+
+Fig. 14: Effect of increasing non-IID severity on spectral alignment and entropy (CIFAR-100, 20 clients). The left panel shows principal-angle similarity between client up-date subspaces under different Dirichlet heterogeneity lev-els ( α ∈ { 0.3, 0.1, 0.05 }). TRISHUL preserves substantially higher subspace compatibility; at α = 0.05 , TRISHUL’s alignment is approximately 0.35 versus ≈ 0.15 for RAVAN and near zero for TRISHUL without shrinkage. The right panel shows spectral entropy of client updates under increasing non-IID severity. The entropy gap widens as α decreases, indicating that nuclear-norm shrinkage remains effective and increasingly important under severe client heterogeneity. Together, both metrics show that TRISHUL maintains stronger spectral con-trol as client distributions diverge. the total representational gain P 
+
+> l
+
+h∗ 
+
+> l
+
+∥Wl∥2 
+
+> F
+
+over the uniform baseline (Eq. (20)). Critically, this allocation is computed once from pretrained norms before training begins and requires no runtime statistics, making it both principled and practically free for edge deployment. 
+
+Fig. 15: Head allocation per layer in ViT-B/16 (12 layers, total budget h = 48 ) under uniform assignment (4 heads per layer) and concave water-filling (Eq. (18)). Layers with larger pretrained Frobenius norms ∥Wl∥2 
+
+> F
+
+(shown on the secondary axis) receive more heads under TRISHUL. The allocation is computed once before training from the pretrained model and incurs no runtime overhead. 
+
+Fig. 16: Layer-wise head allocation in ViT-B/16 under uniform assignment and concave water-filling. Mid-network layers (roughly layers 5–8) with stronger pretrained representational capacity receive up to 6 heads, while shallower and deeper layers with weaker norms receive as few as 2–3. 
+
+c) Client update covariance: We also visualize the co-variance structure of client updates in Figure 17. The left panel shows RAVAN, where the covariance matrix has a noisy structure with substantial off-diagonal variation, indicating that client updates are highly client-specific and poorly aligned, exactly the regime in which aggregation variance is large. The right panel shows TRISHUL, where the covariance matrix is substantially cleaner: the diagonal structure is more pro-nounced and off-diagonal entries are suppressed toward zero, indicating that updates across clients become more coherent after nuclear-norm spectral shrinkage. This structural differ-TABLE IX: Ablation: fixed vs. trainable scaling factors (lower budget, 20 clients).                      
+
+> Scaling CIFAR-100 SVHN 20 Newsgroups IID Non-IID IID Non-IID IID Non-IID Fixed ( si= 1 )84.72 77.62 94.41 90.85 69.21 66.98 Trainable (TRISHUL) 85.13 79.41 94.72 91.38 69.82 68.14
+
+TABLE X: Ablation: initialization strategies (lower budget, 20 non-IID clients).                
+
+> Initialization CIFAR-100 SVHN 20 Newsgroups Random Normal 78.21 90.15 68.14
+> Gram-Schmidt 79.41 91.38 66.92 Constant 58.30 88.12 56.85 Shared Subspace 57.51 84.67 55.73
+
+(a) RAVAN (b) TRISHUL 
+
+Fig. 17: Client update covariance matrices under non-IID CIFAR-100 ( α = 0 .3, 20 clients, lower budget). (a) RAVAN exhibits a noisy structure with high off-diagonal variation, indicating strongly client-specific updates with little shared direction across clients. (b) TRISHUL produces a substantially cleaner structure with a more pronounced diagonal and sup-pressed off-diagonal entries, reflecting improved cross-client update coherence after nuclear-norm spectral shrinkage. This structural improvement directly reduces aggregation variance and improves global model quality. ence directly corresponds to the reduced aggregation variance and lower spectral entropy observed in Figure 9, providing a holistic view of how TRISHUL improves cross-client update consistency. 
+
+4) Influence of Concave Water-Filling Head Allocation: We compare the proposed concave water-filling allocation against three alternatives: uniform allocation, gradient-norm-based al-location, and loss-curvature-based allocation. As shown in Table VIII, concave water-filling performs best across all datasets. The two heuristic alternatives improve on uniform TABLE XI: Accuracy under computational heterogeneity (CIFAR-100, 20 non-IID clients, lower budget).                   
+
+> Method Bell-shaped Uniform Skewed-right HetLoRA 75.23 73.41 68.92 FlexLoRA 76.11 74.28 70.14 TRISHUL (weight-based) 77.84 76.32 72.45 TRISHUL (gradient-based) 78.21 77.03 73.68 TRISHUL (random) 79.06 78.14 75.31
+
+assignment, which supports the general importance of adaptive capacity allocation, but both require additional statistics to be estimated during training. Concave water-filling, by contrast, is computed once from pretrained layer norms and incurs essentially zero runtime overhead. This makes it both more principled and more practical for edge deployment. 
+
+5) Role of Trainable Scaling Factors: Trainable head-wise scaling factors allow clients to modulate the relative importance of different adaptation heads. Table IX shows that learning these scalars consistently improves performance, especially under non-IID data. The improvements suggest that local tasks do not use all adaptation heads equally and that lightweight head-wise modulation helps each client exploit the fixed adaptation budget more effectively. 
+
+6) Effect of Initialization: Because the basis matrices re-main frozen during training, their initialization influences the expressive geometry of the entire multi-head adaptation space. Table X shows that Gram–Schmidt initialization is best for vision tasks, whereas random-normal initialization performs best on 20 Newsgroups. Shared-subspace and constant ini-tializations perform substantially worse, suggesting that inter-head subspace diversity is important for effective multi-head adaptation. 
+
+7) Computational Heterogeneity and Head Selection: Fi-nally, we study computational heterogeneity by assigning clients different trainable budgets drawn from bell-shaped, uniform, and skewed-right distributions. Clients with lower budgets update only a subset of heads. Table XI compares three head-selection strategies: random, weight-based, and gradient-based. Random selection performs best overall. Under non-IID data, weight-based and gradient-based selection tend to prefer locally dominant heads, which can reflect overfitting to client-specific distributions. Random selection avoids this bias and yields more globally representative updates. TR-ISHUL with random selection outperforms both HetLoRA and FlexLoRA across all heterogeneity profiles, indicating that partial-head freezing is an effective mechanism for handling device heterogeneity. V. C ONCLUSION AND FUTURE WORK 
+
+We developed TRISHUL as a three-pronged spectral control framework for heterogeneous federated PEFT. TRISHUL ad-dresses two central failure modes of federated PEFT: unstable client update spectra that cause destructive aggregation inter-ference, and naive uniform allocation of limited adaptation capacity across layers. It does so through three complementary components: exact multi-head low-rank aggregation, nuclear-norm proximal spectral shrinkage, and concave water-filling head allocation. The experimental results show that these components work together effectively. Across vision tasks, language tasks, and billion-parameter model fine-tuning, TRISHUL consistently outperforms strong federated PEFT baselines. The gains are largest under stronger heterogeneity, which supports the main claim of the paper that spectral inconsistency is a fundamental source of federated PEFT degradation and must be controlled explicitly. At the same time, the method preserves practical efficiency: it introduces no additional communication overhead and adds less than 1% computational overhead per round. Importantly, TRISHUL is a spectral-control framework that filters client-specific singular directions before aggre-gation, reducing effective rank, spectral entropy, and inter-client variance while preserving PEFT-level communication efficiency. Several directions remain open. First, the current head allocation is fixed before training; dynamic allocation strategies that adapt to evolving layer importance may yield further gains. Second, all heads currently use the same rank 
+
+r; heterogeneous-rank variants could improve parameter ef-ficiency. Third, extending TRISHUL to differentially private federated learning is promising, since spectrally compact up-dates may admit tighter privacy calibration. Finally, adaptive selection of the regularization strength λ and robustness under low-precision or quantized training merit further investigation. Overall, the results suggest that explicit spectral control is a powerful and practical principle for federated fine-tuning of large models at the edge. REFERENCES [1] H. B. McMahan et al. , “Communication-efficient learning of deep net-works from decentralized data,” in Proceedings of the 20th International Conference on Artificial Intelligence and Statistics . PMLR, 2017. [2] E. J. Hu et al. , “Lora: Low-rank adaptation of large language models,” in International Conference on Learning Representations (ICLR) , 2022. [3] X.-Y. Liu, J. Zhang, G. Wang, W. Tong, and A. Walid, “Efficient pretraining and finetuning of quantized llms with low-rank structure,” in 2024 IEEE 44th international conference on distributed computing systems (ICDCS) . IEEE, 2024, pp. 300–311. [4] A. Raje et al. , “Ravan: Multi-head low-rank adaptation for federated fine-tuning,” arXiv preprint arXiv:2506.05568 , 2025. [5] T. Li, A. K. Sahu, A. Talwalkar, and V. Smith, “Federated optimization in heterogeneous networks,” in Proceedings of Machine Learning and Systems (MLSys) , 2020. [6] S. P. Karimireddy, S. Kale, M. Mohri, S. J. Reddi, S. U. Stich, and A. T. Suresh, “Scaffold: Stochastic controlled averaging for federated learning,” in Proceedings of the 37th International Conference on Machine Learning (ICML) , 2020. [7] B. Recht, M. Fazel, and P. A. Parrilo, “Guaranteed minimum-rank solutions of linear matrix equations via nuclear norm minimization,” 
+
+SIAM Review , vol. 52, no. 3, pp. 471–501, 2010. [8] J.-F. Cai, E. J. Cand` es, and Z. Shen, “A singular value thresholding al-gorithm for matrix completion,” SIAM Journal on Optimization , vol. 20, no. 4, pp. 1956–1982, 2010. [9] S. Boyd and L. Vandenberghe, Convex Optimization . Cambridge University Press, 2004. [10] Z. Wang et al. , “Flora: Federated fine-tuning large language models with heterogeneous low-rank adaptations,” in Advances in Neural Information Processing Systems (NeurIPS) , 2024. [11] R. Singhal, K. Ponkshe, and P. Vepakomma, “Fedex-lora: Exact ag-gregation for federated parameter-efficient fine-tuning of foundation models,” in NeurIPS 2024 Workshop on Fine-Tuning in Modern Machine Learning: Principles and Scalability , 2024. [12] R. Singhal, K. Ponkshe, R. Vartak, L. R. Varshney, and P. Vepakomma, “Fed-sb: A silver bullet for extreme communication efficiency and performance in (private) federated lora fine-tuning,” arXiv preprint arXiv:2502.15436 , 2025. [13] Y. Sun, Z. Li, Y. Li, and B. Ding, “Improving lora in privacy-preserving federated learning,” in International Conference on Learning Represen-tations (ICLR) , 2024. [14] J. Qi et al. , “Fdlora: Personalized federated learning of large language models via dual lora tuning,” arXiv preprint arXiv:2406.07925 , 2024. [15] P. Guo et al. , “Selective aggregation for low-rank adaptation in fed-erated learning (fedsa-lora),” in International Conference on Learning Representations (ICLR) , 2025. [16] Y. J. Cho, L. Liu, Z. Xu, A. Fahrezi, and G. Joshi, “Heterogeneous lora for federated fine-tuning of on-device foundation models,” in 
+
+Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing (EMNLP) , 2024, pp. 12 903–12 913. [17] J. Bai, D. Chen, B. Qian, L. Yao, and Y. Li, “Federated fine-tuning of large language models under heterogeneous tasks and client resources,” in Advances in Neural Information Processing Systems (NeurIPS) , 2024. [18] Q. Zhang, M. Chen, A. Bukharin, N. Karampatziakis, P. He, Y. Cheng, W. Chen, and T. Zhao, “Adalora: Adaptive budget allocation for parameter-efficient fine-tuning,” in International Conference on Learn-ing Representations (ICLR) , 2023. [19] S.-Y. Liu, C.-Y. Wang, H. Yin, P. Molchanov, Y.-C. F. Wang, K.-T. Cheng, and M.-H. Chen, “Dora: Weight-decomposed low-rank adapta-tion,” in International Conference on Machine Learning (ICML) , 2024. [20] D. J. Kopiczko, T. Blankevoort, and Y. M. Asano, “Vera: Vector-based random matrix adaptation,” in International Conference on Learning Representations (ICLR) , 2024. [21] F. Meng, Z. Wang, and M. Zhang, “Pissa: Principal singular values and singular vectors adaptation of large language models,” in Advances in Neural Information Processing Systems (NeurIPS) , 2024. [22] K. B¨ uy¨ ukaky¨ uz, “Olora: Orthonormal low-rank adaptation of large language models,” arXiv preprint arXiv:2406.01775 , 2024. [23] E. J. Cand` es and B. Recht, “Exact matrix completion via convex optimization,” Foundations of Computational Mathematics , vol. 9, no. 6, pp. 717–772, 2009. [24] A. Beck and M. Teboulle, “A fast iterative shrinkage-thresholding algo-rithm for linear inverse problems,” SIAM Journal on Imaging Sciences ,vol. 2, no. 1, pp. 183–202, 2009. [25] C. H. Martin and M. W. Mahoney, “Implicit self-regularization in deep neural networks: Evidence from random matrix theory and implications for learning,” Journal of Machine Learning Research , vol. 22, no. 165, pp. 1–73, 2021. [26] A. Dosovitskiy, L. Beyer, A. Kolesnikov, D. Weissenborn, X. Zhai, T. Unterthiner, M. Dehghani, M. Minderer, G. Heigold, S. Gelly, J. Uszkoreit, and N. Houlsby, “An image is worth 16x16 words: Trans-formers for image recognition at scale,” in International Conference on Learning Representations (ICLR) , 2021. [27] C. Raffel, N. Shazeer, A. Roberts, K. Lee, S. Narang, M. Matena, Y. Zhou, W. Li, and P. J. Liu, “Exploring the limits of transfer learning with a unified text-to-text transformer,” Journal of Machine Learning Research , vol. 21, no. 140, pp. 1–67, 2020. [28] J. Zhang, S. Vahidian, M. Kuo, C. Li, R. Zhang, T. Yu, G. Wang, and Y. Chen, “Towards building the federatedgpt: Federated instruction tuning,” in ICASSP 2024 - 2024 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) , 2024, pp. 6915– 6919. [29] A. Krizhevsky, “Learning multiple layers of features from tiny images,” University of Toronto, Tech. Rep., 2009. [30] Y. Netzer, T. Wang, A. Coates, A. Bissacco, B. Wu, and A. Y. Ng, “Reading digits in natural images with unsupervised feature learning,” in 
+
+NIPS Workshop on Deep Learning and Unsupervised Feature Learning ,2011. [31] T. Mitchell, “Twenty newsgroups,” UCI Machine Learning Repository, 1997. [32] A. Fisch, A. Talmor, R. Jia, M. Seo, E. Choi, and D. Chen, “Mrqa 2019 shared task: Evaluating generalization in reading comprehension,” in Proceedings of the 2nd Workshop on Machine Reading for Question Answering , 2019, pp. 1–13. [33] A. Wang, A. Singh, J. Michael, F. Hill, O. Levy, and S. R. Bowman, “Glue: A multi-task benchmark and analysis platform for natural lan-guage understanding,” in Proceedings of the 2018 EMNLP Workshop BlackboxNLP: Analyzing and Interpreting Neural Networks for NLP ,2018, pp. 353–355. [34] A. Grattafiori et al. , “The llama 3 herd of models,” arXiv preprint arXiv:2407.21783 , 2024. APPENDIX 
+
+This appendix formalizes the three mechanisms used by TRISHUL: exact shared-basis aggregation, rank-controlled spectral shrinkage, and concave water-filling allocation. The results are intended to characterize the mechanism; they do not claim that spectral shrinkage alone solves all statistical heterogeneity in FL. 
+
+A. Preliminaries and Assumptions 
+
+We consider the federated objective 
+
+F (W) = 
+
+> C
+
+X
+
+> c=1
+
+pcLc(W), pc = nc
+
+P 
+
+> j
+
+nj
+
+. (26) For a fixed layer and head, define the uploaded core update 
+
+Zc,i = sc,i eHc,i , (27) where eHc,i is the post-SVT core. 
+
+Assumption A.1 (Smooth local objectives) . Each local ob-jective Lc is L-smooth. 
+
+Assumption A.2 (Bounded post-SVT cores) . For every client 
+
+c and head i, the post-SVT core satisfies 
+
+∥ eHc,i ∥2 ≤ Mi, |sc,i | ≤ smax .
+
+Assumption A.3 (Unbiased client sampling) . Participating clients are sampled independently according to the aggrega-tion weights used by the server. B. Exactness of Shared-Basis Aggregation 
+
+Theorem A.1 (Exact weighted aggregation) . Let Bl,i and Al,i 
+
+be frozen and shared across clients. For any weights {ωc}
+
+satisfying P 
+
+> c
+
+ωc = 1 , the aggregated ambient update satisfies 
+
+X
+
+> c
+
+ωc
+
+X
+
+> i
+
+Bl,i (sc,l,i Hc,l,i )Al,i = X
+
+> i
+
+Bl,i 
+
+X
+
+> c
+
+ωcsc,l,i Hc,l,i 
+
+!
+
+Al,i .
+
+(28) 
+
+Proof. The result follows by linearity of summation and by the fact that the bases are fixed with respect to the client index: 
+
+X
+
+> c
+
+ωc
+
+X
+
+> i
+
+Bl,i Zc,l,i Al,i = X
+
+> i
+
+Bl,i 
+
+X
+
+> c
+
+ωcZc,l,i 
+
+!
+
+Al,i .
+
+Remark A.1. Theorem A.1 removes the algebraic factor-ization bias of standard LoRA aggregation, where generally 
+
+E[BcAc]̸ = E[Bc]E[Ac]. It does not imply that the aggregated update is statistically optimal under arbitrary non-IID data; spectral shrinkage is introduced to reduce the remaining client-update variance. 
+
+C. Rank-Controlled Variance Reduction 
+
+Theorem A.2 (Rank-controlled aggregation variance) . Let 
+
+eHc,i be obtained by SVT: 
+
+eHc,i = prox λη ∥·∥ ∗ (Hgrad  
+
+> c,i
+
+). (29) 
+
+Suppose rank( eHc,i ) ≤ ρi, ∥ eHc,i ∥2 ≤ Mi, and |sc,i | ≤ smax .For m independently sampled clients, 
+
+E 1
+
+m
+
+> m
+
+X
+
+> c=1
+
+
+
+sc,i eHc,i − E[sc,i eHc,i ]
+
+ 2
+
+> F
+
+≤ s2max ρiM 2
+
+> i
+
+m . (30) 
+
+Proof. For any matrix X with rank at most ρi,
+
+∥X∥2 
+
+> F
+
+=
+
+> ρi
+
+X
+
+> j=1
+
+σ2 
+
+> j
+
+(X) ≤ ρi∥X∥22.
+
+Thus ∥sc,i eHc,i ∥2 
+
+> F
+
+≤ s2max ρiM 2 
+
+> i
+
+. The independence of sam-pled clients gives 
+
+E 1
+
+m
+
+> m
+
+X
+
+> c=1
+
+(Zc,i − EZc,i )
+
+> 2
+> F
+
+= 1
+
+m E∥Zc,i − EZc,i ∥2
+
+> F
+
+≤ 1
+
+m E∥Zc,i ∥2 
+
+> F
+
+,
+
+which proves the claim. 
+
+Remark A.2 (Bias–variance tradeoff) . Increasing λ increases the SVT threshold τ = λη , so fewer singular modes survive and ρi decreases. This tightens the variance bound in (30), but it may also increase approximation bias by removing task-relevant modes. 
+
+D. Optimality of Concave Water-Filling Allocation 
+
+Theorem A.3 (Water-filling solution) . Let al = ∥Wl∥2 
+
+> F
+
++ϵ > 
+
+0. The solution of 
+
+max 
+
+> {hl≥0}
+> L
+
+X
+
+> l=1
+
+al log(1 + hl)s.t.
+
+> L
+
+X
+
+> l=1
+
+hl = h (31) 
+
+is 
+
+h∗ 
+
+> l
+
+=
+
+ al
+
+μ − 1
+
+
+
+> +
+
+, (32) 
+
+where μ > 0 is chosen such that P 
+
+> l
+
+h∗ 
+
+> l
+
+= h.Proof. The Lagrangian is 
+
+L = X
+
+> l
+
+al log(1 + hl) − μ X
+
+> l
+
+hl − h
+
+!
+
++ X
+
+> l
+
+νlhl,
+
+with νl ≥ 0. The KKT stationarity condition gives 
+
+al
+
+1 + hl
+
+− μ + νl = 0 .
+
+For active layers hl > 0, νl = 0 and hl = al/μ −1. For inactive layers, complementary slackness gives hl = 0 . Combining both cases yields (32). Corollary A.4 (Utility dominance over uniform allocation) .
+
+Let hunif  
+
+> l
+
+= h/L . Since {h∗ 
+
+> l
+
+} solves (31) ,
+
+> L
+
+X
+
+> l=1
+
+al log(1 + h∗ 
+
+> l
+
+) ≥
+
+> L
+
+X
+
+> l=1
+
+al log(1 + hunif  
+
+> l
+
+). (33) 
+
+The inequality is strict when the uniform allocation does not satisfy the KKT conditions. E. Convergence to a Stationary Point 
+
+We now show that TRISHUL converges to a stationary point of the composite nuclear-norm regularized federated PEFT objective. Since the pretrained weights and bases {Bl,i , Al,i }
+
+are frozen, the optimization variables are only the compact cores and head scalars. Let 
+
+θ = vec ( {Hl,i }l,i , {sl,i }l,i )
+
+denote the concatenated trainable TRISHUL parameter vector. For client c, define 
+
+fc(θ) = Lc
+
+ W0 + ∆ W(θ) , F (θ) = 
+
+> C
+
+X
+
+> c=1
+
+pcfc(θ).
+
+The composite TRISHUL objective is 
+
+Φ( θ) = F (θ) + Ψ( θ), (34) where 
+
+Ψ( θ) = λ
+
+> L
+
+X
+
+> l=1
+> hl
+
+X
+
+> i=1
+
+∥Hl,i ∥∗ + ιS (θ), (35) and ιS is the indicator of the scalar-feasible set 
+
+S = {θ : 0 ≤ sl,i ≤ smax , ∀l, i }.
+
+Thus the nuclear-norm SVT step and scalar clipping are both represented by the proximal operator of Ψ.Because Ψ is nonsmooth, stationarity is measured by the proximal gradient mapping 
+
+Gη (θ) = 1
+
+η
+
+θ − prox ηΨ (θ − η∇F (θ))  . (36) A point θ is stationary for Φ if Gη (θ) = 0, equivalently 
+
+0 ∈ ∇ F (θ) + ∂Ψ( θ).
+
+Assumption A.4 (Smoothness) . Each client objective fc is 
+
+L-smooth in the compact TRISHUL variables, i.e., 
+
+∥∇ fc(θ) − ∇ fc(θ′)∥ ≤ L∥θ − θ′∥
+
+for all θ, θ′. Consequently, F is also L-smooth. 
+
+Assumption A.5 (Unbiased stochastic gradients) . At each local step, client c computes a stochastic gradient gc(θ; ξ)
+
+satisfying 
+
+Eξ [gc(θ; ξ)] = ∇fc(θ),
+
+and 
+
+Eξ ∥gc(θ; ξ) − ∇ fc(θ)∥2 ≤ σ2.
+
+Assumption A.6 (Bounded client heterogeneity) . There exists 
+
+ζ2 ≥ 0 such that, for all θ,
+
+> C
+
+X
+
+> c=1
+
+pc∥∇ fc(θ) − ∇ F (θ)∥2 ≤ ζ2.
+
+Assumption A.7 (Bounded second moment) . There exists 
+
+G2 > 0 such that, for all clients and all local iterates, 
+
+E∥gc(θ; ξ)∥2 ≤ G2.
+
+Assumption A.8 (Client sampling and partial-head aggrega-tion) . At each communication round, m clients are sampled independently using probabilities consistent with the aggrega-tion weights. For partial-head participation, let meff denote the minimum effective number of clients contributing to any active head in a round. Server aggregation is unbiased with respect to the sampled clients. 
+
+Assumption A.9 (Lower bounded objective) . The composite objective is bounded below: 
+
+Φ⋆ = inf  
+
+> θ
+
+Φ( θ) > −∞ .
+
+Theorem A.5 (Convergence to a stationary point) . Suppose Assumptions A.4–A.9 hold. Let TRISHUL run for T communi-cation rounds with S local proximal steps per selected client and stepsize 
+
+0 < η ≤ 18LS .
+
+Let θ(t) denote the global TRISHUL parameter vector at the beginning of round t, and let ¯t be sampled uniformly from 
+
+{0, 1, . . . , T − 1}. Then 
+
+E
+
+h
+
+∥G η (θ(¯ t))∥2i
+
+≤
+
+8
+
+
+
+Φ( θ(0) ) − Φ⋆
+
+
+
+ηST + 16 Lησ 2
+
+meff 
+
++ 64 L2η2(S − 1)( G2 + ζ2). (37) 
+
+Consequently, for fixed S and η = Θ(1 /√ST ),
+
+E
+
+h
+
+∥G η (θ(¯ t))∥2i
+
+=O
+
+ 1
+
+√ST 
+
+
+
++ O
+
+ σ2
+
+meff 
+
+√ST 
+
+
+
++ O
+
+ (S − 1)( G2 + ζ2)
+
+ST 
+
+
+
+. (38) 
+
+TUnder bounded stochastic variance and bounded client het-erogeneity, TRISHUL converges to a stationary point of the nuclear-norm regularized federated PEFT objective. Proof. Let θ(t) 
+
+> c,τ
+
+be the local parameter vector of client c after 
+
+τ local proximal steps in round t, with θ(t) 
+
+> c, 0
+
+= θ(t). A local TRISHUL update can be written as 
+
+θ(t)  
+
+> c,τ +1
+
+= prox ηΨ
+
+
+
+θ(t) 
+
+> c,τ
+
+− ηgc(θ(t) 
+
+> c,τ
+
+; ξc,τ )
+
+
+
+.
+
+The proximal operator contains both SVT on the core matrices and clipping of the scalars. For an L-smooth objective and a proper closed convex nonsmooth term Ψ, the standard proximal descent inequality gives 
+
+Eξ [Φ( θ(t) 
+
+> c,τ +1
+
+)] ≤Φ( θ(t) 
+
+> c,τ
+
+) − η
+
+4 Eξ ∥G η (θ(t) 
+
+> c,τ
+
+)∥2
+
++ 2 Lη 2Eξ ∥gc(θ(t) 
+
+> c,τ
+
+; ξc,τ ) − ∇ F (θ(t) 
+
+> c,τ
+
+)∥2.
+
+(39) The stochastic-gradient error decomposes into stochastic noise and client heterogeneity: 
+
+E∥gc − ∇ F ∥2 ≤ 2σ2 + 2 ζ2,
+
+after averaging over sampled clients. Multiple local steps introduce drift between θ(t) 
+
+> c,τ
+
+and θ(t). Since the proximal operator is nonexpansive and the stochastic gradients have bounded second moment, 
+
+E∥θ(t) 
+
+> c,τ
+
+− θ(t)∥2 ≤ 4η2τ G 2.
+
+By L-smoothness, this yields an additional local-drift term bounded by 16 L2η2τ (G2 + ζ2) in the gradient-mapping com-parison. After S local steps, the server aggregates uploaded core products. Because all bases are frozen and shared, aggregation is linear in the compact core space and exactly corresponds to weighted aggregation of the ambient PEFT updates. Hence no factorization error appears in the descent analysis. The only aggregation noise comes from stochastic gradients, client sampling, and partial-head participation, summarized by meff .Combining the local descent inequalities over S steps, averaging over participating clients, and using η ≤ 1/(8 LS )
+
+gives 
+
+E[Φ( θ(t+1) )] ≤E[Φ( θ(t))] − ηS 
+
+8 E∥G η (θ(t))∥2
+
++ 2 Lη 2S σ2
+
+meff 
+
++ 8 L2η3S(S − 1)( G2 + ζ2).
+
+(40) Rearranging, summing over t = 0, . . . , T − 1, and using 
+
+Φ( θ(T )) ≥ Φ⋆ yields Eq. (37). Since ¯t is uniformly sampled from {0, . . . , T −1}, the averaged bound is exactly the desired bound on E∥G η (θ(¯ t))∥2. Substituting η = Θ(1 /√ST ) gives Eq. (38). 
+
+Corollary A.6 (Stationarity of the unregularized federated loss) . Let Q = PLl=1 hl be the total number of TRISHUL heads and assume each core matrix has size r × r. If 
+
+E∥G η (θ(¯ t))∥2 ≤ ε2,
+
+then the distance to stationarity of the original smooth feder-ated objective F satisfies 
+
+E
+
+h
+
+dist 2 
+
+0, ∇F (θ(¯ t))
+
+i 
+
+≤ 2ε2 + 2 λ2Qr. (41) 
+
+Proof. For the composite objective, stationarity implies 0 ∈∇F (θ)+ ∂Ψ( θ). For each r×r core matrix, any subgradient of the nuclear norm has spectral norm at most one and Frobenius norm at most √r. Since there are Q core matrices, 
+
+sup 
+
+> Z∈∂R (θ)
+
+∥Z∥F ≤ pQr. 
+
+Therefore an ε-stationary point of the composite objective satisfies 
+
+dist( 0, ∇F (θ)) ≤ ε + λpQr. 
+
+Squaring and using (a + b)2 ≤ 2a2 + 2 b2 proves Eq. (41). Theorem A.5 shows that TRISHUL converges to a sta-tionary point of the nuclear-norm regularized federated PEFT objective. The first term in Eq. (37) is the optimization error and decreases with the total number of local updates ST . The second term captures stochastic-gradient and client-sampling noise, and decreases with the effective number of partici-pating clients per head. The third term captures local drift caused by multiple local steps under statistical heterogeneity. Corollary A.6 further shows that stationarity for the original unregularized federated loss is recovered up to a controlled shrinkage bias of order λ2Qr .

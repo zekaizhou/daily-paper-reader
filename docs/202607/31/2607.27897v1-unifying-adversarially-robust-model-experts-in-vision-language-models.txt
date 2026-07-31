@@ -1,0 +1,662 @@
+Title: Unifying Adversarially Robust Model Experts in Vision-Language Models
+
+URL Source: https://arxiv.org/pdf/2607.27897v1
+
+Published Time: Fri, 31 Jul 2026 00:45:10 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+> JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 1
+
+# Unifying Adversarially Robust Model Experts in Vision-Language Models 
+
+Nguyen Duc Thai, Junhao Dong, Sua Qi Rong, Hua Yu, Yew-Soon Ong, Fellow, IEEE 
+
+Abstract —Vision-language models (VLMs), such as CLIP, are vulnerable to adversarial attacks, posing a serious problem for real-life applications and deployment. Adversarial fine-tuning emerges as a prominent defense method; however, different fine-tuning strategies often produce specialized models with distinct robustness characteristics. Each fine-tuned model in turn thrives in some evaluation settings but falters on others, limiting their defensive capabilities. We refer to these specialized fine-tuned models as robust model experts and propose a collabora-tive adversarial fine-tuning framework: CARE - Collaborative Adversarial Robustness fine-tuning using Embedding alignment. CARE maintains multiple experts during training, enables knowledge exchange through embedding-space harmonization, and consolidates the learned knowledge into a single unified robust model. Experts benefit from one another while preserving their individual specializations, enabling the final model to inherit complementary robustness properties. In this paper, we demon-strate CARE on two different adversarial fine-tuning strategies with complementary robustness behaviors. Extensive experiments on classic image classification and downstream vision-language tasks display the effectiveness of our approach, with CARE being able to outperform individually learned model experts. The results suggest that collaborative learning across model experts is a promising direction for improving adversarial robustness. 
+
+Index Terms —Adversarial training, In-distribution accuracy, Zero-shot accuracy, Collaborative learning. 
+
+I. I NTRODUCTION 
+
+Vision-language models, such as CLIP [1], have achieved considerable success in many tasks, such as image captioning, text-to-image generation, or text-to-video generation. This success is due to their ability to align visual and textual rep-resentations in a shared embedding space. However, CLIP, as well as foundational multimodal models, are vulnerable to ad-versarial attack [2]. Subtle, human-imperceptible perturbations can drastically alter predictions, posing serious security risks, such as performance drops, generation of harmful content, or even creating backdoors that attackers can exploit. Therefore, adversarial robustness is essential for the safe and widespread deployment of VLMs. Among many adversarial defense methods, adversarial training remains one of the most effective strategies [3] [4]. Through training or fine-tuning the model with compromised data samples, the model becomes robust and invariant to adversarial perturbations. While adver-sarial training is hardly a new method, the advances of VLMs bring about new defense opportunities. 
+
+Nguyen Duc Thai, Junhao Dong, Sua Qi Rong, Hua Yu, and Yew-Soon Ong are with the College of Computing and Data Science, Nanyang Technological University, Singapore. Yew-Soon Ong, and Junhao Dong are also with the Center for Frontier AI Research, Agency for Science, Technology and Research (A*STAR), Singapore (e-mail: {ducthai001, suaq0001, junhao003, yu hua, asysong }@ntu.edu.sg. Photo of a   
+
+> Panda
+> Using image-text alignment to guide adversarial training. Adv
+> Image-Text alignment expert
+> Preserve image features under adversarial attack. Adv
+> Image-Invariance expert
+> Clean
+> CARE
+> Expert harmonization
+> Generalize across different experts
+> Image-Text alignment expert
+> Image-Invariance expert
+> Unify
+> Less robust on unlearned text.
+> Does not take advantage of text encoder.
+
+Fig. 1: We identify two prominent approaches to adversarial fine-tuning for VLMs. The first relies on image-text alignment to guide the adversarial training process. This approach cannot guarantee alignment on untrained text, and therefore loses effectiveness on new classes. The second leverages VLMs rich visual representations and teaches the model to stay consistent even under adversarial attack. While it is more general, it does not take advantage of the shared representation that is trademark of VLMs. Our framework, CARE, works to combine these different specialized experts. CARE harmonizes different experts, exchanging learned knowledge between them before unifying them into a single final model. First, VLMs perform image-text alignment in a shared embedding space. Thus, text embeddings and prompts can be used to guide the adversarial fine-tuning process. This provides a new defense surface not found in earlier CNNs. Many recent adversarial training methods apply this principle, such as TeCoA [5] or TGA-ZSR [6]. TeCoA fine-tunes using images classification, with adversarial images created to maximize the cross-entropy loss from text and image alignment. TGA explores text-guided attention to improve robustness, but at its core the main idea is the same: relying on the shared image-text embedding space for guidance. Second, the larger size and compute power of VLMs, com-pared to older CNNs, mean that their visual representations are much richer and they can be adversarially trained on proxy tasks, not necessarily image classification. A prominent exam-arXiv:2607.27897v1 [cs.CV] 30 Jul 2026 JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 2
+
+ple is FARE [2]: adversarial images are created to maximize distortion in the image embedding space. The model is trained without image-text supervision, with the sole aim of preserving visual representation, and thus bolster the invariance of image embeddings under attack. We refer to an adversarially trained model as a robust model expert. Depending on the training angle they take, fine-tuned models exhibit different characteristics and their performance varies under different evaluation settings. For example, models that follow the image-text route often performs better on learned class names, since they rely on the text prompts for robustness. Given a new class, they struggle to maintain robustness. On the other hand, models that focus on improving the image-invariance aspect can transfer their robustness to unseen datasets. However, since the image-text alignment is not directly maintained during training, their performance on known classes are lackluster compared to image-text experts. Furthermore, they also do not make use of the trademark fea-ture of VLMs: the shared multimodal representation between image and text. How can we generalize across different adversarial robust model experts? A direct solution would be to train indepen-dent experts, then combine them afterward. However, since different experts are optimized on different strategies, they naturally drift apart during training, and unifying them is unstable. Works that explore combining different models for adversarial training, such as [7] and [8], all stumble upon this roadblock. Previous works then have to periodically overwrite the experts’ parameters completely using a shared checkpoint to maintain stability. We find this approach limits the exploration and specialization of the experts. To overcome this, we propose CARE: Collaborative Adversarial Robustness fine-tuning using Embedding alignment. CARE trains multiple experts simultaneously. Each expert follows its specializa-tion, while a harmonization mechanism is used to exchange knowledge, thus preventing drift and improving stability. The learned robustness is then unified into a single model, thereby generalizing across different adversarial training strategies. The contributions of this work are as follows:  
+
+> •
+
+We propose the CARE framework for learning across ad-versarial robust model experts. CARE maintains multiple experts, each derived from a different adversarial fine-tuning strategy, and unifies their learned knowledge into a single unified robust model.  
+
+> •
+
+We introduce an embedding-space harmonization mech-anism that enables knowledge exchange among experts during training, thus improving stability without sacrific-ing exploration.  
+
+> •
+
+Extensive experiments demonstrate that CARE outper-forms individually trained experts in both image classifi-cation and downstream vision–language tasks. II. R ELATED WORK 
+
+Vision-language models, such as CLIP [1], ALIGN [9], ALBEF [10], are trained on large image-text datasets. Each modality has its own encoder, and the model aligns the multimodal embeddings within a shared latent space to pro-vide strong image-text representations. Harnessing the ex-pressivity of these representations, vision-language models have achieved considerable success in multimodal tasks, such as zero-shot image classification, image-text retrieval, and image captioning or video captioning. In addition, many Large Vision-Language Models (LVLM), such as Flamingo [11], OpenFlamingo [12], LLaVa [13], etc., employ them as vision encoders to handle image-related tasks. However, VLMs are not immune to adversarial attack. Multiple works have explored the vulnerability to attack of LVLMs and VLMs [14] [15] [16] [17]. Among existing defense strategies, adversarial training is one of the most effective. Existing methods often falls into one of two cat-egories: leveraging VLMs image-text latent space or relying on their large architecture and rich visual representations for robustness. The first category can be best presented in the paper by Mao et al. [5]. The authors investigated TeCoA, which leverages the strong image-text alignment of CLIP and using the text encoder to guide the fine-tuning process. Other works, such as PMG [18] or TGA [6], add additional losses such as image-text alignment within the non-fine-tuned model or text-guided attention loss into the mix, but the main principle remains: they target the image-text alignment within CLIP for adversarial training. Schlarmann et al. in [19] displayed the second strategy. They suggested FARE, which adversarially trains CLIP by minimizing the distance between image embeddings of clean and adversarial samples. While the training does not directly address adversarial image classification, the strong image embeddings gained after fine-tuning can be transferred to a multitude of tasks. As stated in Section I, we investigate these two different philosophies. We choose TeCoA and FARE as the bases to demonstrate our framework, as we find them the representatives of the two approaches. We notice that in image-text alignment experts, the logits between image and text embeddings is the primary target for adversarial fine-tuning, while for image-invariance experts, it is done directly through the image encoder, without any image-text-focused objectives. This insight motivates us to derive the harmonization mechanism of CARE: exchanging adversarial knowledge of adversarially fine-tuned embeddings. Our approach bears resemblance to generalization through model merging [20] [21] [22]. Pretrained models are combined in parameter space to improve performance, balance trade-offs, etc., without any increase in inference cost. In the realm of adversarial training, Wang et al. [7] proposed an adversarial training framework to balance the clean-robustness trade-off. Each task is handled by a dedicated expert: one focuses on clean accuracy while the other aims to improve robustness; their parameters are later merged to form a unified model that aggregates knowledge from all tasks. However, the authors revealed that due to differing specialization, the merging process can become unstable, leading to worse results. Their solution is to perform parameter overwriting, where the parameter of the unified model is copied on top of each expert. In this regard, we use our own knowledge exchanging process to harmonize the experts and prevent divergence. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 3Step 1: Universal perturbation initialization  Step 2: Independent adversarial generation  
+
+> Step 3: Expert harmonization and update
+> Step 4: Knowledge generalization through EMA
+> Image-Text alignment expert
+> Image-Invariance expert
+> More robust class logits
+> More robust
+> image embedding
+> Class logits
+> Image embedding
+> Noise Universal perturbation
+> Universal perturbation
+> Adversarial using CE loss
+> Adversarial using L2 loss
+> Align adv
+> Invariance adv
+> Fine-tune
+> Fine-tune
+> Align Image embedding
+> Align Class logits
+> Invariance expert loss:
+> Alignment expert loss:
+> CARE
+> Lion
+> Dog
+> Cat
+> Panda
+> Image-Text alignment expert
+> Image-Invariance expert
+> Image-Text alignment expert
+> Image-Invariance expert
+> Image-Text alignment expert
+> Image-Invariance expert
+> Align adv
+> Invariance adv
+
+Fig. 2: Our method CARE consists of 4 steps: Initialize a universal perturbation with inputs from both experts; Each expert generates its own adversarial samples; Experts optimize their parameters using joint losses: adversarial fine-tuning loss for specialization and harmonization loss to learn from each other; Finally, the parameters are combined using the Exponential Moving Average (EMA) method. The details for each expert’s loss can be found in Eq. (11) and Eq. (9). III. C OLLABORATIVE ADVERSARIAL FINE -TUNING 
+
+In this section we introduce our adversarial fine-tuning framework CARE. The framework performs adversarial fine-tuning across robust model experts and maintains harmoniza-tion through embedding alignment. An overview of the method is presented in Figure 2. 
+
+A. Preliminaries 
+
+CLIP, introduced by Radford et al. [1], is a breakthrough in vision-language pretrained models. CLIP consists of two encoders: an image encoder fθ : X → Rd and a text encoder 
+
+fϕ : T → Rd, sharing the same dimensionality d. Here 
+
+X and T represent the input spaces for images and text, and θ and ϕ represent the model parameters for the image and text encoder, respectively. Zero-shot classification of an image x with C output classes is done by generating the class prompts set t = {t1, t 2, . . . , t C } describing the image i.e. tc = ‘‘This is a photo of a <class c>‘‘ .Cosine similarity between the image embedding of x and the text embedding of t is used to compute each class logit. 
+
+zc(x, θ, ϕ ) = cos( fθ (x), f ϕ(tc)) for c = 1 , . . . , C. (1) Here zc(x, θ, ϕ ) is the logit for class c and the logit vector is z(x, θ, ϕ ) = [z1(x, θ, ϕ ), . . . , z C (x, θ, ϕ )] . We can then compute the class probability using the softmax function. 
+
+pc(x, θ, ϕ ) = exp ( zc)
+
+PCc′=1 exp ( zc′ ) . (2) 
+
+pθ,ϕ (x) = [ p1(x, θ, ϕ ), . . . , p C (x, θ, ϕ )] is the prediction vec-tor. Suppose that the ground-truth label of x is y, the aim of an adversarial attack in the ℓp-norm threat model is then to generate an adversarial sample ˜x such that the model misclassifies ˜x into another class: 
+
+arg max  
+
+> c=1 ,...,C
+
+pθ,ϕ (x)̸ = y, |˜x − x|p ≤ ε, ˜x ∈ X, (3) where ϵ is the perturbation radius. Following prior works, we focus on ℓ∞-norm threats. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 4
+
+Mao et al. in [5] introduced TeCoA, a text-guided adver-sarial fine-tuning approach for CLIP on ImageNet. TeCoA minimizes the cross-entropy between the image-text logits of the adversarial samples and the true labels: LCE (z(˜ x, θ, ϕ ), y ).The robust training of TeCoA can be written as a minimax optimization problem: 
+
+θT eCoA = arg min  
+
+> θ
+
+max  
+
+> |˜x−x|∞≤ϵ
+
+LCE (z(˜ x, θ, ϕ ), y ). (4) Schlarmann et al. in [19] suggested an unsupervised ap-proach to robust fine-tuning using ℓ2-distance loss, anchoring the adversarial image embeddings to that of the original clean embeddings, preventing drift in image feature space: 
+
+LL2(fθ (˜ x), f θOrg (x)) = || fθ (˜ x) − fθOrg (x)|| 22. (5) FARE enforces image feature invariance between clean and adversarial samples, therefore promoting robustness. The ro-bust formulation of FARE is the following: 
+
+θF ARE = arg min  
+
+> θ
+
+max  
+
+> |˜x−x|∞≤ϵ
+
+LL2(fθ (˜ x), f θOrg (x)) . (6) In both TeCoA and FARE, the inner maximization problem is approximated using Projected Gradient Descent (PGD) [3]. We denote the cross-entropy loss and the ℓ2-distance loss as LCE (˜ x, y ) and LL2(˜ x, x ). Since both FARE and TeCoA optimize the image encoder only, we simplify the notation for logits and class probability into z(x, θ ) and p(x, θ ).We choose these two to be the bases for our framework due to their isolated focus on different components in the CLIP architecture: TeCoA uses text features to improve robustness, while FARE uses image features. Our framework, CARE, maintains separate networks with different specializations: Image-text alignment expert, based on TeCoA, or Alignment expert for short; and Image-invariance expert, based on FARE, or Invariance expert for short. The Alignment expert utilizes cross-entropy loss for adversarial training, while the Invariance expert relies on ℓ2-distance loss. In this work we focus on adversarial training for the image encoder only, and we denote the corresponding parameters of these two image encoders as 
+
+θAlign and θInv , respectively. A final network CARE, with parameters θCARE , is produced by unifying the two experts. The three networks θAlign , θInv , and θCARE are initialized using the same pretrained CLIP image encoder. θAlign and 
+
+θInv are optimized directly during training. Both experts utilize the same clean data sample to generate their distinct adversarial samples using K-step PGD. We apply Exponential Moving Average (EMA) after each training step to unify learned knowledge from the two: 
+
+θCARE := βθ CARE + (1 − β)[ γθ Align + (1 − γ)θInv ]. (7) Here, 0 ≤ β ≤ 1 is the decay rate and 0 ≤ γ ≤ 1 controls the influence of each expert. However, the experts with their unique specialization will diverge too much from each other, thus leading to an unstable combination. We propose an Expert harmonization method to allow robust optimization while maintaining synchronization. 
+
+B. Expert harmonization 
+
+Our Expert harmonization mechanism aligns each expert to implicitly learn the adversarial fine-tuning process of the other. We observe that θAlign optimizes the cross-entropy loss by acting directly on the image-text. Meanwhile, θInv optimizes the L2 loss by operating on the image embeddings. We add an Embedding alignment loss to each expert: θInv will align its clean logits (which it does not optimize) to those of θAlign 
+
+(which optimizes logits directly). Likewise, the θAlign network will align its clean image embeddings to those of θInv . This cross-learning mechanism enhances the robustness of each expert using both the image and text encoders and promotes consistency between their optimization dynamics. Given an input image x with label y, we denote ˜xAlign 
+
+and ˜xInv the adversarial samples that the experts generate in-dependently by maximizing the cross-entropy loss and the ℓ2-distance loss as described in Section III-A. Lalign z is the loss for logits alignment, used by the Invariance expert. Lalign f is the embedding alignment loss, used by the Alignment expert. We use Cosine similarity loss by minimizing the negative cosine similarity for alignment losses. 
+
+Lalign z (x, θ Align , θ Inv ) = − cos( z(x, θ Inv ), z (x, θ Align ))) ,
+
+(8) 
+
+LInv = LL2(fθInv (˜ xInv ), f θOrg (x)) +Lalign z (x, θ Align , θ Inv ), (9) 
+
+Lalign f (x, θ Align , θ Inv ) = − cos( fθAlign (x), f θInv (x)) ,
+
+(10) 
+
+LAlign = LCE (z(˜ xAlign , θ Align ), y )+Lalign f (x, θ Align , θ Inv ). (11) 
+
+Theorem 1. Assume that Lalign z (x, θ Align , θ Inv ) and 
+
+Lalign f (x, θ Align , θ Inv ) are twice differentiable in the neigh-borhood of θ. Let Hz (θ) := ∇2 
+
+> θInv
+
+Lalign z (x, θ Align , θ Inv )
+
+and Hf (θAlign ) := ∇2 
+
+> θ
+
+Lalign f (x, θ Align , θ Inv ), for sufficient small drift between the two model parameter θAlign and θInv ,the auxiliary losses act as momentums pulling the experts toward each other, where the gradient updates are: 
+
+∇θ Lalign z (x, θ Align , θ Inv ) = Hz (θAlign )( θInv − θAlign ),
+
+(12) 
+
+∇θ Lalign f (x, θ Align , θ Inv ) = Hf (θInv )( θAlign − θInv ).
+
+(13) 
+
+Proof. Let ∆θ = θInv − θAlign be the drift between the two experts, then θInv = θAlign + ∆ θ, and θAlign = θInv − ∆θ.Consider the auxiliary loss for the LInv in Eq. 9: 
+
+Lalign z (x, θ Align , θ Inv ) = − cos( z(x, θ Inv ), z (x, θ Align ))) ,where we align the logits of the Invariance expert with those of the Alignment expert. The reference logits θAlign 
+
+are frozen, therefore the loss is a function of θInv only. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 5
+
+Perform second-order Taylor expansion around θAlign :
+
+Lalign z = Lalign z (x, θ Align , θ Align + ∆ θ)= −cos (z(x, θ Align ), z (x, θ Align + ∆ θ)) = −cos (z(x, θ Align ), z (x, θ Align ))+ 
+
+∇θ (−cos (z(x, θ Align ), z (x, θ Align )))∆ θ+12 ∆θT Hz (θ)∆ θ + O(∥∆∥3). (14) Here, Hz represents the Hessian matrix through the logits cosine similarity. Because we calculate the cosine similarity of the logits at θAlign with its reference logits also at θAlign ,the cosine similarity becomes 1, and its first-order derivative is 0, simplifying the expansion to: 
+
+Lalign z = −1 + 12 ∆θT Hz (θAlign )∆ θ + O(∥∆∥3). (15) For sufficiently small ∥∆∥, O(∥∆∥3) becomes negligible, leaving only 12 ∆θT Hz (θ)∆ θ.Thus, the gradient direction for the auxiliary loss is: 
+
+∇θ Lalign z (x, θ Align , θ Inv ) ≈ Hz (θAlign )∆ θ
+
+= Hz (θAlign )( θInv − θAlign ).
+
+(16) Similarly, substituting θAlign = θInv − ∆θ and performing a similar expansion on the auxiliary loss for the Alignment expert gives (flipped sign due to subtraction of ∆θ): 
+
+∇θ Lalign f (x, θ Align , θ Inv ) ≈ − Hf (θInv )∆ θ
+
+= −Hf (θInv )( θInv − θAlign )= Hf (θInv )( θAlign − θInv ).
+
+(17) Similar to the logits alignment loss, Hf (θInv ) is the Hessian matrix through the feature cosine similarity. In one step, the update to Invariance expert would be equal to −η∇θ Lalign z = −ηH z (θAlign )( θInv − θAlign ),penalizing Invariance expert if it is far way from Alignment expert. Vice versa, the Alignment expert is pulled toward the last known location of Invariance expert. Therefore, in each update step, the experts are prevented from moving too far from each other. Theorem 1 affects our design choices for CARE substan-tially. Namely, both cosine similarity and clean representation alignment (we align the clean logits and clean embeddings) are chosen because in this way we can omit the first-order deriva-tive in the Taylor expansion, making theoretical analysis easier. Intuitively, the auxiliary losses force the experts to maintain the same clean representation while exploration comes from different adversarial specialization. The drift ∆θ is small at the beginning of training, due to the experts being initialized from the same pretrained network, and the momentum from the auxiliary losses keep them from diverging. 
+
+Algorithm 1 C ollaborative Adversarial Robustness fine-tuning using Embedding alignment (CARE) 
+
+Input : 
+
+> •
+
+Parameter sets: pre-trained CLIP θCLIP ; Alignment expert 
+
+θAlign ; Invariance expert θInv ; unified model θCARE . 
+
+> •
+
+T total fine-tuning steps, M collaborative perturbation initial-ization steps, K adversarial generation steps, and adversarial generation step-size α. Perturbation radius ϵ. 
+
+> •
+
+Dataset D, learning rate η. 
+
+> •
+
+EMA beta β and gamma γ. 
+
+> 1:
+
+Initialize θAlign , θInv , θCARE ← θCLIP  
+
+> 2:
+
+for t = 1 , . . . , T do  
+
+> 3:
+
+Sample (x, y ) from dataset D 
+
+> 4:
+
+˜x0 ← x + δ, δ ∼ N (−ϵ, ϵ ) 
+
+> 5:
+
+for m = 1 , . . . , M do  
+
+> 6:
+
+˜xm = arg max |˜x−x|≤ ϵ LGAIP (˜ xm−1, x ). 
+
+> 7:
+
+end for  
+
+> 8:
+
+˜x0
+
+> Align
+
+, ˜x0 
+
+> Inv
+
+← ˜xM 
+
+> 9:
+
+for k = 1 , . . . , K do  
+
+> 10:
+
+˜xkAlign = arg max |˜x−x|≤ ϵ LCE (˜ xk−1
+
+> Align
+
+, y ) 
+
+> 11:
+
+˜xkInv = arg max |˜x−x|≤ ϵ LL2(˜ xk−1 
+
+> Inv
+
+, x ) 
+
+> 12:
+
+end for  
+
+> 13:
+
+Parameter update for each expert:  
+
+> 14:
+
+θAlign ← θAlign − η∇θAlign LAlign {Eq. (11) } 
+
+> 15:
+
+θInv ← θInv − η∇θInv LInv {Eq. (9) } 
+
+> 16:
+
+Co-distillation using EMA: 
+
+θCARE := βθ CARE + (1 − β)[ γθ Align + (1 − γ)θInv ] 
+
+> 17:
+
+end for  
+
+> 18:
+
+return Fine-tuned model parameter θCARE 
+
+C. Universal perturbation initialization 
+
+To further improve the coherence between the two experts, we take inspiration from [8], [23], [24], and design our own Global Adversarial perturbation Initialization Process 
+
+(GAIP). Instead of sampling independent random noise for each expert, GAIP constructs a shared universal perturbation that benefits both adversarial specializations. We use θAlign and θInv to generate this initial perturbation. During this process, they are frozen. We align the perturbed logits with those of θAlign and its image embeddings with those of θInv using negative cosine similarity. The loss for generating the universal perturbation is: 
+
+h(˜ x) = 1 − cos  z(˜ x, θ Align ), z (x, θ Align ), (18) 
+
+g(˜ x) = 1 − cos  fθInv (˜ x), f θInv (x), (19) 
+
+LGAIP (˜ x, x ) = h(˜ x) + g(˜ x). (20) Where h(˜ x) and g(˜ x) are losses for alignment of logits and image embeddings, respectively. Intuitively, GAIP follows the principle of Expert harmoniza-tion, where experts follow the stronger embeddings of each other. We find that instead of applying the expert losses (CE and L2) directly, using Cosine similarity produces a better result and is easier to control, as CE and L2 losses operate on different scales. More details can be found in Section VI-B. The GAIP perturbation is generated through an M-step PGD process using the GAIP loss described above. Then, each expert will use that initialized perturbation to generate its JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 6
+
+TABLE I: Image classification accuracy (%). Results are shown for three evaluation settings: clean images, ℓ∞ adversarial examples with perturbation size ε = 2 /255 , and ε = 4 /255 . We report in-distribution (ID) performance on ImageNet, zero-shot (ZS) average, and average of ID and ZS. Best results are shown in bold and underline denotes second-best accuracies.                                                                                                                                                                                                                                                                                                                                                      
+
+> In-distribution Zero-shot (Unseen datasets) Overall average Method ImageNet CalTech Cars CIFAR10 CIFAR100 DTD EuroSAT FGVC Flowers ImageNet-R ImageNet-S PCAM OxfordPets STL-10 ZS Avg
+> clean
+> CLIP 74.9 83.3 77.9 95.2 71.1 55.2 62.6 31.8 79.2 87.9 59.6 52.0 93.2 99.3 73.1 74.0 TeCoA 2-CLIP 80.2 80.7 50.1 87.5 60.7 44.4 26.1 14.0 51.8 80.1 58.4 49.9 80.0 96.1 60.0 70.1 FARE 2-CLIP 74.2 84.8 70.5 89.5 69.1 50.0 25.4 26.7 70.6 85.5 59.7 50.0 91.1 98.5 67.0 70.6
+> CARE 2-CLIP (Ours) 80.7 83.9 54.3 93.3 71.6 47.6 25.6 16.1 53.9 83.8 61.3 50.6 86.1 98.4 63.6 72.2
+> TeCoA 4-CLIP 75.2 78.4 37.9 79.6 50.3 38.0 22.5 11.8 38.4 74.3 54.2 50.0 76.1 93.4 54.2 64.7 FARE 4-CLIP 70.4 84.7 63.8 77.7 56.5 43.8 18.3 22.0 58.1 80.2 56.7 50.0 87.1 96.0 61.1 65.8
+> CARE 4-CLIP (Ours) 78.1 82.7 48.9 92.2 70.0 47.7 25.0 14.0 48.8 82.2 60.3 55.4 83.5 98.1 62.2 70.2
+> ℓ∞, ε = 2 /255
+> CLIP 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.1 0.0 0.0 0.0 0.0 0.0 TeCoA 2-CLIP 62.3 70.2 22.2 63.7 35.0 27.0 12.8 5.8 27.6 58.8 45.2 40.0 69.7 88.7 43.6 53.0 FARE 2-CLIP 46.1 73.0 26.0 60.3 35.6 26.7 6.2 5.9 31.2 56.5 38.3 41.9 68.3 90.1 43.1 44.6
+> CARE 2-CLIP (Ours) 64.2 74.3 26.6 73.5 44.9 30.3 13.5 6.9 27.5 65.1 48.9 47.7 73.6 92.7 48.1 56.2
+> TeCoA 4-CLIP 60.6 69.7 17.9 59.7 33.7 26.5 8.0 5.0 24.1 59.2 43.0 48.8 68.0 86.7 42.3 51.5 FARE 4-CLIP 52.4 76.7 30.0 57.3 36.5 28.3 12.8 8.2 31.3 61.6 41.6 50.2 72.4 89.6 45.9 49.2
+> CARE 4-CLIP (Ours) 64.5 74.5 23.9 71.2 46.1 32.2 15.1 6.7 24.5 64.0 48.1 47.9 73.0 92.6 47.7 56.1
+> ℓ∞, ε = 4 /255
+> CLIP 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 TeCoA 2-CLIP 37.3 57.4 6.5 31.0 17.8 14.7 7.7 1.1 9.8 36.7 32.8 16.0 50.3 69.2 27.0 32.2 FARE 2-CLIP 16.6 46.6 4.8 25.9 13.9 11.7 0.5 0.6 7.1 25.6 22.5 17.2 27.9 61.7 20.5 18.6
+> CARE 2-CLIP (Ours) 40.3 60.6 7.3 38.0 21.5 17.3 8.1 2.0 9.6 40.5 35.7 26.2 53.0 73.4 30.3 35.3
+> TeCoA 4-CLIP 44.3 60.9 8.4 37.1 21.5 16.4 6.6 2.1 12.4 41.9 34.2 44.0 55.2 74.3 31.9 38.1 FARE 4-CLIP 33.3 64.1 12.7 34.6 20.2 17.3 11.1 2.6 12.5 40.6 30.9 50.2 50.7 74.4 32.4 32.9
+> CARE 4-CLIP (Ours) 47.1 64.6 8.4 43.3 26.0 20.3 11.6 3.1 12.3 46.7 38.7 34.4 59.0 79.8 34.5 40.8
+
+own adversarial sample through a K-step PGD: the Alignment expert with CE loss and the Invariance expert with L2 loss. 
+
+D. Pseudocode 
+
+In this section, we present the algorithmic specification of CARE. The algorithm consists of 4 main steps, as shown in Figure 2: first, the universal perturbation is initialized; second, each expert uses the perturbation to generate an adversarial sample befitting its optimization process (image-text feature alignment of close clean-adversarial image feature); third, the experts are optimized using a joint loss of usual robustness optimization and Expert harmonization loss; finally, they com-bine their parameters using EMA to produce the unified model. The algorithm is shown in Algorithm 1. IV. R ESULTS 
+
+We find that image-text experts like TeCoA thrive under learned vocabulary where the image-text alignment is best maintained, whereas image-invariance experts like FARE per-form better when facing new classes not seen during train-ing. In this section, we compare our method CARE against its bases: TeCoA and FARE, highlighting its effectiveness in generalizing between different robust model experts. We also conduct investigations of the model’s performance on downstream vision-language tasks and the effect of the Expert harmonization method. 
+
+Settings. We evaluate zero-shot evaluation using the test set of ImageNet-1K [25] as the in-distribution (seen dataset) bench-mark. 13 additional zero-shot datasets are used to measure zero-shot accuracy on unseen data. We also test our model on two vision-language tasks: image captioning and visual question answering. Datasets and evaluation protocols for each tasks are provided in their specific sections below. 
+
+Implementation details. Unless otherwise stated, all results are from CLIP ViT-L/14 variants, following [5] [19], training involves 10-step PGD ( ℓ∞, ϵ ∈ { 2255 , 4255 }, α = 1255 ). Follows [19], we use superscript to denote the ϵ value used for training, CARE 2 would be trained using ϵ = 2255 and CARE 4 is trained on ϵ = 4255 . For fairness, as our GAIP process also employs PGD, we use 5-step PGD for universal perturbation generation and 5 steps for adversarial generation. TeCoA and FARE use all 10 steps for adversarial generation. For EMA merging, decay rate β = 0 .999 and expert weight γ = 0 .5.We use AutoAttack [26] for zero-shot robustness evaluation and adaptive attacks for downstream vision-language tasks. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 7
+
+TABLE II: Image captioning performance with LLaVA 1.5-7B as the language head. CIDEr score is reported under clean and adversarial settings ( ℓ∞ ∈ { 2, 4}/255 ). Best and second-best results are shown in bold and underline, respectively. 
+
+Image Captioning Method COCO Flickr30k Average 
+
+clean 2255 4255 clean 2255 4255 clean 2255 4255 
+
+CLIP 115.5 4.0 3.1 77.5 1.6 1.0 96.5 2.8 2.05 TeCoA 2 98.4 44.2 30.3 57.1 23.2 15.3 77.8 33.7 22.8 FARE 2 109.9 53.6 31.0 71.1 29.5 17.5 90.5 41.6 24.3 
+
+CARE 2 107.8 55.6 33.6 66.6 30.8 19.7 87.2 43.2 26.7 
+
+TeCoA 4 88.3 50.9 35.3 48.6 27.9 19.5 68.5 39.4 27.4 FARE 4 102.4 57.1 40.9 61.6 31.4 22.8 82.0 44.3 31.9 CARE 4 103.6 59.2 40.5 64.8 33.0 23.2 84.2 46.1 31.9 
+
+TABLE III: Performance on visual question answering benchmarks with LLaVA 1.5-7B as the language head. VQA accuracy is reported under clean and adversarial settings ( ℓ∞ ∈ { 2, 4}/255 ). Best results are shown in bold and underline denotes second-best accuracies. 
+
+Visual Question Answering Method TextVQA VQAv2 Average 
+
+clean 2255 4255 clean 2255 4255 clean 2255 4255 
+
+CLIP 37.1 0.5 0.0 74.5 2.9 0.0 55.8 1.7 0.0 TeCoA 2 24.1 12.1 8.8 66.9 33.8 21.8 45.5 23.0 15.3 FARE 2 31.9 14.7 9.1 71.7 34.9 23.0 51.8 24.8 16.1 
+
+CARE 2 26.8 15.7 9.5 66.7 43.1 27.6 46.8 29.4 18.6 
+
+TeCoA 4 20.7 12.6 9.3 63.2 41.0 31.7 42.0 26.8 20.5 FARE 4 27.6 15.8 10.9 68.3 40.7 30.5 48.0 28.3 20.7 
+
+CARE 4 23.7 15.8 11.1 66.3 46.3 34.8 45.0 31.0 23.0 
+
+For fine-tuning details, we use AdamW [27] as the optimizer (beta (0.9, 0.95)). The learning rate is set to 5 × 10 −5 and weight decay is set to 1×10 −4. The batch size is 128, and the fine-tuning is done on 4 NVIDIA H100 80GB GPUs. 
+
+A. Image classification 
+
+Datasets. Following previous works on VLMs’ robustness [5] [19], we train our models on the training split of ImageNet-1K [25]. Zero-shot classification is reported for the validation split of ImageNet-1K (test labels are unavailable), and this is used to test the in-distribution performance. In addition, performance on unseen data is evaluated using the 13 datasets covering a wide range of scenarios:  
+
+> •
+
+Natural objects: STL-10 [28], CIFAR-10/100 [29], Caltech-101 [30].  
+
+> •
+
+Fine-grained: Stanford Cars [31], Oxford-IIIT Pets [32], Flowers-102 [33], FGVC-Aircraft [34].  
+
+> •
+
+Textures: DTD [35].  
+
+> •
+
+Remote sensing: EuroSAT [36].  
+
+> •
+
+Medical: PCAM [37].  
+
+> •
+
+Robustness variants of ImageNet: ImageNet-R [38] and ImageNet-S [39]. 
+
+Evaluation protocol. We report clean accuracy and robust accuracy under AutoAttack [26]. We assess accuracy under 
+
+ϵ = 2255 and ϵ = 4255 . We evaluate robustness on 1000 images of each dataset, and clean accuracy for all samples. In order to demonstrate our motivation, the different specialization of adversarial robust model experts and how CARE generalize across them, results of ImageNet-1K and the other 13 datasets are reported separately. Details on image classification are recorded in Table I. CARE shows a noticeable increase in accuracy across almost all settings, both on ImageNet and on other datasets. Under the strongest attack setting, with ϵ = 4255 , CARE outperforms TeCoA by 2% and FARE by nearly 8%. We reiterate our previ-ous point from Section I, that Image-text alignment experts are stronger on learned class names and Image-invariance experts can better transfer robustness to unseen datasets. Considering the preferred evaluation dataset for each expert, ImageNet for TeCoA and Zero-shot datasets for FARE, CARE still outperforms both experts with a clear improvement. For models trained on ϵ = 2255 , that is TeCoA 2, FARE 2
+
+and CARE 2, we observe another phenomenon. As we increase attack strength, FARE accuracy drops rapidly, from 70.6% on clean to 44.6% for ϵ = 2255 , and falls to 18.6% on ϵ = 4255 - the attack that models are not trained for. However, both TeCoA and CARE shows less sharp decline. This can suggest that Image-text alignment experts, such as TeCoA, can be more consistent and robust on image classification. It also shows that CARE is able to inherit this strong trait. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 8
+
+TABLE IV: Average zero-shot image classification accuracies (%) of TeCoA 4, FARE 4, CARE 4 and the two experts at the end of training. 
+
+Method In-distribution Zero-shot 
+
+clean 2255 4255 clean 2255 4255 
+
+TeCoA 4 75.2 60.6 44.3 54.2 42.3 31.9 Alignment expert (TeCoA-based) 77.3 65.3 49.4 50.5 39.0 28.4 FARE 4 70.4 52.4 33.3 61.1 45.9 32.4 Invariance expert (FARE-based) 73.1 56.9 37.6 61.4 46.9 33.3 CARE 4 78.1 64.5 47.1 62.2 47.7 34.5 
+
+B. Downstream vision-language tasks 
+
+Datasets. For downstream vision-language tasks, we evaluate image captioning and visual question answering. Image cap-tioning uses COCO [40] and Flickr30k [41]. Visual question answering uses TextVQA [42] and VQAv2 [43]. 
+
+Evaluation protocol. Evaluation on vision-language tasks is done by replacing the ViT-L/14 image encoder in LLaVA 1.5-7B [13] with CARE. All other components remain fixed. We experiment on image captioning and visual question an-swering. In both cases, 500 images are randomly sampled for adversarial evaluation, and all images are used for clean evaluation. The details can be found below. 
+
+Image captioning. CIDEr score [44] reported as the evaluation metric. Adversarial samples are generated using APGD [26] at 100 iterations. After each attack, an early-stop mechanism is used to remove all samples with less than 10 CIDEr score for COCO or 2 CIDEr score for Flickr30k. The ϵ used for APGD is set to be the same ϵ the image encoders are trained on, 2255 and 4255 . Results are shown in Table II. 
+
+Visual question answering. We assess VQA accuracy [45] for the TextVQA [42] and VQAv2 [43] datasets, selecting the five most frequent answers among the ten ground-truth annotations for each sample. Similarly to image captioning, we employ APGD [26] as the attacking method, with ϵ ∈ { 2255 , 4255 }, in this case with targeted perturbations using target strings such as ‘‘Maybe’’ or ‘‘Word’’ , following [19]. Results are shown in Table III. For downstream tasks, FARE has a slight edge on clean evaluation and ties with CARE on Image Captioning at 
+
+ϵ = 4255 , however, CARE is the best in all other settings. We note that the images and prompts for downstream tasks can be considered zero-shot data, which the models are not explicitly trained on. This aligns with our observation that Image-invariance experts, like FARE, thrive in this setting, which can explain FARE’s strong performance compared to its image classification results. However, CARE is still the best for robust accuracy. This suggests that CARE is able to capitalize on FARE’s strong specialization, while the image-text alignment knowledge is transferable across text encoders, since we use different text encoders for downstream tasks. 
+
+C. Analysis of harmonization method 
+
+Table IV shows the zero-shot image classification results of the three models - TeCoA 4, FARE 4, and CARE 4, along = 2/255 = 4/255  
+
+> 30
+> 40
+> 50
+> 60
+> 70
+> Accuracy (%)
+> 60.6%
+> 44.3%
+> 52.4%
+> 33.3%
+> 64.5%
+> 47.1%
+> ImageNet (In-distribution) Accuracy
+> TeCoA 4
+> FARE 4
+> CARE 4(Ours)
+> 50
+> 40
+> 30
+> Accuracy (%)
+> 42.3%
+> 31.9%
+> 45.9%
+> 32.4%
+> 47.7%
+> 34.5%
+> Under adversarial attacks, TeCoA 4
+> performs better on ImageNet, but FARE 4
+> is better on zero-shot datasets.
+> Our method, CARE 4, outperforms both
+> on all datasets.
+> Zero-shot (Unseen datasets) Accuracy
+
+Fig. 3: A comparison of robust accuracy on image classifica-tion for different fine-tuning methods under adversarial attack 
+
+ϵ = {2, 4}/255 . Each experts, TeCoA and FARE, specialize in one evaluation setting: TeCoA excels on Imagenet evaluation while FARE performs better outside of Imagenet. Our method, CARE, displays the best result in both cases, showcasing its ability to generalize between robust model experts. with the checkpoints of the two experts at the end of training. The results of zero-shot image classifications are surprising: there is an overall increase in Invariance expert on both in-distribution and zero-shot accuracy compared to FARE. Meanwhile, the Alignment expert, against TeCoA, gets a boost in in-distribution accuracy but also reduced performance on the zero-shot datasets. We hypothesize this is due to the stronger image-text feature alignment on the Invariance expert, allowing it to perform bet-ter overall. Furthermore, since the objective of the Invariance expert (as well as FARE) is to minimize differences between clean and adversarial images, it has not been fine-tuned on the image classification task. The information exchange with the Alignment expert helps the model maintain task knowledge, which is ignored entirely during training FARE. For the Alignment expert, however, by aligning its image embedding with that of the Invariance expert, the model gets a more robust image embedding and is able to generate even stronger image-text logits for training, culminating in overfitting on the in-distribution dataset even more. We believe the class logits is dependent on the image embedding, so for the Alignment expert, modification on the image embedding affects the logits, and by extension, the adversarial training process, directly. The reverse is not true, and the knowledge the Invariance expert gained on the logits does not explicitly affect the loss function on the image embedding. V. C OMPUTATIONAL RESOURCES ANALYSIS 
+
+One of the main bottlenecks in training multiple models like CARE is the added resources. In theory, the added cost JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 9
+
+TABLE V: Training efficiency comparison among different methods.             
+
+> Method Memory Time (1 step) Total time (20000 steps)
+> TeCoA 29.1 GB 8.7 sec 48 hours FARE 25.0 GB 9.0 sec 50 hours CARE 52.6 GB 15.0 sec 83 hours
+
+TABLE VI: Average zero-shot image classification accuracies (%) of ViT-B/32 CARE 4 using different harmonization loss functions.                  
+
+> Loss function In-distribution Zero-shot (Unseen datasets)
+> clean 2255 4255 clean 2255 4255
+> KL Divergence 61.06 42.50 25.46 49.18 36.90 25.55 Cosine Similarity 61.06 42.36 25.40 49.14 36.86 25.55
+
+of CARE can be calculated as follows:  
+
+> •
+
+Double training time due to training two experts at once.  
+
+> •
+
+Triple memory usage due to maintaining 2 experts and the merged model at the same time. However, in this section we show that with proper engineer-ing techniques and analysis, this added cost can be alleviated partially for efficient training. The full comparison across methods is shown in Table V. 
+
+A. Time analysis 
+
+Our CARE uses 5 PGD steps for GAIP and 5 PGD steps training each experts. From the perspective of each experts, they still complete a total of 10 PGD steps. However, since the GAIP steps are shared, the total number of PGD steps to perform are only 15. Thus, our training time only increases by a factor of 1.5 instead of 2. 
+
+B. Memory consumption 
+
+Memory usage comes from both data and models. We notice that each expert creates its own adversarial data for each step, which the other expert does not use. Thus, we delete adversarial data generated after each training step. For example, when training the Alignment expert we delete the Invariance expert training data, and vice-versa. This method substantially reduces memory consumption from data usage to the same as training a single model. We also notice that the final merged model CARE is created using EMA, without any gradient update. Thus it can be kept in evaluation mode to further reduce memory. Another extreme optimization would be to offload it into the CPU completely, however during training we find that putting the model into evaluation mode is enough for our setup. Therefore the memory consumption of CARE is only equal to training both TeCoA and FARE on the same machine despite actually optimizing 3 models. Furthermore, during inference we only use the final CARE model, so there is no added memory usage. TABLE VII: Ablation study of GAIP under clean and adver-sarial settings. We show average image classification accuracy for In-distribution and Zero-shot datasets, with and without adversarial attack.                           
+
+> Clean (%) Robust ( ϵ= 4 /255 ) (%) Method ID ZS Total ID ZS Total
+> Cosine similarity 61.06 49.14 110.20 25.40 25.55 50.95
+> No GAIP 58.14 47.24 105.38 24.86 25.90 50.76 L2 and CE losses 60.12 50.61 110.73 21.48 24.12 45.60
+
+TABLE VIII: Average image classification accuracies (%) of ViT-B/32 CARE 4 using Expert harmonization and using Parameter redistribution.          
+
+> Harmonization method ID ZS
+> clean 2255 4255 clean 2255 4255
+> Parameter redistribution 60.52 41.16 23.70 49.22 35.93 24.99 Expert harmonization (Ours) 61.06 42.36 25.40 49.14 36.86 25.55
+
+VI. A BLATION STUDY 
+
+In this section we go over various ablation choices when empirically testing our method. Due to time and resource constraints, these ablations were done on ViT-B/32 instead of ViT-L/14. After ablation, the best design (loss function, combination mechanism) is chosen to be integrated, leading to our results shown in Section IV. 
+
+A. Ablation of Expert harmonization loss 
+
+We investigate our choice of loss function for Expert harmonization: Cosine similarity against KL Divergence. The models are trained with ϵ = 4255 . All other training configu-rations are kept the same. The results are shown in Table VI, indicating zero-shot image classification accuracy. There are minor differences between the two models, which we regard as insignificant. We decide in the end to use Cosine similarity loss for our ViT-L/14 training, due to two reasons:  
+
+> •
+
+Theoretical analysis in Theorem 1 shows that Cosine similarity acts as momentum to prevent divergence.  
+
+> •
+
+Cosine similarity is more numerically stable, as the loss is bounded in the range (-1, 1). 
+
+B. Ablation on GAIP 
+
+We test our GAIP design in 3 different settings:  
+
+> •
+
+Our GAIP using Cosine similarity loss.  
+
+> •
+
+No GAIP at all (in this case we allocate 5 PGD steps for GAIP into the training process, thus training for 10 steps of PGD).  
+
+> •
+
+GAIP using the expert losses directly for PGD (Align-ment expert uses cross-entropy loss and Invariance expert uses L2 loss). The results are presented in Table VII. Cosine similarity achieves the best result over all. Using the expert losses directly provides marginal gain on clean accuracy ( 0.5%) but substantial drop in robust accuracy. Meanwhile, without GAIP the clean accuracy suffers. Thus, we decided to use Cosine similarity in our final version. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 10 TeCoA FARE CARE (Ours) 
+
+Fig. 4: t-SNE visualization of features from 5 classes in ImageNet. Clean captioning  Adversarial captioning                   
+
+> TeCoA :A man wearing a cowboy hat is holding a cell phone.
+> TeCoA :A woman is sitting on the floor holding a video game controller.
+> FARE :A man wearing a hat is sitting in a chair.
+> CARE :A man in a red shirt is sitting in a chair and taking a picture of himself.
+> FARE :A man wearing a hat and playing a flute.
+> CARE :A man in a red shirt is sitting in a chair and taking a picture of himself.
+> TeCoA :A plane is flying in the sky.
+> TeCoA :A bird flies over a field with a building in the background.
+> FARE :A plane is flying in the sky.
+> CARE :A plane is flying in the sky above a building.
+> FARE :A bird is flying in the sky above a building.
+> CARE :A plane is flying in the sky above a building.
+> TeCoA :A white computer mouse on a wooden table.
+> TeCoA :A white wii remote on a person's arm.
+> FARE :A white computer mouse is sitting on a wooden desk.
+> CARE :A white computer mouse is sitting on a wooden desk.
+> FARE :A white iPod is sitting on a wooden desk.
+> CARE :A white computer mouse is sitting on a wooden desk.
+
+Clean captioning  Adversarial captioning 
+
+Clean captioning  Adversarial captioning 
+
+Fig. 5: Qualitative results for Image captioning using LLaVa. We show the captions generated by each CLIP-based model for the original image and under adversarial attack ( ϵ = 4255 ). 
+
+C. Comparison to other collaborative frameworks 
+
+A direct inspiration for this work comes from [7]. In this paper, the authors trained two experts, one handling clean accuracy and the other for adversarial accuracy. However, there is no communication between the experts during training, and the authors noted that to prevent divergence, it is necessary to perform Parameter redistribution periodically. Specifically, this involves overwriting the experts’ parameters with those of the unified model. We believe this will disable the experts’ ability for exploration, since they can only optimize in the immediate parameter space near the unified model before being overwritten. We test our Expert harmonization method against this approach to show that our framework can prevent divergence while maintaining robustness. In order to do so, we train a ViT-B/32 image encoder with the same setup at ϵ = 4255 , replacing Expert harmonization with Parameter redistribution. The redistribution occurs once every 1000 steps, starting from the 8000 th step (out of 20000 total steps). The Question:  What color are the dogs? 
+
+Ground Truth:  Brown 
+
+Question:  Are you able to turn left? 
+
+Ground Truth:  No 
+
+Question:  What is mainly featured? 
+
+Ground Truth:  Hot Dog 
+
+TeCoA : Hot dog  TeCoA : Sandwich 
+
+FARE : Hot dog 
+
+CARE : Hot dog 
+
+FARE : Bun 
+
+CARE : Hot dog 
+
+TeCoA : No  TeCoA : Yes 
+
+FARE : No 
+
+CARE : No 
+
+FARE : Yes 
+
+CARE : No 
+
+TeCoA : Brown  TeCoA : Brown and white 
+
+FARE : Brown 
+
+CARE : Brown and tan 
+
+FARE : Brown and white 
+
+CARE : Brown and tan 
+
+Clean VQA  Adversarial VQA 
+
+Clean VQA  Adversarial VQA 
+
+Clean VQA 
+
+Fig. 6: Qualitative results for Visual question answering using LLaVa. The adversarial strength used is ϵ = 4255 . Here the ground truth is denoted by the most frequent answers among annotations for each sample. results can be found in Table VIII. It shows that the Expert harmonization model outperforms its redistribution counterpart completely, up to nearly 2% more robust accuracy on ϵ = 4255 .VII. V ISUALIZATION 
+
+Figure 4 presents the t-SNE visualization of feature repre-sentations from 5 randomly sampled classes from ImageNet test set (50 samples each). We find that TeCoA produces clusters with high spread, making it hard to find the boundary between classes. On the other hand, the classes in FARE JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 11 
+
+are fragmented, with each cluster composed of many mini-clusters, perhaps due to the lack of text supervision to bind images in the same class. CARE shows the most promising results, with compact clusters and well-defined borders. We present Figure 5 and Figure 6 to show qualitative com-parisons on Image captioning and Visual questioning tasks. Here, green denotes captionings/answers that fit the ground truth completely, yellow denotes partially correct answers, while red ones are wrong outputs. CARE is strong against adversarial attacks on visual-image tasks, maintaining consis-tent answers and captions under perturbations. VIII. L IMITATIONS AND DICUSSION 
+
+This work stems from the observation that adversarial train-ing for VLMs can be primariliy separated into two different categories: image-text alignment or image-invariance. We find each of these specializations has its own preferred evaluation settings where it performs best. CARE is thus created to generalize across these robust model experts. In this sense the construction of CARE is clear and simple: the image-text alignment experts train the logits between image and text, while the image-invariance experts train the image features. Expert harmonization between them is conducted to let each expert learns from the strong embedding of the other. However, other kind of categorization might exist, in which case the Expert harmonization process must be adapted accordingly. Our work also reveals that a training scheme that optimizes both the image features and image-text alignment does not necessitate a better model, as evidenced by the Alignment expert overfitting onto the fine-tuned dataset in Section IV-C. With regard to the task of image classification, there is an asymmetry between image embeddings and class logits, one is dependent on the other but not vice versa. For future work, we would like to design collaborative methods with respect to this asymmetry. Furthermore, while we have done our best to limit the computational resources of CARE, as stated in Section V, we believe it can still be a bottleneck for larger models, which we want to resolve. IX. C ONCLUSION 
+
+In this paper, we presented CARE, a novel framework for adversarial training that can generalize across robust model experts. We test CARE using two state-of-the-art methods: TeCoA and FARE, each of them representing a different approach to adversarial fine-tuning. Our empirical experiments show that CARE outperforms the methods it is based on. CARE is able to combine the complementary strengths of TeCoA and FARE and gaining the specialization of both. REFERENCES [1] A. Radford, J. W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal, G. Sastry, A. Askell, P. Mishkin, J. Clark et al. , “Learning transferable visual models from natural language supervision,” in International conference on machine learning . PmLR, 2021, pp. 8748–8763. 1, 2, 3 [2] C. Schlarmann and M. Hein, “On the adversarial robustness of multi-modal foundation models,” in Proceedings of the IEEE/CVF Interna-tional Conference on Computer Vision , 2023, pp. 3677–3685. 1, 2 [3] A. Madry, A. Makelov, L. Schmidt, D. Tsipras, and A. Vladu, “Towards deep learning models resistant to adversarial attacks,” arXiv preprint arXiv:1706.06083 , 2017. 1, 4 [4] H. Zhang, Y. Yu, J. Jiao, E. Xing, L. El Ghaoui, and M. Jordan, “Theoretically principled trade-off between robustness and accuracy,” in International conference on machine learning . PMLR, 2019, pp. 7472–7482. 1 [5] C. Mao, S. Geng, J. Yang, X. Wang, and C. Vondrick, “Understanding zero-shot adversarial robustness for large-scale models,” arXiv preprint arXiv:2212.07016 , 2022. 1, 2, 4, 6, 7 [6] L. Yu, H. Zhang, and C. Xu, “Text-guided attention is all you need for zero-shot robustness in vision-language models,” Advances in Neural Information Processing Systems , vol. 37, pp. 96 424–96 448, 2024. 1, 2 [7] H. Wang and Y. Wang, “Generalist: Decoupling natural and robust gen-eralization,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , 2023, pp. 20 554–20 563. 2, 10 [8] J. Dong, P. Koniusz, J. Chen, X. Xie, and Y.-S. Ong, “Adversarially robust few-shot learning via parameter co-distillation of similarity and class concept learners,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2024, pp. 28 535–28 544. 2, 5[9] C. Jia, Y. Yang, Y. Xia, Y.-T. Chen, Z. Parekh, H. Pham, Q. Le, Y.-H. Sung, Z. Li, and T. Duerig, “Scaling up visual and vision-language representation learning with noisy text supervision,” in International conference on machine learning . PMLR, 2021, pp. 4904–4916. 2 [10] J. Li, R. Selvaraju, A. Gotmare, S. Joty, C. Xiong, and S. C. H. Hoi, “Align before fuse: Vision and language representation learning with momentum distillation,” Advances in neural information processing systems , vol. 34, pp. 9694–9705, 2021. 2 [11] J.-B. Alayrac, J. Donahue, P. Luc, A. Miech, I. Barr, Y. Hasson, K. Lenc, A. Mensch, K. Millican, M. Reynolds et al. , “Flamingo: a visual language model for few-shot learning,” Advances in neural information processing systems , vol. 35, pp. 23 716–23 736, 2022. 2 [12] A. Awadalla, I. Gao, J. Gardner, J. Hessel, Y. Hanafy, W. Zhu, K. Marathe, Y. Bitton, S. Gadre, S. Sagawa et al. , “Openflamingo: An open-source framework for training large autoregressive vision-language models,” arXiv preprint arXiv:2308.01390 , 2023. 2 [13] H. Liu, C. Li, Q. Wu, and Y. J. Lee, “Visual instruction tuning,” 
+
+Advances in neural information processing systems , vol. 36, pp. 34 892– 34 916, 2023. 2, 8 [14] X. Qi, K. Huang, A. Panda, M. Wang, and P. Mittal, “Visual adversarial examples jailbreak large language models,” CoRR , 2023. 2 [15] N. Carlini, M. Nasr, C. A. Choquette-Choo, M. Jagielski, I. Gao, P. W. W. Koh, D. Ippolito, F. Tramer, and L. Schmidt, “Are aligned neural networks adversarially aligned?” Advances in Neural Information Processing Systems , vol. 36, pp. 61 478–61 500, 2023. 2 [16] Y. Zhao, T. Pang, C. Du, X. Yang, C. Li, N.-M. M. Cheung, and M. Lin, “On evaluating adversarial robustness of large vision-language models,” Advances in Neural Information Processing Systems , vol. 36, pp. 54 111–54 138, 2023. 2 [17] X. Gu, X. Zheng, T. Pang, C. Du, Q. Liu, Y. Wang, J. Jiang, and M. Lin, “Agent smith: A single image can jailbreak one million multimodal llm agents exponentially fast,” arXiv preprint arXiv:2402.08567 , 2024. 2 [18] S. Wang, J. Zhang, Z. Yuan, and S. Shan, “Pre-trained model guided fine-tuning for zero-shot adversarial robustness,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , 2024, pp. 24 502–24 511. 2 [19] C. Schlarmann, N. D. Singh, F. Croce, and M. Hein, “Robust clip: Unsupervised adversarial fine-tuning of vision embeddings for robust large vision-language models,” arXiv preprint arXiv:2402.12336 , 2024. 2, 4, 6, 7, 8 [20] M. Wortsman, G. Ilharco, S. Y. Gadre, R. Roelofs, R. Gontijo-Lopes, A. S. Morcos, H. Namkoong, A. Farhadi, Y. Carmon, S. Kornblith 
+
+et al. , “Model soups: averaging weights of multiple fine-tuned models improves accuracy without increasing inference time,” in International conference on machine learning . PMLR, 2022, pp. 23 965–23 998. 2 [21] G. Ilharco, M. T. Ribeiro, M. Wortsman, S. Gururangan, L. Schmidt, H. Hajishirzi, and A. Farhadi, “Editing models with task arithmetic,” 
+
+arXiv preprint arXiv:2212.04089 , 2022. 2 [22] G. Ortiz-Jimenez, A. Favero, and P. Frossard, “Task arithmetic in the tangent space: Improved editing of pre-trained models,” Advances in Neural Information Processing Systems , vol. 36, pp. 66 727–66 754, 2023. 2 [23] S.-M. Moosavi-Dezfooli, A. Fawzi, O. Fawzi, and P. Frossard, “Univer-sal adversarial perturbations,” in Proceedings of the IEEE conference on computer vision and pattern recognition , 2017, pp. 1765–1773. 5 JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 12 
+
+[24] A. Shafahi, M. Najibi, Z. Xu, J. Dickerson, L. S. Davis, and T. Goldstein, “Universal adversarial training,” in Proceedings of the AAAI Conference on Artificial Intelligence , vol. 34, no. 04, 2020, pp. 5636–5643. 5 [25] J. Deng, W. Dong, R. Socher, L.-J. Li, K. Li, and L. Fei-Fei, “Imagenet: A large-scale hierarchical image database,” in 2009 IEEE conference on computer vision and pattern recognition . Ieee, 2009, pp. 248–255. 6, 7[26] F. Croce and M. Hein, “Reliable evaluation of adversarial robustness with an ensemble of diverse parameter-free attacks,” in International conference on machine learning . PMLR, 2020, pp. 2206–2216. 6, 7, 8[27] I. Loshchilov and F. Hutter, “Decoupled weight decay regularization,” in International Conference on Learning Representations, ICLR , 2019. 7[28] A. Coates, A. Ng, and H. Lee, “An analysis of single-layer networks in unsupervised feature learning,” in Proceedings of the fourteenth international conference on artificial intelligence and statistics . JMLR Workshop and Conference Proceedings, 2011, pp. 215–223. 7 [29] A. Krizhevsky, G. Hinton et al. , “Learning multiple layers of features from tiny images,” 2009. 7 [30] L. Fei-Fei, R. Fergus, and P. Perona, “Learning generative visual models from few training examples: An incremental bayesian approach tested on 101 object categories,” in 2004 conference on computer vision and pattern recognition workshop . IEEE, 2004, pp. 178–178. 7 [31] J. Krause, M. Stark, J. Deng, and L. Fei-Fei, “3d object representations for fine-grained categorization,” in Proceedings of the IEEE interna-tional conference on computer vision workshops , 2013, pp. 554–561. 7[32] O. M. Parkhi, A. Vedaldi, A. Zisserman, and C. Jawahar, “Cats and dogs,” in 2012 IEEE conference on computer vision and pattern recog-nition . IEEE, 2012, pp. 3498–3505. 7 [33] M.-E. Nilsback and A. Zisserman, “Automated flower classification over a large number of classes,” in 2008 Sixth Indian conference on computer vision, graphics & image processing . IEEE, 2008, pp. 722–729. 7 [34] S. Maji, E. Rahtu, J. Kannala, M. Blaschko, and A. Vedaldi, “Fine-grained visual classification of aircraft,” arXiv preprint arXiv:1306.5151 ,2013. 7 [35] M. Cimpoi, S. Maji, I. Kokkinos, S. Mohamed, and A. Vedaldi, “Describing textures in the wild,” in Proceedings of the IEEE conference on computer vision and pattern recognition , 2014, pp. 3606–3613. 7 [36] P. Helber, B. Bischke, A. Dengel, and D. Borth, “Eurosat: A novel dataset and deep learning benchmark for land use and land cover classi-fication,” IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing , vol. 12, no. 7, pp. 2217–2226, 2019. 7 [37] B. S. Veeling, J. Linmans, J. Winkens, T. Cohen, and M. Welling, “Rotation equivariant cnns for digital pathology,” in Medical Image Computing and Computer Assisted Intervention–MICCAI 2018: 21st International Conference, Granada, Spain, September 16-20, 2018, Proceedings, Part II 11 . Springer, 2018, pp. 210–218. 7 [38] D. Hendrycks, S. Basart, N. Mu, S. Kadavath, F. Wang, E. Dorundo, R. Desai, T. Zhu, S. Parajuli, M. Guo, D. Song, J. Steinhardt, and J. Gilmer, “The many faces of robustness: A critical analysis of out-of-distribution generalization,” ICCV , 2021. 7 [39] H. Wang, S. Ge, Z. Lipton, and E. P. Xing, “Learning robust global representations by penalizing local predictive power,” in Advances in Neural Information Processing Systems , 2019, pp. 10 506–10 518. 7 [40] T.-Y. Lin, M. Maire, S. Belongie, J. Hays, P. Perona, D. Ramanan, P. Doll´ ar, and C. L. Zitnick, “Microsoft coco: Common objects in context,” in European conference on computer vision . Springer, 2014, pp. 740–755. 8 [41] B. A. Plummer, L. Wang, C. M. Cervantes, J. C. Caicedo, J. Hocken-maier, and S. Lazebnik, “Flickr30k entities: Collecting region-to-phrase correspondences for richer image-to-sentence models,” in Proceedings of the IEEE international conference on computer vision , 2015, pp. 2641– 2649. 8 [42] A. Singh, V. Natarajan, M. Shah, Y. Jiang, X. Chen, D. Batra, D. Parikh, and M. Rohrbach, “Towards vqa models that can read,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,2019, pp. 8317–8326. 8 [43] Y. Goyal, T. Khot, D. Summers-Stay, D. Batra, and D. Parikh, “Making the v in vqa matter: Elevating the role of image understanding in visual question answering,” in Proceedings of the IEEE conference on computer vision and pattern recognition , 2017, pp. 6904–6913. 8 [44] R. Vedantam, C. Lawrence Zitnick, and D. Parikh, “Cider: Consensus-based image description evaluation,” in Proceedings of the IEEE confer-ence on computer vision and pattern recognition , 2015, pp. 4566–4575. 8[45] S. Antol, A. Agrawal, J. Lu, M. Mitchell, D. Batra, C. L. Zitnick, and D. Parikh, “Vqa: Visual question answering,” in Proceedings of the IEEE international conference on computer vision , 2015, pp. 2425–2433. 8

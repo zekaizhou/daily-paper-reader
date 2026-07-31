@@ -1,0 +1,697 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-31T20:51:48.193578+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 11,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 36,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2607.21417v1",
+      "source": "arxiv",
+      "title": "Towards Privacy-Preserving Federated Prompt Tuning under Data Heterogeneity: A Subspace-Decomposed Expert Approach",
+      "abstract": "Federated prompt tuning (FPT) enables collaborative adaptation of vision--language models (VLMs) using lightweight prompts. Existing methods often address heterogeneity and privacy through a split-prompt design under local differential privacy (DP), combining a shared prompt for global transfer with private prompts for local adaptation. However, a single shared prompt may over-smooth diverse transferable knowledge, weakening the balance between personalization and generalization. Multi-expert prompts (MEPs) can better capture this diversity, but enlarge the communicated space, increasing DP noise and communication cost while making robust expert composition more difficult. We propose FedSEPT, a privacy-preserving Fed}erated Subspace-decomposed Expert Prompt Tuning. Specifically, we employ Subspace-decomposed Expert Modeling (SEM) to parameterize multiple prompt experts with shared low-rank factors, a fixed public basis, and private residuals, thereby confining communication and DP perturbation to a compact factor space while enabling direct server aggregation in a common coordinate system. We further design Instance-aware Expert Fusion (IEF), which adaptively combines semantically complementary experts via on-device routing and performs efficient logit-level fusion using cached expert-specific text features. Extensive experiments on 11 heterogeneous benchmarks show that, under the same privacy constraints, FedSEPT achieves a better trade-off between local adaptation and global generalization than strong baselines.",
+      "authors": [
+        "Yuhua Wang",
+        "Xiaodong Li",
+        "Yihao Guo",
+        "Yuxiang Jia",
+        "Qinnan Zhang",
+        "Yifan Sun",
+        "Hainan Zhang",
+        "Yongxin Tong",
+        "Zhiming Zheng"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-07-23T15:22:48+00:00",
+      "link": "https://arxiv.org/pdf/2607.21417v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Federated prompt tuning for adaptation of vision-language models",
+      "llm_evidence_cn": "用于视觉语言模型适配的联邦提示微调",
+      "llm_evidence": "用于视觉语言模型适配的联邦提示微调",
+      "canonical_evidence": "用于视觉语言模型适配的联邦提示微调",
+      "llm_tldr_en": "Introduces FedSEPT for privacy-preserving federated prompt tuning to adapt VLMs under data heterogeneity.",
+      "llm_tldr_cn": "提出FedSEPT，用于在数据异构环境下实现视觉语言模型的隐私保护联邦提示微调。",
+      "llm_tldr": "提出FedSEPT，用于在数据异构环境下实现视觉语言模型的隐私保护联邦提示微调。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Prompt tuning for domain adaptation in VLMs",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.21973v1",
+      "source": "arxiv",
+      "title": "Rethinking Layer-Wise Information Allocation for Vision Foundation Model Adaptation",
+      "abstract": "Vision foundation models are increasingly reused as frozen backbones for downstream visual recognition, making parameter-efficient adaptation a central problem. Prompt-based adaptation, including Visual Prompt Tuning (VPT), provides a lightweight way to specialize these models, but its layer-wise behavior remains poorly understood: performance is sensitive to prompt depth, placement, and task distribution, and gains on standard in-domain benchmarks do not always translate into robust generalization. We argue that this limitation is not solely an optimization issue, but a layer-wise information allocation issue: existing prompt-based methods lack principled control over what prompt-conditioned representations should preserve, suppress, and propagate across depth. Inspired by the Information Bottleneck principle, we introduce Prompted Information Bottlenecks (PIB), a framework that regularizes layer-wise compression-sufficiency trade-offs and promotes a more coherent cross-layer information path. The key idea is that effective adaptation should be minimal yet sufficient, retaining task-relevant local evidence in earlier layers while progressively discarding nuisance factors and redundant details in deeper layers. Extensive experiments show that PIB achieves strong performance across 34 datasets, reaching 92.1% on FGVC, 93.01% on HTA, and 77.33% on VTAB-1k, while tuning only 0.35% parameters on average across the main settings. Beyond benchmark accuracy, PIB helps explain the non-monotonic behavior of prompt capacity scaling, reduces shortcut reliance, and improves robustness under distribution shift and fine-grained recognition settings. These results position PIB as both a practical method and an information-allocation perspective for adapting frozen vision foundation models. Our code is available at https://github.com/itsnotacie/MM-26-PIB",
+      "authors": [
+        "Yuqi Li",
+        "Xi Xiao",
+        "Yunbei Zhang",
+        "Lin Zhao",
+        "Yu Li",
+        "Aiden Zhao",
+        "Tianyang Wang",
+        "Hao Xu",
+        "Yingli Tian"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-07-24T04:39:55+00:00",
+      "link": "https://arxiv.org/pdf/2607.21973v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Visual Prompt Tuning (VPT) and foundation model adaptation",
+      "llm_evidence_cn": "视觉提示微调 (VPT) 与基础模型适配",
+      "llm_evidence": "视觉提示微调 (VPT) 与基础模型适配",
+      "canonical_evidence": "视觉提示微调 (VPT) 与基础模型适配",
+      "llm_tldr_en": "Analyzes layer-wise information allocation in prompt-based adaptation for vision foundation models.",
+      "llm_tldr_cn": "分析了视觉基础模型在基于提示的适配过程中的层级信息分配问题。",
+      "llm_tldr": "分析了视觉基础模型在基于提示的适配过程中的层级信息分配问题。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Prompt tuning for domain adaptation in VLMs",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.24465v1",
+      "source": "arxiv",
+      "title": "Rethinking Expert Training for Model Merging with Prompt Learning",
+      "abstract": "Model merging aims to combine multiple domain-specialized experts trained from a shared foundation model into a single multi-task model. Existing approaches largely focus on improving the merging procedure itself and typically assume experts obtained through full-parameter fine-tuning. In this work, we revisit expert training for model merging. We first show that prompt-based adaptation provides a strong baseline: independently learned prompts can be exploited across tasks while keeping the backbone fixed, avoiding the interference introduced by weight merging. Building on this observation, we introduce Dual-Tuned Experts (DTEs), a two-stage training strategy that first learns prompts and then fine-tunes the vision encoder. This reduces the magnitude of task-specific parameter updates and produces experts with higher merge compatibility. Experiments across multiple CLIP architectures, full fine-tuning, and LoRA experts show that DTEs consistently improve merged performance of standard merging approaches and remain effective even when combining heterogeneous sets of experts.",
+      "authors": [
+        "Christos Georgakilas",
+        "Aniello Panariello",
+        "Samir El Karrat Moreno",
+        "Simone Calderara",
+        "Dimosthenis Karatzas",
+        "Joost van de Weijer"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-07-27T14:04:48+00:00",
+      "link": "https://arxiv.org/pdf/2607.24465v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "prompt-based adaptation for domain-specialized experts",
+      "llm_evidence_cn": "针对领域专业专家的提示学习适配",
+      "llm_evidence": "针对领域专业专家的提示学习适配",
+      "canonical_evidence": "针对领域专业专家的提示学习适配",
+      "llm_tldr_en": "Uses prompt learning and vision encoder fine-tuning to merge domain-specialized experts into a multi-task model.",
+      "llm_tldr_cn": "利用提示学习和视觉编码器微调，将多个领域专家模型合并为统一的多任务模型。",
+      "llm_tldr": "利用提示学习和视觉编码器微调，将多个领域专家模型合并为统一的多任务模型。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Prompt tuning for domain adaptation in VLMs",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.26947v1",
+      "source": "arxiv",
+      "title": "Progressive Multimodal Alignment for Continual Instruction Tuning",
+      "abstract": "Multimodal Large Language Models (MLLMs) rely on a projector to align visual representations with the language embedding space, making it central to cross-modal understanding. In Multimodal Continual Instruction Tuning (MCIT), however, shifting visual distributions and evolving instruction semantics cause this shared projector to drift, leading to projector-level forgetting, an issue largely overlooked by methods that focus primarily on the LLM backbone. We introduce Progressive Multimodal Alignment (PMA), a framework that enables the projector to adapt continually while preserving previously learned alignment. PMA detects multimodal distribution shifts via a lightweight representation descriptor and progressively expands projector experts only when needed. An expandable router integrates expert outputs based on multimodal features, while the original pretrained projector is retained as a stable alignment anchor. This progressive mechanism balances stability and plasticity with sub-linear parameter growth and serves as a method-agnostic add-on to existing MCIT approaches. Extensive experiments on two recent MCIT benchmarks demonstrate that mitigating projector-level forgetting yields consistent gains over prior state-of-the-art methods when combined with PMA. Moreover, PMA scales across diverse MLLM backbones, demonstrating robust and broadly applicable MCIT performance.",
+      "authors": [
+        "Duzhen Zhang",
+        "Yahan Yu",
+        "Qiaoyi Su",
+        "Jiahua Dong",
+        "Tielin Zhang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-07-29T14:15:55+00:00",
+      "link": "https://arxiv.org/pdf/2607.26947v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Adapting MLLM projectors to shifting visual distributions in continual tuning",
+      "llm_evidence_cn": "在持续微调中使MLLM投影器适配变化的视觉分布",
+      "llm_evidence": "在持续微调中使MLLM投影器适配变化的视觉分布",
+      "canonical_evidence": "在持续微调中使MLLM投影器适配变化的视觉分布",
+      "llm_tldr_en": "Proposes PMA to handle distribution shifts and projector drift in multimodal continual tuning.",
+      "llm_tldr_cn": "提出PMA框架，解决多模态持续指令微调中的分布偏移和投影器漂移问题。",
+      "llm_tldr": "提出PMA框架，解决多模态持续指令微调中的分布偏移和投影器漂移问题。",
+      "llm_tags": [
+        "query:vlm-da:composite"
+      ],
+      "matched_query_tag": "query:vlm-da:composite",
+      "matched_query_text": "Papers central to 查找有关使用vlm/mllm解决domain adaptation问题的论文, especially work that connects or combines: v; p; Prompt tuning for domain adaptation in VLMs; Unsupervised or supervised domain adaptation techniques; Vision-Language Models; Multi-modal Large Language Models; How to use vision language models for domain adaptation?; Recent advances in MLLM based domain adaptation methods; Fine tuning VLMs for cross domain robustness.",
+      "matched_requirement_id": "req-composite-vlm-da",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.21850v1",
+      "source": "arxiv",
+      "title": "SCALE: Self-Supervised Constraint-Aware Layout GEneration for Local P&R DRV Fixing at Advanced Nodes",
+      "abstract": "As semiconductor manufacturing advances toward sub-2nm nodes, local place-and-route (P&R) design-rule violation (DRV) fixing is increasingly limited by complex rule interactions, dense multi-layer routing geometries, and foundry-specific constraints. While Large Language Models (LLMs) have recently demonstrated strong capabilities in EDA scripting and documentation, their application to visual layout understanding remains largely unexplored: diagnosing DRC violations from layout imagery demands precise geometric reasoning and foundry-specific rule knowledge absent from general-purpose VLM training. We propose SCALE, a framework with a self-supervised layout-generation stage for local DRV fixing at advanced nodes. Multi-layer layout geometry is serialized into structured text, and a fine-tuned language model learns to reconstruct randomly masked polygons from surrounding BEOL context alone without violation labels. At inference, natural-language rule constraints and high-temperature sampling steer generation toward diverse, violation-prone layout variants validated by an industrial signoff DRC checker, producing DRC-annotated layout--violation pairs used to fine-tune a domain-adapted DRC-VLM. This VLM provides rule-aware geometric guidance for local DRV repair, boosting state-of-the-art agents' solve rates by +12--25% (up to 97%) on 100 real sub-2nm cases spanning enclosure, spacing, width, and color-spacing violations.",
+      "authors": [
+        "Chia-Tung Ho",
+        "Haoyu Yang",
+        "Guanglei Zhou",
+        "Yoshi Nishi",
+        "Yaguang Li",
+        "Walker Turner",
+        "Cunxi Yu",
+        "Yiran Chen",
+        "Brucek Khailany"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-07-23T22:38:04+00:00",
+      "link": "https://arxiv.org/pdf/2607.21850v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Adapting VLMs for foundry-specific rule knowledge in layout understanding",
+      "llm_evidence_cn": "将VLM适配于版图理解中的特定代工厂规则知识",
+      "llm_evidence": "将VLM适配于版图理解中的特定代工厂规则知识",
+      "canonical_evidence": "将VLM适配于版图理解中的特定代工厂规则知识",
+      "llm_tldr_en": "SCALE adapts VLMs to semiconductor layout understanding and DRV fixing using self-supervised learning.",
+      "llm_tldr_cn": "SCALE框架通过自监督学习使VLM能够理解半导体版图并修复设计规则违规。",
+      "llm_tldr": "SCALE框架通过自监督学习使VLM能够理解半导体版图并修复设计规则违规。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "How to use vision language models for domain adaptation?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.21908v1",
+      "source": "arxiv",
+      "title": "Unsupervised Multimodal Intent Discovery via MLLM-Guided Concept Generation and Semantic Propagation",
+      "abstract": "Unsupervised multimodal intent discovery aims to uncover latent intents from unlabeled multimodal dialogues, but remains challenging due to the lack of explicit semantic supervision. Existing methods often provide limited interpretability, as their refinement mainly relies on geometric similarity rather than high-level semantic guidance. To address these limitations, we propose MCSP, a fully unsupervised method that introduces semantic refinement based on concepts into multimodal intent discovery. To obtain reliable semantic evidence for intent discovery, we identify high-quality representative samples for each cluster and use them to support MLLM-guided contrastive reasoning against neighboring clusters, which produces interpretable high-level semantic concepts. Building on these concepts, we perform semantic propagation over a semantically weighted graph to align conceptual information with local structural consistency and generate reliable pseudo-labels for representation refinement. Extensive experiments on three challenging multimodal intent datasets show that MCSP consistently outperforms state-of-the-art methods while producing interpretable clusters grounded in semantic concepts.",
+      "authors": [
+        "Yunjin Gu",
+        "Qianrui Zhou",
+        "Hua Xu"
+      ],
+      "primary_category": "cs.MM",
+      "categories": [
+        "cs.MM"
+      ],
+      "published": "2026-07-24T02:25:27+00:00",
+      "link": "https://arxiv.org/pdf/2607.21908v1",
+      "tags": [
+        "keyword:VLM DA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "MLLM-guided concept generation for unsupervised discovery",
+      "llm_evidence_cn": "MLLM引导的无监督发现概念生成",
+      "llm_evidence": "MLLM引导的无监督发现概念生成",
+      "canonical_evidence": "MLLM引导的无监督发现概念生成",
+      "llm_tldr_en": "Uses MLLMs for unsupervised multimodal intent discovery through semantic refinement and reasoning.",
+      "llm_tldr_cn": "利用多模态大模型通过语义细化和推理进行无监督多模态意图发现。",
+      "llm_tldr": "利用多模态大模型通过语义细化和推理进行无监督多模态意图发现。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Multi-modal Large Language Models",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.23694v1",
+      "source": "arxiv",
+      "title": "Parameter-Efficient Adaptation of SAM3 for Prompt-Driven Surgical Concept Segmentation",
+      "abstract": "Efficient surgical segmentation empowers clinical diagnosis, intraoperative monitoring, and downstream robotic pipelines for reconstruction and simulation. Although prompt-driven foundation models like Segment Anything Model 3 (SAM3) achieve strong segmentation performance on natural images, surgical data exhibits domain gaps against its pre-training data, resulting in degraded segmentation accuracy. Furthermore, existing medical SAM methods require full-parameter fine-tuning, incurring heavy computational consumption and low efficiency. To address these limitations, this work proposes a parameter-efficient Low-Rank Adaptation (LoRA) adaptation of SAM3 for surgical concept segmentation. We inject low-rank adapters into the prompt encoder, detector and tracker while fully freezing the vision backbone, which only optimizes 0.98% of the total model parameters and supports training on a single consumer GPU. Comprehensive experiments demonstrate that our method consistently outperforms zero-shot SAM3 and other mainstream baselines, and the generated segmentation results can be directly deployed to support downstream robotic surgical scene reconstruction and physical simulation pipelines.",
+      "authors": [
+        "Changjing Liu",
+        "Yiming Huang",
+        "Beilei Cui",
+        "Liangjing Shao",
+        "Long Bai",
+        "Yanheng Li",
+        "Haoxuan Che",
+        "Hongliang Ren"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-07-26T14:40:04+00:00",
+      "link": "https://arxiv.org/pdf/2607.23694v1",
+      "tags": [
+        "keyword:VLM DA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Parameter-efficient adaptation of foundation models for domain-specific surgical data",
+      "llm_evidence_cn": "针对领域特定手术数据的基础模型参数高效适配",
+      "llm_evidence": "针对领域特定手术数据的基础模型参数高效适配",
+      "canonical_evidence": "针对领域特定手术数据的基础模型参数高效适配",
+      "llm_tldr_en": "Adapts SAM3 to surgical domains using LoRA to overcome domain gaps in segmentation.",
+      "llm_tldr_cn": "利用LoRA将SAM3适配至手术领域，解决分割任务中的领域差异问题。",
+      "llm_tldr": "利用LoRA将SAM3适配至手术领域，解决分割任务中的领域差异问题。",
+      "llm_tags": [
+        "query:vlm-da:composite"
+      ],
+      "matched_query_tag": "query:vlm-da:composite",
+      "matched_query_text": "Papers central to 查找有关使用vlm/mllm解决domain adaptation问题的论文, especially work that connects or combines: v; p; Prompt tuning for domain adaptation in VLMs; Unsupervised or supervised domain adaptation techniques; Vision-Language Models; Multi-modal Large Language Models; How to use vision language models for domain adaptation?; Recent advances in MLLM based domain adaptation methods; Fine tuning VLMs for cross domain robustness.",
+      "matched_requirement_id": "req-composite-vlm-da",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.21546v1",
+      "source": "arxiv",
+      "title": "UnDA: Unpaired Domain Alignment for Cross-Modal Knowledge Transfer in Medical Imaging",
+      "abstract": "Multimodal based approaches often outperform single modality approaches in downstream tasks as the different modalities provide complementary information, yet acquiring paired clinical data remains a significant challenge in real world scenarios. While cross-modal knowledge distillation addresses this, existing methods often struggle with large modality gaps and the propagation of noise from uncertain source-domain predictions. To overcome these challenges, we propose UnDA, an anchor-guided framework for unpaired cross-modal distillation. Our approach introduces a backbone-agnostic Alignment Module that extracts semantically structured class tokens via an attention based pooling mechanism. To ensure robust knowledge transfer, we propose Uncertainty-Weighted Optimal Transport (UCT-OT), which dynamically weights feature-level alignment based on prediction confidence, effectively suppressing noisy supervision. Furthermore, a per-class ProtoNCE objective maintains stable prototype memories to enforce global discriminability across unpaired batches. Evaluations on representative segmentation tasks under strictly unpaired settings show consistent improvements in accuracy and boundary precision in the target modality, demonstrating that meaningful structural knowledge can be transferred across heterogeneous data sources without paired datasets.",
+      "authors": [
+        "Rafsan Jany",
+        "Shadab Tanjeed Ahmad",
+        "Ahsan Bulbul",
+        "Tahsinul Islam",
+        "Md Azam Hossain",
+        "Abu Raihan Mostofa Kamal"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-07-23T17:33:29+00:00",
+      "link": "https://arxiv.org/pdf/2607.21546v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "unpaired domain alignment for cross-modal transfer",
+      "llm_evidence_cn": "跨模态迁移的非配对领域对齐",
+      "llm_evidence": "跨模态迁移的非配对领域对齐",
+      "canonical_evidence": "跨模态迁移的非配对领域对齐",
+      "llm_tldr_en": "UnDA provides a framework for unpaired cross-modal knowledge distillation and domain alignment.",
+      "llm_tldr_cn": "UnDA提出了一种用于非配对跨模态知识蒸馏和领域对齐的架构。",
+      "llm_tldr": "UnDA提出了一种用于非配对跨模态知识蒸馏和领域对齐的架构。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Unsupervised or supervised domain adaptation techniques",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.20914v1",
+      "source": "arxiv",
+      "title": "Three-Pronged Spectral Control for Federated Parameter Efficient Fine Tuning",
+      "abstract": "Federated parameter-efficient fine-tuning (PEFT) enables communication-efficient adaptation of large pretrained models on decentralized edge data, but it remains fragile under non-IID client heterogeneity. In low-rank adaptation (LoRA), different clients may learn locally useful but spectrally misaligned update subspaces, causing high-variance aggregation and poor global transfer. We propose TRISHUL, a spectral-control framework for robust federated PEFT. TRISHUL follows the FL no-raw-data-sharing setting but does not itself provide formal privacy guarantees. TRISHUL uses shared frozen multi-head low-rank bases to obtain algebraically exact aggregation of compact core updates, applies nuclear norm proximal shrinkage to suppress client-specific high-rank spectral components before upload, and allocates adaptation heads non-uniformly across layers using a concave water filling budget rule derived from pretrained layer capacity. Because shrinkage is performed only on small core matrices, TRISHUL adds negligible computation and no extra per-round communication over the underlying multi-head PEFT protocol. Across vision and language benchmarks, including CIFAR-100, SVHN, 20 Newsgroups, MRQA, and GLUE with LLaMA3.2-1B, TRISHUL improves convergence, stability, and final performance over federated LoRA baselines, with greater gains under stronger heterogeneity.",
+      "authors": [
+        "Shiva Raj Pokhrel",
+        "Dipsan Bhattarai",
+        "Anwar Walid"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.NI"
+      ],
+      "published": "2026-07-23T04:49:38+00:00",
+      "link": "https://arxiv.org/pdf/2607.20914v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Federated PEFT for adaptation on decentralized data",
+      "llm_evidence_cn": "分散数据自适应的联邦参数高效微调",
+      "llm_evidence": "分散数据自适应的联邦参数高效微调",
+      "canonical_evidence": "分散数据自适应的联邦参数高效微调",
+      "llm_tldr_en": "Proposes a spectral-control framework for robust federated PEFT to handle non-IID client heterogeneity.",
+      "llm_tldr_cn": "提出了一种鲁棒联邦PEFT的光谱控制框架，以处理非独立同分布的客户端异构性。",
+      "llm_tldr": "提出了一种鲁棒联邦PEFT的光谱控制框架，以处理非独立同分布的客户端异构性。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Fine tuning VLMs for cross domain robustness",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.25516v1",
+      "source": "arxiv",
+      "title": "A Causality-aware Infer-diagnose-refine Framework for Test-time Modality Adaptation in VLA Models",
+      "abstract": "Vision-language-action (VLA) models predict sequential actions to execute tasks specified by language instructions, conditioned on visual observations and proprioceptive states. However, how to fuse modalities in VLA models remains an open problem, since robot manipulation involves dynamic phases, such as long-distance movements and close-range interactions, in which the importance of visual observations may vary over time. In this paper, we propose an infer-diagnose-refine (IDR) framework, a model-agnostic framework that can be integrated with diverse VLA architectures for refining action predictions at test time. IDR first infers actions under factual and counterfactual scenarios of visual observations, and then diagnoses the causal effects of visual observations as the estimated dynamic importance, which is finally used to refine the action predictions in a training-free manner. We further design a causality-aware action refiner to realize the IDR framework, including zero-padding interventions for inferring counterfactual actions, norm-based quantification for diagnosing causal effects, and gated residual fusion for refining actions. Extensive experiments on both simulation benchmarks and real-world tasks show improvements in overall performance across multiple VLA backbones, demonstrating the efficacy of dynamically adjusting visual importance at test time.",
+      "authors": [
+        "Haoyu Zhang",
+        "Yuwei Wu",
+        "Jin Chen",
+        "Gao Zhi",
+        "Zhenxin Diao",
+        "Mingyang Gao",
+        "Kun Wu",
+        "Yongchun Liu",
+        "Fan Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-28T09:56:42+00:00",
+      "link": "https://arxiv.org/pdf/2607.25516v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Test-time modality adaptation in Vision-Language-Action models",
+      "llm_evidence_cn": "视觉-语言-动作模型中的测试时模态自适应",
+      "llm_evidence": "视觉-语言-动作模型中的测试时模态自适应",
+      "canonical_evidence": "视觉-语言-动作模型中的测试时模态自适应",
+      "llm_tldr_en": "Introduces a framework for test-time modality adaptation in VLA models to refine action predictions.",
+      "llm_tldr_cn": "引入了一种VLA模型测试时模态自适应框架，用于优化动作预测。",
+      "llm_tldr": "引入了一种VLA模型测试时模态自适应框架，用于优化动作预测。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "How to use vision language models for domain adaptation?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.22994v1",
+      "source": "arxiv",
+      "title": "Breaking the Synthetic-Real Domain Shortcut for Training-Free Generative Replay-based Class Incremental Learning",
+      "abstract": "Class-incremental learning (CIL) requires models to continuously acquire new knowledge while avoiding catastrophic forgetting. While exemplar replay is effective, it raises concerns regarding privacy and storage. Thus, generative replay has emerged as a viable alternative, synthesizing old data using frozen pretrained text-to-image (T2I) models without any extra training. However, we observe that directly mixing synthetic old-class data with real new-class data during incremental training leads to significant performance degradation. This issue stems from a \"domain shortcut\", where models rely on domain-discriminative features instead of semantic class cues. To address this, we propose DREAM ($\\underline{\\mathbf{D}}$omain-$\\underline{\\mathbf{R}}$egularized $\\underline{\\mathbf{E}}$xemplar-free $\\underline{\\mathbf{A}}$lignment $\\underline{\\mathbf{M}}$odel), which uses a training-free generator to synthesize old-class data and eliminates domain shortcut via subspace rectification and orthogonal projection, while reinforcing semantic alignment through real-anchored prototype regularization. Extensive experiments on 4 datasets demonstrate that DREAM outperforms existing exemplar-free CIL methods and achieves state-of-the-art performance. Our source code is available at https://github.com/Light-ZhangTao/DREAM.",
+      "authors": [
+        "Tao Zhang",
+        "Qixuan Fan",
+        "Yiyuan Liang",
+        "Yanjie Wang",
+        "Song Yan",
+        "Tian Tian",
+        "Jiahuan Zhou",
+        "Luxin Yan",
+        "Sheng Zhong",
+        "Xu Zou"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-07-25T02:14:41+00:00",
+      "link": "https://arxiv.org/pdf/2607.22994v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Breaking synthetic-real domain shortcut in incremental learning",
+      "llm_evidence_cn": "在增量学习中打破合成-真实域捷径",
+      "llm_evidence": "在增量学习中打破合成-真实域捷径",
+      "canonical_evidence": "在增量学习中打破合成-真实域捷径",
+      "llm_tldr_en": "Addresses domain shortcut issues in generative replay-based class incremental learning.",
+      "llm_tldr_cn": "解决了基于生成回放的类增量学习中的域捷径问题，提升了模型语义学习能力。",
+      "llm_tldr": "解决了基于生成回放的类增量学习中的域捷径问题，提升了模型语义学习能力。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Unsupervised or supervised domain adaptation techniques",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.21371v1",
+      "source": "arxiv",
+      "title": "DINOde: Continuous Vision-Text Alignment for Open-Vocabulary Semantic Segmentation",
+      "abstract": "Open-vocabulary semantic segmentation (OVSS) leverages textual semantics to segment objects beyond predefined categories. While the self-supervised model DINOv3 provides strong structured visual representations, its lack of native textual alignment hinders its direct application to OVSS. To bridge this gap, we propose DINOde, an ODE-based framework that continuously aligns CLIP text embeddings with the DINO visual manifold. Our approach employs two complementary components: (i) Semantic Text Flow (STF), which evolves text embeddings toward the DINO manifold through a continuous ODE trajectory, and (ii) Global Context Flow (GCF), which progressively refines the holistic image representation carried by DINO's CLS token. To preserve the hyperspherical geometry of the feature space during this evolution, we further introduce Velocity Tangent Projection, which constrains the learned velocity field to the tangent space. By modeling alignment as a continuous trajectory, DINOde avoids the manifold entanglement inherent in discrete MLP projections and yields more robust cross-modal alignment. Extensive experiments demonstrate that DINOde consistently outperforms existing methods and achieves state-of-the-art performance across multiple OVSS benchmarks. The code is available at https://github.com/yoon307/DINOde.",
+      "authors": [
+        "Sung-Hoon Yoon",
+        "Hoyong Kwon",
+        "Changgyoon Oh",
+        "Kuk-Jin Yoon"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-07-23T14:37:27+00:00",
+      "link": "https://arxiv.org/pdf/2607.21371v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "aligns CLIP text embeddings for open-vocabulary segmentation",
+      "llm_evidence_cn": "对齐CLIP文本嵌入用于开放词汇分割",
+      "llm_evidence": "对齐CLIP文本嵌入用于开放词汇分割",
+      "canonical_evidence": "对齐CLIP文本嵌入用于开放词汇分割",
+      "llm_tldr_en": "DINOde aligns CLIP text with DINO visual features for open-vocabulary semantic segmentation.",
+      "llm_tldr_cn": "DINOde通过ODE框架将CLIP文本嵌入与DINO视觉特征对齐，用于开放词汇语义分割。",
+      "llm_tldr": "DINOde通过ODE框架将CLIP文本嵌入与DINO视觉特征对齐，用于开放词汇语义分割。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Vision-Language Models",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.26596v1",
+      "source": "arxiv",
+      "title": "Decoupled Visual Processing: Efficient Multimodal Adaptation via Modality-Specific Transformer Substitution",
+      "abstract": "Multimodal large language models (MLLMs) have demonstrated remarkable capabilities by integrating visual and textual understanding within a unified transformer architecture. However, fine-tuning all parameters of these models for visual instruction tuning is computationally expensive and often unnecessary, as the representation requirements for visual and textual tokens diverge significantly in the deeper layers of the network. In this paper, we propose Decoupled Visual Processing (DVP), an efficient training framework that replaces the upper decoder layers of a pretrained LLM with a lightweight, independently trainable single transformer block dedicated exclusively to visual token processing. Specifically, after shared processing through the first half of the decoder layers, visual and textual tokens are split: visual tokens are routed through a newly initialized single transformer block while textual tokens continue through the original frozen decoder layers. The two streams are then concatenated before the language modeling head. During training, only the single transformer block is updated, dramatically reducing the number of trainable parameters. Experiments on the LLaVA-1.5 framework demonstrate that DVP achieves competitive performance on MME, POPE, and ChartQA benchmarks while training only a fraction of the total parameters, suggesting that visual representations in MLLMs can be effectively learned through a decoupled, parameter-efficient pathway.",
+      "authors": [
+        "Mingkuan Feng",
+        "Zhengqi Wen",
+        "Jianhua Tao"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-07-29T08:16:28+00:00",
+      "link": "https://arxiv.org/pdf/2607.26596v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Efficient multimodal adaptation via transformer substitution",
+      "llm_evidence_cn": "通过Transformer替换实现高效多模态适配",
+      "llm_evidence": "通过Transformer替换实现高效多模态适配",
+      "canonical_evidence": "通过Transformer替换实现高效多模态适配",
+      "llm_tldr_en": "Proposes Decoupled Visual Processing (DVP) for efficient MLLM adaptation by replacing deep decoder layers.",
+      "llm_tldr_cn": "提出解耦视觉处理（DVP），通过替换深层Transformer块实现多模态大模型的高效适配。",
+      "llm_tldr": "提出解耦视觉处理（DVP），通过替换深层Transformer块实现多模态大模型的高效适配。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Recent advances in MLLM based domain adaptation methods",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.23125v1",
+      "source": "arxiv",
+      "title": "Self-Boosting Vision-Language Models with Noisy Student On-Policy Self-Distillation",
+      "abstract": "Post-training enables vision-language models (VLMs) to understand human instructions and perform various downstream tasks. Current post-training methods usually rely on human-annotated data, distillation from external models, reinforcement learning with human feedback, or verifiable answers. This limits their ability to improve without external supervision. To tackle this, we propose NOPD (Noisy Student On-Policy Self-Distillation), a simple yet effective self-distillation approach that improves VLMs without any external models or ground-truth answers. Our key insight is that prediction discrepancies between clean and corrupted inputs naturally induce a self-supervision signal. In NOPD, the model learns from corrupted inputs while using its own predictions under clean inputs as token-level supervision. We show the effectiveness of NOPD on five visual reasoning tasks; it can match and even outperform reinforcement learning approaches or distillation from external models. Notably, when trained with 2.1K samples from Geometry3K, NOPD improves Qwen2.5-VL-7B by 20 points on its validation set. It also shows generalization on out-of-distribution test sets and achieves 7.4 point gains on MathVista. Furthermore, we demonstrate that NOPD is a general approach to enhance VLMs, achieving improvements across three models on 12 benchmarks.",
+      "authors": [
+        "Shuai Wang",
+        "Daoan Zhang",
+        "Zhe Tang",
+        "Hao Cheng",
+        "Jiaheng Wei"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-07-25T10:00:33+00:00",
+      "link": "https://arxiv.org/pdf/2607.23125v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "post-training VLMs for downstream tasks without external supervision",
+      "llm_evidence_cn": "无需外部监督的视觉语言模型下游任务后训练",
+      "llm_evidence": "无需外部监督的视觉语言模型下游任务后训练",
+      "canonical_evidence": "无需外部监督的视觉语言模型下游任务后训练",
+      "llm_tldr_en": "Proposes a self-distillation method to improve VLMs using prediction discrepancies between clean and corrupted inputs.",
+      "llm_tldr_cn": "提出一种自蒸馏方法，利用原始与损坏输入间的预测差异在无监督下提升视觉语言模型性能。",
+      "llm_tldr": "提出一种自蒸馏方法，利用原始与损坏输入间的预测差异在无监督下提升视觉语言模型性能。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Fine tuning VLMs for cross domain robustness",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.22300v1",
+      "source": "arxiv",
+      "title": "Biomedical Machine Translation for Low-Resource Arabic-Script Languages via Cross-Lingual Transfer and LoRA Adapter Merging",
+      "abstract": "We present a systematic study of healthcare-domain cross-lingual transfer to address the scarcity of biomedical NMT resources for Arabic-script languages. We use Arabic and Persian as higher-resource pivots to improve translation for \\textbf{four severely low-resource} targets: Dari (Afghan Persian, a standardised variety of Persian), Pashto, Sorani Kurdish (Central Kurdish, a major standardized variety of Kurdish), and Urdu (closely related to Hindi). Using LoRA fine-tuning on small decoder-only LLMs, we train \\textit{domain-specific pivot adapters} and evaluate \\textbf{three transfer strategies}: few-shot in-context learning, minimal supervised adaptation, and, to the best of our knowledge, for the first time in this setting, zero-data LoRA adapter merging. Supervised adaptation with just 500 sentences achieves near pivot-language quality for Dari (CHrF++ 41.01) and meaningful gains for Urdu (28.88), while adapter merging reaches within 3.5 CHrF++ of supervised adaptation for Dari at zero additional cost. Pashto and Sorani Kurdish remain insufficient for high-stakes clinical deployment exposing the limits of cross-lingual transfer when structural distance from the pivots is too great. LoRA adapter merging works surprisingly well for closely related languages, even without target-language biomedical data.",
+      "authors": [
+        "Abdullah Alabdullah",
+        "Arash Eslamighayour",
+        "Sarp Harbalioglu",
+        "Lifeng Han"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-07-24T13:44:50+00:00",
+      "link": "https://arxiv.org/pdf/2607.22300v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "domain-specific adaptation and cross-lingual transfer",
+      "llm_evidence_cn": "领域特定适配与跨语言迁移",
+      "llm_evidence": "领域特定适配与跨语言迁移",
+      "canonical_evidence": "领域特定适配与跨语言迁移",
+      "llm_tldr_en": "Studies domain-specific adaptation for low-resource biomedical translation using LoRA and transfer learning.",
+      "llm_tldr_cn": "研究了利用LoRA和迁移学习在低资源生物医学翻译中的领域特定适配。",
+      "llm_tldr": "研究了利用LoRA和迁移学习在低资源生物医学翻译中的领域特定适配。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Unsupervised or supervised domain adaptation techniques",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.27897v1",
+      "source": "arxiv",
+      "title": "Unifying Adversarially Robust Model Experts in Vision-Language Models",
+      "abstract": "Vision-language models (VLMs), such as CLIP, are vulnerable to adversarial attacks, posing a serious problem for real-life applications and deployment. Adversarial fine-tuning emerges as a prominent defense method; however, different fine-tuning strategies often produce specialized models with distinct robustness characteristics. Each fine-tuned model in turn thrives in some evaluation settings but falters on others, limiting their defensive capabilities. We refer to these specialized fine-tuned models as robust model experts and propose a collaborative adversarial fine-tuning framework: CARE - Collaborative Adversarial Robustness fine-tuning using Embedding alignment. CARE maintains multiple experts during training, enables knowledge exchange through embedding-space harmonization, and consolidates the learned knowledge into a single unified robust model. Experts benefit from one another while preserving their individual specializations, enabling the final model to inherit complementary robustness properties. In this paper, we demonstrate CARE on two different adversarial fine-tuning strategies with complementary robustness behaviors. Extensive experiments on classic image classification and downstream vision-language tasks display the effectiveness of our approach, with CARE being able to outperform individually learned model experts. The results suggest that collaborative learning across model experts is a promising direction for improving adversarial robustness.",
+      "authors": [
+        "Nguyen Duc Thai",
+        "Junhao Dong",
+        "Sua Qi Rong",
+        "Hua Yu",
+        "Yew-Soon Ong"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-07-30T09:13:35+00:00",
+      "link": "https://arxiv.org/pdf/2607.27897v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Adversarial fine-tuning for VLM robustness",
+      "llm_evidence_cn": "针对VLM鲁棒性的对抗性微调",
+      "llm_evidence": "针对VLM鲁棒性的对抗性微调",
+      "canonical_evidence": "针对VLM鲁棒性的对抗性微调",
+      "llm_tldr_en": "Proposes CARE, a collaborative adversarial fine-tuning framework to unify robust experts in VLMs like CLIP.",
+      "llm_tldr_cn": "提出CARE框架，通过协同对抗性微调和嵌入对齐提升CLIP等视觉语言模型的防御鲁棒性。",
+      "llm_tldr": "提出CARE框架，通过协同对抗性微调和嵌入对齐提升CLIP等视觉语言模型的防御鲁棒性。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Fine tuning VLMs for cross domain robustness",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.23335v1",
+      "source": "arxiv",
+      "title": "The Gate Always Closes: On Injecting Auxiliary Signals into Frozen Vision-Language Models",
+      "abstract": "Auxiliary signal pathways in VLMs are routinely fitted with learnable gates so the optimiser can decide how much of the signal to admit. We find that the optimiser almost always decides on zero: across five injection designs, every gated pathway becomes behaviourally closed, with accuracy invariant to ablating the pathway at inference even when the gate parameter would nominally pass 30-45% of the signal. We attribute this suppression phenomenon to two regimes, a dead-gradient regime formalised through the caption-invariance of image-derived signals, and a negative-utility regime in which the auxiliary signal actively hurts the loss. Rather than fight suppression, we exploit it: we regularise LoRA fine-tuning with geometric auxiliary losses from hyperbolic visual relational graphs (IoA-driven entailment cones and angular repulsion on the Lorentz manifold), coupled only through the forward pass at training time and dropped at inference. Disaggregating GQA by question type exposes a clean dissociation. Three configurations without geometric losses at inference lose 2.85-3.39pp on relational questions while gaining ~1pp on attribute questions; a fourth that trains with the losses but infers through a soft prompt loses 5.14pp on rel for only +0.23pp on attr, so training-time regularisation alone does not protect relational accuracy without a geometric inference pathway. Configurations that keep the geometric pathway at inference preserve vanilla-level relational accuracy and match the attribute gain. Out of distribution on VSR, the RMS-prefix recipe preserves the spatial signal; stripping the geometric losses (G2) collapses VSR by 4.6pp, isolating them as the OOD source. A secondary result: embedding-norm alignment is necessary for generation-safe prefix injection, and learnable gates should be replaced with fixed, non-optional injection at matched scales.",
+      "authors": [
+        "Moshiur Farazi",
+        "Sameera Ramasinghe",
+        "Bekir Sait Ciftler",
+        "Mahbub Ahmed Turza",
+        "Shafin Rahman"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-07-25T19:14:34+00:00",
+      "link": "https://arxiv.org/pdf/2607.23335v1",
+      "tags": [
+        "keyword:VLM DA",
+        "query:VLM DA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Regularizing LoRA fine-tuning in Vision-Language Models",
+      "llm_evidence_cn": "视觉语言模型中LoRA微调的正规化",
+      "llm_evidence": "视觉语言模型中LoRA微调的正规化",
+      "canonical_evidence": "视觉语言模型中LoRA微调的正规化",
+      "llm_tldr_en": "Investigates auxiliary signal injection in frozen VLMs and exploits signal suppression to regularize LoRA.",
+      "llm_tldr_cn": "研究冻结VLM中的辅助信号注入，并利用信号抑制来规范LoRA微调。",
+      "llm_tldr": "研究冻结VLM中的辅助信号注入，并利用信号抑制来规范LoRA微调。",
+      "llm_tags": [
+        "query:vlm-da"
+      ],
+      "matched_query_tag": "query:vlm-da",
+      "matched_query_text": "Fine tuning VLMs for cross domain robustness",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

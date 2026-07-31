@@ -1,0 +1,134 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.22994v1/fig-001.webp",
+      "caption": "Figure 1. Illustration of the “Domain Shortcut” phenomenon and Our Solution. (a) Baseline: In standard generative replay, a significant domain gap between synthetic old-class data (blue) and real new-class data (red) creates a “Domain Shortcut”. This gap causes the model to mistakenly treat the real space as the new class space, prioritizing domain separation over semantic class distinction during inference. (b) DREAM (Ours): We propose Feature Domain Rectification (FDR) to excise “Domain Shortcut” via Orthogonal Subspace Projection. By projecting features into a rectified semantic subspace, the domain gap is eliminated, forcing the model to learn the true semantic decision boundary (black line) and effectively aligning real and synthetic distributions.",
+      "page": 1,
+      "index": 1,
+      "width": 494,
+      "height": 518
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22994v1/fig-002.webp",
+      "caption": "Table 1. Comparison of Task-agnostic Average Incremental Accuracy (%) across four benchmarks. We compare DREAM with exemplar-free (e.g., SEED), exemplar-based (e.g., T-CIL), model inversion (e.g., R-DFCIL), and generative replay methods (e.g., DiffClass). DREAM consistently achieves the best performance across all datasets and settings among exemplar-free approaches, while attaining performance comparable to exemplar-based methods. Best results are shown in bold, and second-best results are underlined. Missing results are denoted by “–”, as some methods do not report the corresponding settings or do not release their implementations.",
+      "page": 6,
+      "index": 2,
+      "width": 1008,
+      "height": 396
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22994v1/fig-003.webp",
+      "caption": "Figure 8. Empirical Verification of Domain Shortcut. We visualize the Task-Agnostic Accuracy (TAG) classification flow for Task 0/1/8/9 samples (Real Data) on the CIFAR-100 dataset. The x-axis represents the predicted global class index. “Ti/Cj” means the jth Class of the ith Task. Consistent with our theoretical derivation, the heatmap reveals a massive concentration of predictions in the Task 9 region (T9/C#, highlighted in red), which corresponds to the current Real task. This empirical evidence confirms that the model correctly identifies the domain attribute (“Real”) but incorrectly associates it with the only available Real classes (Task 9), verifying the existence of the “Domain Shortcut” where domain cues override semantic distinctions.",
+      "page": 15,
+      "index": 3,
+      "width": 1006,
+      "height": 559
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22994v1/fig-004.webp",
+      "caption": "Figure 2. Visualization of the “Domain Shortcut” via Confusion Matrices. TAW (a, b, c): Within-task classification remains accurate as class differences outweigh domain differences. TAG (d): When mixing tasks, the model overwhelmingly misclassifies old-class real data (Tasks 0-8) as the current real task (Task 9), confirming that domain artifacts dominate semantic cues in the decision process.",
+      "page": 2,
+      "index": 4,
+      "width": 986,
+      "height": 239
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22994v1/fig-005.webp",
+      "caption": "Figure 4. Task-agnostic average accuracy curves on CIFAR-100. Results for (a) T = 5 tasks, (b) T = 10 tasks, and (c) T = 20 tasks show that DREAM (orange curve) consistently outperforms state-of-the-art exemplar-free methods.",
+      "page": 7,
+      "index": 5,
+      "width": 1003,
+      "height": 257
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22994v1/fig-006.webp",
+      "caption": "Figure 5. Task-agnostic average accuracy curves on ImageNet-Subset. Results for (a) T = 5 tasks, (b) T = 10 tasks, and (c) T = 20 tasks demonstrate that DREAM (orange curve) consistently outperforms state-of-the-art exemplar-free methods.",
+      "page": 7,
+      "index": 6,
+      "width": 1003,
+      "height": 262
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22994v1/fig-007.webp",
+      "caption": "Table 4. Sensitivity Analysis of Loss Weights. We assess the stability of the model under varying weights for prototype loss (λProto) and distillation loss (λKD).",
+      "page": 8,
+      "index": 7,
+      "width": 494,
+      "height": 506
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22994v1/fig-008.webp",
+      "caption": "Figure 7. Intra-task t-SNE Visualization on CIFAR-100. We visualize feature spaces for Task 0 (top) and Task 9 (bottom). The left column (Raw) shows dispersed distributions, while the right column (Rectified) shows more compact and clustered representations, validating that our rectified distillation enhances intra-class compactness and semantic separability.",
+      "page": 8,
+      "index": 8,
+      "width": 458,
+      "height": 405
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22994v1/fig-009.webp",
+      "caption": "Figure 3. Overview of DREAM. The pipeline integrates Attribute-Aware Generative Replay (blue) with a novel training pipeline based on Feature Domain Rectification (yellow). (1) Synthesis: We utilize a VLM to extract rich attributes and a frozen generator to synthesize diverse old and real data. (2) Rectification (FDR): We perform Dynamic Domain Centering and Hierarchical Subspace Rectification to explicitly remove domain-sensitive subspaces (visualized bottom-left). (3) Alignment (RAPC): A Real-Anchored Prototype Consolidation loss aligns synthetic and real features with real-data anchors to ensure domain alignment and intra-class compactness.",
+      "page": 4,
+      "index": 9,
+      "width": 1015,
+      "height": 681
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22994v1/fig-010.webp",
+      "caption": "Figure 10. Empirical Verification of Corollary 3.3 (Singular Value Spectrum). We analyze the rank structure of the Domain Gap (Red, Solid) and Intra-class Semantic Variance (Blue, Dashed) using SVD on a logarithmic scale. The Domain Gap curve exhibits a precipitous exponential decay, confirming that the systematic domain artifacts are concentrated in a low-dimensional subspace (Low-Rank). In contrast, the Semantic Variance curve shows a slower power-law decay with a heavy tail, indicating that semantic information is distributed robustly across dimensions. The clear spectral crossover at k ≈ 6 (where Blue > Red) validates our strategy of excising the top-k dominant domain components while preserving the semantic-rich residual subspace.",
+      "page": 17,
+      "index": 10,
+      "width": 742,
+      "height": 547
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22994v1/fig-011.webp",
+      "caption": "Table 13. Sensitivity Analysis of Hyperparameters on TinyImageNet. We evaluate the impact of rectification strength γ, subspace dimension k, and weights for prototype loss (λProto) and distillation loss (λKD) on model performance. Default settings are bolded.",
+      "page": 27,
+      "index": 11,
+      "width": 987,
+      "height": 181
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22994v1/fig-012.webp",
+      "caption": "Table 12. Sensitivity Analysis of Hyperparameters on CIFAR-10. We evaluate the impact of rectification strength γ, subspace dimension k, and weights for prototype loss (λProto) and distillation loss (λKD) on model performance. Default settings are bolded.",
+      "page": 27,
+      "index": 12,
+      "width": 987,
+      "height": 182
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22994v1/fig-013.webp",
+      "caption": "Figure 12. Task-agnostic average accuracy curves on TinyImageNet. Results for (a) T = 5 tasks, (b) T = 10 tasks, and (c) T = 20 tasks show that DREAM (orange curve) consistently outperforms state-of-the-art exemplar-free methods.",
+      "page": 24,
+      "index": 13,
+      "width": 1003,
+      "height": 260
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22994v1/fig-014.webp",
+      "caption": "Figure 11. Task-agnostic average accuracy curves on CIFAR-10. Results for (a) T = 2 tasks and (b) T = 5 tasks show that DREAM (orange curve) consistently outperforms state-of-the-art exemplar-free methods.",
+      "page": 24,
+      "index": 14,
+      "width": 665,
+      "height": 262
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22994v1/fig-015.webp",
+      "caption": "Figure 14. Visualization of Synthesized Samples. We display synthetic images generated by our proposed DREAM framework across four standard benchmarks: CIFAR-10, CIFAR-100, ImageNet-Subset, and TinyImageNet. To demonstrate the universality and scalability of our method, we present results using two distinct generative backbones: Qwen-Image and Stable Diffusion v1.5. The visualized samples exhibit high fidelity and diversity, confirming the effectiveness of our approach across different datasets and model architectures.",
+      "page": 31,
+      "index": 15,
+      "width": 729,
+      "height": 1242
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22994v1/fig-016.webp",
+      "caption": "Figure 9. Empirical Verification of Shared Domain Subspace (Corollary 3.2). We evaluate whether the domain subspace estimated from New Classes can generalize to Old Classes. The histograms show the L2 distance between real and synthetic feature centroids for each unseen old class. Left: Raw features exhibit a significant domain gap (Avg Dist: 1.14). Right: After applying the rectification matrix P learned exclusively from new classes, the domain gap for old classes is reduced by 50.80% (Avg Dist: 0.56). This successful cross-class generalization confirms that the domain bias lies in a shared subspace across disjoint categories.",
+      "page": 16,
+      "index": 16,
+      "width": 1008,
+      "height": 431
+    }
+  ]
+}

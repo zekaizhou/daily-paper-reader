@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.21850v1/fig-001.webp",
+      "caption": "Figure 1: Off-the-shelf closed-source VLMs hallucinate geometric features (e.g., incorrect VIA count) and lack foundry-specific design rule knowledge, producing inaccurate violation analyses. Our domainadapted VLM correctly perceives layout geometry and applies precise rule semantics, enabling reliable DRV root cause analysis.",
+      "page": 1,
+      "index": 1,
+      "width": 442,
+      "height": 331
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21850v1/fig-002.webp",
+      "caption": "Figure 5: Examples of DRC fix approaches for VIA spacing (top) and metal tip-to-tip (bottom) rules. (a) Target layouts with the original violations. (b) Baseline agent fixes introduce new violations while try to fix the target DRV. (c) Proposed DRC-VLM analysis with structured root-cause and connectivity-aware actions yielding clean fixes. PRL=Parallel Running Length. Axis coordinates are scaled for confidentiality.",
+      "page": 6,
+      "index": 2,
+      "width": 995,
+      "height": 466
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21850v1/fig-003.webp",
+      "caption": "Figure 2: Proposed Framework. Phase I: Layouts are serialized into text to train an autoregressive model; text-conditioned sampling generates diverse layouts, annotated by industrial DRC and a teacher model for fine-tuning the DRC-VLM. Phase II: The DRC-VLM guides AI agents to edit the local GDS (boundary polygons may only be extended, not removed) with DRC/LVS checker-in-the-loop feedback.",
+      "page": 2,
+      "index": 3,
+      "width": 972,
+      "height": 511
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21850v1/fig-004.webp",
+      "caption": "Figure 4: An example of the VLM detection task used for SFT. Each SFT training pair consists of a layout image, input prompt, and response. Axis coordinates are scaled for confidentiality.",
+      "page": 4,
+      "index": 4,
+      "width": 507,
+      "height": 267
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21850v1/fig-005.webp",
+      "caption": "Figure 3: t-SNE Diversity Analysis. t-SNE projection comparing synthetic datasets against the ground truth (red). Both the trained proposed (autoregressive) and D3PM models achieve high-fidelity, in distribution coverage. In contrast, the heuristic script-based baseline fails to capture the realistic geometric distribution. 3.3 Discussion: Choosing the Model Modality",
+      "page": 4,
+      "index": 5,
+      "width": 525,
+      "height": 252
+    }
+  ]
+}

@@ -1,0 +1,828 @@
+Title: The Gate Always Closes: On Injecting Auxiliary Signals into Frozen Vision-Language Models
+
+URL Source: https://arxiv.org/pdf/2607.23335v1
+
+Published Time: Tue, 28 Jul 2026 00:54:09 GMT
+
+Number of Pages: 29
+
+Markdown Content:
+# The Gate Always Closes: On Injecting Auxiliary Signals into Frozen Vision-Language Models 
+
+Moshiur Farazi 1, Sameera Ramasinghe 2, Bekir Sait Ciftler 1, Mahbub Ahmed Turza 3, and Shafin Rahman 3 
+
+> 1
+
+University of Doha for Science and Technology, Doha, Qatar  
+
+> 2
+
+Pluralis Research, Australia  
+
+> 3
+
+North South University, Dhaka, Bangladesh 
+
+Abstract. Auxiliary signal pathways in VLMs are routinely fitted with learnable gates so the optimiser can decide how much of the signal to admit. We find that the optimiser almost always decides on zero: across five injection designs, every gated pathway becomes behaviourally closed ,with accuracy invariant to ablating the pathway at inference even when the gate parameter would nominally pass 30–45% of the signal. We at-tribute this suppression phenomenon to two regimes, a dead-gradient 
+
+regime formalised through the caption-invariance of image-derived sig-nals, and a negative-utility regime in which the auxiliary signal actively hurts the loss. Rather than fight suppression, we exploit it: we regularise LoRA fine-tuning with geometric auxiliary losses from hyperbolic visual relational graphs (IoA-driven entailment cones and angular repul-sion on the Lorentz manifold), coupled only through the forward pass at training time and dropped at inference. Disaggregating GQA by ques-tion type exposes a clean dissociation. Three configurations without ge-ometric losses at inference lose 2.85–3.39pp on relational questions while gaining ∼1pp on attribute questions; a fourth that trains with the losses but infers through a soft prompt loses 5.14pp on rel for only +0.23pp on attr, so training-time regularisation alone does not protect relational ac-curacy without a geometric inference pathway. Configurations that keep the geometric pathway at inference preserve vanilla-level relational ac-curacy and match the attribute gain. Out of distribution on VSR, the RMS-prefix recipe preserves the spatial signal; stripping the geometric losses (G2) collapses VSR by 4.6pp, isolating them as the OOD source. A secondary result: embedding-norm alignment is necessary for generation-safe prefix injection, and learnable gates should be replaced with fixed, non-optional injection at matched scales. 
+
+Keywords: Vision-Language Models · Auxiliary Losses · LoRA Regu-larisation · Compositional Reasoning 
+
+1 Introduction 
+
+Parameter-efficient fine-tuning of Vision-Language Models with LoRA [14] is now standard practice, yet task-specific adaptation routinely erodes the pretrained arXiv:2607.23335v1 [cs.CV] 25 Jul 2026 2 Authors Suppressed Due to Excessive Length 
+
+model’s broader competence. On GQA, LoRA fine-tuning of LLaVA-1.5-7B with no auxiliary supervision has been reported to move accuracy from 60.38% to 57.21% [4], consistent with adapters latching onto surface patterns in the training data when no structural signal is present to hold them back. Visual scenes carry a hierarchical relational structure (objects contained in regions, attributes bound to entities) that flat patch-token sequences discard. We encode that structure as a continuous latent graph on the Lorentz hyper-boloid [4,21], with IoA-driven entailment and angular repulsion losses that shape the manifold geometry from spatial containment cues. Our claim is that these geometric losses act as structural regularisers for LoRA : training with en-tailment and angular objectives preserves pretrained accuracy across configura-tions where LoRA alone degrades it. The regularisation operates through forward coupling — the geometric computation must participate in the forward pass at training time, but can be dropped at inference. This finding emerged from a broader investigation of how auxiliary signals interact with a frozen LLM when routed through learnable pathways. Across five experiments spanning attention biases, gated prefix tokens, and margin-trained compositional objectives, every learnable gated pathway ends up behaviourally closed : task accuracy is invariant to ablating the pathway at inference, even when the gate parameter itself sits at a value that would nominally pass 30–45% of the signal (Sec. 4). We call this the suppression phenomenon , and attribute it to two distinct mechanisms. The first is a dead-gradient regime, where caption-invariance of image-derived signals nulls the first-order discriminative gradient (Proposition 1). The second is a negative-utility regime, where the auxiliary signal actively hurts the loss and the gradient consistently drives the gate toward its magnitude-zero limit. Since the optimiser reliably closes the injection pathway under both regimes, the value of the geometric computation lies in the training dynamics it induces, not in any signal it delivers at test time. A separate, more practical question concerns generation-safe prefix injec-tion. When prefix tokens are projected from a hyperbolic manifold into LLM embedding space, a large norm mismatch can open up between prefix and text embeddings. We show that RMS normalisation to the text distribution resolves the resulting generation collapse, and we attribute the collapse itself to residual-stream dominance rather than attention-softmax saturation (Section 5). Our contributions are threefold. First, we show that geometric auxiliary losses (hyperbolic entailment, angular repulsion) regularise LoRA fine-tuning through forward coupling, preserving pretrained accuracy where LoRA alone degrades it, and we uncover a task-selectivity dissociation: learned prompts trade relational accuracy for attribute accuracy, whereas geometric training avoids this trade-off. Second, we identify the suppression phenomenon for learnable injection gates and characterise its two mechanisms (dead-gradient and negative-utility), yielding actionable guidance for VLM adapter design. Third, we establish embedding-norm alignment as a necessary condition for generation-safe prefix injection. The Gate Always Closes 3
+
+2 Related Work 
+
+Prefix and prompt tuning. VPT [11] introduced learned prefix tokens for vision transformers, and LLaMA-Adapter [6] carried the idea into LLM layers with zero-initialised gating. In both cases the prefix content is learned end-to-end via backpropagation through the frozen backbone. Different to these works, we ask what happens when the prefix content is derived from a structured external computation — here a geometric relational graph — rather than shaped by the task gradient itself. We find that the structured pathway is reliably suppressed under a task-only loss. 
+
+Auxiliary signal injection in VLMs. A growing body of work attaches scene-graph generators and feeds predicate triplets as text [8,16,25], injects visual rela-tion encodings as prefix tokens [4], or modulates attention weights with structural biases. Yang et al . [27] instead use scene graphs as reinforcement signals. These efforts differ in what they inject, but a common design assumption is that a well-shaped auxiliary signal will be consumed at inference. Our investigation spans two injection mechanisms (attention bias and prefix tokens) and characterises the conditions under which the pathways carrying that signal remain active or become suppressed. 
+
+Hyperbolic VLMs. Hyperbolic spaces embed hierarchical structure with low distortion [5, 7, 17]. MERU [2] introduced hyperbolic contrastive VLMs, and HyCoCLIP [18] extended this with compositional entailment. Ramasinghe et al . [21] showed that geodesic contrastive losses conflict with entailment cones and cause curvature collapse; our angle-based losses inherit this insight. HyperET [19] demonstrated efficient hyperbolic training for MLLMs. In our experiments the Lorentz manifold serves as the experimental vehicle for generating the auxiliary signal. The suppression and norm-mismatch findings, however, are mechanism-level rather than geometry-level, and would apply equally to any structured signal delivered through an analogous pathway. 
+
+Structured attention biases. ALiBi [20] and RoPE [22] inject position-dependent biases into attention, and FlashBias [26] provides efficient kernels for dense vari-ants. Dalal et al . [1] improve LLaVA’s compositionality through attention-guided image warping. Our attention-bias mechanism is a special case of this family, and the suppression finding applies to it directly. 
+
+Compositionality benchmarks. ARO [28], Winoground [23] and SugarCrepe [9] probe compositional understanding. SugarCrepe++ addresses known text-only biases in the original benchmark [3]. SCRAMBLe [15] reaches 54.8% Winoground group via preference tuning. Our evaluation uses SugarCrepe (7 subcategories) and Winoground; we note the known biases where they bear on the interpreta-tion. 
+
+Auxiliary noise as regularisation. NEFTune [10] showed that adding uni-form noise to input embeddings during instruction tuning improves downstream evaluation scores. This raises the possibility that part of the benefit attributed to structured auxiliary signals is captured by generic noise perturbation. We control for this confound with a fixed-random prefix baseline (Sec. 6, G2). 4 Authors Suppressed Due to Excessive Length Q    
+
+> K
+> V
+> 1
+> 2
+> N...
+> 1
+> 2
+> N... tanh (S .softplus( β)) ij
+> ...
+> ... ... ... ...
+
+## ... 
+
+## ... trainable frozen training(forward pass)              
+
+> β,𝛄 Learnable Gate Learnable
+> β
+> (Adapted LoRA) ...
+> 𝓛 +𝓛 ent ang
+> 𝓛 task exp_map
+> to ℍnL(N x d)
+> Hierarchical Pooling
+> ... RMS Prefix Token zon H inLlog (z )HiRMS (𝛄 →0) W (d x D) P (N x D) Input Image Vision
+> Encoder H x W Patches RoI Align (N x d)
+
+## ... N x N cross-attention + spatial bias ...  
+
+> Visual Relational Graph Lorentz N node
+> (N x D) Attention Bias
+> LLM(Frozen + Trainable) Text
+> Before Image
+> Patches Prefix
+> Tokens Text
+> After
+
+❄
+
+> Injection Mechanism
+
+X X =A    
+
+> (P x N) S
+> (N x N) AT
+> (N x P) B
+> (P x P) Answer Casual Mask
+> M←M + B Prefix Tokens
+> P∈ℝN x D
+
+Fig. 1: Pipeline overview. From class-agnostic region proposals, we compute dense visual relations, embed them on the Lorentz hyperboloid, and route the geometric signal through two injection mechanisms: attention bias (Mechanism A) and gated prefix tokens (Mechanism B). Auxiliary losses Lent and Lang regularise LoRA during training; both gates β, γ collapse to zero under task-only loss. 
+
+3 Experimental Vehicle: Hyperbolic Relational Encoding 
+
+We use a hyperbolic relational graph [4] as the source of the auxiliary signal. The architecture (Fig. 1)here is an experimental vehicle rather than the contribution. 
+
+3.1 Lorentz Manifold Preliminaries 
+
+We work in the Lorentz model Lnκ , the upper sheet of the (n+1) -dimensional hyperboloid ( n=256 ) with learnable curvature κ > 0 (initialised at 1.0, clamped to [0 .1, 5.0] ); see Supp. Sec. 2 for the explicit form. The exponential map at the origin o sends tangent vectors v (with v0=0 ) to manifold points; the explicit form is standard (Supp. Eq. 2), followed by manifold projection back onto Lnκ .Every point q ∈ Lnκ with ∥˜q∥ ≥ K defines an entailment cone [5, 21] with half-aperture ω(q) = arcsin( K/ ∥˜q∥), K=0 .1 (the Lorentz-model simplification of Ganea’s Poincaré formulation used in [21]; we enforce the constraint by numerical clamping). Points nearer the origin carry wider cones and thus encode more general concepts. Two points p, q are separated by the central angle ϕ(p, q)
+
+at the origin, computed as the Euclidean angle between the spatial parts of their tangent-space images log κ
+
+o(p) and log κ
+
+o(q) (Supp. Eq. 3). Since our losses (Sec. 3.3) act on the central angle and half-aperture directly, this formulation differs from Ganea’s original exterior-angle containment test but serves the same purpose. The cone containment test ϕ(p, q) ≤ ω(q) is inherently asymmetric, since different points carry different apertures. The Gate Always Closes 5
+
+3.2 Visual Relational Graph 
+
+From N =36 class-agnostic region proposals, we extract RoI features vi ∈ Rdv
+
+(dv =1024 , CLIP ViT-L, before the multi-modal projector) and compute pair-wise relation features via spatially-biased multi-head self-attention. The rela-tive geometry between regions is encoded from centre offsets and log size ratios (Supp. Eq. 6), giving a 4-D feature per pair and producing a dense relation ten-sor R ∈ RN ×N ×d (d=256 ). Each rij is projected to a tangent vector (with norm clamped to 5 for numerical stability), mapped to Lnκ via the exponential map at the origin, and aggregated to per-node embeddings through the Einstein mid-point [24]: γi = zi, 0 (time component), weighted Minkowski sum, and projection back onto Lnκ .
+
+3.3 Geometric Losses 
+
+Following Ramasinghe et al . [21], we use purely geometric losses that operate on angles rather than geodesic distances, since the latter conflict with entailment and drive the curvature toward collapse. We denote the asymmetric Intersection-over-Area of region a into region b as IoA( a→b) := |a∩b| / |a|. When IoA( a→b) >
+
+0.8, region a is spatially contained in b and its embedding should fall inside b’s entailment cone: 
+
+Lent = E(a,b ):IoA >0.8 max  0, ϕ (za, zb) − η ω (zb). (1) If instead IoA < 0.05 in both directions, the regions are disjoint and we push their embeddings apart in angle: 
+
+Lang = E(a,b ):IoA <0.05 max  0, π 
+
+> 2
+
+− ϕ(za, zb). (2) A hinge penalty Lκ = max(0 , 0.3 − | κ|)2 prevents curvature collapse. The full objective is L = Ltask + α(t)( λang Lang + λent Lent + λκLκ), where α(t) ramps linearly from 0.001 to αmax over 100 steps. 
+
+3.4 Two Injection Mechanisms 
+
+We test two ways to deliver the geometric signal to the LLM. Both are formalised here in the notation that the gradient analysis of Sec. 4 requires. 
+
+Mechanism A: Attention bias. From the node embeddings {zi}Ni=1 we com-pute asymmetric cone scores 
+
+sij = η · ω(zj ) − ϕ(zi, zj ), ˆsij = tanh  sij · softplus( β), (3) where η (init 1.5) and β (init 0) are learnable. The scores are mapped to a 
+
+P ×P patch-level bias ( P =576 ) through a soft IoU-based assignment A ∈ RP ×N
+
+and bilinear interpolation, B = AˆSA ⊤. During prefill, this bias is added to the LLM’s causal mask at image-patch positions. The property that matters for the suppression analysis is simple: B depends only on the image, not on the text. 6 Authors Suppressed Due to Excessive Length 
+
+Mechanism B: Gated prefix tokens. A hyperbolic Top-K gate selects the 
+
+K=4 relation embeddings closest in geodesic distance to a learnable query q ∈
+
+Lnκ , projects them to LLM dimension via Wp ∈ Rd×dllm , applies RMS normal-ization, and scales by tanh( γ) with γ (init 0) a learnable gate: 
+
+tk = tanh( γ) · RMSNorm  Wp ˜uk
+
+ · ∥¯e∥2
+
+∥RMSNorm( Wp ˜uk)∥2
+
+, (4) where ˜uk = (log κ 
+
+> o
+
+zik )1: n is the spatial part of the tangent vector of the k-th selected embedding and ¯e is the mean text embedding. The resulting tokens are inserted after the image patches. During training, prefix dropout ( p=0 .5)randomly zeros the prefix tokens. 
+
+Training setup. LLaVA-1.5-7B backbone with LoRA (rank 16, q_proj /v_proj ). Three optimizer groups: AdamW for LoRA ( 2×10 −5), Riemannian Adam [12] for the graph ( 10 −4), and vanilla Adam for κ (10 −4, no gradient clipping). Training runs on GQA train_balanced (∼82K samples) for 3–5 epochs. 
+
+Controls. We also train two prefix variants. The first is a soft prompt : the same gated-prefix architecture with randomly initialised learned embeddings, no geometric backbone, matched parameter count. The second is Euclidean : the same relational graph in flat space, with arithmetic means replacing Einstein midpoints and cosine angle replacing ϕ.
+
+4 The Suppression Phenomenon 
+
+Every configuration in which a learnable scalar controls the strength of an auxil-iary pathway ends up behaviourally closed : task accuracy is essentially invariant to ablating the pathway at inference. We use a behavioural definition throughout, since the parameter sign alone is misleading. Under a softplus( β) parameterisa-tion, β= − 0.58 still passes roughly 44% of the signal ( softplus( −0.58) ≈0.44 ); under a tanh( γ) parameterisation, γ= − 0.35 inverts the signal at ∼34% mag-nitude rather than closing it. Yet ablation (Table 1) leaves the LLM’s outputs unchanged in both cases: the model has learned to route around the pathway, not merely to shut it. We document five independent instances of this behavioural closure. 
+
+4.1 Five Demonstrations (S1) Attention bias, end-to-end ( αmax =0 .05 ): The bias scale β is initialised at 0 and trained jointly with the task and geometric losses. Over 5 epochs, β
+
+settles at −0.70 (softplus( −0.70) ≈0.41 , cone scores attenuated by more than half). GQA with bias: 58.05%; without: 57.98% ( ∆=0 .07 pp). The pathway is behaviourally closed even though the parameter is not. 
+
+(S2) Attention bias, reduced geometric weight ( αmax =0 .01 ): Weaker ge-ometric gradient interference. β settles at −0.58 . GQA reaches 60.16% on full The Gate Always Closes 7
+
+testdev (Table 3), essentially at the vanilla baseline, confirming that the interfer-ence, not the bias itself, was the problem. The +2pp SugarCrepe gain (75.73% vs. 73.69%) comes from LoRA regularisation, not from bias injection. 
+
+(S3) Compositional margin loss (Stage 2): LoRA frozen, only β trainable, margin loss on positive/negative caption pairs. β monotonically declines from 0 to −8.50 over 50K steps ( softplus( −8.50) ≈ 2×10 −4, pathway fully disabled). In contrast to S1–S2, here the pathway is closed in the strict parameter sense too; this is the only regime in which the behavioural and parametric definitions coincide. 
+
+(S4) Gated prefix, no dropout: Prefix tokens derived from the hyperbolic graph, gated by tanh( γ). γ settles at −0.35 (tanh ≈− 0.34 ). Behaviourally the pathway acts as an inverted low-magnitude signal, and ablation moves accuracy negligibly (Table 1). 
+
+(S5) Gated prefix, raw norms: Same as S4 without RMS normalization. Gate γ hovers near 0 throughout training (final: +0 .005 ). The gate is essentially inert; the signal is too large to let through and too structured to fully suppress. 
+
+4.2 First- vs. Second-Order Suppression Regimes 
+
+The five demonstrations exhibit qualitatively different suppression dynamics. S5 (raw prefix gate) stalls near zero throughout training; S3 (margin loss with LoRA frozen) monotonically dives to −8.5; S1, S2 and S4 sit between, drifting to modest negatives ( −0.35 to −0.70 ). Proposition 1 isolates the first-order discriminative gradient through the gate and shows that caption-invariance nulls it. The step from this vanishing gradient to a fixed point γ∗ ≈ 0 requires an additional assumption — that higher-order terms carry no systematic signal — which S3 falsifies: with LoRA frozen and β the only free parameter, β moves consistently for 50K steps, which cannot be gradient noise. First-order deadness therefore does not imply stalling, and we must distinguish two regimes. 
+
+Notation. Let fθ denote the LLM and let b(I) ∈ Rm be an image-derived auxiliary signal, entering the LLM through a scalar gate γ. We use the additive linearisation 
+
+h(I, c ; γ) ≈ h0(I, c ) + γ · g(b(I)) 
+
+as an idealisation of both injection paths (attention bias and prefix tokens); higher-order corrections in γ mediated by softmax and residual nonlinearities are what distinguish the two regimes below. 
+
+Proposition 1 (First-order gradient vanishes under caption-invariance). 
+
+Consider a pairwise scoring loss Lpair = max(0 , m − (s+ − s−)) where s+ =
+
+ℓ(h(I, c +; γ)) and s− = ℓ(h(I, c −; γ)) . If b(I) is caption-invariant ( ∂b/∂c = 0 ), then to first order in γ:
+
+∂(s+ − s−)
+
+∂γ γ=0 
+
+=
+
+ ∂ℓ ∂h c+
+
+− ∂ℓ ∂h c−
+
+
+
+· g(b(I)) . (5) 
+
+The margin s+ − s− changes with γ at first order only to the extent that ∂ℓ/∂ h
+
+differs between captions at the hidden-state positions where g(b(I)) is non-zero. 8 Authors Suppressed Due to Excessive Length                             
+
+> Table 1: Behavioural closure: task accuracy with vs. without the auxiliary pathway at inference (attention bias zeroed for S1–S2, prefix tokens dropped for S4–S5; S3 has no active pathway at inference by design). Every |∆|≤ 1.3pp; S5’s negative ∆shows the learned pathway is worse than no injection. Full-testdev for S1; 2,000-question subset for S2, S4, S5.
+> Config Gate/scale With (%) Without (%) ∆(pp)
+> S1 (Attn bias, α=0 .05 )β=−0.70 58.05 57.98 +0 .07
+> S2 (Attn bias, α=0 .01 )β=−0.58 60.40 60.65 −0.25
+> S3 (Margin, LoRA frozen) β=−8.5inactive by design —S4 (Prefix, no dropout) γ=−0.35 59.40 60.05 −0.65
+> S5 (Raw prefix gated) γ=+0 .005 59.35 60.60 −1.25
+
+For attention biases operating on image-patch self-attention (positions disjoint from caption tokens), this difference is a higher-order effect mediated by cross-attention, and the first-order component of EI [∂Lpair /∂γ ] is dominated by noise. 
+
+The proposition tells us the first-order discriminative term vanishes. Whether the gate stalls or dives depends on the second-order (mediated) term. 
+
+Regime A — first-order dead + second-order noise ⇒ stall (S5-like). 
+
+When higher-order effects of the perturbation on the loss average to noise across images, the total gradient is unbiased and the optimiser drifts without direction. S5 exhibits this signature: γ hovers near zero for the entire training run and ends at +0 .005 .
+
+Regime B — first-order dead + second-order systematic ⇒ dive (S3). 
+
+When the perturbation systematically hurts the loss (because b(I) pushes the LLM’s internal representations away from margin-maximising directions), the second-order gradient acquires a consistent sign that drives γ toward its magnitude-zero limit. Under a softplus parameterisation ( softplus( β) → 0 as β → −∞ ), that limit is unbounded, producing the monotonic dive to −8.5 observed in S3. For-mally characterising this regime requires an explicit second-order expansion of the loss around γ=0 that we do not pursue here. 
+
+S1, S2, S4 sit in an intermediate regime. Under the task cross-entropy (single caption, not a margin), the first-order gradient through γ need not vanish; suppression instead reflects a mild second-order preference of the task loss for 
+
+|γ| small. Consistent with this, S1 and S2 settle at modest negatives ( −0.70 
+
+and −0.58 ) rather than diving, and behavioural ablation of the pathway leaves accuracy essentially unchanged (Table 1). The +2pp SC gain in S2 comes from LoRA regularisation during training (Sec. 6), not from the bias at inference. 
+
+Behavioural ablations. For each configuration we ablate the auxiliary pathway at inference and measure the change in task accuracy (Table 1): every |∆| falls within 1.3pp, and four of five within ±0.5pp; in the S5 case ablation actually 
+
+improves accuracy, showing the learned prefix is worse than no injection. This is the operational content of “behaviourally closed”: the model’s output distribution treats the auxiliary pathway as noise. Full ablation details are in Supp. Table 2. The Gate Always Closes 90 20K 40K 60K 80K 100K 120K 140K 160K 
+
+> Training Step
+> −8
+> −6
+> −4
+> −2
+> 0
+> Gate / Scale Value
+> S1: Attention bias (α=0.05)
+> S2: Attention bias (α=0.01)
+> S3: Margin loss (β→-8.5)
+> S4: Prefix gate (no dropout)
+> S5: Raw prefix gate
+
+Fig. 2: Gate trajectories across the five con-figurations (training step on the x-axis, gate parameter on the y-axis). Two suppression regimes are visible: S5 stalls near zero, S3 drives monotonically to β → − 8.5. All five end-points are behaviourally closed (Table 1). 
+
+Table 2: 2×2 factorisation: norm treatment × gate. Each cell re-ports GQA testdev accuracy (2,000-question subset) and SugarCrepe av-erage. †Single-seed. ‡Gate converges to ∼0 (suppression), so this cell is approximately equivalent to the un-gated row; the no_dropout variant (gate → − 0.35 ) gives a noisy proxy. 
+
+> §
+
+GQA on the 2,000-question subset for consistency across cells; full-testdev RMS/None is 60.75% (Table 3).           
+
+> Norm Gate GQA (%) SC avg (%)
+> Raw ( L2∼24 .6) None (forced) 34.75 79.94
+> Raw ( L2∼24 .6) Tanh (init 0) 59.35 76.18 RMS (matched) None (forced) 60.70 §74.78 RMS (matched) Tanh (init 0) ∼60 ‡∼74 ‡
+
+4.3 Gradient Flow Analysis: Prefix vs. Attention Bias 
+
+The two injection mechanisms differ in how gradients from the task loss reach the auxiliary parameters. For attention bias , the bias B ∈ RP ×P is added to the pre-softmax scores QK ⊤/√dh of every attention head at every layer. The gradient ∂Ltask /∂β flows through the softmax Jacobian of all 32 layers × 32 heads, creating direct coupling between the bias scale and the LoRA parameters. We attribute the GQA degradation in S1 (58.05% vs. 60.38% baseline) to this coupling: the task-loss gradient through the bias scale interferes with LoRA optimisation. Reducing αmax (S2) or detaching B from the backward pass both recover GQA, confirming the gradient-interference mechanism. For prefix tokens , the signal enters as additional input embeddings. The task-loss gradient flows through the prefix projection Wp but does not directly modulate the attention mask. The gradient path to LoRA runs through the LLM’s attention weights acting on the prefix embeddings, providing an indirect coupling. Consistent with this weaker coupling, prefix-based training with the same geometric losses has been reported to reach 61.03% GQA on full testdev [4]. 
+
+5 Norm Mismatch and the Engineering Fix 
+
+When prefix tokens are derived from a hyperbolic manifold and projected into LLM embedding space, the resulting embeddings can carry L2 norms very far from those of the pretrained text embeddings. In an unnormalised configuration reported by [4], the raw prefix embeddings sit at L2∼24 .6 while text embeddings sit at L2∼0.68 , a 36 × gap , and generative VQA accuracy in that configuration is reported at 35% relative to a 60% baseline [4]. We attribute this shift to 
+
+residual-stream dominance , not to attention-softmax saturation. 10 Authors Suppressed Due to Excessive Length 
+
+Why softmax saturation is not the mechanism. LLaMA-style transform-ers apply RMSNorm to hidden states before each block’s Q/K/V projections: 
+
+h′ = RMSNorm( h), then k = Wkh′. Since RMSNorm equalises per-token key magnitudes at every layer regardless of the initial embedding norm, a 36 × input-embedding gap does not translate into a 36 × key-norm gap at the softmax, and attention weights therefore cannot saturate through this channel alone. 
+
+Residual-stream dominance. The mechanism that survives the pre-norm ar-chitecture is the residual pathway. Each layer computes 
+
+hℓ+1 = hℓ + Fℓ(RMSNorm( hℓ)) ,
+
+where the block outputs Fℓ(·) are bounded by softmax and MLP nonlinearities. When h0 at a prefix position is 36 × larger than at text positions, the residual 
+
+hℓ at that position stays prefix-dominated for all subsequent layers: pre-norm rescales what enters the block but cannot subtract the residual. The unembed-ding then reads out an output distribution whose direction is skewed by the prefix subspace at every position that attends to prefix tokens, breaking autoregressive coherence. 
+
+Why raw prefix helps compositional scoring while hurting generation. 
+
+The paradox in Table 3 — raw prefix gains +6pp on SugarCrepe but loses 
+
+25 pp on GQA generation — is resolved by this account. Log-likelihood scoring compares two captions conditioned on the same image-prefix pair; the residual-dominance bias is largely shared between the two conditions and cancels, leaving the compositional signal carried by the prefix direction intact. Autoregressive generation, by contrast, needs accurate next-token logits in absolute terms, which residual-stream skew disrupts. 
+
+5.1 The Fix: RMS Normalization 
+
+We apply the same RMSNorm-and-text-mean rescaling used inside the prefix definition (Eq. 4), applied post-projection to every prefix token so that the re-sulting L2-norm distribution tracks the text embeddings. 
+
+5.2 2×2 Factorisation 
+
+To disentangle the contributions of norm matching and gating, we run a factorial design over the two treatments (Table 2, displayed alongside Fig. 2). Reading the table by column isolates each factor. The transition from raw to RMS norms (left column) recovers generation quality, while compositionality falls because the normalised prefix no longer dominates the attention distribution. The right column shows that adding a learnable gate on top of either norm treatment leads to suppression (raw: gate → +0 .005 , effectively dead; RMS: gate → − 0.35 ,actively inverted). 
+
+6 Experimental Results 
+
+Table 3 presents the full comparison across injection mechanisms and signal sources. The Gate Always Closes 11 0.0 0.2 0.4 0.6 0.8 1.0 1.2             
+
+> L2 norm
+> 0
+> 50
+> 100
+> 150
+> 200
+> 250
+> 300
+> 350
+> Count  GQA Accuracy:
+> Text: 60.38%
+> RMS: 60.75%
+> Raw: 34.75%
+> RMS Normalization Works
+> Text ( =0.68)
+> RMS prefix ( =0.66)
+> 10 110 010 1
+> L2 norm (log scale)
+> 0
+> 200
+> 400
+> 600
+> 800
+> Count
+> Raw Prefix Problem
+> Text ( =0.68)
+> RMS ( =0.66)
+> Raw ( =24.56)
+> 36× gap
+
+Fig. 3: L2 norm distributions for text embeddings vs. raw and RMS-normalised prefix tokens. Raw prefixes carry 36 × the text-embedding norm, which dominates the resid-ual stream and breaks autoregressive generation; RMS normalization aligns the two distributions and restores generation quality. 
+
+Table 3: Main results on GQA testdev (12,578 questions, full set) and SugarCrepe (7,514 samples). Gate: end-of-training value ( tanh applied). SC: SugarCrepe 7-category average. Bold: best in column among our configurations. Raw prefix row: values from [4], reference only. Winoground group scores at chance (16.75–19.75% vs. 16.67% chance) for all configurations; omitted here, full numbers in supplementary. 
+
+Method Gate GQA SC avg Key finding 
+
+LLaVA-1.5-7B vanilla — 60.38 73.69 Baseline + LoRA only (no geo. loss) — 57.21 74.98 LoRA degrades w/o regularisation + Raw prefix [4] — 34.75 79.94 Reported values; unnormalised prefix regime + Attn. bias (small α) −0.58 60.16 75.73 Bias behaviourally closed + RMS prefix, ungated forced 60.75 74.78 Norm-matched, generation-safe + Soft prompt (no geometry) −0.20 59.90 77.00 Strong SC, no geometry needed + Euclidean, gated +0 .19 59.15 76.56 Gate opens, GQA drops + Raw prefix, gated +0 .005 59.35 76.18 Gate essentially inert + Hyp. prefix, no geo. losses (G2) −0.31 59.59 78.84 Ablation: geo. losses trade SC for rel + Synthesis (geo loss + soft prompt) −0.20 60.07 77.45 Aggregate SC best but rel drops (Sec. 6.1) 
+
+Aggregate compositionality peaks at the two “no-geometric-loss” con-figurations. The two highest SugarCrepe averages come from the Hyp. prefix run with geometric losses stripped (G2, 78.84%) and from the synthesis con-figuration that infers with a soft prompt (77.45%). Both sit above the pure soft prompt (77.00%) and above every fully-geometric variant (74.78–76.18%). Ranked on aggregate SC alone, the geometric losses appear to hurt composition by ∼4pp for the hyperbolic prefix architecture. We defer the resolution of this apparent puzzle to Sec. 6.1, where disaggregating by question type shows that the geometric losses trade SC average for GQA-rel accuracy, a trade that inverts the sign of the “best” judgement. 
+
+Norm-matched prefixes preserve generation. With RMS normalization, GQA accuracy with prefix tokens present reaches 60.75% on full testdev, com-parable to the 60.38% baseline without any prefix. Without normalization, the same prefix configuration yields 34.75%. We attribute the difference to the em-bedding norm mismatch analysed in Section 5. 
+
+Every gated variant suppresses the gate. The attention bias β settles at 
+
+−0.58 , the soft-prompt gate at −0.20 , and the raw-prefix gate at +0 .005 (dead). The single partial exception is the Euclidean gated variant ( γ = +0 .19 ), whose 12 Authors Suppressed Due to Excessive Length GQA-rel GQA-attr      
+
+> 45
+> 50
+> 55
+> 60
+> 65
+> 70
+> Accuracy (%)
+> +3.08 pp
+> Relational Attribute
+> Vanilla Soft Prompt Euclidean Attn Bias RMS Prefix
+
+Fig. 4: GQA accuracy on relational vs. attribute questions across configura-tions. Error bars are 95% bootstrap CIs. Soft-prompt shows a rel-for-attr trade-off; geometric configurations avoid it. 
+
+GQA drops to 59.15%; the gate opens, but at a measurable cost to generation quality — an instance of the negative-utility regime discussed in Sec. 4. 
+
+On overall compositionality, soft prompts match or exceed geome-try. Soft prompts (77.00% SC) score above every geometric injection variant. Since the soft-prompt variant carries no geometric backbone (just randomly initialised learned embeddings behind a tanh gate), we read the aggregate com-positionality gains associated with geometric prefix injection [4] as arising from two mechanisms that do not require the geometric content itself: the geomet-ric losses regularising LoRA weights during training, and the prefix embedding magnitude driving the model to attend to the injected tokens. However, once we disaggregate by question type, a different picture emerges (Sec. 6.1). Per-category SugarCrepe numbers (Supp. Fig. S1, Supp. Table S2) show that the attention-bias variant peaks on Add-Object ( +2 .82 pp) and Add-Attribute (+2 .46 pp) — consistent with the hierarchical containment signal from the en-tailment cones — while the soft-prompt control still attains the highest average despite carrying no geometric backbone. The category-level story is what the next subsection resolves. 
+
+6.1 A Task-Selectivity Dissociation: Soft Prompts Trade, Geometry Preserves 
+
+The aggregate SugarCrepe comparison masks a task-specific dissociation that surfaces once we disaggregate GQA by semantic question type. GQA’s testdev labels each question with a semantic category; we focus on rel (relational, 5,308 questions probing spatial and inter-object reasoning) and attr (attribute, 5,186 questions probing object properties). Table 4 reveals a clean three-tier dissociation. The three configurations with-out geometric losses at inference — soft prompt, Euclidean, and Hyp. prefix with the geometric losses removed (G2) — all sit 2.85–3.39pp below vanilla on rela-tional questions. Synthesis, which trains with geometric losses but infers with a soft prompt, drops further ( −5.14pp); training-time supervision alone does not protect relational accuracy once the inference-time pathway is a pure soft prompt. The two configurations with geometric losses at inference (Attn. bias, RMS prefix) preserve vanilla-level relational accuracy within CI. Of the four unpaired CI comparisons between the geometric and no-geo configurations, two are disjoint (RMS-prefix vs. soft prompt / Euclidean) and two overlap slightly (<0.5pp; Attn. bias vs. soft prompt / Euclidean); we treat CI-disjointedness as The Gate Always Closes 13 
+
+Table 4: GQA accuracy disaggregated by semantic question type. Bootstrap 95% CIs (n=1 ,000 resamples) in brackets. ‡G2 = hyperbolic-prefix recipe with geometric losses removed.                                  
+
+> Method GQA-rel (%) GQA-attr (%)
+> (n=5,308) (n=5,186) LLaVA-1.5 vanilla 52.94 [51.58, 54.33] 66.12 [64.77, 67.45]
+> + Soft prompt (no geo.) 50.09 [48.79, 51.47] 67.18 [65.93, 68.47]
+> + Euclidean, gated 49.64 [48.32, 51.02] 67.05 [65.81, 68.30]
+> + Hyp. prefix, no geo. (G2) ‡49.55 [48.25, 50.89] 67.12 [65.89, 68.38]
+> + Synthesis (geo + soft prompt) 47.80 [46.44, 49.12] 66.35 [65.10, 67.61]
+> + Attn. bias (small α)52.32 [50.98, 53.67] 67.61 [66.31, 68.88]
+> + RMS prefix, ungated 53.17 [51.88, 54.58] 67.41 [66.18, 68.68]
+
+suggestive rather than definitive here, and defer a paired-bootstrap test on the shared 5,308 questions to future work. The rel-for-attr trade is small in abso-lute terms ( ∼1pp attribute gain in exchange for ∼3pp relational loss for the three no-geo configurations), but the sign is consistent and the geometric-loss configurations avoid it. The G2 ablation (Hyp. prefix, no geometric losses; rel 49.55%) is diagnostic. It isolates the contribution of the geometric losses from that of the hyperbolic architecture and dropout schedule. Stripped of the losses, the hyperbolic pre-fix behaves like soft-prompt and Euclidean on relational accuracy, confirming that the losses — not the hyperbolic forward-pass structure alone — carry the rel-preservation effect. Synthesis (rel 47.80%) sits below even the other no-geo configurations, so training-time geometric supervision is not sufficient to protect relational accuracy when the inference-time pathway is a pure soft prompt: the regularisation acts through the coupled forward pass, not through the loss signal alone. The same dissociation inverts the aggregate SugarCrepe picture. G2 (78.84%) and Synthesis (77.45%) achieve the highest SC averages by concentrating capac-ity on the attribute-heavy 5-of-7 SugarCrepe subcategories — the same tier that gains on GQA-attr. The geometric-loss configurations spend that capacity on relational preservation instead. On a benchmark that weights relational under-standing, they win; on one that averages attribute-dominated categories, they lose. 
+
+On Winoground. Winoground group scores span 16.75–19.75% across all seven of our configurations, essentially at the 16.67% chance-level for the group metric. Winoground therefore does not discriminate between the methods in our study and is omitted from Tables 3 and 4; full per-model group/image/text scores are reported in the supplementary material. This near-chance behaviour is consistent with LLaVA-1.5-7B’s published Winoground performance and with the known text-only-bias issues of the benchmark [3]. 
+
+Out-of-distribution check on VSR. To probe whether the trade-off pat-tern generalises beyond GQA, we evaluate on Visual Spatial Reasoning [13] (VSR): 2,195 statements about spatial relations between objects in natural im-ages, scored by comparing log P (Yes | I, c ) vs. log P (No | I, c ). VSR is entirely 14 Authors Suppressed Due to Excessive Length 
+
+Table 5: VSR accuracy ( n=2 ,113 successfully scored; 82 image-load errors excluded uniformly). Out-of-distribution binary yes/no evaluation; no configuration saw VSR images or format during training.            
+
+> Method VSR (%)
+> LLaVA-1.5 vanilla (no fine-tuning) 66.21
+> + RMS prefix, ungated (hyperbolic + geo losses) 60.01
+> + Synthesis (geo loss + soft prompt) 56.08 + Soft prompt (no geometry) 56.03 + Hyp. prefix, no geo. losses (G2) 55.37 + Attn. bias (small α+ geo losses) 54.52
+
+out-of-distribution: none of our fine-tuned configurations saw its images, cap-tions, or binary-classification format during training. Table 5 reports the results. Four observations follow. First, every fine-tuned configuration loses 6–12pp to the vanilla baseline. This is expected, since VSR uses a different task for-mat (binary yes/no) and a different image distribution (COCO), and LoRA fine-tuning on GQA visibly narrows the model’s out-of-distribution range. The trade-off framing of Table 4 is a within-fine-tuned-regime claim, not an absolute claim over vanilla; VSR makes the boundary of that claim explicit. Second, only the hyperbolic-prefix configuration with geometric losses survives the distribu-tion shift: at 60.01% it exceeds all other fine-tuned configurations by 4–5.5pp. Third, removing the geometric losses from that configuration — the G2 ab-lation — collapses VSR accuracy to soft-prompt level (55.37% vs. 56.03%), a 4.6pp drop that isolates the geometric-loss contribution from the architecture alone. Together with Table 4, this pins the OOD spatial signal to the geometric losses in the coupled forward pass, not to the architecture and not to training-time regularisation alone. Fourth, the hyperbolic-attention-bias configuration sits at 54.52% on VSR, 1.5pp below soft-prompt (56.03%). The gap is within noise and does not itself distinguish the two mechanisms, but combined with the in-distribution behavioural closure of the attention-bias pathway (Sec. 4) it is consistent with the attention-bias mechanism not benefiting from the geometric losses at inference. Fig. 5 corroborates the containment-hierarchy interpretation. Soft-prompt fail-ures on the left cluster on prepositional/containment relations (“on”, “inside”, “behind”) — categories a purely task-driven prompt has no reason to acquire the correct inductive bias for. The Poincaré projection on the right shows the ex-pected topology: broad scene-level nodes near the origin, specific instance nodes toward the boundary, with cone apertures decreasing with specificity, the struc-ture the entailment loss is trained to enforce. 
+
+6.2 Forward Coupling Regularises LoRA 
+
+The geometric losses (entailment, angular repulsion) act as a structural regu-lariser for LoRA, but only when the bias participates in the forward pass. Two coupling comparisons and one ablation isolate the contribution. The Gate Always Closes 15 Q.  What do you                                          
+
+> think is in front of
+> the man that is
+> wearing a shoe? Q. What is this house
+> sitting beside? Q. What hangs on the
+> beige wall? Q. What is located
+> on top of the mud? GT GT GT GT Vanilla Soft RMS toaster toaster toaster oven toaster Vanilla Vanilla Vanilla Soft Soft Soft RMS RMS RMS mirror mirror mirror shower curtain motorcycle motorcycle bench bench net net fench fench Input Image
+> 012345
+> 678910 11
+> 12 13 14 15 16 17
+> 18 19 20 21 22 23
+> 24 25 26 27 28 29
+> 30 31 32 33 34 35
+> 1.0 0.5 0.0 0.5 1.0
+> PCA Dim 1
+> 1.0
+> 0.5
+> 0.0
+> 0.5
+> 1.0
+> PCA Dim 2
+> Poincaré Disk Projection
+> 01
+> 2
+> 34567
+> 8
+> 910 11
+> 12 13 14
+> 15
+> 16
+> 17 18
+> 19 20
+> 21
+> 22
+> 23
+> 24
+> 25
+> 26 27
+> 28 29
+> 30
+> 31 32
+> 33
+> 34 35
+> =0.0707
+> =0.2185
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+
+Fig. 5: Left: GQA relational questions where soft-prompt tuning fails and the ge-ometric model succeeds. Failures cluster on spatial and containment queries — the very failure mode the entailment-cone structure of the geometric losses is designed to prevent. Right: Poincaré disk projection of the learned Lorentz manifold. Wider en-tailment cones near the origin correspond to more general regions (e.g., “room”, “field”); specific objects (e.g., “table”, “horse”) sit near the boundary, reflecting the IoA-driven spatial hierarchy learnt from containment cues. 
+
+Table 6: Forward coupling for LoRA regularisation. Rows 1–4 share the geometric losses; G2 removes them. Rows 1–2 on the 2,000-question subset (SE ≈1.1pp); rows 3–5 on full testdev. ∗LoRA-only eval, prefix dropped at inference. ∗∗ Same, for the RMS-prefix model. 
+
+Coupling mode GQA (%) SC avg (%) 
+
+No coupling (frozen bias, geo losses on) 58.35 75.22 Forward only (detach bias, geo losses on) 60.10 75.08 Forward + gradient (raw prefix, geo losses on) [4] 61.03 ∼74 ∗
+
+Forward, forced (RMS prefix, geo losses on) 61.25 ∗∗ 74.78 Forward, forced, no geo. losses (G2) 59.59 78.84 
+
+A companion visualisation of the gate trajectories, contrasting the five sup-pressed gates with the one variant (Euclidean) whose gate stays positive at a measurable GQA cost, is provided in the supplementary (Supp. Fig. S2). The frozen → detach transition ( +1.75pp GQA) shows that the bias must participate in the forward pass for LoRA to benefit. Without forward coupling, the geometric losses alone provide only a modest gain over LoRA-only training (58.35% vs. 57.21%, +1.14pp), roughly at the noise floor of single-seed evaluation and considerably weaker than the coupled configurations. The G2 ablation in the last row removes the geometric losses from the forward-coupled recipe and lands at 59.59% GQA and 78.84% SC. Read against RMS prefix (61.25% GQA, 74.78% SC), the geometric losses buy +1.66pp GQA at a cost of −4.06pp SC average. Combined with the GQA-rel disaggregation of Table 4 and the VSR result of Table 5, we attribute this pattern to the geometric losses trading aggregate attribute-heavy compositionality for relational preservation and OOD spatial signal, which is the trade one would expect from IoA-driven entailment losses that shape the embedding geometry around spatial containment. 16 Authors Suppressed Due to Excessive Length 
+
+6.3 Generation Safety: Hallucination and Fluency 
+
+Since the RMS-prefix configuration is proposed as a generation-safe alternative to raw prefix injection, we ask how “safe” it actually is on two standard generation-side benchmarks: POPE (yes/no object-existence probing on COCO images, 3 subsets × 3,000 questions each) and COCO captioning on val2017 (5,000 images, standard n-gram and semantic metrics). Per-configuration POPE (random/popular/adversarial) and COCO-captioning numbers (BLEU-4, METEOR, CIDEr) are given in Supp. Table S3. Two observations follow. The RMS-prefix configuration loses 1–2pp of POPE accuracy relative to vanilla (adversarial 82.30 vs. 83.40), which is the real cost of norm-matched injection at inference. Meanwhile, the same configuration sits closest to vanilla on every captioning metric (CIDEr 1.096 vs. 1.132, a 3% drop; BLEU-4 essentially tied), while soft-prompt tuning gives up substantially more captioning quality (CIDEr 0.987, −13%). We therefore refine the “generation-safe” framing: the RMS-prefix configuration preserves fluency and lexical faith-fulness best among the fine-tuned variants, at the cost of a small hallucination penalty. Soft-prompt training shows the mirror image, with the least hallucina-tion but the worst captioning quality. 
+
+7 Conclusion 
+
+Geometric losses regularise LoRA via forward coupling with a task-selectivity dissociation. Hyperbolic entailment and angular losses regularise LoRA fine-tuning through forward coupling: three no-geometric-loss configu-rations lose 2.85–3.39pp on GQA-rel and a fourth that trains with the losses but infers through a soft prompt loses 5.14pp, whereas configurations that keep the geometric pathway at inference preserve vanilla-level relational accuracy. The trade is against attribute-heavy aggregate SugarCrepe ( −4pp), but out-of-distribution on VSR the G2 ablation collapses accuracy by 4.6pp, pinning the OOD spatial signal to the geometric losses in the coupled forward pass rather than to the architecture or to training-time regularisation alone. 
+
+Suppression phenomenon and norm alignment. We identified the sup-pression phenomenon and separated its two regimes: a dead-gradient regime formalised by caption-invariance (Proposition 1) and a negative-utility regime that drives gates monotonically to large negatives. The mechanism generalises: any auxiliary pathway controlled by a learnable gate under a task loss that does not directly reward the pathway’s contribution — adapters, side-networks, external-memory injection — is subject to closure. The practical implication is to inject beneficial signals non-optionally, with norm alignment done correctly, rather than delegate to a gate the optimiser will close. We establish RMS nor-malisation to the text-embedding scale as the fix for prefix injection, at a small 1–2pp POPE hallucination cost. 
+
+Limitations. Our claims come with several caveats. Results are on a single back-bone (LLaVA-1.5-7B) fine-tuned on GQA only, and several ablations are single-seed; Proposition 1 formalises only the first-order suppression regime, while the The Gate Always Closes 17 
+
+second-order dive of S3 remains descriptive; the trade-off avoidance corroborates OOD only for the hyperbolic-prefix configuration on VSR; and CI comparisons in Table 4 are unpaired, with a paired-bootstrap test on the shared 5,308 questions deferred to future work. Supp. Sec. 9 discusses each in detail. 
+
+Future work. Since caption-invariance is what nulls the first-order gradient, a natural direction is text-coupled injection whose contribution to the hidden states depends on the caption being processed. A formal second-order expan-sion of the loss around γ=0 would close the gap between the dead-gradient and negative-utility regimes; extension to other adapter families, other VLM back-bones and scales, and other geometries would test the generality of both the regularisation and suppression findings. Extended discussion is in Supp. Sec. 8. 
+
+References 
+
+1. Dalal, H.S., Kashiani, H., Afghah, F.: Constructive distortion for vision-language models via attention-guided image warping. In: ICLR (2026) 3, 20 2. Desai, K., Nickel, M., Rajpurohit, T., Johnson, J., Vedantam, R.: Hyperbolic image-text representations. In: ICML (2023) 3, 20 3. Dumpala, S.H., et al.: SugarCrepe++: Fixing compositionality benchmarks with hard positives. In: NeurIPS D&B (2024) 3, 13, 20 4. Farazi, M., Ramasinghe, S., Turza, M.A., Rahman, S.: HyperVis: Continuous latent visual relational graphs on the Lorentz hyperboloid for compositional reasoning. arXiv:2606.06100 (2026) 2, 3, 4, 9, 11, 12, 15, 20, 27 5. Ganea, O.E., Bécigneul, G., Hofmann, T.: Hyperbolic entailment cones for learning hierarchical embeddings. In: ICML (2018) 3, 4, 20 6. Gao, P., Han, J., Zhang, R., et al.: LLaMA-Adapter V2: Parameter-efficient visual instruction model. arXiv:2304.15010 (2023) 3, 19 7. He, M., et al.: Hyperbolic deep learning for foundation models: A survey. SIGKDD (2025) 3, 20 8. Herzig, R., et al.: Incorporating structured representations into pretrained vision & language models using scene graphs. In: EMNLP (2023) 3, 20 9. Hsieh, C.Y., Zhang, J., Ma, Z., et al.: SugarCrepe: Fixing hackable benchmarks for vision-language compositionality. In: NeurIPS (2023) 3, 20 10. Jain, N., Chiang, P.y., Wen, Y., Kirchenbauer, J., Chu, H.M., Somepalli, G., Bar-toldson, B.R., Kailkhura, B., Schwarzschild, A., Saha, A., Goldblum, M., Geiping, J., Goldstein, T.: NEFTune: Noisy embeddings improve instruction finetuning. In: ICLR (2024) 3, 20, 28 11. Jia, M., Tang, L., Chen, B.C., et al.: Visual prompt tuning. In: ECCV (2022) 3, 19 12. Kochurov, M., Karimov, R., Kozlukov, S.: Geoopt: Riemannian optimization in PyTorch (2020), https://github.com/geoopt/geoopt 6, 23 13. Liu, F., Emerson, G., Collier, N.: Visual spatial reasoning. Transactions of the Association for Computational Linguistics 11 , 635–651 (2023) 13 14. Liu, H., Li, C., Li, Y., Lee, Y.J.: Improved baselines with visual instruction tuning. In: CVPR (2024) 1 15. Mishra, S., Saenko, K., Saligrama, V.: SCRAMBLe: Preference-tuned vision-language models for visio-linguistic compositionality. In: ICCV (2025) 3, 20 16. Mitra, C., Huang, B., Darrell, T., Herzig, R.: Compositional chain-of-thought prompting for large multimodal models. In: CVPR (2024) 3, 20 18 Authors Suppressed Due to Excessive Length 17. Nickel, M., Kiela, D.: Poincaré embeddings for learning hierarchical representa-tions. In: NeurIPS (2017) 3, 20 18. Pal, A., et al.: Compositional entailment learning for hyperbolic vision-language models. In: ICLR (2025) 3, 20 19. Peng, L., Xu, M., Liu, C., Yang, Y., Shen, Z.: Efficient training in hyperbolic space for multi-modal large language models. In: NeurIPS (2025) 3, 20 20. Press, O., Smith, N.A., Lewis, M.: Train short, test long: Attention with linear biases enables input length generalization. In: ICLR (2022) 3, 20 21. Ramasinghe, S., Khan, S., Barnes, N., et al.: Accept the modality gap: An explo-ration in the hyperbolic space. In: CVPR (2024) 2, 3, 4, 5, 20 22. Su, J., Lu, Y., Pan, S., Murtadha, A., Liu, B., Liu, Y.: RoFormer: Enhanced transformer with rotary position embedding. Neurocomputing (2024) 3, 20 23. Thrush, T., Jiang, R., Bartolo, M., et al.: Winoground: Probing vision and language models for visio-linguistic compositionality. In: CVPR (2022) 3, 20 24. Ungar, A.A.: Analytic Hyperbolic Geometry: Mathematical Foundations and Ap-plications. World Scientific (2005) 5, 21 25. Wang, H., et al.: Enhancing visual grounding and generalization: A multi-task learning approach with scene graph expressions. In: ICASSP (2025) 3, 20 26. Wu, Y., et al.: FlashBias: Fast computation of attention with bias. In: NeurIPS (2025) 3, 20 27. Yang, C., et al.: Scene graph thinking: Reinforcing structured visual reasoning for multimodal large language models. In: ICML (2026) 3, 20 28. Yüksekgonul, M., Bianchi, F., Kalluri, P., Jurafsky, D., Zou, J.: When and why vision-language models behave like bags-of-words, and what to do about it? In: ICLR (2023) 3, 20 Supplementary Material: “The Gate Always Closes: On Injecting Auxiliary Signals into Frozen Vision-Language Models” 
+
+Moshiur Farazi 1, Sameera Ramasinghe 2, Bekir Sait Ciftler 1, Mahbub Ahmed Turza 3, and Shafin Rahman 3 
+
+> 1
+
+University of Doha for Science and Technology, Doha, Qatar  
+
+> 2
+
+Pluralis Research, Australia  
+
+> 3
+
+North South University, Dhaka, Bangladesh 
+
+This document supplements the main paper. Section, figure, and table numbers are prefixed with S; citations use the same bibliography as the main paper. The sections below are ordered to mirror the main paper’s flow, so a reader who wants to expand any specific claim can find its supplement in the same reading order. 
+
+Guide to the Supplementary. Supplementary section Extends this part of the main pa-per 
+
+1: Extended Related Work Section 1 (Introduction), positioning paragraph 2: Extended Geometric Primitives Section 2 (Experimental Vehicle), Sec. 2.1–2.2 3: Training and Compute Details Section 2.4 (Training setup) 4: Behavioural Ablations of the Auxiliary Pathway Section 3 (Suppression Phenomenon), Table 1 of main 5: Gate Trajectories During Training Section 3.2 and Fig. 2 of main 6: Per-Category SugarCrepe Breakdown Section 5 (Experimental Results), the SC average line 7: Generation-Side Evaluation (POPE, COCO) Section 5.3 (Generation Safety) 8: Extended Discussion Section 6 (Conclusion), tail pointer 9: Limitations Section 6 (Conclusion), the Limitations sentence 
+
+1 Extended Related Work 
+
+The Introduction of the main paper lists the six threads closest to this work in one paragraph and points here for the fuller treatment. This section expands each thread and positions our contribution against it. 
+
+Prefix and prompt tuning. VPT [11] introduced learned prefix tokens for vision transformers, and LLaMA-Adapter [6] carried the idea into LLM layers 20 Authors Suppressed Due to Excessive Length 
+
+with zero-initialised gating. In both cases the prefix content is learned end-to-end via backpropagation through the frozen backbone. Different to these works, we ask what happens when the prefix content is derived from a structured external computation — here a geometric relational graph — rather than shaped by the task gradient itself. We find that the structured pathway is reliably suppressed under a task-only loss. 
+
+Auxiliary signal injection in VLMs. A growing body of work attaches scene-graph generators and feeds predicate triplets as text [8,16,25], injects visual rela-tion encodings as prefix tokens [4], or modulates attention weights with structural biases. Yang et al . [27] instead use scene graphs as reinforcement signals. These efforts differ in what they inject, but a common design assumption is that a well-shaped auxiliary signal will be consumed at inference. Our investigation spans two injection mechanisms (attention bias and prefix tokens) and characterises the conditions under which the pathways carrying that signal remain active or become suppressed. 
+
+Hyperbolic VLMs. Hyperbolic spaces embed hierarchical structure with low distortion [5, 7, 17]. MERU [2] introduced hyperbolic contrastive VLMs, and HyCoCLIP [18] extended this with compositional entailment. Ramasinghe et al . [21] showed that geodesic contrastive losses conflict with entailment cones and cause curvature collapse; our angle-based losses inherit this insight. HyperET [19] demonstrated efficient hyperbolic training for MLLMs. In our experiments the Lorentz manifold serves as the experimental vehicle for generating the auxiliary signal. The suppression and norm-mismatch findings, however, are mechanism-level rather than geometry-level, and would apply equally to any structured signal delivered through an analogous pathway. 
+
+Structured attention biases. ALiBi [20] and RoPE [22] inject position-dependent biases into attention, and FlashBias [26] provides efficient kernels for dense vari-ants. Dalal et al . [1] improve LLaVA’s compositionality through attention-guided image warping. Our attention-bias mechanism is a special case of this family, and the suppression finding applies to it directly. 
+
+Compositionality benchmarks. ARO [28], Winoground [23] and SugarCrepe [9] probe compositional understanding. SugarCrepe++ addresses known text-only biases in the original benchmark [3]. SCRAMBLe [15] reaches 54.8% Winoground group via preference tuning. Our evaluation uses SugarCrepe (7 subcategories) and Winoground; we note the known biases where they bear on the interpreta-tion. 
+
+Auxiliary noise as regularisation. NEFTune [10] showed that adding uni-form noise to input embeddings during instruction tuning improves downstream evaluation scores. This raises the possibility that part of the benefit attributed to structured auxiliary signals is captured by generic noise perturbation. We control for this confound with the fixed-random prefix baseline (G2) in the main paper’s results section. Supplementary Material 21 
+
+2 Extended Geometric Primitives 
+
+The main paper Sec. 2.1 uses several hyperbolic-geometry primitives (manifold, exponential map, entailment cone, central angle, Einstein midpoint) by name only. This section gives their explicit forms. 
+
+Lorentz manifold. The Lorentz model Lnκ is the upper sheet of the hyperboloid in (n+1) -dimensional Minkowski spacetime ( n=256 ): 
+
+Lnκ =
+
+
+
+p ∈ Rn+1 : ⟨p, p⟩L = − 1
+
+κ , p 0 > 0
+
+
+
+, (1) where the Lorentzian inner product is ⟨p, q⟩L = −p0q0 + Pni=1 piqi and κ > 0
+
+is the learnable curvature parameter (initialised at 1.0, clamped to [0 .1, 5.0] ). Tangent vectors at the origin have their time component fixed at v0 = 0 .
+
+Exponential map at the origin. The exponential map at o = ( p1/κ, 0, . . . , 0) ⊤
+
+sends a tangent vector v (with v0=0 ) to a manifold point: 
+
+exp κ
+
+> o
+
+(v) = cosh  √κ∥˜v∥ o + sinh( √κ∥˜v∥)
+
+√κ∥˜v∥ v, (2) followed by manifold projection p0 ← p1/κ + ∥˜p∥2, where ˜p = ( p1, . . . , p n)
+
+denotes the spatial coordinates. 
+
+Central angle. Two points p, q are separated by the central angle at the origin 
+
+ϕ(p, q) = arccos 
+
+ ⟨˜up, ˜uq⟩∥˜up∥ ∥ ˜uq∥
+
+
+
+, (3) where ˜up is the spatial part of log κ
+
+> o
+
+(p).
+
+Entailment cone half-aperture. Every point q ∈ Lnκ with ∥˜q∥ ≥ K defines an entailment cone with half-aperture 
+
+ω(q) = arcsin 
+
+ K
+
+∥˜q∥
+
+
+
+, K=0 .1. (4) The cone containment test ϕ(p, q) ≤ ω(q) is inherently asymmetric because dif-ferent points carry different apertures — points closer to the origin have larger 
+
+ω(q) and therefore contain more of the manifold, matching the intended seman-tics that general concepts contain specific ones. 
+
+Einstein midpoint (aggregation). Per-node embeddings are computed from per-edge relation tangents via the Einstein midpoint [24]. Denoting the manifold-mapped edge embeddings for node i as {zij }Nj=1 with time components γij =
+
+zij, 0, the weighted Minkowski sum is 
+
+zraw  
+
+> i
+
+=
+
+PNj=1 γij zij 
+
+PNj=1 γij 
+
+, zi = proj Lnκ
+
+ zraw 
+
+> i
+
+, (5) where the projection restores zi, 0 = p1/κ + ∥˜zraw  
+
+> i
+
+∥2. Weighting by the time component (rather than uniformly) is what distinguishes the Einstein midpoint 22 Authors Suppressed Due to Excessive Length 
+
+from a naive Minkowski average and is what preserves the hyperbolic geometry under aggregation. 
+
+Relative geometry encoding. The relative geometry between region proposals 
+
+i and j is encoded from centre offsets and log size ratios: 
+
+∆ij =
+
+h xi−xj 
+
+> wj
+
+, yi−yj 
+
+> hj
+
+, log wi 
+
+> wj
+
+, log hi
+
+> hj
+
+i
+
+∈ R4. (6) This four-dimensional per-pair feature is concatenated with the RoI-feature pair and fed into the spatially-biased multi-head self-attention that produces the dense relation tensor R ∈ RN ×N ×d.
+
+RMS text-mean rescaling. The prefix-token rescaling of the main paper’s Eq. (4) is, in fully explicit form, applied to any projected prefix token t ∈ Rdllm 
+
+as 
+
+ˆt = RMSNorm( t) · ∥¯e∥2
+
+∥RMSNorm( t)∥2
+
+, (7) where ¯e is the mean text embedding vector in the batch. The result is a prefix whose L2-norm distribution tracks that of the text embeddings. 
+
+Numerical stability notes. All the primitives above have edge cases that pro-duce NaNs under naive floating-point implementation. We clamp the tangent-vector norm to [10 −6, 5] before every exp map to avoid both underflow in sinh( ·)/∥˜v∥
+
+and overflow in cosh . The arccos argument in Eq. 3 is clamped to [−1+10 −6, 1−
+
+10 −6] to protect its derivative. The curvature κ is clamped to [0 .1, 5.0] per gradi-ent step; a hinge penalty Lκ = max(0 , 0.3−| κ|)2 discourages κ from approaching the lower bound, which would blow up the cone half-apertures. 
+
+3 Training and Compute Details 
+
+The main paper Sec. 2.4 sketches the training setup in one paragraph. This section gives the full recipe — hyperparameters, optimizer groups, compute cost — so an implementer can reproduce the reported numbers. 
+
+Optimizer group separation. The three optimizer groups matter for stability. Putting the LoRA weights and the hyperbolic-graph parameters under the same optimizer causes the graph to run at the LoRA learning rate ( 2 × 10 −5), which is 5 × too small for the geometric losses to converge within the training budget. Putting the curvature κ under Riemannian Adam causes it to over-shoot the 
+
+[0 .1, 5.0] interval because the Riemannian correction inflates its step size near the lower bound. Using a vanilla Adam for κ alone, without gradient clipping, was the setting under which κ reliably stabilised near its initialised value. 
+
+Compute cost. Every headline configuration was trained on 8 ×A100 80GB. End-to-end wall-clock times (training + full-testdev eval) were approximately: RMS-prefix ungated 14h, attention-bias configurations 9h each ( αmax affects gradient budget but not wall-clock), soft-prompt 8h (fewest active parameters), Euclidean 9h, G2 ablation 18h (longest because it inherits the RMS-prefix ar-chitecture without benefit of the geometric-loss regularisation, so more epochs were needed to converge), synthesis 12h. Full-testdev GQA evaluation is 45–60 Supplementary Material 23 
+
+Table 1: Full training recipe for the headline configurations. Values are shared across configurations unless noted. Per-configuration deltas (e.g., αmax for the two attention-bias runs, prefix dropout for the two prefix runs) are indicated inline in the main paper Sec. 3.1 demonstrations.                                                  
+
+> Group Setting
+> Backbone LLaVA-1.5-7B (frozen weights) LoRA rank 16 (query and value projections only) Optimizer (LoRA) AdamW, learning rate 2×10 −5, weight decay 0 Optimizer (graph) Riemannian Adam [12], learning rate 10 −4
+> Optimizer ( κ)Vanilla Adam, learning rate 10 −4, no gradient clipping Batch size (per GPU) 8Gradient accumulation 2 (effective batch 16 ×8 GPUs = 128 )Precision bfloat16 Training data GQA train_balanced ,≈82K samples Epochs 5 (3 for ablations, marked in captions) Warmup 100 steps linear ramp on α(t)from 0.001 to αmax
+> Manifold dimension n= 256
+> Number of region proposals N= 36
+> RoI feature dimension dv= 1024 (CLIP ViT-L, before projector) Prefix tokens (Mechanism B) K= 4
+> Prefix dropout p= 0 .5(except S4 which sets p= 0 )Cone half-aperture constant Kω= 0 .1(in Eq. 4) Curvature bounds κ∈[0 .1,5.0] , initialised at 1.0
+
+min per configuration on a single A100. VSR and Winoground evaluations are 
+
+<5 min each. COCO captioning on val2017 is ≈30 min per configuration with greedy decoding. 
+
+Reproducibility. Every configuration is a single training run under one fixed seed. This is a known limitation — see Sec. 9. Full checkpoints and evaluation scripts will be released at anonymised URL upon acceptance. 
+
+4 Behavioural Ablations of the Auxiliary Pathway 
+
+The main paper Sec. 3 (Suppression Phenomenon) argues that every learnable gated pathway in the five configurations S1–S5 is behaviourally closed — the model’s output distribution treats the auxiliary pathway as noise. Table 2 below reports the per-configuration numbers behind this claim: task accuracy with the pathway active versus removed at inference. All ablation deltas fall within 1.3pp, and four of the five within ±0.5pp. Ablating the pathway at inference does not restore compositional signal to the LLM; in the S5 case it improves accuracy, indicating that the learned prefix is worse than no injection at all. This is the operational content of “behaviourally closed”: the model’s output distribution has learned to treat the auxiliary path-way as noise, whether the gate parameter itself sits near zero (S3, S5) or at a value that would nominally pass a substantial fraction of the signal (S1, S2, S4). 
+
+What “ablation” means per mechanism. For attention-bias configurations (S1, S2), ablating means setting B to the zero matrix at inference; the LLM sees no additive bias on the image-patch causal mask, only the standard causal 24 Authors Suppressed Due to Excessive Length 
+
+Table 2: Behavioural ablations of the auxiliary pathway at inference. Task accuracy with the pathway active vs. removed (attention bias zeroed for S1–S2; prefix tokens dropped for S4–S5). Every |∆| sits within 1.3pp of no-op, and S5’s negative ∆ shows the pathway is worse than no injection — the operational meaning of behaviourally closed . S3 has no active pathway at inference (softplus (−8.5) ≈0), so ablation is a no-op.                         
+
+> Config Gate/scale With pathway Without pathway ∆
+> S1 (Attn bias, α=0 .05 )β=−0.70 58.05 57.98 +0.07 S2 (Attn bias, α=0 .01 )†β=−0.58 60.40 60.65 −0.25 S3 (Margin, LoRA frozen) β=−8.5(≈0)pathway inactive by design —S4 (Prefix, no dropout) †γ=−0.35 59.40 60.05 −0.65 S5 (Raw prefix gated) †γ=+0 .005 59.35 60.60 −1.25
+> †
+
+Reported on a 2,000-question testdev subset; other cells on full testdev. 
+
+structure. For prefix configurations (S4, S5), ablating means dropping the K=4 
+
+prefix tokens from the input sequence entirely; the LLM sees only the im-age patches followed by the caption tokens. S3’s ablation is a no-op because 
+
+softplus( −8.5) ≈2 × 10 −4 already reduces the pathway to numerical noise. In all cases the LoRA weights are untouched — the ablation isolates the inference-time contribution of the auxiliary pathway from the training-time regularisation effect the pathway induced on LoRA. 
+
+Why the numbers are close but not identical. A perfectly behaviourally-closed pathway would produce ∆ = 0 exactly. The observed |∆| values of 0.07– 1.25pp reflect two effects. First, floating-point non-associativity when the bias tensor is added and then removed does not exactly cancel across all 32 layers. Second, in the S5 case, the residual contribution of the raw prefix embeddings is large enough that the LLM’s LoRA weights have compensated by shifting slightly, so removing the prefix at inference leaves a residual drift that hurts more than it helps. 
+
+5 Gate Trajectories During Training 
+
+The main paper (Sec. 3.2 and Fig. 2) shows the gate parameters at convergence. Here we plot the full trajectories, contrasting the five suppressed configurations with the Euclidean variant whose gate stays open at a measurable GQA cost. The trajectories corroborate the two-regime story in the main paper: gates in the dead-gradient regime drift slowly toward small negatives (S1, S2, S4), while a gate in the negative-utility regime is driven hard toward large negatives (S3, at 
+
+−8.5). The Euclidean variant is the exception that clarifies the rule — its gate does stay positive, but the pathway it admits actively costs 1.23pp on GQA, so “open” is not the same as “useful”. 
+
+6 Per-Category SugarCrepe Breakdown 
+
+The main paper’s results section summarises SugarCrepe as a single average. Here we decompose that average across the seven categories (Replace-Object/ Supplementary Material 25 0.0 0.2 0.4 0.6 0.8 1.0      
+
+> Fraction of Training
+> 8
+> 6
+> 4
+> 2
+> 0
+> Gate / Scale Value
+> Suppression Cases (S1 S5)
+> S1: Attn bias
+> S2: Attn bias
+> S3: Margin loss
+> S4: Prefix gate
+> S5: Raw prefix gate
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> Fraction of Training
+> 0.20
+> 0.15
+> 0.10
+> 0.05
+> 0.00
+> 0.05
+> 0.10
+> 0.15
+> 0.20
+> Gate Value
+> Gate Behavior by Signal Source
+> RMS ungated
+> Euclidean
+> Soft prompt
+
+Fig. 1: Gate dynamics over training. 
+
+Left: the five suppressed gates, all be-haviourally closed (Table 2); three drift to modest negatives, one dives to −8.5,one hovers near zero. Right: the Eu-clidean variant is the only one whose gate stays positive ( γ= + 0 .19 ), yet its GQA drops to 59.15% (vs. 60.38% base-line); the soft-prompt gate goes negative (γ=−0.20 ) with no geometric backbone to keep it open. R-O R-A R-R S-O S-A A-O A-A    
+
+> 40
+> 50
+> 60
+> 70
+> 80
+> 90
+> Accuracy (%)
+> Relation
+> SugarCrepe Categories
+> Soft Prompt Avg (77.0) Vanilla Attn Bias RMS Prefix
+
+Fig. 2: SugarCrepe accuracy per cate-gory, all seven perturbation types. The attention-bias variant (small α) peaks on Add-Object (+2 .82 pp) and Add-Attribute (+2 .46 pp) relative to vanilla LLaVA-1.5, consistent with the hierar-chical containment signal the entailment cones are trained on. The soft-prompt control, despite carrying no geometric backbone, attains the highest average — reinforcing the caution from the main pa-per that the average alone is a poor sum-mary. 
+
+Table 3: SugarCrepe per-category accu-racy. R: Replace, S: Swap, A: Add. G2 = Hyp. prefix with the geometric losses re-moved (cf. main paper Table 3). Numbers are strict SugarCrepe accuracy under log-likelihood scoring; bolded row marks the per-column best.                                          
+
+> Method R-O R-A R-R S-O S-A A-O A-A Avg
+> Vanilla 80.21 77.16 74.96 77.64 85.29 46.99 73.55 73.69 Attn. bias (small α)81.11 79.31 77.31 78.86 86.04 50.73 76.73 75.73 RMS prefix, ungated 79.54 77.03 75.60 78.05 85.89 52.62 74.71 74.78 Soft prompt 81.60 80.71 77.81 80.08 86.04 53.73 79.05 77.00
+> Hyp. prefix, no geo. (G2) 83.17 81.73 78.88 80.89 86.94 58.20 82.08 78.84
+
+Attribute/Relation, Swap-Object/Attribute, Add-Object/Attribute) to expose which perturbations each variant handles. The category-level breakdown makes two things visible that the average hides. First, the attention-bias variant is not uniformly stronger than vanilla; its gain is concentrated on the Add perturbations, exactly where a containment-hierarchy signal would be expected to help. Second, the G2 row (hyperbolic prefix trained without the geometric losses) tops every column despite the abla-tion removing the geometry — consistent with the main paper’s argument that the prefix pathway is not what carries the compositional signal at inference. 26 Authors Suppressed Due to Excessive Length 
+
+Table 4: Generation-side evaluation across the four LLaVA-1.5 configurations. POPE reports accuracy (%) on the random, popular, and adversarial object-existence probes (the three splits stress increasingly biased distractor sampling). Captioning is COCO val2017 (5,000 images), greedy decoding, pycocoevalcap; SPICE is omitted because of a Java version incompatibility in the local eval harness. Best per column in bold. The soft-prompt row is the case where a POPE-clean method is still generation-degraded on captioning — a reminder that POPE alone underestimates generation harm.                             
+
+> POPE (%) COCO captioning Method rand. popular adv. BLEU-4 METEOR CIDEr LLaVA-1.5 vanilla 86.30 85.13 83.40 0.324 0.280 1.132
+> + RMS prefix, ungated (hyp.) 83.97 83.30 82.30 0.321 0.259 1.096 + Attn. bias (small α)86.30 85.53 84.13 0.314 0.255 1.069 + Soft prompt (no geometry) 86.63 85.90 84.20 0.287 0.235 0.987
+
+7 Generation-Side Evaluation: POPE and COCO Captioning 
+
+The main paper Sec. 5.3 (Generation Safety) reports the headline finding — that RMS-normed prefix injection preserves POPE within noise but loses 0.036 CIDEr, and that the soft-prompt variant drops much further (CIDEr 0.987 vs. 1.132) despite its POPE score matching vanilla. The full per-condition table is below. Two secondary observations follow from the full table. First, the attention-bias variant is generation-safe on POPE (adversarial split slightly above vanilla at 84.13% vs. 83.40%) but still loses 0.063 CIDEr, so even a design that never enters the residual stream directly is not free on fluency. Second, the RMS-prefix row is the only configuration with a POPE drop on the random split (83.97% vs. 86.30%), yet its captioning metrics are closer to vanilla than the soft prompt’s — an ordering that any single generation benchmark, taken alone, would obscure. 
+
+POPE subset construction. POPE probes “Is there an X in the image?” where X is either a positive (present) or a distractor (absent) object. The three splits differ in how distractors are sampled: random draws distractors uniformly from the COCO label set, popular biases toward objects that frequently co-occur with the present objects in COCO, and adversarial explicitly picks distractors that are semantically near the present objects. Adversarial is the hardest split, so a drop concentrated there indicates the model is less discriminating between semantically similar objects. 
+
+Why the RMS-prefix POPE drop is not a failure. The 2.33pp drop on POPE-random (86.30 to 83.97) is the price of the residual-stream perturbation that comes with keeping the prefix tokens in the sequence. Since the RMS-prefix configuration is the only one that gives strong OOD spatial signal (VSR 60.01%, main paper Table 6), the trade is worth flagging but not framing as a failure of the design. Supplementary Material 27 
+
+8 Extended Discussion 
+
+This section extends the Conclusion of the main paper with the four discussion threads that space did not permit in the main text. 
+
+What would a non-suppressed injection look like? Suppression arises from two interacting causes: (i) the auxiliary signal is caption-invariant, so the discriminative gradient through the gate is approximately zero, and (ii) the task loss treats the signal as noise. A pathway that avoids both properties would need to be text-coupled : its contribution to the hidden states should depend on the text being processed, not only on the image. Query-conditioned bilinear interactions between text queries and geometric features are a natural candidate. Since each preposition (“on,” “under,” “beside”) would then obtain a different lens onto the relational structure, the pathway would carry the first-order gradient that caption-invariant injections lack. 
+
+Why geometry helps training but not inference. The geometric losses (IoA-driven entailment, angular repulsion) shape LoRA weight updates during training by providing a structured auxiliary objective that prevents overfitting to surface patterns of the training set. LoRA fine-tuning without auxiliary supervi-sion has been reported to move GQA accuracy below the pretrained baseline [4]; with the geometric losses in place, accuracy is preserved or improved across every configuration we tested. This regularisation effect does not require the geometric signal to be useful at inference. It acts through the training dynamics, not the inference pathway. 
+
+The compositionality–generation tradeoff is partly a norm tradeoff. 
+
+Unnormalised prefix tokens force the LLM to attend to them by virtue of their large magnitude, which benefits log-likelihood scoring but disrupts autoregres-sive generation. RMS normalization trades some of this forced-attention com-positional signal for generation safety: the prefix tokens remain in the sequence but no longer dominate the attention distribution. 
+
+Implications beyond this work. Suppression is not specific to hyperbolic ge-ometry, nor even to visual relational signals. Any auxiliary pathway controlled by a learnable gate and trained under a task loss that does not directly reward the pathway’s contribution will be subject to it. This covers adapters, side-networks, and external-memory injection mechanisms alike. The practical implication fol-lows: beneficial signals should be injected non-optionally, with the engineering (scale matching, norm alignment) done correctly, rather than delegated to a learnable gate that the optimizer will close. 
+
+Connection to the residual-stream literature. The residual-stream-dominance argument in the main paper’s Sec. 4 rests on a standard reading from mechanistic interpretability: transformer hidden states can be read as a sum of contributions written by earlier blocks and never explicitly subtracted. The 36 × initial-norm gap is a large-perturbation instance of the same phenomenon that mechanistic-interpretability studies observe at smaller scales when they inspect the “residual stream” at intermediate layers. In our setting the effect is loud enough that a simple RMS rescaling suffices to restore generation quality; more subtle norm 28 Authors Suppressed Due to Excessive Length 
+
+mismatches, which are common across VLM adapter architectures, may be silent contributors to reported generation degradations. 
+
+9 Limitations 
+
+The main paper’s Conclusion summarises the caveats in one sentence and points here. This section expands each into a paragraph and, at the end, tabulates the follow-up experiments that we did not run within the sprint budget for this submission. 
+
+Single-seed training. Every configuration in this paper is a single training run under one fixed seed. Test-time bootstrap CIs quantify evaluation noise but not training noise; the rel/attr dissociation reported in the main paper therefore rests on one run per configuration. Characterising training-seed variance for the headline configurations (soft-prompt, RMS-prefix, attention-bias, synthesis) is the most important reliability check we do not report. 
+
+Scope of Proposition 1 of the main paper. The proposition establishes that the first-order discriminative gradient through the gate vanishes under caption-invariance. It does not by itself imply gate stalling: as S3 demonstrates, systematic second-order effects can drive the gate strongly. Our second-order ac-count (Regime B in the main paper) is descriptive rather than formal. A formal second-order analysis of when auxiliary perturbations systematically hurt the loss remains open. 
+
+Scope of the noise-regularisation control. The G2 ablation in the main paper removes the geometric losses but keeps the hyperbolic architecture and training recipe. This isolates the loss contribution from the architecture contri-bution, but does not rule out the stronger NEFTune-style hypothesis [10] that random-noise embeddings could substitute for the entire injection pathway. A fixed-random-prefix control, identical recipe, random-tensor prefix in place of the hyperbolic graph, would tighten this. We did not run it within the sprint budget for this submission. 
+
+Task-format and backbone scope. We evaluate on LLaVA-1.5-7B only, so the suppression phenomenon should be tested on other VLM families and scales. The trade-off avoidance claim is a within-fine-tuned-regime statement: on out-of-distribution VSR (main paper), all GQA-tuned configurations underperform vanilla, and only the geometric-prefix configuration corroborates trade-off avoid-ance out-of-domain; the attention-bias configuration does not. Extending train-ing to include diverse spatial data may close the vanilla-vs.-fine-tuned gap. 
+
+Non-hyperbolic auxiliary signals. The mechanism-level suppression claim generalises beyond hyperbolic geometry (Sec. 8), but we do not test that general-isation directly. A non-geometric structured signal — e.g., a scene-graph-derived attention bias — injected through the same gated pathway would test whether suppression is truly signal-agnostic. Supplementary Material 29 
+
+Table 5: Follow-up experiments deferred to future work. 
+
+Experiment What it would establish 
+
+Multi-seed training for the 4 headline configurations Training-seed variance for the rel/attr dis-sociation Fixed-random-prefix control (NEFTune-strength test) Whether random-noise substitutes for the hyperbolic prefix Text-coupled bilinear injection Whether breaking caption-invariance breaks the dead-gradient regime Paired-bootstrap test on shared 5,308 rel questions Whether the CI-overlaps in the rel-preservation claim reach significance un-der a paired test LLaVA-1.5-13B / Qwen-VL / Idefics backbones Whether suppression is LLaVA-specific or general to instruction-tuned VLMs Non-hyperbolic structured signals (scene graphs, dense predictions) Whether the suppression finding is truly signal-agnostic

@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.23335v1/fig-001.webp",
+      "caption": "Fig. 5: Left: GQA relational questions where soft-prompt tuning fails and the geometric model succeeds. Failures cluster on spatial and containment queries — the very failure mode the entailment-cone structure of the geometric losses is designed to prevent. Right: Poincaré disk projection of the learned Lorentz manifold. Wider entailment cones near the origin correspond to more general regions (e.g., “room”, “field”); specific objects (e.g., “table”, “horse”) sit near the boundary, reflecting the IoA-driven spatial hierarchy learnt from containment cues.",
+      "page": 15,
+      "index": 1,
+      "width": 716,
+      "height": 215
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23335v1/fig-002.webp",
+      "caption": "Fig. 1: Pipeline overview. From class-agnostic region proposals, we compute dense visual relations, embed them on the Lorentz hyperboloid, and route the geometric signal through two injection mechanisms: attention bias (Mechanism A) and gated prefix tokens (Mechanism B). Auxiliary losses Lent and Lang regularise LoRA during training; both gates β, γ collapse to zero under task-only loss.",
+      "page": 4,
+      "index": 2,
+      "width": 721,
+      "height": 370
+    }
+  ]
+}

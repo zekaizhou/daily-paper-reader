@@ -1,0 +1,110 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.21908v1/fig-001.webp",
+      "caption": "Figure 1: Comparison of intent discovery paradigms.",
+      "page": 1,
+      "index": 1,
+      "width": 497,
+      "height": 418
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21908v1/fig-002.webp",
+      "caption": "Table 1: Results on three benchmarks. The two MCSP variants differ only in the MLLM used for concept generation, namely Qwen3-VL and Gemini-3.0-Pro. Best results are in bold and second-best are underlined.",
+      "page": 6,
+      "index": 2,
+      "width": 1022,
+      "height": 331
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21908v1/fig-003.webp",
+      "caption": "Table 2: Ablation results on three benchmark datasets. Best results are in bold and second-best are underlined.",
+      "page": 6,
+      "index": 3,
+      "width": 1022,
+      "height": 250
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21908v1/fig-004.webp",
+      "caption": "Figure 7: Promptcont for multimodal contrastive reasoning, focusing on cluster A against nearest neighbor B.",
+      "page": 11,
+      "index": 4,
+      "width": 506,
+      "height": 698
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21908v1/fig-005.webp",
+      "caption": "Figure 4: Temperature hyper-parameter sensitivity analysis on MIntRec2.0 measured by accuracy (%).",
+      "page": 7,
+      "index": 5,
+      "width": 1056,
+      "height": 244
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21908v1/fig-006.webp",
+      "caption": "Figure 5: Visualization of representations on the MIntRec dataset.",
+      "page": 7,
+      "index": 6,
+      "width": 1165,
+      "height": 271
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21908v1/fig-007.webp",
+      "caption": "Figure 11: Visualization of representations on the MELD-DA dataset.",
+      "page": 14,
+      "index": 7,
+      "width": 1056,
+      "height": 260
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21908v1/fig-008.webp",
+      "caption": "Figure 10: Visualization of representations on the MIntRec2.0 dataset.",
+      "page": 14,
+      "index": 8,
+      "width": 1165,
+      "height": 252
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21908v1/fig-009.webp",
+      "caption": "Figure 2: Overview of the proposed MCSP method. The MCSP proceeds through three synergistic stages to achieve precise unsupervised intent discovery: (1) Contrastive Pretraining, which performs mask-based contrastive learning on multimodal inputs to establish a robust joint embedding space; (2) Concept Extraction, which leverages MLLM-guided reasoning to generate semantic concepts from high-quality representative samples; and (3) Semantic Propagation, which integrates evidence diffusion and concept-driven supervision to refine the embedding manifold for accurate intent identification.",
+      "page": 3,
+      "index": 9,
+      "width": 1050,
+      "height": 570
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21908v1/fig-010.webp",
+      "caption": "Figure 9: Effect of confidence ratio 𝜌 on the ARI metric.",
+      "page": 13,
+      "index": 10,
+      "width": 506,
+      "height": 294
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21908v1/fig-011.webp",
+      "caption": "Figure 6: Case study on MIntRec. Representative samples display video, text, and GT labels. Purple text indicates generated concepts. Green and red borders indicate strong alignment and semantic deviation from GT labels, respectively.",
+      "page": 8,
+      "index": 11,
+      "width": 1044,
+      "height": 858
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21908v1/fig-012.webp",
+      "caption": "Figure 3: Multimodal Contrastive Reasoning.",
+      "page": 4,
+      "index": 12,
+      "width": 498,
+      "height": 318
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21908v1/fig-013.webp",
+      "caption": "Figure 8: Promptglobal used to ensure cross-cluster label consistency and syntactical alignment.",
+      "page": 12,
+      "index": 13,
+      "width": 506,
+      "height": 514
+    }
+  ]
+}

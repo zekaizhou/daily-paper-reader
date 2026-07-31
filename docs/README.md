@@ -6,73 +6,73 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-30
-- 运行时间：2026-07-30 20:06:29 UTC
+- 最新运行日期：2026-07-31
+- 运行时间：2026-07-31 20:54:40 UTC
 - 运行状态：成功
 - 本次总论文数：17
 - 精读区：6
 - 速读区：11
 
 ### 今日简报（AI）
-今日精选 17 篇前沿论文，深度聚焦联邦提示微调与多模态适配技术的最新突破。
-重点推荐通过子空间分解解决异构数据隐私问题的联邦方案，以及针对活体检测的分层视觉提示微调技术。
-建议关注提示微调在隐私计算与跨模态迁移中的高效应用，把握大模型轻量化适配的新趋势。
-- 详情：[/202607/30/README](/202607/30/README)
+今日深度解析 17 篇前沿成果，重点攻克联邦提示微调中的隐私异构难题与视觉大模型的层级适配优化。
+满分论文提出的子空间分解专家法为隐私保护提供了新思路，同时多模态 VLA 模型的因果感知适配展现出极高的实战价值。
+建议优先研读联邦学习与高效参数微调（PEFT）相关突破，把握大模型在医疗分割等垂直领域的落地趋势。
+- 详情：[/202607/31/README](/202607/31/README)
 
 ### 精读区论文标签
-1. [Towards Privacy-Preserving Federated Prompt Tuning under Data Heterogeneity: A Subspace-Decomposed Expert Approach](/202607/30/2607.21417v1-towards-privacy-preserving-federated-prompt-tuning-under-data-heterogeneity-a-subspace-decomposed-expert-approach)  
+1. [Towards Privacy-Preserving Federated Prompt Tuning under Data Heterogeneity: A Subspace-Decomposed Expert Approach](/202607/31/2607.21417v1-towards-privacy-preserving-federated-prompt-tuning-under-data-heterogeneity-a-subspace-decomposed-expert-approach)  
    标签：评分：10.0/10、query:vlm-da
-   evidence：数据异构下VLM协作自适应的联邦提示微调
-2. [DINO-VPT: Hierarchical Visual Prompt Tuning for Joint Physical-Digital Face Anti-Spoofing](/202607/30/2607.20900v1-dino-vpt-hierarchical-visual-prompt-tuning-for-joint-physical-digital-face-anti-spoofing)  
+   evidence：用于视觉语言模型适配的联邦提示微调
+2. [Rethinking Layer-Wise Information Allocation for Vision Foundation Model Adaptation](/202607/31/2607.21973v1-rethinking-layer-wise-information-allocation-for-vision-foundation-model-adaptation)  
    标签：评分：9.0/10、query:vlm-da
-   evidence：视觉语言模型的分层视觉提示微调
-3. [Rethinking Expert Training for Model Merging with Prompt Learning](/202607/30/2607.24465v1-rethinking-expert-training-for-model-merging-with-prompt-learning)  
+   evidence：视觉提示微调 (VPT) 与基础模型适配
+3. [Rethinking Expert Training for Model Merging with Prompt Learning](/202607/31/2607.24465v1-rethinking-expert-training-for-model-merging-with-prompt-learning)  
    标签：评分：9.0/10、query:vlm-da
-   evidence：针对领域专业专家的基于提示的自适应和视觉编码器微调
-4. [Fine-Grained Food Image Understanding via Target-Aware Data Alignment](/202607/30/2607.25794v1-fine-grained-food-image-understanding-via-target-aware-data-alignment)  
+   evidence：针对领域专业专家的提示学习适配
+4. [Progressive Multimodal Alignment for Continual Instruction Tuning](/202607/31/2607.26947v1-progressive-multimodal-alignment-for-continual-instruction-tuning)  
    标签：评分：9.0/10、query:vlm-da
-   evidence：目标感知数据对齐以弥合视觉语言模型中的网络到目标领域差距
-5. [Test-Time Training for Modality Order Consistency in Vision-Language Models](/202607/30/2607.20351v1-test-time-training-for-modality-order-consistency-in-vision-language-models)  
+   evidence：在持续微调中使MLLM投影器适配变化的视觉分布
+5. [SCALE: Self-Supervised Constraint-Aware Layout GEneration for Local P&R DRV Fixing at Advanced Nodes](/202607/31/2607.21850v1-scale-self-supervised-constraint-aware-layout-generation-for-local-pr-drv-fixing-at-advanced-nodes)  
    标签：评分：8.0/10、query:vlm-da
-   evidence：VLM一致性的测试时训练
-6. [Rethinking Layer-Wise Information Allocation for Vision Foundation Model Adaptation](/202607/30/2607.21973v1-rethinking-layer-wise-information-allocation-for-vision-foundation-model-adaptation)  
+   evidence：将VLM适配于版图理解中的特定代工厂规则知识
+6. [Unsupervised Multimodal Intent Discovery via MLLM-Guided Concept Generation and Semantic Propagation](/202607/31/2607.21908v1-unsupervised-multimodal-intent-discovery-via-mllm-guided-concept-generation-and-semantic-propagation)  
    标签：评分：8.0/10、query:vlm-da
-   evidence：针对基础模型的提示词适配，包括视觉提示调优 (VPT)
+   evidence：MLLM引导的无监督发现概念生成
 
 ### 速读区论文标签
-1. [UnDA: Unpaired Domain Alignment for Cross-Modal Knowledge Transfer in Medical Imaging](/202607/30/2607.21546v1-unda-unpaired-domain-alignment-for-cross-modal-knowledge-transfer-in-medical-imaging)  
+1. [Parameter-Efficient Adaptation of SAM3 for Prompt-Driven Surgical Concept Segmentation](/202607/31/2607.23694v1-parameter-efficient-adaptation-of-sam3-for-prompt-driven-surgical-concept-segmentation)  
    标签：评分：8.0/10、query:vlm-da
-   evidence：医学影像中跨模态知识迁移的非配对领域对齐。
-2. [Decoupled Visual Processing: Efficient Multimodal Adaptation via Modality-Specific Transformer Substitution](/202607/30/2607.26596v1-decoupled-visual-processing-efficient-multimodal-adaptation-via-modality-specific-transformer-substitution)  
+   evidence：针对领域特定手术数据的基础模型参数高效适配
+2. [A Causality-aware Infer-diagnose-refine Framework for Test-time Modality Adaptation in VLA Models](/202607/31/2607.25516v1-a-causality-aware-infer-diagnose-refine-framework-for-test-time-modality-adaptation-in-vla-models)  
    标签：评分：8.0/10、query:vlm-da
-   evidence：通过Transformer替换实现MLLM的高效多模态适配
-3. [Progressive Multimodal Alignment for Continual Instruction Tuning](/202607/30/2607.26947v1-progressive-multimodal-alignment-for-continual-instruction-tuning)  
+   evidence：视觉-语言-动作模型中的测试时模态自适应
+3. [Decoupled Visual Processing: Efficient Multimodal Adaptation via Modality-Specific Transformer Substitution](/202607/31/2607.26596v1-decoupled-visual-processing-efficient-multimodal-adaptation-via-modality-specific-transformer-substitution)  
    标签：评分：8.0/10、query:vlm-da
-   evidence：在持续指令微调中使MLLM投影层适应变化的视觉分布
-4. [Foundation Models for Face Presentation Attack Detection: A Unified Linear-Probing Benchmark](/202607/30/2607.26993v1-foundation-models-for-face-presentation-attack-detection-a-unified-linear-probing-benchmark)  
+   evidence：通过Transformer替换实现高效多模态适配
+4. [Unifying Adversarially Robust Model Experts in Vision-Language Models](/202607/31/2607.27897v1-unifying-adversarially-robust-model-experts-in-vision-language-models)  
    标签：评分：8.0/10、query:vlm-da
-   evidence：在跨数据集领域偏移下适配预训练的视觉语言编码器
-5. [SOPD-SocialNav: Selective On-Policy Distillation for Vision-Language Social Navigation](/202607/30/2607.19850v1-sopd-socialnav-selective-on-policy-distillation-for-vision-language-social-navigation)  
+   evidence：针对VLM鲁棒性的对抗性微调
+5. [UnDA: Unpaired Domain Alignment for Cross-Modal Knowledge Transfer in Medical Imaging](/202607/31/2607.21546v1-unda-unpaired-domain-alignment-for-cross-modal-knowledge-transfer-in-medical-imaging)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：将知识从大型教师 VLM 转移到轻量级学生 VLM 以用于导航任务。
-6. [Memory-Augmented Multimodal Large Language Models for Small Object Understanding in Streaming Aerial Videos](/202607/30/2607.19857v1-memory-augmented-multimodal-large-language-models-for-small-object-understanding-in-streaming-aerial-videos)  
+   evidence：跨模态迁移的非配对领域对齐
+6. [Breaking the Synthetic-Real Domain Shortcut for Training-Free Generative Replay-based Class Incremental Learning](/202607/31/2607.22994v1-breaking-the-synthetic-real-domain-shortcut-for-training-free-generative-replay-based-class-incremental-learning)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：将当前的多模态大语言模型 (MLLM) 应用于航空感知
-7. [Variance-reduced Domain Adaptation using Paired Sampling](/202607/30/2607.20367v1-variance-reduced-domain-adaptation-using-paired-sampling)  
+   evidence：在增量学习中打破合成-真实域捷径
+7. [Self-Boosting Vision-Language Models with Noisy Student On-Policy Self-Distillation](/202607/31/2607.23125v1-self-boosting-vision-language-models-with-noisy-student-on-policy-self-distillation)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：无监督领域自适应技术
-8. [Online Variance Reduction for Domain Adaptation on Streaming Data](/202607/30/2607.20374v1-online-variance-reduction-for-domain-adaptation-on-streaming-data)  
+   evidence：无需外部监督的视觉语言模型下游任务后训练
+8. [The Gate Always Closes: On Injecting Auxiliary Signals into Frozen Vision-Language Models](/202607/31/2607.23335v1-the-gate-always-closes-on-injecting-auxiliary-signals-into-frozen-vision-language-models)  
    标签：评分：7.0/10、query:vlm-da
-   evidence：流数据领域适配的在线方差缩减
-9. [Point-Selection Fine-Tuning Framework for Robust Point Cloud Classification](/202607/30/2607.19711v1-point-selection-fine-tuning-framework-for-robust-point-cloud-classification)  
+   evidence：视觉语言模型中LoRA微调的正规化
+9. [Three-Pronged Spectral Control for Federated Parameter Efficient Fine Tuning](/202607/31/2607.20914v1-three-pronged-spectral-control-for-federated-parameter-efficient-fine-tuning)  
    标签：评分：6.0/10、query:vlm-da
-   evidence：用于鲁棒自适应的提示生成
-10. [SeededGrasp: Language-Guided Grasping in Complex Scenes with Multiple Embodiments](/202607/30/2607.20207v1-seededgrasp-language-guided-grasping-in-complex-scenes-with-multiple-embodiments)  
+   evidence：分散数据自适应的联邦参数高效微调
+10. [DINOde: Continuous Vision-Text Alignment for Open-Vocabulary Semantic Segmentation](/202607/31/2607.21371v1-dinode-continuous-vision-text-alignment-for-open-vocabulary-semantic-segmentation)  
    标签：评分：6.0/10、query:vlm-da
-   evidence：使用视觉语言模型（VLM）指定机器人抓取的任务需求。
-11. [Look Less, Think Faster: Joint Token-Compute Adaptation for Multimodal LLMs](/202607/30/2607.20357v1-look-less-think-faster-joint-token-compute-adaptation-for-multimodal-llms)  
+   evidence：对齐CLIP文本嵌入用于开放词汇分割
+11. [Biomedical Machine Translation for Low-Resource Arabic-Script Languages via Cross-Lingual Transfer and LoRA Adapter Merging](/202607/31/2607.22300v1-biomedical-machine-translation-for-low-resource-arabic-script-languages-via-cross-lingual-transfer-and-lora-adapter-merging)  
    标签：评分：6.0/10、query:vlm-da
-   evidence：多模态大语言模型的联合 Token 与计算自适应
+   evidence：领域特定适配与跨语言迁移
 
 
 <div class="dpr-home-promo-card">
