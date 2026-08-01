@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.23581v1/fig-001.webp",
+      "caption": "Table 1: Results on the four-way source-attribution task of MMFakeBench. F1 is the primary metric. P, R, and F1 are macro-averaged. Bold denotes the best overall result, and underline denotes the strongest inference-only baseline. Results of our implementations are averaged over three runs.",
+      "page": 7,
+      "index": 1,
+      "width": 500,
+      "height": 429
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23581v1/fig-002.webp",
+      "caption": "Figure 1: A motivating example of fine-grained source attribution.",
+      "page": 3,
+      "index": 2,
+      "width": 1054,
+      "height": 350
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23581v1/fig-003.webp",
+      "caption": "Figure 5: Learning dynamics of one representative offline notebook induction run.",
+      "page": 8,
+      "index": 3,
+      "width": 1018,
+      "height": 780
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23581v1/fig-004.webp",
+      "caption": "Figure 3: Overview of Verification-Notebook Learning (VNL).",
+      "page": 4,
+      "index": 4,
+      "width": 1052,
+      "height": 446
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23581v1/fig-005.webp",
+      "caption": "Figure 6: Case study of how a Verification Notebook guides different source-attribution decisions.",
+      "page": 9,
+      "index": 5,
+      "width": 1054,
+      "height": 781
+    }
+  ]
+}

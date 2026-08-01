@@ -1,0 +1,547 @@
+Title: Verification-Notebook Learning for Source-Aware Multimodal Misinformation Detection
+
+URL Source: https://arxiv.org/pdf/2607.23581v1
+
+Published Time: Tue, 28 Jul 2026 01:02:18 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# Verification-Notebook Learning for Source-Aware Multimodal Misinformation Detection 
+
+## Junyuan Tan 
+
+Independent Researcher junyuan.tan.cs@gmail.com 
+
+Abstract 
+
+Multimodal misinformation verification is challenging be-cause misleading signals may come from different parts of a post and require different forms of evidence. LVLMs are well suited to this task, but their verification performance often depends on the inference procedure applied to each instance. Existing methods improve this procedure through stronger prompting, retrieval, or deliberation, but rarely re-tain the verification patterns learned from previous examples. We propose Verification-Notebook Learning (VNL), a non-parametric framework that learns an external verification pro-cedure for a frozen LVLM before inference. VNL builds a compact notebook of decision principles, evidence cues, and recurring pitfalls from prior verification experience. The note-book remains fixed during inference and guides the verifica-tion of new examples. Rather than updating model parameters or storing demonstrations, VNL records learned knowledge in an artifact that can be inspected directly. Experiments show that VNL consistently outperforms a range of competitive baselines. Further analyses show that the Verification Note-book improves fine-grained source attribution while remain-ing compact and interpretable, providing an effective way to accumulate verification knowledge without model training. 
+
+## Introduction 
+
+The growing diversity of multimodal misinformation makes source-aware verification increasingly important, as mislead-ing content may come from the text, the image, or the relation between them (Liu et al. 2025a). A news post may be decep-tive because its textual claim is false (Thorne et al. 2018; Shu et al. 2020), its visual content has been manipulated (Shao, Wu, and Liu 2023), or two otherwise plausible modalities have been paired to imply a false association (Luo, Darrell, and Rohrbach 2021; Abdelnabi, Hasan, and Fritz 2022). De-tecting such cases requires more than a binary judgment of veracity. A reliable system must identify the source of the distortion, determine which evidence to examine, and weigh textual, visual, cross-modal, and external signals when they conflict (Liu et al. 2025a). LVLMs provide a strong foundation for this setting (Liu et al. 2023; Li et al. 2023). They can describe visual content, interpret textual claims, compare information across modal-ities, and reason with external knowledge. However, their verification behavior remains brittle (Bai et al. 2024). Under direct prompting, an LVLM may conflate visual plausibility with factual correctness, interpret weak semantic relatedness as cross-modal consistency, or attribute uncertainty to visual manipulation without sufficient evidence. These errors are not solely failures of perception or retrieval. They expose a more fundamental limitation: current LVLM-based verifica-tion lacks a stable and reusable procedure for determining which evidence to examine and how to prioritize conflicting signals. Most recent LVLM-based systems address this limitation with more elaborate inference procedures. They augment each instance with retrieved evidence or tool outputs (Cui et al. 2026), decompose verification into multiple reason-ing steps (Liu et al. 2025a), or use questions, search, and debate to support agentic deliberation (Beigi et al. 2025; Xuan et al. 2024; Liu et al. 2025b). These systems seek to improve inference-time reasoning while leaving the underly-ing model unchanged. Although they can improve individual predictions, they do not accumulate verification knowledge across examples. Each test case starts a new reasoning pro-cess, and useful patterns discovered during inference remain temporary. The system may therefore perform more reason-ing at inference time without learning a stable verification procedure before deployment. Earlier supervised approaches provide a different way to learn from task experience. Fine-tuned multimodal detectors, representation-level classifiers, and parameter-efficient adap-tation methods can encode this experience in model parame-ters when labeled data and trainable backbones are available (Wang et al. 2018; Ying et al. 2023; Qi et al. 2024; Yan et al. 2025). These methods show that development experience can improve multimodal verification. However, they differ from the LVLM-based inference systems considered in this work. Parameter learning requires access to the model, training infrastructure, and careful optimization, while the resulting knowledge is difficult to inspect or transfer. We do not seek to replace parametric adaptation. Instead, we study whether development-set experience can improve black-box LVLM verification through an external, auditable, and deployment-friendly form of learning. We investigate whether a frozen LVLM can use prior ver-ification experience through an explicit external procedure rather than relying solely on instance-level inference traces or parameter updates. Source-aware misinformation detec-tion needs a learning mechanism that produces neither a arXiv:2607.23581v1 [cs.AI] 26 Jul 2026 temporary reasoning trace nor an updated set of parameters, but an external verification procedure. This procedure should be learned from development experience, remain fixed dur-ing inference, and be explicit enough to support analysis and revision. We propose Verification-Notebook Learning, a two-stage non-parametric framework that learns reusable verification knowledge outside the LVLM. Its output is a Verification Notebook, a compact and structured collection of source-aware notes covering decision guidance, mistakes to avoid, and observable evidence cues. The notebook is not a single instruction template of the kind used in prompting, nor does it store individual cases for later reuse. Instead, it summarizes verification experience as general rules and evidence cues that guide future reasoning. During the learning stage, a Verifier-Editor loop constructs the notebook from labeled development data. The Verifier consults the current notebook and produces a verdict to-gether with a reasoning trace. The Editor compares batches of verification records with the available supervision, checks whether the relevant evidence was examined, identifies where the reasoning succeeded or failed, and converts reusable in-sights into concise notebook updates. Each update is assigned to the appropriate notebook function, either decision guid-ance and mistakes to avoid or observable evidence cues. Redundant and case-specific notes are discarded. Candidate notebooks are selected according to validation performance. The LVLM parameters remain frozen throughout this pro-cess, and learning occurs only through updates to the external notebook. During inference, the selected Verification Note-book remains fixed and guides source-aware verification of unseen examples. It may use the same type of external ev-idence available to inference-only baselines. Test examples do not update the notebook, and no feedback from the test distribution is used. Verification-Notebook Learning offers an alternative to both increasingly expensive inference and opaque parametric adaptation. Unlike inference-only agentic reasoning, it con-verts repeated verification experience into persistent knowl-edge. Unlike fine-tuning, it is lightweight, auditable, and compatible with black-box models. We hypothesize that ro-bust multimodal verification requires both strong test-time reasoning and reusable guidance about what to verify, when to verify it, and how to prioritize different forms of evidence. Our contributions are as follows: 
+
+• We propose Verification-Notebook Learning as a non-parametric learning paradigm for source-aware multi-modal misinformation detection. 
+
+• We introduce a Verifier-Editor mechanism that distills labeled verification experience into a fixed, source-aware Verification Notebook. 
+
+• We show that Verification-Notebook Learning improves multimodal misinformation detection, while analyses of notebook evolution and decision-boundary behavior clar-ify how explicit verification knowledge affects model de-cisions. 
+
+## Related Work 
+
+Multimodal Misinformation Detection 
+
+Multimodal misinformation detection has often been studied through supervised representation learning over heteroge-neous signals. Before LVLMs became widely used for this task, most systems trained task-specific detectors using tex-tual content, visual content, social context, event informa-tion, or propagation patterns (Wang et al. 2018; Singhal et al. 2019; Shu et al. 2019; Bian et al. 2020). This re-search includes multi-view and multimodal representation learning (Ying et al. 2023; Wu, Liu, and Zhang 2023), cross-modal fusion (Chen et al. 2022), attention-based alignment (Qian et al. 2021), and graph- or propagation-aware detection (Wang et al. 2020). Although these methods differ in archi-tecture and supervision, they all combine multiple forms of evidence rather than treating text and images as independent inputs. The task has also evolved from coarse veracity classifica-tion to fine-grained source analysis. Early studies focused pri-marily on binary fake-news detection (Nakamura, Levy, and Wang 2020), whereas later work examined different sources of misleading information (Liu et al. 2025a). A post may be deceptive because its textual claim is false (Thorne et al. 2018), its image has been manipulated or synthetically gen-erated (Shao, Wu, and Liu 2023), or an otherwise plausible image and caption have been paired out of context (Luo, Darrell, and Rohrbach 2021; Aneja, Bregler, and Nießner 2021). Evidence-grounded multimodal fact-checking also shows that some claims require information beyond the post itself (Yao et al. 2023). Recent source-aware benchmarks make these distinctions explicit by requiring the model to determine whether the distortion comes from the text, the image, or the cross-modal relation (Liu et al. 2025a). This formulation is more demanding than binary classification because the system must both detect misinformation and at-tribute the misleading signal to the correct source. Our work adopts this source-aware setting and studies a different way to use development-set experience for mul-timodal misinformation detection. Existing learning-based methods typically encode such experience in model param-eters or learned representations. In contrast, VNL keeps the LVLM fixed and records task experience in an external Veri-fication Notebook. This design makes verification knowledge explicit, reusable, and easy to inspect. 
+
+LVLM-based Multimodal Verification 
+
+LVLMs provide a different approach to multimodal misinfor-mation detection. Rather than training a task-specific classi-fier, recent systems often formulate verification as prompted multimodal reasoning. The model interprets the caption, examines the image, compares textual and visual signals, and produces a source-aware decision with an explanation (Zhang and Gao 2023; Tahmasebi, Müller-Budack, and Ew-erth 2024). A single LVLM can therefore support visual description, textual reasoning, cross-modal comparison, and knowledge-based inference. However, verification quality de-pends strongly on the protocol provided to the model, includ-ing label definitions, evidence-checking instructions, ques-“Black Canary is real. ” 
+
+> …… The attached image
+> depicts a bird, which does
+> not align with the fictional
+> superhero …… Therefore, the
+> caption and image are
+> mismatched ……
+
+Initial Verification 
+
+Mismatch Mismatch  
+
+> …… The reasoning should
+> have prioritized evaluating
+> the truthfulness of the
+> caption's claim before
+> considering its relationship
+> to the image ……
+
+Reflection   
+
+> Ground Truth
+> …… 'Black Canary is real'
+> makes a false claim
+> because …… the correct
+> classification for a false
+> claim in the caption is
+> 'textual_veracity_distortion'
+> ……
+
+Refined Verification     
+
+> Textual veracity distortion Textual veracity distortion
+
+Multimodal Post Figure 1: A motivating example of fine-grained source attribution. tion design, and reasoning format (Xuan et al. 2024; Xiao et al. 2025; Beigi et al. 2025). A common research direction is to improve LVLM verifi-cation through stronger test-time reasoning. Some methods provide retrieved evidence or entity-level context to ground factual claims (Xuan et al. 2024; Li et al. 2025). Others decompose verification into intermediate questions, fixed workflows, or tool-assisted reasoning steps (Liu et al. 2025a; Xuan et al. 2024; Xu et al. 2025). More agentic systems allocate additional test-time computation through planning, adaptive reasoning, multiple agents, or debate-style delib-eration (Cui et al. 2026; Liu et al. 2025b). These studies show that stronger reasoning and richer context can improve LVLM-based verification. However, they primarily change how each test instance is processed. The verifier typically starts a new reasoning process for every example, and use-ful verification patterns discovered during inference are not retained as a fixed task procedure. Source-aware multimodal misinformation detection re-quires the model to examine and prioritize textual veracity, visual authenticity, and cross-modal consistency. VNL ad-dresses this challenge by using labeled verification records from the development set to build a compact notebook before deployment, rather than retrieving similar cases or introduc-ing additional test-time agents. The notebook records source-attribution rules, evidence cues, and recurring mistakes that help distinguish textual distortion, visual distortion, and mis-match. It remains fixed throughout test-time inference. 
+
+## Preliminaries 
+
+Problem Formulation 
+
+We study source-aware multimodal misinformation detec-tion. Each example is a news post x = ( c, I, e ), where c is a textual claim or caption, I is the associated image, and e
+
+is optional external evidence. The task is to predict a label 
+
+y ∈ Y from a source-aware label space. In the multiclass setting, Y contains four labels: original content, textual ve-racity distortion, visual veracity distortion, and mismatch. The model must determine whether a post is misleading and 0 10 20 30 40 50 60 70    
+
+> Macro-F1 (%)
+> Verification Prompt 63.4
+> MMD-Agent 57.3
+> Minimal Prompt 45.2
+
+Figure 2: Preliminary macro-F1 comparison of direct LVLM prompting and MMD-Agent on the four-way source-attribution task. whether the distortion comes from the text, the image, or the relation between them. Given a frozen LVLM fθ , a development set Ddev =
+
+{(xi, y i)}ni=1 , and a held-out validation set Dval , we aim to learn an external verification procedure without updating the parameters of fθ . We represent this procedure as a Verifica-tion Notebook N , which is learned from the development set and kept fixed during inference. 
+
+Motivating Observations 
+
+Direct LVLM verification can be substantially improved. 
+
+Recent LVLM-based methods for misinformation detection often use multi-step or multi-agent reasoning to improve per-formance. Our preliminary results show that direct LVLM verification also benefits from careful prompting, as illus-trated in Figure 2. A simple zero-shot prompt achieves an F1 score of 45.2, while a verification-oriented prompt with clearer task instructions and source-aware label definitions raises the score to 63.4. In comparison, MMD-Agent achieves an F1 score of 57.3. This comparison suggests that precise guidance can substantially improve direct verification. 
+
+Source attribution requires fine-grained distinctions among labels. Source-aware misinformation detection re-. . . 
+
+Verifier        
+
+> Frozen LVLM Verdict: √Verdict: √
+> Verdict: √Verdict: √Verdict: Verdict: Verdict: Verdict:
+
+. . 
+
+Editor   
+
+> Frozen LVLM
+> Rules & Mistakes Cues
+> News Image
+> Frozen
+> Text
+> Context
+> Multimodal News Reasoning Record
+> Batched Reasoning Record
+> Ground Truth
+> insert
+> Verification Notebook
+
+1 Offline Notebook Induction   
+
+> Record
+> Batch 1
+> Record
+> Batch 1
+> Record
+> Batch 2
+> Record
+> Batch 2
+> Record
+> Batch 3
+> Record
+> Batch 3
+> Validation Set
+> scores
+> Candidate 1 Candidate 2 Candidate n
+
+. . 
+
+> Selected
+> Verification Notebook
+> Current
+> Verification Notebook
+
+2 Validation -Guided Selection 
+
+Verifier 
+
+> Frozen LVLM
+> Verification Notebook
+
+3 Inference Figure 3: Overview of Verification-Notebook Learning (VNL). quires careful distinctions among closely related labels. Fig-ure 1 shows an example in which the caption claims that “Black Canary is real.” The initial verifier correctly rec-ognizes Black Canary as a fictional character but predicts mismatch because it focuses on the inconsistency between the caption and the associated image. After reflection, it re-vises the prediction to textual veracity distortion because the caption itself contains a false factual claim. Detecting that a post is misleading is not sufficient to iden-tify the source of the distortion. Without reusable guidance, an inference-only method must resolve these fine-grained label distinctions independently for each new example and cannot retain useful conclusions from previous reasoning. In this case, reflection yields a general rule: when a cap-tion contains a false factual claim, the factual accuracy of the caption should be evaluated before the post is classified as a mismatch based on image-caption alignment. Retaining such rules allows the verifier to apply them to later examples instead of deriving them again during each inference. 
+
+## Method 
+
+Figure 3 provides an overview of VNL. 
+
+Verification Notebook 
+
+A Verification Notebook N is a compact textual record of reusable verification knowledge rather than a collection of instance-level demonstrations. Each note describes a general decision rule, an evidence cue, a label-boundary condition, or a recurring reasoning failure. In our implementation, the notes are organized into two functional sections: Decision Rules & Mistakes to Avoid and Observable Evidence Cues. The former contains decision procedures, label-boundary logic, arbitration principles, and recurring reasoning pitfalls, whereas the latter records concrete textual, visual, and cross-modal evidence cues. This structure keeps the notebook pro-cedural, evidence-centered, and applicable across instances. 
+
+Verifier-Editor Learning 
+
+Verification-Notebook Learning uses two prompted LVLM operators: a Verifier and an Editor, denoted by Vθ and Eθ ,respectively. Each operator is implemented by applying a role-specific prompt to a frozen LVLM. The shared sub-script θ indicates that the model parameters remain fixed and that learning occurs only through updates to the external notebook. At update step t, the Verifier receives an instance xi and the current notebook Nt. It produces a reasoning trace ri and a prediction ˆyi:
+
+(ri, ˆyi) = Vθ (xi, Nt), ˆyi ∈ Y . (1) The Verifier uses Nt as accumulated verification experience and consults the entries relevant to the current instance. Dur-ing notebook induction, the system records the reasoning trace, prediction, verification outcome, and reference label: 
+
+zi = ( xi, r i, ˆyi, y i, I[ˆ yi = yi]) . (2) For a mini-batch B, the Editor receives the current note-book, a batch of verification records, and the corresponding textual case contexts: 
+
+ot = Eθ (Nt, {zi}i∈B , {qi}i∈B ), (3) where qi denotes the textual context provided to the edit-ing stage. Using the available supervision signal, the Editor determines whether the Verifier examined the relevant ev-idence, identifies where the reasoning succeeded or failed, and extracts insights that generalize beyond the current exam-ple. It then proposes notebook operations ot that add concise, reusable, and non-redundant notes: 
+
+Nt+1 = Apply( Nt, o t). (4) Each new note is assigned to exactly one notebook function: decision guidance and mistakes to avoid, or observable ev-idence cues. In the batched induction pipeline, the Editor processes textual representations of the verification records and textual case contexts rather than raw image inputs. Visual evidence informs notebook updates only when it is described in the reasoning trace of the Verifier or in the textual case context. Highly similar notes are filtered to keep the notebook compact and reduce redundancy. 
+
+Offline Notebook Induction 
+
+We learn the notebook offline from Ddev . For each mini-batch B ⊂ D dev , all instances are processed independently using the same notebook snapshot. The resulting verification records are accumulated, and the Editor periodically updates the notebook based on these records. Batch-level updates re-duce sensitivity to individual instances and help the notebook capture recurring verification patterns. At fixed selection intervals, candidate notebooks are eval-uated on Dval . Let Sval (N ; Dval ) denote the held-out selec-tion score obtained when the Verifier uses notebook N . The selected notebook is 
+
+N ∗ = arg max 
+
+> Nt
+
+Sval (Nt; Dval ). (5) In our experiments, Sval is the primary validation metric for the task. 
+
+Validation-Guided Multi-Branch Selection 
+
+We also use a validation-guided multi-branch variant corre-sponding to best-of-N notebook induction. At the beginning of selection period p, N candidate notebooks are forked from the current best notebook. Each branch follows the same Verifier-Editor update procedure but uses indepen-dently sampled development mini-batches. Editing is per-formed at a fixed frequency, and held-out evaluation occurs only at the end of each period. Let Np,j denote branch j in period p. The candidate for the period is selected by 
+
+j∗ = arg max   
+
+> j∈{ 1,...,N }
+
+Sval (Np,j ; Dval ). (6) The selected branch replaces the current best notebook if its held-out score matches or exceeds the current best score. Otherwise, the previous best notebook is retained. This pro-cedure searches over discrete notebook updates while keep-ing the LVLM parameters fixed. Algorithm 1 summarizes the validation-guided multi-branch procedure used to induce and select the Verification Notebook. 
+
+Inference 
+
+After induction, the selected notebook N ∗ remains fixed. For an unseen instance x, inference is performed as 
+
+(r, ˆy) = Vθ (x, N ∗). (7) The notebook provides learned procedural guidance to the Verifier, while the underlying LVLM remains unchanged. Algorithm 1: Validation-Guided Multi-Branch Verification-Notebook Learning 
+
+Input : Development set Ddev , validation set Dval , textual case contexts {qi}, frozen Verifier Vθ , frozen Editor Eθ , and initial notebook N0
+
+Parameter : Number of selection periods P , number of branches N , update steps per period K, mini-batch size b,and editing interval h satisfying h | K
+
+Output : Selected Verification Notebook 
+
+N ∗ 
+
+> 1:
+
+N ∗ ← N 0 
+
+> 2:
+
+s∗ ← Sval (N ∗; Dval ) 
+
+> 3:
+
+for p = 1 to P do  
+
+> 4:
+
+for j = 1 to N do  
+
+> 5:
+
+Np,j ← N ∗ 
+
+> 6:
+
+Zj ← ∅, Qj ← ∅ 
+
+> 7:
+
+for k = 1 to K do  
+
+> 8:
+
+Sample a mini-batch Bp,j,k ⊂ D dev of size b 
+
+> 9:
+
+for each (xi, y i) ∈ Bp,j,k do  
+
+> 10:
+
+(ri, ˆyi) ← Vθ (xi, Np,j ) 
+
+> 11:
+
+zi ← (xi, r i, ˆyi, y i, I[ˆ yi = yi])  
+
+> 12:
+
+Zj ← Z j ∪ { zi} 
+
+> 13:
+
+Qj ← Q j ∪ { qi} 
+
+> 14:
+
+end for  
+
+> 15:
+
+if k mod h = 0 then  
+
+> 16:
+
+o ← Eθ (Np,j , Zj , Qj ) 
+
+> 17:
+
+Np,j ← Apply( Np,j , o ) 
+
+> 18:
+
+Zj ← ∅, Qj ← ∅ 
+
+> 19:
+
+end if  
+
+> 20:
+
+end for  
+
+> 21:
+
+sp,j ← Sval (Np,j ; Dval ) 
+
+> 22:
+
+end for  
+
+> 23:
+
+j∗ ← arg max j∈{ 1,...,N } sp,j  
+
+> 24:
+
+if sp,j ∗ ≥ s∗ then  
+
+> 25:
+
+N ∗ ← N p,j ∗ 
+
+> 26:
+
+s∗ ← sp,j ∗ 
+
+> 27:
+
+end if  
+
+> 28:
+
+end for  
+
+> 29:
+
+return N ∗
+
+## Experiments 
+
+Experimental Setup 
+
+Dataset and splits. We evaluate VNL on MM-FakeBench (Liu et al. 2025a) using its four-way source-attribution setting. Each instance contains a caption and an associated image, and the model predicts one of four labels: original, textual veracity distortion, visual veracity distor-tion, or mismatch. The model must determine both whether the post is misleading and whether the distortion originates from the text, the image, or the cross-modal relation. We adopt a learn-then-deploy protocol. We split the origi-nal MMFakeBench validation set into a development set and a held-out validation set at a ratio of 7:3, yielding 700 and 300 examples, respectively. The development set is used for notebook induction, whereas the held-out validation set is used for notebook selection. For final evaluation, we sam-ple 2,000 examples from the original MMFakeBench test set while preserving the class distribution. The resulting test set contains 600 original examples, 600 textual-distortion ex-amples, 200 visual-distortion examples, and 600 mismatch examples. Neither the test examples nor their labels are used for notebook induction, notebook selection, or prompt devel-opment. 
+
+Evaluation metrics. We report macro-averaged precision, recall, and F1, together with accuracy. Macro-F1 is the pri-mary metric because the task is class-imbalanced, with sub-stantially fewer visual-distortion examples than examples from the other classes. Compared with accuracy, macro-F1 better reflects performance across different sources of misinformation. Candidate notebooks are selected based on macro-F1 on the held-out validation set. 
+
+Implementation details. All LVLM operators in VNL are implemented using GPT-4o with role-specific prompts, and the model parameters remain frozen throughout the experi-ments. VNL obtains Wikipedia evidence using the evidence-acquisition pipeline of MMD-Agent (Liu et al. 2025a) and provides it in the input context. Offline notebook induction uses a mini-batch size of 20. The Editor updates the note-book after each mini-batch, and candidate notebooks are evaluated on the held-out validation set every 40 examples. We use bge-base-en-v1.5 to detect semantic duplicates and filter notes with a similarity score above 0.9. For validation-guided notebook search, the first selection period uses eight branches to broaden the initial search, whereas each subse-quent period uses four branches. At the end of each period, the branch with the highest validation macro-F1 is selected and accepted only if its score matches or exceeds the best validation score observed so far. Notebook induction stops if the best validation macro-F1 does not improve for two con-secutive selection periods. The final notebook is fixed before test-time inference. Because notebook updates depend on the order of the development examples, we run the complete learning and evaluation pipeline with three random seeds and report the mean performance. 
+
+Baselines 
+
+We compare VNL with several baselines. Unless otherwise specified, baselines implemented in our experiments use the same GPT-4o model, label space, data split, and test instances as VNL. 
+
+Standard Prompt (SP). SP follows the LVLM evaluation protocol reported in MMFakeBench (Liu et al. 2025a). It prompts the model to classify a caption-image pair into the benchmark label space without external memory or learned verification knowledge. 
+
+MMD-Agent. MMD-Agent is the agentic multimodal misinformation detection system introduced with MM-FakeBench (Liu et al. 2025a). It retrieves entity-centered evidence from Wikipedia and performs multi-stage reason-ing over textual, visual, and external information for each instance. 
+
+Direct. Direct is a zero-shot LVLM baseline that receives a caption and an image and predicts one of the four source-aware labels without demonstrations, retrieved cases, exter-nal evidence, or notebook guidance. 
+
+Chain-of-Thought (CoT). CoT adds a generic chain-of-thought instruction to Direct, asking the model to reason step by step before producing the final label. 
+
+Wiki Context. Wiki Context augments the input with Wikipedia search results generated by the evidence-acquisition stage used in MMD-Agent. The model receives the retrieved textual evidence together with the caption and image. 
+
+ICL. In-Context Learning (ICL) (Brown et al. 2020) uses a fixed, class-balanced set of four labeled demonstrations, with one example from each class. The same set of demonstrations is used for every test instance. 
+
+CR. Case Retrieval (CR) constructs a case bank from the development set and retrieves the three most similar la-beled cases for each query based on caption similarity. The retrieved captions, images, and labels are provided to the LVLM. 
+
+ICL + Wiki and CR + Wiki. ICL + Wiki combines the fixed, class-balanced demonstrations with Wikipedia evi-dence. CR + Wiki combines the three retrieved cases with Wikipedia evidence. For the controlled baselines, we use two prompt protocols. The Minimal Prompt specifies the input format and candidate labels while providing limited task guidance. The Verifica-tion Prompt explicitly defines the four source-aware labels and instructs the LVLM to examine textual veracity, image authenticity, and cross-modal consistency separately. 
+
+Main Results 
+
+Table 1 reports the results on the four-way source-attribution task. MMD-Agent substantially improves on the standard prompting protocol, confirming the value of multi-stage rea-soning and external evidence for multimodal misinformation detection. However, Direct with the Verification Prompt al-ready outperforms MMD-Agent using a single LVLM call. This result indicates that a complex inference procedure can-not fully compensate for an under-specified task interface. Detailed task instructions and clear label definitions alone provide strong guidance for source-aware LVLM verifica-tion. The comparison between the Minimal Prompt and the Verification Prompt further demonstrates the importance of task specification. The Verification Prompt consistently achieves stronger results across inference settings, showing that LVLMs benefit from detailed verification instructions and clear source-attribution label definitions. In contrast, generic chain-of-thought prompting does not provide a con-sistent improvement. CoT slightly outperforms Direct under the Minimal Prompt but performs worse than Direct under the Verification Prompt. Longer reasoning traces therefore do not necessarily improve the decision criteria required for fine-grained source attribution. External evidence and development examples also im-prove performance, although the gains remain limited when Table 1: Results on the four-way source-attribution task of MMFakeBench. F1 is the primary metric. P, R, and F1 are macro-averaged. Bold denotes the best overall result, and un-derline denotes the strongest inference-only baseline. Results of our implementations are averaged over three runs. 
+
+Method F1 Acc. P R
+
+SP 41.6 55.0 75.0 46.0 MMD-Agent 57.3 55.8 60.6 56.9 
+
+Minimal Prompt 
+
+Direct 45.2 51.3 57.6 49.7 CoT 45.9 50.6 48.7 47.6 Wiki Context 45.6 51.0 59.9 49.5 ICL 54.6 54.6 70.8 57.6 CR 46.9 51.9 60.0 49.1 
+
+Verification Prompt 
+
+Direct 63.4 64.3 64.3 66.2 CoT 62.1 63.1 63.1 64.4 Wiki Context 65.2 65.7 65.2 67.8 ICL 61.2 60.8 68.2 64.5 ICL + Wiki 64.0 63.5 67.0 67.3 CR 64.7 64.2 67.7 67.5 CR + Wiki 67.8 66.9 69.4 69.3 
+
+VNL (Ours) 73.2 71.8 75.1 72.4 
+
+this information is supplied directly in the prompt. Under the Verification Prompt, Wiki Context improves on Direct, indicating that retrieved factual evidence helps resolve some entity-level and textual-veracity uncertainty. Example-based methods such as ICL and CR provide additional information about label semantics and decision boundaries, and combin-ing case retrieval with external evidence yields the strongest prompt-based use of development information. Neverthe-less, these methods primarily use development examples as instance-level references during inference, leaving their reusable verification knowledge implicit. VNL achieves the best overall performance, with a macro-F1 of 73.2% and an accuracy of 71.8%. Compared with CR + Wiki, which also uses retrieved evidence and development-set cases, VNL improves macro-F1 by 5.4 percentage points and accuracy by 4.9 percentage points. Compared with MMD-Agent, VNL improves macro-F1 by 15.9 percentage points and accuracy by 16.0 percentage points. These gains show that the Verification Notebook uses development ex-perience more effectively than methods that directly retrieve or insert individual cases. Rather than storing examples as demonstrations, VNL distills them into source-aware deci-sion rules, observable evidence cues, label-boundary condi-tions, and recurring mistakes to avoid. These notes guide the Verifier in determining which evidence to examine, how to prioritize textual, visual, and cross-modal signals, and when to attribute misinformation to textual distortion rather than mismatch or visual distortion. Because the note-book is learned offline and remains fixed during inference, VNL converts development-set experience into explicit and reusable verification knowledge while preserving the black-box LVLM setting. Table 2: Ablation study of Verification-Notebook Learning. Bold denotes the best result. 
+
+Variant F1 Acc. 
+
+w/o Editor 63.4 64.7 w/o Multi-Branch Selection 69.7 67.5 w/o Wiki Context 70.2 69.2 w/o Structured Sections 70.5 69.7 
+
+Full VNL 73.2 71.8 Original Textual Dist. Visual Dist. Mismatch    
+
+> Ground-truth class
+> 0
+> 15
+> 30
+> 45
+> 60
+> 75
+> 90
+> F1 score (%)
+> Direct (Minimal) Direct (Verification) CR+Wiki VNL
+
+Figure 4: Per-class F1 scores on the four-way source-attribution task. 
+
+Ablation Study 
+
+Effect of notebook learning. The w/o Editor variant dis-ables notebook induction and uses the Verifier without learned notebook updates. Its performance is close to that of Direct with the Verification Prompt, indicating that the verifier prompt already provides a strong task specification. Full VNL improves macro-F1 by 9.8 percentage points over this variant, showing that learned notebook knowledge ac-counts for most of the improvement. The notebook converts development feedback into reusable decision rules, observ-able evidence cues, and label-boundary guidance for source-aware verification. 
+
+Effect of validation-guided multi-branch selection. Re-moving validation-guided multi-branch selection reduces macro-F1 from 73.2% to 69.7%. A single induction path can still learn useful verification notes, but it is more likely to overemphasize incidental patterns in local batches or miss stronger combinations of notebook updates. Multi-branch se-lection addresses this issue by exploring several discrete up-date paths and selecting the branch that generalizes best to the held-out validation data. This result shows that notebook con-struction benefits from validation-guided search even when the LVLM parameters remain fixed. 
+
+Effect of external knowledge. Removing Wiki Context re-duces macro-F1 from 73.2% to 70.2%, indicating that exter-nal evidence remains important for source-aware multimodal verification. Retrieved knowledge helps the Verifier check entity-level facts and resolve textual-veracity uncertainty when the post alone provides insufficient information. Nev-ertheless, the w/o Wiki Context variant still outperforms the 40 80 120 160 200 240 
+
+> Induction step
+> 72
+> 74
+> 76
+> 78
+> 80
+> 82
+> Score (%)
+
+(a) Validation performance during induction      
+
+> Best validation F1 Validation accuracy Accepted notebook
+> 40 80 120 160 200 240
+> Induction step
+> 0
+> 5
+> 10
+> 15
+> 20
+> 25
+> Number of notes
+
+(b) Compact growth of notebook knowledge      
+
+> Decision rules & Mistakes Evidence cues Notebook tokens
+> 40 80 120 160 200 240
+> Induction step
+> 65
+> 70
+> 75
+> 80
+> 85
+> 90
+> Validation F1 (%)
+
+(c) Source-level F1 evolution      
+
+> Original Textual Dist. Visual Dist. Mismatch
+> 40 80 120 160 200 240
+> Induction step
+> 70
+> 72
+> 74
+> 76
+> 78
+> 80
+> 82
+> Validation F1 (%)
+
+(d) Validation-guided branch selection 
+
+> Historical best Candidate range Period-best candidate
+> 0100 200 300 400 500 600
+> Tokens
+
+Figure 5: Learning dynamics of one representative offline notebook induction run. other baselines. The learned notebook is therefore not sim-ply a channel for external evidence. Even without retrieved context, it provides reusable decision rules and evidence-prioritization guidance that improve attribution among tex-tual distortion, visual distortion, and mismatch. 
+
+Effect of structured notebook sections. Removing the structured sections reduces macro-F1 from 73.2% to 70.5%, showing that the organization of external knowledge af-fects how effectively it guides inference. Separating Deci-sion Rules & Mistakes to Avoid from Observable Evidence Cues clarifies the function of each note: some notes specify how to choose among source labels, whereas others identify concrete textual, visual, or cross-modal signals. With an un-structured collection, the Verifier must infer the function of each note during inference, which weakens the procedural role of the notebook. 
+
+Per-Class Analysis 
+
+Figure 4 compares the per-class F1 scores of representative methods. VNL achieves the strongest overall performance across source classes, particularly on the three misinforma-tion classes. Its performance on the original class is compa-rable to that of the strongest direct baseline, while it achieves the highest F1 scores for textual distortion, visual distortion, and mismatch. This result is important because source-aware verification requires the model not only to identify reliable posts but also to attribute misleading posts to the correct source of distortion. VNL consistently outperforms CR + Wiki across all three misinformation classes, with particularly large gains on tex-tual distortion and mismatch. These improvements cannot be explained by access to retrieved evidence or case refer-ences alone. The notebook provides reusable guidance for source attribution, such as checking caption factuality before assigning mismatch and distinguishing visual manipulation from image-caption inconsistency. This guidance helps the Verification Notebook 
+
+Decision Rules & Mistakes to Avoid  Observable Evidence Cues 
+
+> [10] Avoid inferring mismatch solely based on minor variations
+> in text interpretation when the caption and image are
+> otherwise consistent.
+> ...  ...
+> [14] Unnatural or implausible elements in images, such as outdated or
+> incongruous objects, are strong indicators of visual_veracity_distortion.
+> [15] Discrepancies between described objects (e.g., plate vs. cutting
+> board) and their visual representation are strong indicators of mismatch.
+> ...  ...
+> Because of a bet again exchangetraded funds
+> Catalyst Mutual Funds had a standout year in
+> 2015
+
+Case 1           
+
+> Ground Truth: original
+> CR+Wiki: ... The caption does not explicitly
+> reference Wall Street or the visual elements in
+> the image. Misatch
+> VNL: ... The image shows a Wall Street sign
+> with ... which is a generic representation of
+> financial markets. There is no direct evidence
+> of a mismatch .. .Additionally, there is no
+> indication of textual veracity distortion .. .The
+> image does not show signs of tampering or AI
+> generation.. .Original
+> A small plane on the sand near a beach.
+
+Case 2          
+
+> Ground Truth: visual_veracity_distortion
+> CR+Wiki: ... However, the image also includes a
+> fantastical creature resembling a dragon, which
+> is not mentioned in the caption ... Misatch
+> VNL: .. .According to the Verification
+> Notebook, such unnatural or implausible
+> elements (cue [14]) are strong indicators of
+> visual_veracity_distortion ... The mismatch
+> category is also not applicable because the
+> caption and image are not depicting entirely
+> different scenes... Visual_veracity_distortion
+> A brown teddy bear sitting at a table with
+> colored pegs.
+
+Case 3          
+
+> Ground Truth: mismatch
+> CR+Wiki: ... which matches the caption ... The
+> image appears authentic and unaltered, and
+> the caption is factually accurate ... Original
+> VNL: ... This discrepancy between the
+> described objects (colored pegs) and the visual
+> evidence (sunglasses) aligns with Verification
+> Notebook entry [15] .. .The teddy bear itself
+> and the table are consistent with the caption,
+> but the specific detail about colored pegs is
+> not supported by the image. Mismatch
+
+Figure 6: Case study of how a Verification Notebook guides different source-attribution decisions. Verifier avoid basing its decision solely on the most salient signal in each example. VNL also produces a more balanced per-class perfor-mance profile. The difference between its strongest and weak-est classes is smaller than that of CR + Wiki and sub-stantially smaller than that of Direct with the Verification Prompt. Learned notebook guidance therefore improves both aggregate macro-F1 and the consistency of source attribution across different misinformation types. 
+
+Learning Dynamics of Offline Notebook Induction 
+
+We examine a representative induction trajectory to illustrate how the Verification Notebook is constructed before deploy-ment. We track validation performance, notebook size, per-class performance, and branch selection at different induction checkpoints. This trajectory is illustrative rather than univer-sal; it shows how VNL accumulates candidate verification knowledge offline and uses held-out validation feedback to select the notebook for inference. Figure 5(a) shows the validation trajectory. Performance improves during the early stages of induction, and the best validation macro-F1 is reached after 160 development ex-amples. Candidates produced at later checkpoints do not ex-ceed this score, so the previous best notebook is retained. This trajectory illustrates the role of validation-based selec-tion: notebook updates are retained only when they match or improve held-out performance, rather than simply because additional development examples have been processed. Figure 5(b) shows that the notebook remains compact as its performance improves. At the selected checkpoint, it contains 22 notes and 547 tokens. Both notebook sections grow dur-ing induction. The decision-rule section records verification procedures and common mistakes, whereas the evidence-cue section records reusable textual, visual, and cross-modal signals. The resulting notebook is therefore a concise verifi-cation procedure rather than a memory of individual devel-opment examples. Figure 5(c) presents the corresponding class-level trajec-tories. The improvements are not confined to a single label but occur across several source-attribution boundaries, in-cluding textual distortion, visual distortion, and mismatch. These results indicate that the notebook supports more con-sistent label-boundary decisions, such as separating false tex-tual claims from cross-modal mismatch and distinguishing visual manipulation from image-caption inconsistency. Figure 5(d) illustrates validation-guided branch selection. During each selection period, VNL evaluates several can-didate notebooks and compares the strongest candidate with the historical best. Candidates from the early periods improve the selected notebook, whereas those from later periods fall below the historical best and are rejected. This procedure limits the effect of noisy or batch-specific updates and favors notebook changes that generalize beyond the local induction batches. Figure 6 presents three examples showing how the same learned Verification Notebook guides different source-attribution decisions. The cases cover three common decision boundaries: symbolic image-caption consistency, visual ve-racity distortion, and object-level mismatch. 
+
+Case Study 
+
+In the first case, the caption concerns Catalyst Mutual Funds, while the image shows a Wall Street sign. CR + Wiki pre-dicts mismatch because the image does not directly depict the specific subject mentioned in the caption. VNL instead predicts original. The notebook guides the Verifier to inter-pret the Wall Street sign as a generic but relevant financial context rather than as evidence of contradiction. This rule prevents limited visual specificity from being mistaken for cross-modal mismatch. The second case concerns the distinction between mis-match and visual veracity distortion. The caption states that a small plane is on the sand near a beach, which is consis-tent with the main content of the image. However, the im-age also contains an implausible dragon-like creature. CR + Wiki treats this unmentioned object as an image-caption mis-match. VNL assigns the example to visual veracity distortion because the error lies in the visual content itself rather than in a mismatch between unrelated textual and visual contexts. This decision follows the notebook cue that implausible or fabricated objects provide evidence of visual distortion. The third case demonstrates the importance of examining local object-level evidence. The caption describes a brown teddy bear sitting at a table with colored pegs, whereas the image shows the teddy bear wearing sunglasses instead of the described pegs. CR + Wiki predicts original because the overall scene is broadly consistent with the caption. VNL predicts mismatch after checking whether the specific object described in the caption is present in the image. The note-book thus directs the Verifier beyond coarse scene similarity toward the object-level relation that determines the correct label. Together, these cases show that VNL improves source at-tribution by refining the decision criteria used by the Verifier rather than by making the model uniformly more skepti-cal. The notebook helps the Verifier accept symbolic images when they provide an appropriate context, identify implausi-ble visual content as visual distortion, and detect object-level contradictions even when the broader scene remains related. Verification-Notebook Learning thereby converts develop-ment experience into reusable rules and evidence cues that guide inference toward the correct source of misinformation. 
+
+## Conclusion 
+
+We presented Verification-Notebook Learning, a non-parametric framework for source-aware multimodal misin-formation detection with frozen LVLMs. Instead of updating model parameters or retaining individual cases, VNL learns an external verification procedure. It distills verification ex-perience into a compact notebook of decision principles, evidence cues, and recurring pitfalls, which remains fixed and guides subsequent inference. This design provides an inspectable and persistent basis for evidence checking and source attribution while remaining compatible with black-box LVLMs. The experimental results and analyses show that the learned notebook outperforms strong inference-based al-ternatives by supporting more consistent verification deci-sions rather than memorizing individual cases. These find-ings demonstrate that reusable external procedures provide a practical form of learning for LVLM-based multimodal verification. 
+
+## References 
+
+Abdelnabi, S.; Hasan, R.; and Fritz, M. 2022. Open-domain, content-based, multi-modal fact-checking of out-of-context images via online resources. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,14940–14949. Aneja, S.; Bregler, C.; and Nießner, M. 2021. Cosmos: Catching out-of-context misinformation with self-supervised learning. arXiv preprint arXiv:2101.06278 .Bai, Z.; Wang, P.; Xiao, T.; He, T.; Han, Z.; Zhang, Z.; and Shou, M. Z. 2024. Hallucination of multimodal large lan-guage models: A survey. arXiv preprint arXiv:2404.18930 .Beigi, A.; Jiang, B.; Li, D.; Tan, Z.; Shaeri, P.; Kumarage, T.; Bhattacharjee, A.; and Liu, H. 2025. Can LLMs improve multimodal fact-checking by asking relevant questions? In 
+
+2025 IEEE International Conference on Big Data (BigData) ,2732–2741. IEEE. Bian, T.; Xiao, X.; Xu, T.; Zhao, P.; Huang, W.; Rong, Y.; and Huang, J. 2020. Rumor detection on social media with bi-directional graph convolutional networks. In Proceedings of the AAAI conference on artificial intelligence , volume 34, 549–556. Brown, T.; Mann, B.; Ryder, N.; Subbiah, M.; Kaplan, J. D.; Dhariwal, P.; Neelakantan, A.; Shyam, P.; Sastry, G.; Askell, A.; et al. 2020. Language models are few-shot learners. Ad-vances in neural information processing systems , 33: 1877– 1901. Chen, Y.; Li, D.; Zhang, P.; Sui, J.; Lv, Q.; Tun, L.; and Shang, L. 2022. Cross-modal ambiguity learning for multi-modal fake news detection. In Proceedings of the ACM web conference 2022 , 2897–2905. Cui, X.; Zou, Y.; Li, Z.; Li, P.; Xu, X.; Liu, X.; and Huang, H. 2026. T2Agent: A Tool-augmented Multimodal Misin-formation Detection Agent with Monte Carlo Tree Search. In Proceedings of the AAAI Conference on Artificial Intelli-gence , volume 40, 175–183. Li, F.; Wu, J.; He, C.; and Zhou, W. 2025. CMIE: Com-bining MLLM insights with external evidence for explain-able out-of-context misinformation detection. In Findings of the Association for Computational Linguistics: ACL 2025 ,9342–9354. Li, J.; Li, D.; Savarese, S.; and Hoi, S. 2023. Blip-2: Boot-strapping language-image pre-training with frozen image en-coders and large language models. In International confer-ence on machine learning , 19730–19742. PMLR. Liu, H.; Li, C.; Wu, Q.; and Lee, Y. J. 2023. Visual instruction tuning. Advances in neural information processing systems ,36: 34892–34916. Liu, X.; Li, Z.; Li, P.; Huang, H.; Xia, S.; Cui, X.; Huang, L.; Deng, W.; and He, Z. 2025a. Mmfakebench: A mixed-source multimodal misinformation detection benchmark for lvlms. In International Conference on Learning Representations ,volume 2025, 86327–86352. Liu, Y.; Liu, Y.; Zhang, X.; Chen, X.; and Yan, R. 2025b. The truth becomes clearer through debate! multi-agent systems with large language models unmask fake news. In Proceed-ings of the 48th International ACM SIGIR Conference on Research and Development in Information Retrieval , 504– 514. Luo, G.; Darrell, T.; and Rohrbach, A. 2021. Newsclippings: Automatic generation of out-of-context multimodal media. In Proceedings of the 2021 Conference on Empirical Meth-ods in Natural Language Processing , 6801–6817. Nakamura, K.; Levy, S.; and Wang, W. Y. 2020. Faked-dit: A new multimodal benchmark dataset for fine-grained fake news detection. In Proceedings of the twelfth language resources and evaluation conference , 6149–6157. Qi, P.; Yan, Z.; Hsu, W.; and Lee, M. L. 2024. Sniffer: Multimodal large language model for explainable out-of-context misinformation detection. In Proceedings of the IEEE/CVF conference on computer vision and pattern recog-nition , 13052–13062. Qian, S.; Wang, J.; Hu, J.; Fang, Q.; and Xu, C. 2021. Hi-erarchical multi-modal contextual attention network for fake news detection. In Proceedings of the 44th international ACM SIGIR conference on research and development in in-formation retrieval , 153–162. Shao, R.; Wu, T.; and Liu, Z. 2023. Detecting and ground-ing multi-modal media manipulation. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 6904–6913. Shu, K.; Cui, L.; Wang, S.; Lee, D.; and Liu, H. 2019. de-fend: Explainable fake news detection. In Proceedings of the 25th ACM SIGKDD international conference on knowledge discovery & data mining , 395–405. Shu, K.; Mahudeswaran, D.; Wang, S.; Lee, D.; and Liu, H. 2020. Fakenewsnet: A data repository with news content, social context, and spatiotemporal information for studying fake news on social media. Big data , 8(3): 171–188. Singhal, S.; Shah, R. R.; Chakraborty, T.; Kumaraguru, P.; and Satoh, S. 2019. Spotfake: A multi-modal framework for fake news detection. In 2019 IEEE fifth international conference on multimedia big data (BigMM) , 39–47. IEEE. Tahmasebi, S.; Müller-Budack, E.; and Ewerth, R. 2024. Multimodal misinformation detection using large vision-language models. In Proceedings of the 33rd ACM Inter-national Conference on Information and Knowledge Man-agement , 2189–2199. Thorne, J.; Vlachos, A.; Christodoulopoulos, C.; and Mittal, A. 2018. FEVER: a large-scale dataset for fact extraction and VERification. In Proceedings of the 2018 Conference of the North American Chapter of the Association for Computa-tional Linguistics: Human Language Technologies, Volume 1 (Long Papers) , 809–819. Wang, Y.; Ma, F.; Jin, Z.; Yuan, Y.; Xun, G.; Jha, K.; Su, L.; and Gao, J. 2018. Eann: Event adversarial neural networks for multi-modal fake news detection. In Proceedings of the 24th acm sigkdd international conference on knowledge discovery & data mining , 849–857. Wang, Y.; Qian, S.; Hu, J.; Fang, Q.; and Xu, C. 2020. Fake news detection via knowledge-driven multimodal graph con-volutional networks. In Proceedings of the 2020 interna-tional conference on multimedia retrieval , 540–547. Wu, L.; Liu, P.; and Zhang, Y. 2023. See how you read? multi-reading habits fusion reasoning for multi-modal fake news detection. In Proceedings of the AAAI conference on artificial intelligence , volume 37, 13736–13744. Xiao, Y.; Han, Z.; Wang, Y.; and Jiang, H. 2025. Xfacta: Contemporary, real-world dataset and evaluation for multi-modal misinformation detection with multimodal llms. arXiv preprint arXiv:2508.09999 .Xu, Q.; Du, H.; Łukasik, S.; Zhu, T.; Wang, S.; and Yu, X. 2025. Mdam3: A misinformation detection and analysis framework for multitype multimodal media. In Proceedings of the ACM on Web Conference 2025 , 5285–5296. Xuan, K.; Yi, L.; Yang, F.; Wu, R.; Fung, Y. R.; and Ji, H. 2024. LEMMA: towards lvlm-enhanced multimodal misin-formation detection with external knowledge augmentation. 
+
+arXiv preprint arXiv:2402.11943 .Yan, Z.; Qi, P.; Hsu, W.; and Lee, M.-L. 2025. Trust-vl: An explainable news assistant for general multimodal misinfor-mation detection. In Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing , 5588– 5604. Yao, B. M.; Shah, A.; Sun, L.; Cho, J.-H.; and Huang, L. 2023. End-to-end multimodal fact-checking and explanation generation: A challenging dataset and models. In Proceed-ings of the 46th International ACM SIGIR Conference on Research and Development in Information Retrieval , 2733– 2743. Ying, Q.; Hu, X.; Zhou, Y.; Qian, Z.; Zeng, D.; and Ge, S. 2023. Bootstrapping multi-view representations for fake news detection. In Proceedings of the AAAI conference on Artificial Intelligence , volume 37, 5384–5392. Zhang, X.; and Gao, W. 2023. Towards llm-based fact ver-ification on news claims with a hierarchical step-by-step prompting method. In Proceedings of the 13th international joint conference on natural language processing and the 3rd conference of the asia-pacific chapter of the association for computational linguistics (volume 1: Long papers) , 996– 1011.

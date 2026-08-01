@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.22117v1/fig-001.webp",
+      "caption": "Table 2. Detailed DG accuracies (%) on PACS and VLCS. N/A indicates unavailable values. † denotes results reported from DomainBed [17], and ‡ denotes results reported from CPCANet [10]. Gray rows correspond to our method under different backbone architectures. Best results within each backbone category are highlighted in bold.",
+      "page": 6,
+      "index": 1,
+      "width": 1035,
+      "height": 412
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22117v1/fig-002.webp",
+      "caption": "Table 3. Detailed DG accuracies (%) on OfficeHome and TerraIncognita. N/A indicates unavailable values. † denotes results reported from DomainBed [17], and ‡ denotes results reported from CPCANet [10]. Gray rows correspond to our method under different backbone architectures. Best results within each backbone category are highlighted in bold.",
+      "page": 7,
+      "index": 2,
+      "width": 1035,
+      "height": 412
+    }
+  ]
+}

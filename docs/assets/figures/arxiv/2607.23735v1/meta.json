@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.23735v1/fig-001.webp",
+      "caption": "Figure 4: Motivation for dynamic momentum: (a) The mean of all the single noise adaptation errors over the 15 corruptions in ImageNet-C-5k. (b)-(p) The errors obtained on different corruption domains of ImageNet-C-5k, taken one at a time. We calculated the error rates for different α values over different types of noises and different severity levels of the Imagenet-C dataset. We found that while on average a high α helps improve the average accuracy, as seen in (a), different types of noises perform optimally at different α values as seen in (b)-(p), thus justifying a need for a dynamic momentum adjustment. Additionally, these optimum α values also vary with varying noise severities.",
+      "page": 15,
+      "index": 1,
+      "width": 981,
+      "height": 961
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23735v1/fig-002.webp",
+      "caption": "Figure 1: To justify our design choices, we conducted three experiments on the ImageNet-C dataset. (a) The frequency distribution of entropy values of 75, 000 images spanning over 15 types of corruptions. Green distribution is for the samples with correct pseudo-labels while the red distribution is for the incorrect ones. Samples correctly predicted are likely to have lower entropy predictions. (b) Average error across all 15 noise types with different levels of severity (corruption severity levels 1 and 5) with the RMT (Döbler et al., 2023) model. x axis lists different fixed momentum (α) values with which the RMT teacher is updated. Performance varies differently with the choice of α depending on the distribution shift. (c) The number of noise types achieving minimum error rates vs. α demonstrates that performance is optimal at different α values for different noise types, highlighting the need for a method to compute α dynamically. (Best viewed in color.)",
+      "page": 2,
+      "index": 2,
+      "width": 968,
+      "height": 275
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23735v1/fig-003.webp",
+      "caption": "Table 2: Classification error rate (%) on CIFAR10-to-CIFAR10-C, ImageNet-to-ImageNet-C, and CIFAR100-to-CIFAR100-C: Error rates are calculated on the highest corruption severity i.e., level 5. For each dataset, the upper rows list the approaches that use source data for prototyping, while the lower rows list approaches that do not use source data anywhere during adaptation. For RMT and SANTA (which use the source for computing the prototypes by default), we re-implemented them with our proposed source prototype estimation, for fair comparison; for these two methods, superscript ∗ denotes source prototypes are estimated using the pre-trained classifier weights without using original source data (ref. section 3.2). Conversely, for the proposed DMSE, superscript s means source prototypes are obtained by using original source data. Best results are highlighted in bold.",
+      "page": 7,
+      "index": 3,
+      "width": 922,
+      "height": 904
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23735v1/fig-004.webp",
+      "caption": "Figure 3: Ablation studies on DMSE over ImageNet-C: (a) Comparison of mean errors over 10 different sequences of the 15 corruptions, using different CTTA methods (b) Mean errors over 15 corruptions with varying cosine-distance threshold for class-wise prototype estimation (c) Mean errors over 15 corruptions with varying scaling factor (β). (d) Variation of Momentum (α) over 15 corruption types. The red dotted lines indicate the boundaries between different corruption categories",
+      "page": 10,
+      "index": 4,
+      "width": 976,
+      "height": 665
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23735v1/fig-005.webp",
+      "caption": "Figure 2: The proposed DMSE architecture: The student model is trained with pseudo labels from the mean teacher. The teacher is updated using EMA from the student with a dynamically determined α based on the student’s prediction entropy. If the entropy falls below a threshold, the teacher model resets to the source model. Additionally, class-wise prototypes are dynamically updated using confidently pseudo-labelled test data. For inference, a summation of outputs of both the student model and the teacher model is considered.",
+      "page": 4,
+      "index": 5,
+      "width": 995,
+      "height": 456
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23735v1/fig-006.webp",
+      "caption": "Figure 5: Validation of Prototype Alignment: t-SNE plot showing 500 test-time prototypes (blue), source prototypes from classifier weights (red), and source prototypes from source data (black). Prototypes estimated using classifier weights align with true source prototypes, and test-time prototypes remain close to them.",
+      "page": 17,
+      "index": 6,
+      "width": 492,
+      "height": 368
+    }
+  ]
+}

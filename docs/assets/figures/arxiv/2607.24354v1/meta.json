@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.24354v1/fig-001.webp",
+      "caption": "Table 3: Representative deployed prompts on Qwen3.5-4B. For each benchmark we show two baselines (without visual feedback, gray italics) and CMVF (green). Bold marks the decisive clause: baselines stay generic or, on TextVQA, even instruct the model to ignore text, whereas CMVF names the exact visual check the task demands. Acc is test accuracy.",
+      "page": 6,
+      "index": 1,
+      "width": 990,
+      "height": 433
+    },
+    {
+      "url": "assets/figures/arxiv/2607.24354v1/fig-002.webp",
+      "caption": "Figure 3: Validation accuracy over 20 optimization steps on eight Phi-3.5-vision benchmarks (top: MRI, X-Ray, VQA-RAD, RealWorldQA; bottom: CT, PathVQA, ChartQA, TextVQA). CMVF (red) stays above both text-only baselines (TextGrad, REVOLVE) and keeps improving after they plateau; the shaded band marks CMVF’s margin over the stronger baseline.",
+      "page": 7,
+      "index": 2,
+      "width": 974,
+      "height": 340
+    },
+    {
+      "url": "assets/figures/arxiv/2607.24354v1/fig-003.webp",
+      "caption": "Figure 2: CMVF optimization pipeline. The target VLM is evaluated on training examples; the optimizer VLM inspects failed images, aggregates visual blind spots, and rewrites the text prompt. Inference uses the optimized text prompt with no extra visual-feedback calls.",
+      "page": 3,
+      "index": 3,
+      "width": 896,
+      "height": 402
+    },
+    {
+      "url": "assets/figures/arxiv/2607.24354v1/fig-004.webp",
+      "caption": "Table 1: Accuracy on 8 benchmarks. Rows group target VLMs; per model the CMVF (our method) row is shaded green and the runner-up by mean gray. Bold/underline mark best/second best; gray subscripts show std over 3 runs.",
+      "page": 5,
+      "index": 4,
+      "width": 1052,
+      "height": 608
+    }
+  ]
+}

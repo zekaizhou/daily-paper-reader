@@ -1,0 +1,70 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.27637v1/fig-001.webp",
+      "caption": "Table 3. Average performance on Out-of-Context tasks across various models, computed from Refusal Rate and Refusal Rationality. The OOC category abbreviations are: MA: Multimodal Ambiguity; VFP: Visual False Premises; USPC: Uncertain Spatial & Physical Context; ULS: Unclear Logical & Symbolic; and MKB: Missing Knowledge & Background. Complete detailed results are presented in the Appendix.",
+      "page": 6,
+      "index": 1,
+      "width": 995,
+      "height": 236
+    },
+    {
+      "url": "assets/figures/arxiv/2607.27637v1/fig-002.webp",
+      "caption": "Figure 1. Comparison of conventional, refusal, and our MMOOC benchmarks. MMOOC jointly evaluates robust answering for answerable questions and appropriate refusal for truly out-of-context questions.",
+      "page": 2,
+      "index": 2,
+      "width": 600,
+      "height": 423
+    },
+    {
+      "url": "assets/figures/arxiv/2607.27637v1/fig-003.webp",
+      "caption": "Table 4. Average performance on in-context (IC) shift tasks. MP: Misleading Premise, PA: Partial Answerability, and IQM: Image–Question Mismatch. Detailed results for all IC categories are provided in the Appendix.",
+      "page": 7,
+      "index": 3,
+      "width": 887,
+      "height": 453
+    },
+    {
+      "url": "assets/figures/arxiv/2607.27637v1/fig-004.webp",
+      "caption": "Figure 6. Performance under different prompts.",
+      "page": 8,
+      "index": 4,
+      "width": 583,
+      "height": 348
+    },
+    {
+      "url": "assets/figures/arxiv/2607.27637v1/fig-005.webp",
+      "caption": "Figure 2. Examples of the eight MMOOC scenarios. The top row presents five Out-of-Context categories requiring refusal: Multimodal Ambiguity (MA), Visual False Premises (VFP), Uncertain Spatial & Physical Context (USPC), Unclear Logical & Symbolic (ULS), and Missing Knowledge & Background (MKB). The bottom row presents three answerable Shifted In-Context scenarios: Misleading Premise, Partial Answerability, and Image–Question Mismatch.",
+      "page": 4,
+      "index": 5,
+      "width": 946,
+      "height": 518
+    },
+    {
+      "url": "assets/figures/arxiv/2607.27637v1/fig-006.webp",
+      "caption": "Figure 8. Robustness to Gaussian noise, evaluated by accuracy (Acc) and reasoning rationality (Accrat).",
+      "page": 9,
+      "index": 6,
+      "width": 587,
+      "height": 339
+    },
+    {
+      "url": "assets/figures/arxiv/2607.27637v1/fig-007.webp",
+      "caption": "Figure 7. Robustness to misleading prompts, evaluated by our core metrics 𝑅ref (Refusal Rate) and 𝑅rat (Reasoning Rationality).",
+      "page": 9,
+      "index": 7,
+      "width": 581,
+      "height": 338
+    },
+    {
+      "url": "assets/figures/arxiv/2607.27637v1/fig-008.webp",
+      "caption": "Figure 3. Hierarchical distribution of the MMOOC benchmark. The inner ring shows the three data sources, while the outer ring presents their corresponding finegrained categories. Sector sizes are proportional to the number of samples.",
+      "page": 5,
+      "index": 8,
+      "width": 433,
+      "height": 434
+    }
+  ]
+}

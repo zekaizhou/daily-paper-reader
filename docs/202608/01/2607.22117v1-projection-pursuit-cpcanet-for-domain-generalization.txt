@@ -1,0 +1,428 @@
+Title: Projection Pursuit CPCANet for Domain Generalization
+
+URL Source: https://arxiv.org/pdf/2607.22117v1
+
+Published Time: Mon, 27 Jul 2026 00:34:21 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# Projection Pursuit CPCANet for Domain Generalization 
+
+## Yu-Hsi Chen The University of Melbourne 
+
+> yuhsi@student.unimelb.edu.au
+
+## Abd-Krim Seghouane The University of Melbourne 
+
+> abd-krim.seghouane@unimelb.edu.au
+
+## Abstract 
+
+Domain Generalization (DG) aims to learn representa-tions robust to distribution shifts. Recent geometric align-ment methods, such as CPCANet, extract domain-invariant structures through batch-wise Common Principal Compo-nent Analysis (CPCA). However, CPCANet suffers from rank-deficient covariance estimation due to the small-sample-size issue in mini-batch training. To address this limitation, we propose Projection Pursuit CPCANet (PP-CPCANet), a covariance-free framework that learns a global orthogonal basis on the Stiefel manifold and jointly optimizes it with net-work parameters via the Cayley transform. We further intro-duce a symmetry-breaking detached-median PP dispersion objective to extract common principal components (CPCs) with dense and robust optimization signals. Experiments on four DG benchmarks show that PP-CPCANet achieves SOTA performance while maintaining stable training. 
+
+## 1. Introduction 
+
+The ability to generalize across changing environments is a hallmark of human intelligence, yet it remains a fundamen-tal challenge for deep neural networks. Although modern models achieve remarkable performance under i.i.d. settings, they often degrade substantially under real-world distribu-tion shifts, such as variations in sensor characteristics or backgrounds [59, 2]. DG seeks to address this challenge by learning representations from multiple source domains that remain effective on unseen target domains [ 39 ]. Among the various DG paradigms, geometric alignment aims to identify latent structures that are shared across domains while sup-pressing domain-specific variations [ 46 ]. Recent methods have explored learning common geometric representations across domains. In particular, CPCANet [ 10 ] incorporates CPCA into deep networks to extract domain-invariant CPCs. However, CPCANet relies on batch-wise covariance estima-tion, which becomes rank-deficient when feature dimensions exceed mini-batch sizes, a common situation in modern deep learning that limits the recoverable common subspace. To address this limitation, we propose PP-CPCANet, a covariance-free deep CPCA approach. PP-CPCANet learns a global orthogonal basis and optimizes it through a PP dispersion objective on projected features, thereby avoiding the rank-deficiency bottleneck while retaining the capability to discover domain-invariant structures across environments. Our main contributions are summarized as follows: • Bypassing Covariance Rank Deficiency: We bypass the small-sample-size limitation of batch-wise covari-ance estimation, preventing the representation trunca-tion inherent to deep CPCA models. • Robust Projection Objective: We present a detached-median L1 PP dispersion objective with symmetry-breaking weights, enabling robust and stable learning. 
+
+## 2. Related Work 
+
+2.1. Domain Generalization 
+
+Domain Generalization (DG) aims to learn models that generalize to unseen domains using only data from multiple source domains during training. Let X ⊆ Rp denote the input space and Y = {1, . . . , C } the label space. A domain is characterized by a joint distribution PXY over X × Y .Given K source domains Etr = {E1, . . . , E K }, where each domain Ek = {(x(k) 
+
+> i
+
+, y (k) 
+
+> i
+
+)}Nk 
+
+> i=1
+
+is sampled from P (k) 
+
+> XY
+
+, the objective is to learn a predictor that generalizes to an un-seen target domain Ete whose distribution differs from all source domains, i.e ., P (te )
+
+> XY
+
+̸ = P (k) 
+
+> XY
+
+. Existing DG meth-ods can be broadly categorized into representation-learning and optimization-based approaches. Representation-learning methods seek domain-invariant features through adversar-ial alignment [ 54 , 11 ], causal invariance [ 37 , 23 ], disen-tangled representations [ 56 , 53 ], and contrastive learning objectives [ 24 , 38 ]. Optimization-based methods improve robustness by simulating domain shifts during training via meta-learning [ 31 , 4 ], gradient-based regularization [ 43 ], or weight-averaging strategies [8]. 
+
+2.2. CPCA for Domain Generalization 
+
+CPCA [ 15 ] extends classical PCA to multiple populations by assuming that their covariance matrices share a common 1arXiv:2607.22117v1 [cs.CV] 24 Jul 2026 orthogonal basis while retaining domain-specific eigenval-ues. This formulation is naturally aligned with DG, as the shared basis captures invariant structures across domains while suppressing domain-specific variations. Building on this principle, CPCANet [ 10 ] integrates CPCA into deep networks through an unfolded architecture for extracting CPCs. However, embedding CPCA into mini-batch train-ing introduces a fundamental limitation due to small sample sizes. Let Xk ∈ RNk ×p denote the mean-centered feature matrix of domain k, where Nk is the mini-batch size and 
+
+p is the feature dimension. While classical CPCA assumes 
+
+nk = Nk − 1 ≥ p, modern deep learning typically operates in the regime nk ≪ p, where feature dimensions far exceed mini-batch sizes. Although dual PCA [ 44 , 6] alleviates nu-merical singularity by operating on the Gram matrix XkX⊤ 
+
+> k
+
+,the recovered subspace remains fundamentally limited by the available samples. Consequently, batch-wise CPCA can only capture a truncated approximation of the underlying common subspace, potentially discarding important geomet-ric information. Motivated by this limitation, PP-CPCANet bypasses covariance estimation and instead learns a global orthogonal basis through PP optimization. 
+
+2.3. Robust Statistics and Projection Pursuit 
+
+Standard PCA is sensitive to outliers since its variance-maximization objective is dominated by extreme observa-tions [ 7]. In DG, such observations often arise from domain shifts, spurious correlations, or background noise. Robust statistical methods address this issue by replacing L2-based variance with more resilient measures, such as L1 disper-sion [ 26 ] or median-based estimators [ 27 ]. However, directly incorporating median-based objectives into deep networks is challenging, as the non-smooth median operator often yields sparse and unstable gradients during backpropaga-tion. Projection Pursuit (PP) [ 16 , 22 ] offers an alternative formulation for dimensionality reduction by directly op-timizing a projection index on projected samples, rather than computing the covariance matrix. Consequently, PP avoids the covariance estimation and rank-deficiency issues discussed in Section 2.2, making it particularly attractive for high-dimensional deep representations. Motivated by these observations, PP-CPCANet combines the robustness of median-based statistics with the flexibility of PP. 
+
+## 3. Projection Pursuit CPCANet 
+
+We propose Projection Pursuit CPCANet (PP-CPCANet), a framework that bypasses the mini-batch singularity is-sue inherent to covariance-based optimization. Section 3.1 introduces a globally parameterized orthogonal basis via Stiefel manifold optimization, and Section 3.2 presents a PP-based robust dispersion criterion for learning domain-invariant CPCs from feature projections. Finally, Section 3.3 describes the progressive bottleneck cascade, domain-guided feature modulation, and the training and inference pipeline. The complete formulation is presented in Algorithm 1. 
+
+3.1. Parametric Stiefel Manifold Optimization 
+
+PP-CPCANet bypasses batch-wise covariance estimation through a globally learnable orthogonal layer that is jointly optimized with the network parameters. Let ˜Ft−1 ∈ RB×D
+
+denote the input features at cascade depth t, where B =PKk=1 Nk is the total batch size. A bottleneck module bψt
+
+first maps these features to a lower-dimensional represen-tation Zt ∈ RB×dt . Following manifold trivialization ap-proaches for orthogonal learning [ 28 , 20 ], we parameterize the orthogonal basis using an unconstrained vector θt ∈
+
+Rdt(dt−1) /2. A deterministic mapping S : Rdt(dt−1) /2 →
+
+Rdt×dt converts θt into a skew-symmetric matrix At =
+
+S(θt) satisfying A⊤ 
+
+> t
+
+= −At. As in [ 29 , 33 ], the orthogonal basis is then obtained via the Cayley transform: 
+
+βt =
+
+
+
+Idt − 12 At
+
+  
+
+Idt + 12 At
+
+−1
+
+, (1) which guarantees β⊤ 
+
+> t
+
+βt = Idt . The projected features are subsequently computed as 
+
+Ut = Ztβt. (2) 
+
+3.2. Symmetry-Breaking Robust Dispersion 
+
+PP-based approaches identify PCs by maximizing the dispersion of the projected features Ut. However, since 
+
+βt is orthogonal, the total variance of Ut is rotationally invariant [ 42 ]. Consequently, an unweighted PP dispersion objective provides no optimization signal for updating βt. To break this symmetry and encourage variance concentration in the leading components, we introduce a monotonically decreasing weight vector wt ∈ Rdt , e.g ., proportional to 
+
+[dt, d t − 1, . . . , 1] and normalized such that Pdt 
+
+> j=1
+
+wt,j = 1 .Furthermore, standard L2 variance is sensitive to domain-shifted outliers, whereas Median Absolute Deviation (MAD), despite its robustness [ 27 ], yields sparse gradients due to the non-smooth median operator. To obtain dense and robust optimization signals, we introduce a detached-median L1
+
+dispersion metric. For domain k at cascade depth t, let Ut,k 
+
+denote the projected features and define the median anchor 
+
+mt,k = sg 
+
+h
+
+median  {U(i)
+
+> t,k
+
+}Nk
+
+> i=1
+
+i
+
+, (3) where sg[ ·] denotes the stop-gradient operator. Detaching the median stabilizes optimization by preventing gradients from propagating through the anchor [ 9]. The PP dispersion score is then defined as 
+
+st,k = w⊤
+
+> t
+
+1
+
+NkNkX
+
+> i=1
+
+U(i) 
+
+> t,k
+
+− mt,k 
+
+!
+
+. (4) Algorithm 1: Forward Pass and Objective Formulation of PP-CPCANet 
+
+Input: Mini-batch of raw inputs X, domain labels d ∈ { 1, . . . , K } with sizes Nk
+
+Parameters: Backbone hθ , Cascade depth T , Dimensionalities {dt}Tt=1 , Depth-specific Bottlenecks bψt , Global Manifold parameters θt ∈ Rdt(dt−1) /2,Modulators MLP γt and MLP ∆ft , Symmetry-breaking weights wt ∈ Rdt , Classifier (Wcls , bcls )
+
+Output: Task prediction logits ˆY, Optimization objective Ltotal 
+
+/* 1. Initial Feature Extraction */ 
+
+˜F0 ← hθ (X) ; // Extract ambient backbone features /* 2. Parametric Stiefel Manifold Optimization (Sec. 3.1) */ 
+
+for t = 1 , . . . , T do 
+
+Zt ← bψt ( ˜Ft−1) ; // Project to narrowed dt-dim bottleneck 
+
+At ← S (θt) ; // Construct global skew-symmetric matrix 
+
+βt ←  Idt − 12 At
+
+   Idt + 12 At
+
+−1 ; // Map to Stiefel Manifold via Cayley Transform 
+
+Ut ← Ztβt ; // Project features onto the orthogonal basis /* 3. Domain-Guided Feature Modulation (Sec. 3.3.2) */ 
+
+γt ← 2 · σ
+
+
+
+MLP γt (Ut)
+
+
+
+; // Generate domain-invariant scaling 
+
+∆Ft ← MLP ∆ft (Ut) ; // Generate domain-invariant shift 
+
+˜Ft ← ( ˜Ft−1 ⊙ γt) + ∆ Ft ; // Modulate ambient features residually /* 4. Symmetry-Breaking Robust Dispersion (Sec. 3.2) */ 
+
+Lppcpca ← 0
+
+for t = 1 , . . . , T do for k = 1 , . . . , K do 
+
+Ut,k ← Ut[d = k] ; // Isolate depth-t projections for domain k
+
+mt,k ← sg median  {U(i) 
+
+> t,k
+
+}Nki=1 
+
+ ; // Fix robust median anchor via stop-gradient 
+
+st,k ← w⊤
+
+> t
+
+ 1
+
+> Nk
+
+PNki=1 U(i) 
+
+> t,k
+
+− mt,k 
+
+
+
+; // Compute dense and weighted L1 dispersion 
+
+Lppcpca ← L ppcpca − st,k ; // Accumulate negative score to maximize variance 
+
+Lppcpca ← L ppcpca / (K · T ) ; // Normalize objective across domains and depths /* 5. Objective Formulation and Inference (Sec. 3.3.3) */ 
+
+ˆY ← ˜FT Wcls + bcls ; // Compute task prediction logits from final depth 
+
+Ltotal ← L task + λppcpca Lppcpca ; // Formulate final joint objective 
+
+return ˆY, Ltotal 
+
+3.3. Cascaded Architecture and Training Objective 
+
+3.3.1 Progressive Bottleneck Cascade 
+
+While inspired by the multi-stage architecture of classical CPCANet [ 10 ], PP-CPCANet introduces a distinct cascade of depth T in the form of a progressive bottleneck cas-cade. Drawing on foundational information bottleneck prin-ciples [ 48 , 21 ], the latent dimensionality narrows at each cascade depth, i.e ., d1 > d 2 > · · · > d T . Specifically, the projection dimension is halved at each step, subject to a strict lower bound, formally defined as dt+1 = max( dt/2, 16) .Unlike standard stage-wise stacking, this explicit structural constraint is designed and expected to iteratively filter out high-entropy domain-specific variations, aiming to isolate the core semantic shape of the data. 
+
+3.3.2 Domain-Guided Feature Modulation 
+
+We adopt the Domain-Guided Feature Modulation module from [ 10 ] at each depth to capture the underlying geomet-ric structure of the feature space. Specifically, Ut is fed into dedicated multi-layer perceptrons (MLPs) to predict a shifting factor ∆Ft ∈ RD and a bounded scaling factor 
+
+γt = 2 · σ(MLP γt (Ut)) , where σ denotes the sigmoid func-tion. These factors modulate the ambient features before they are passed to the next cascade depth: 
+
+˜Ft = ( ˜Ft−1 ⊙ γt) + ∆ Ft. (5) 
+
+3.3.3 Objective Formulation and Inference 
+
+To optimize the network, we maximize the dispersion of the CPCs by minimizing the negative sum of the PP disper-sion scores st,k . To ensure gradient stability across varying cascade depths T and numbers of source domains K, the objective is normalized: 
+
+Lppcpca = − 1
+
+K · T
+
+TX
+
+t=1 
+
+KX
+
+k=1 
+
+st,k . (6) Let ˆY denote the task prediction logits from the modu-lated features ˜FT at the final cascade depth, and let Y denote the corresponding ground-truth labels. The objective jointly minimizes the classification loss Ltask and the PP penalty: 
+
+Ltotal = Ltask ( ˆY, Y) + λppcpca Lppcpca , (7) where λppcpca balances the two objectives. 4. Experiments 
+
+4.1. Experimental Setup 
+
+4.1.1 Evaluation Benchmarks 
+
+We evaluate on four widely adopted DG benchmarks: PACS [ 32 ], VLCS [ 14 ], OfficeHome [ 51 ], and TerraIncog-nita [ 5]. PACS contains 9,991 images from four visual do-mains (Art, Cartoon, Photo, and Sketch) spanning 7 ob-ject categories. VLCS comprises 10,729 images from four datasets (Caltech101, LabelMe, SUN09, and VOC2007), including 5 shared categories. OfficeHome is a benchmark comprising 15,588 images from four domains (Art, Clipart, Product, and Real World) and covering 65 object categories. TerraIncognita contains 24,788 wildlife images captured by camera traps across four geographical locations (L100, L38, L43, and L46) with 10 animal categories. 
+
+4.1.2 Implementation Details 
+
+We follow the unified training and evaluation protocol of DomainBed [17] and adopt the optimization settings of CP-CANet [ 10 ] across all datasets and backbones. Models are trained with a batch size of 32 per domain, a dropout rate of 0.5, label smoothing of 0.1, and learning rates of 5 × 10 −5
+
+and 1 × 10 −4 for the pre-trained backbone and PP-CPCANet modules, respectively. ResNet-50 [ 19 ] is optimized using Adam for 5,000 steps, whereas DeiT-S/B [ 49 ] and VMamba-T/S/B [ 35 ] are trained using AdamW with a weight decay of 0.05 for 10,000 steps. Additionally, PP-CPCANet uses a PP penalty weight of λppcpca = 5 × 10 −3, a single-depth 
+
+T = 1 , and a projection dimension of d1 = 128 . Analysis on the effects of cascade depth and projection dimension is provided in Section 4.3. All experiments are conducted on NVIDIA A100 GPUs with 80 GB of memory. 
+
+4.2. Main Results 
+
+As shown in Table 1, PP-CPCANet with VMamba-B achieves the highest average DG accuracy among all eval-uated models. We also report GPU memory and training time, showing that PP-CPCANet consistently incurs lower training overhead than CPCANet. Tables 2 and 3 further present detailed domain-wise results across all benchmarks. 
+
+4.3. Analysis and Discussion 
+
+We evaluate the structural hyperparameters of PP-CPCANet by reporting the average DG accuracy across all datasets using a ResNet-50 backbone. Table 4 investigates the effect of the projection dimension d1 under a single-depth architecture with T = 1 . The best result is obtained with d1 = 128 . Table 5 further analyzes the impact of cas-cade depth T . The highest accuracy is achieved with the shallow configuration T = 1 , while increasing the depth to 
+
+T ≥ 2 provides no further improvement and even degrades performance. Therefore, we adopt T = 1 and d1 = 128 for all experiments in Section 4.2. 
+
+## 5. Conclusion 
+
+In this paper, we identified the rank-deficiency bottle-neck that limits covariance-based geometric alignment in deep networks. By introducing PP-CPCANet, we bypassed the batch-wise covariance estimation through global Stiefel manifold optimization and the robust detached-median L1
+
+PP dispersion objective, enabling domain-invariant CPCs extraction with dense and outlier-resistant gradients even in small-sample-size regimes. Furthermore, the structural analysis demonstrates that the robust dispersion metric is ar-chitecturally efficient, requiring only a single-depth cascade to obtain an effective balance between noise suppression and representation capacity. In summary, PP-CPCANet achieves SOTA performance across multiple standard DG benchmarks while maintaining a stable optimization process. 
+
+## References                       
+
+> [1] K. Ahuja, E. Caballero, D. Zhang, J.-C. Gagnon-Audet, Y. Bengio, I. Mitliagkas, and I. Rish. Invariance principle meets information bottleneck for out-of-distribution general-ization. Advances in Neural Information Processing Systems ,34:3438–3450, 2021. 5, 6, 7 [2] M. Arjovsky, L. Bottou, I. Gulrajani, and D. Lopez-Paz. In-variant risk minimization. arXiv preprint arXiv:1907.02893 ,2019. 1 [3] D. Arpit, H. Wang, Y. Zhou, and C. Xiong. Ensemble of aver-ages: Improving model selection and boosting performance in domain generalization. Advances in Neural Information Processing Systems , 35:8265–8277, 2022. 6, 7 [4] Y. Balaji, S. Sankaranarayanan, and R. Chellappa. Metareg: Towards domain generalization using meta-regularization. Ad-vances in neural information processing systems , 31, 2018. 1[5] S. Beery, G. Van Horn, and P. Perona. Recognition in terra incognita. In Proceedings of the European conference on computer vision (ECCV) , pages 456–473, 2018. 4 [6] C. M. Bishop and N. M. Nasrabadi. Pattern recognition and machine learning , volume 4. Springer, 2006. 2 [7] E. J. Cand `es, X. Li, Y. Ma, and J. Wright. Robust principal component analysis? Journal of the ACM (JACM) , 58(3):1– 37, 2011. 2 [8] J. Cha, S. Chun, K. Lee, H.-C. Cho, S. Park, Y. Lee, and S. Park. Swad: Domain generalization by seeking flat min-ima. Advances in Neural Information Processing Systems ,34:22405–22418, 2021. 1, 6, 7 [9] X. Chen and K. He. Exploring simple siamese representation learning. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 15750–15758, 2021. 2 [10] Y.-H. Chen and A.-K. Seghouane. Cpcanet: Deep unfolding common principal component analysis for domain generaliza-
+
+Method PACS VLCS OfficeHome TerraIncognita Avg. (↑) Peak GPU RAM (GB) (↓) Total GPU Time 
+
+(days-hh:mm:ss) (↓)
+
+ResNet-50 Backbone 
+
+ERM ‡ [50] (Book ’98) 84.1 ± 0.3 74.5 ± 0.5 67.1 ± 0.3 49.0 ± 0.8 68.7 8.15 0-16:18:01 CORAL ‡ [46] (ECCV ’16) 82.9 ± 1.1 75.6 ± 0.4 67.3 ± 0.2 41.6 ± 1.1 66.9 8.24 0-17:01:36 CDANN ‡ [34] (ECCV ’18) 83.6 ± 0.3 76.2 ± 0.4 66.7 ± 0.3 48.9 ± 0.7 68.9 8.22 0-16:28:10 SelfReg ‡ [24] (ICCV ’21) 82.6 ± 0.7 76.2 ± 0.5 67.2 ± 0.2 47.2 ± 1.0 68.3 8.24 0-17:14:25 SagNet ‡ [40] (CVPR ’21) 82.7 ± 1.0 73.8 ± 0.6 64.8 ± 0.4 47.7 ± 0.5 67.2 8.21 1-02:44:50 ARM ‡ [57] (NeurIPS ’21) 84.1 ± 0.4 75.8 ± 0.3 67.0 ± 0.3 45.4 ± 0.6 68.1 12.85 0-22:21:43 IB-ERM ‡ [1] (NeurIPS ’21) 82.9 ± 0.5 74.3 ± 0.6 65.6 ± 0.3 50.3 ± 0.7 68.3 8.15 0-16:15:01 
+
+IB-IRM ‡ [1] (NeurIPS ’21) 82.0 ± 0.8 76.4 ± 0.6 58.1 ± 0.2 42.8 ± 1.1 64.8 8.15 0-16:26:45 Transfer ‡ [55] (NeurIPS ’21) 83.0 ± 0.4 73.6 ± 0.7 62.5 ± 0.3 36.3 ± 1.3 63.9 8.15 3-03:42:55 EQRM ‡ [13] (NeurIPS ’22) 84.0 ± 0.7 76.0 ± 0.4 67.4 ± 0.2 45.0 ± 0.8 68.1 8.12 0-17:07:21 ADRMX ‡ [12] (arXiv ’23) 84.6 ± 0.3 75.6 ± 0.5 66.6 ± 0.2 47.2 ± 0.8 68.5 16.36 0-23:49:41 RDM ‡ [41] (WACV ’24) 85.3 ± 0.3 74.6 ± 0.4 68.0 ± 0.2 49.5 ± 0.6 69.4 8.15 0-16:19:27 URM ‡ [25] (TMLR ’24) 81.4 ± 0.7 77.1 ± 0.2 65.3 ± 0.3 49.8 ± 0.9 68.4 8.19 0-16:18:08 CPCANet ‡ [10] (arXiv ’26) 85.5 ± 0.3 75.9 ± 0.5 69.3 ± 0.3 47.4 ± 0.9 69.5 8.65 0-16:49:40 PP-CPCANet 85.1 ± 0.3 75.3 ± 0.6 69.1 ± 0.2 47.5 ± 1.0 69.2 8.25 0-16:47:22 
+
+ViT-based Backbones 
+
+CPCANet-S ‡ [10] (arXiv ’26) 85.4 ± 0.4 78.4 ± 0.4 72.8 ± 0.4 44.7 ± 0.8 70.3 7.17 1-20:53:26 CPCANet-B ‡ [10] (arXiv ’26) 89.6 ± 0.3 79.8 ± 0.4 77.1 ± 0.2 44.6 ± 0.7 72.8 14.28 4-18:12:24 PP-CPCANet-S 87.4 ± 0.4 78.0 ± 0.3 73.1 ± 0.4 42.4 ± 0.7 70.2 6.79 1-19:38:36 
+
+PP-CPCANet-B 89.5 ± 0.4 79.5 ± 0.5 77.6 ± 0.2 43.8 ± 0.8 72.6 13.90 4-17:03:21 
+
+SSM-based Backbones 
+
+CPCANet-T ‡ [10] (arXiv ’26) 89.6 ± 0.7 79.1 ± 0.5 70.2 ± 0.4 54.1 ± 0.4 73.3 21.43 2-02:34:26 CPCANet-S ‡ [10] (arXiv ’26) 92.6 ± 0.4 80.1 ± 0.5 75.4 ± 0.2 56.4 ± 0.3 76.1 37.41 3-18:05:48 CPCANet-B ‡ [10] (arXiv ’26) 91.2 ± 0.6 79.6 ± 0.4 78.1 ± 0.3 57.7 ± 0.8 76.6 47.42 4-12:57:31 PP-CPCANet-T 89.8 ± 0.4 79.4 ± 0.4 69.1 ± 0.5 53.9 ± 1.5 73.1 18.41 2-01:08:39 
+
+PP-CPCANet-S 92.5 ± 0.6 79.9 ± 0.3 75.6 ± 0.5 56.8 ± 0.5 76.2 37.22 3-16:20:05 PP-CPCANet-B 92.9 ± 0.2 80.3 ± 0.4 77.8 ± 0.3 57.7 ± 0.9 77.2 47.81 4-11:23:51 
+
+Table 1. Summary of DG accuracies (%) and computational overhead across benchmark datasets. Total GPU time denotes the cumulative training time over four datasets and three random seeds. ‡ denotes results reported from CPCANet [ 10 ]. Gray rows correspond to our method under different backbone architectures. Best results within each backbone category are highlighted in bold .tion. arXiv preprint arXiv:2605.05136 , 2026. 1, 2, 3, 4, 5, 6, 7[11] A. Dayal, V. KB, L. R. Cenkeramaddi, C. Mohan, A. Kumar, and V. N Balasubramanian. Madg: margin-based adversarial learning for domain generalization. Advances in Neural In-formation Processing Systems , 36:58938–58952, 2023. 1, 6, 7[12] B. Demirel, E. Aptoula, and H. Ozkan. Adrmx: Additive disentanglement of domain features with remix loss. arXiv preprint arXiv:2308.06624 , 2023. 5, 6, 7 [13] C. Eastwood, A. Robey, S. Singh, J. Von K ¨ugelgen, H. Has-sani, G. J. Pappas, and B. Sch ¨olkopf. Probable domain gener-alization via quantile risk minimization. Advances in Neural Information Processing Systems , 35:17340–17358, 2022. 5, 6, 7 [14] C. Fang, Y. Xu, and D. N. Rockmore. Unbiased metric learn-ing: On the utilization of multiple datasets and web images for softening bias. In Proceedings of the IEEE international conference on computer vision , pages 1657–1664, 2013. 4 [15] B. N. Flury. Common principal components in k groups. 
+
+Journal of the American Statistical Association , 79(388):892– 898, 1984. 1 [16] J. H. Friedman and J. W. Tukey. A projection pursuit algo-rithm for exploratory data analysis. IEEE Transactions on computers , 100(9):881–890, 2006. 2 [17] I. Gulrajani and D. Lopez-Paz. In search of lost domain generalization. In International Conference on Learning Representations , 2021. 4, 6, 7 [18] J. Guo, L. Qi, Y. Shi, and Y. Gao. Start: A generalized state space model with saliency-driven token-aware transforma-tion. Advances in Neural Information Processing Systems ,37:55286–55313, 2024. 6, 7 [19] K. He, X. Zhang, S. Ren, and J. Sun. Deep residual learning for image recognition. In Proceedings of the IEEE conference on computer vision and pattern recognition , pages 770–778, 2016. 4 [20] K. Helfrich, D. Willmott, and Q. Ye. Orthogonal recurrent neural networks with scaled cayley transform. In Interna-tional Conference on Machine Learning , pages 1969–1978. PMLR, 2018. 2 [21] G. E. Hinton and R. R. Salakhutdinov. Reducing the dimensionality of data with neural networks. science ,313(5786):504–507, 2006. 3 [22] P. J. Huber. Projection pursuit. The annals of Statistics , pages 435–475, 1985. 2 [23] Y. Jiang and V. Veitch. Invariant and transportable represen-tations for anti-causal domain shifts. Advances in Neural Information Processing Systems , 35:20782–20794, 2022. 1 [24] D. Kim, Y. Yoo, S. Park, J. Kim, and J. Lee. Selfreg: Self-supervised contrastive regularization for domain generaliza-Method PACS VLCS 
+
+Art Cartoon Photo Sketch Avg.( ↑) Caltech LabelMe Pascal Sun Avg. ( ↑)
+
+ResNet-50 Backbone 
+
+ERM † [50] (Book ’98) 84.7 ± 0.4 80.8 ± 0.6 97.2 ± 0.3 79.3 ± 1.0 85.5 ± 0.2 97.7 ± 0.4 64.3 ± 0.9 73.4 ± 0.5 74.6 ± 1.3 77.5 ± 0.4 CORAL † [46] (ECCV ’16) 88.3 ± 0.2 80.0 ± 0.5 97.5 ± 0.3 78.8 ± 1.3 86.2 ± 0.3 98.3 ± 0.1 66.1 ± 1.2 73.4 ± 0.3 77.5 ± 1.2 78.8 ± 0.6 CDANN ‡ [34] (ECCV ’18) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 
+
+DGER ‡ [58] (NeurIPS ’20) 87.5 ± 1.0 79.3 ± 1.4 98.3 ± 0.1 76.3 ± 0.7 85.3 ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 
+
+SelfReg ‡ [24] (ICCV ’21) 87.9 ± 1.0 79.4 ± 1.4 96.8 ± 0.7 78.3 ± 1.2 85.6 ± 0.4 96.7 ± 0.4 65.2 ± 1.2 73.1 ± 1.3 76.2 ± 0.7 77.8 ± 0.9 SagNet † [40] (CVPR ’21) 87.4 ± 1.0 80.7 ± 0.6 97.1 ± 0.1 80.0 ± 0.4 86.3 ± 0.2 97.9 ± 0.4 64.5 ± 0.5 71.4 ± 1.3 77.5 ± 0.5 77.8 ± 0.5 SWAD ‡ [8] (NeurIPS ’21) 89.3 ± 0.2 83.4 ± 0.6 97.3 ± 0.3 82.5 ± 0.5 88.1 ± 0.1 98.8 ± 0.1 63.3 ± 0.3 75.3 ± 0.5 79.2 ± 0.6 79.1 ± 0.1 ARM † [57] (NeurIPS ’21) 86.8 ± 0.6 76.8 ± 0.5 97.4 ± 0.3 79.3 ± 1.2 85.1 ± 0.4 98.7 ± 0.2 63.6 ± 0.7 71.3 ± 1.2 76.7 ± 0.6 77.6 ± 0.3 IB-ERM ‡ [1] (NeurIPS ’21) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 
+
+IB-IRM ‡ [1] (NeurIPS ’21) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 
+
+Transfer ‡ [55] (NeurIPS ’21) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 
+
+EQRM ‡ [13] (NeurIPS ’22) 86.5 ± 0.4 82.1 ± 0.7 96.6 ± 0.2 80.8 ± 0.2 86.5 ± 0.2 98.3 ± 0.0 63.7 ± 0.8 72.6 ± 1.0 76.7 ± 1.1 77.8 ± 0.6 EoA ‡ [3] (NeurIPS ’22) 90.5 ± N/A 83.4 ± N/A 98.0 ± N/A 82.5 ± N/A 88.6 ± N/A 99.1 ± N/A 63.1 ± N/A 75.9 ± N/A 78.3 ± N/A 79.1 ± N/A 
+
+ADRMX ‡ [12] (arXiv ’23) 87.7 ± N/A 80.6 ± N/A 97.7 ± N/A 77.5 ± N/A 85.9 ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 78.5 ± N/A 
+
+MADG ‡ [11] (NeurIPS ’23) 87.8 ± 0.5 82.2 ± 0.6 97.7 ± 0.3 78.3 ± 0.4 86.5 ± 0.4 98.5 ± 0.2 65.8 ± 0.3 73.1 ± 0.3 77.3 ± 0.1 78.7 ± 0.2 SAGM ‡ [52] (CVPR ’23) 87.4 ± 0.2 80.2 ± 0.3 98.0 ± 0.2 80.8 ± 0.6 86.6 ± 0.2 99.0 ± 0.2 65.2 ± 0.4 75.1 ± 0.3 80.7 ± 0.8 80.0 ± 0.3 GMDG ‡ [47] (CVPR ’24) 84.7 ± 1.0 81.7 ± 2.4 97.5 ± 0.4 80.5 ± 1.8 85.6 ± 0.3 98.3 ± 0.4 65.9 ± 1.0 73.4 ± 0.8 79.3 ± 1.3 79.2 ± 0.3 RDM ‡ [41] (WACV ’24) 88.4 ± 0.2 81.3 ± 1.6 97.1 ± 0.1 81.8 ± 1.1 87.2 ± 0.7 98.1 ± 0.2 64.9 ± 0.7 72.6 ± 0.5 77.9 ± 1.2 78.4 ± 0.4 URM ‡ [25] (TMLR ’24) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 87.2 ± 3.4 N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 77.1 ± 0.2 CPCANet ‡ [10] (arXiv ’26) 86.0 ± 0.4 82.8 ± 0.9 95.4 ± 0.6 77.8 ± 0.7 85.5 ± 0.3 97.1 ± 0.3 63.2 ± 0.3 68.4 ± 1.8 74.9 ± 0.2 75.9 ± 0.5 PP-CPCANet 84.4 ± 0.1 80.8 ± 0.6 95.8 ± 0.4 79.2 ± 1.1 85.1 ± 0.3 97.1 ± 0.3 62.8 ± 1.8 67.4 ± 0.7 74.1 ± 1.6 75.3 ± 0.6 
+
+ViT-based Backbones 
+
+SDViT-S ‡ [45] (ACCV ’22) 87.6 ± 0.3 82.4 ± 0.4 98.0 ± 0.3 77.2 ± 1.0 86.3 ± 0.2 96.8 ± 0.5 64.2 ± 0.8 76.2 ± 0.4 78.5 ± 0.4 78.9 ± 0.4 GMoE-S ‡ [30] (ICLR ’23) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 88.1 ± 0.1 N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 80.2 ± 0.2 GMoE-B ‡ [30] (ICLR ’23) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 89.4 ± 0.1 N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 81.2 ± 0.1 START-M-S ‡ [18] (NeurIPS ’24) 88.6 ± N/A 83.2 ± N/A 98.6 ± N/A 77.8 ± N/A 87.1 ± 0.3 N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 
+
+START-M-B ‡ [18] (NeurIPS ’24) 88.7 ± N/A 83.0 ± N/A 98.5 ± N/A 76.8 ± N/A 86.8 ± 0.2 N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 
+
+CPCANet-S ‡ [10] (arXiv ’26) 87.6 ± 0.4 82.9 ± 0.7 96.9 ± 0.2 74.3 ± 1.5 85.4 ± 0.4 97.5 ± 0.3 64.3 ± 1.2 72.0 ± 0.4 79.6 ± 1.0 78.4 ± 0.4 CPCANet-B ‡ [10] (arXiv ’26) 91.7 ± 0.6 85.3 ± 0.2 99.3 ± 0.4 82.1 ± 0.8 89.6 ± 0.3 97.9 ± 0.2 66.4 ± 1.0 73.6 ± 0.2 81.2 ± 1.4 79.8 ± 0.4 PP-CPCANet-S 89.7 ± 0.7 84.7 ± 1.4 96.4 ± 0.4 78.9 ± 0.6 87.4 ± 0.4 97.1 ± 0.4 62.5 ± 0.5 73.3 ± 0.5 79.3 ± 0.9 78.0 ± 0.3 PP-CPCANet-B 91.4 ± 1.1 85.4 ± 0.7 99.3 ± 0.1 82.1 ± 0.6 89.5 ± 0.4 98.6 ± 0.6 65.5 ± 0.4 74.7 ± 0.2 79.3 ± 1.7 79.5 ± 0.5 
+
+SSM-based Backbones 
+
+DGMamba-T ‡ [36] (ACM MM ’24) 91.2 ± N/A 86.9 ± N/A 98.9 ± N/A 87.0 ± N/A 91.0 ± 0.1 97.7 ± N/A 64.8 ± N/A 79.3 ± N/A 81.0 ± N/A 80.7 ± 0.1 DGMamba-S ‡ [36] (ACM MM ’24) 94.1 ± N/A 87.8 ± N/A 99.6 ± N/A 89.0 ± N/A 92.6 ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 
+
+DGMamba-B ‡ [36] (ACM MM ’24) 95.1 ± N/A 89.2 ± N/A 99.8 ± N/A 87.9 ± N/A 93.0 ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 
+
+START-M ‡ [18] (NeurIPS ’24) 93.3 ± N/A 87.6 ± N/A 99.1 ± N/A 87.1 ± N/A 91.8 ± 0.4 98.8 ± N/A 67.0 ± N/A 77.2 ± N/A 82.3 ± N/A 81.3 ± 0.3 START-X ‡ [18] (NeurIPS ’24) 92.8 ± N/A 87.4 ± N/A 99.2 ± N/A 87.5 ± N/A 91.7 ± 0.5 98.7 ± N/A 66.6 ± N/A 77.0 ± N/A 82.6 ± N/A 81.2 ± 0.3 CPCANet-T ‡ [10] (arXiv ’26) 91.8 ± 0.7 86.3 ± 0.8 98.0 ± 0.4 82.3 ± 2.7 89.6 ± 0.7 97.5 ± 0.4 66.7 ± 0.4 72.9 ± 1.3 79.4 ± 1.3 79.1 ± 0.5 CPCANet-S ‡ [10] (arXiv ’26) 93.6 ± 0.6 91.6 ± 0.4 99.5 ± 0.2 85.7 ± 1.4 92.6 ± 0.4 96.5 ± 0.6 65.8 ± 0.7 75.6 ± 1.4 82.4 ± 1.1 80.1 ± 0.5 CPCANet-B ‡ [10] (arXiv ’26) 93.2 ± 0.4 87.8 ± 1.4 99.5 ± 0.1 84.4 ± 1.9 91.2 ± 0.6 96.5 ± 0.4 66.3 ± 1.3 75.3 ± 0.4 80.2 ± 0.5 79.6 ± 0.4 PP-CPCANet-T 90.5 ± 0.7 86.8 ± 1.2 97.6 ± 0.2 84.4 ± 0.4 89.8 ± 0.4 97.2 ± 0.4 66.4 ± 0.9 75.5 ± 1.1 78.6 ± 1.1 79.4 ± 0.4 PP-CPCANet-S 94.8 ± 0.4 89.9 ± 1.1 99.4 ± 0.2 85.8 ± 2.3 92.5 ± 0.6 97.3 ± 0.3 65.3 ± 0.7 75.3 ± 1.1 81.7 ± 0.3 79.9 ± 0.3 PP-CPCANet-B 93.6 ± 0.5 91.7 ± 0.1 99.8 ± 0.2 86.4 ± 0.7 92.9 ± 0.2 97.4 ± 0.2 67.9 ± 1.2 75.2 ± 0.6 80.5 ± 0.4 80.3 ± 0.4 
+
+Table 2. Detailed DG accuracies (%) on PACS and VLCS . N/A indicates unavailable values. † denotes results reported from DomainBed [ 17 ], and ‡ denotes results reported from CPCANet [ 10 ]. Gray rows correspond to our method under different backbone architectures. Best results within each backbone category are highlighted in bold .tion. In Proceedings of the IEEE/CVF international confer-ence on computer vision , pages 9619–9628, 2021. 1, 5, 6, 7[25] K. Krishnamachari, S.-K. Ng, and C.-S. Foo. Uniformly distributed feature representations for fair and robust learning. 
+
+Transactions on Machine Learning Research , 2024. 5, 6, 7 [26] N. Kwak. Principal component analysis based on l1-norm maximization. IEEE transactions on pattern analysis and machine intelligence , 30(9):1672–1680, 2008. 2 [27] C. Leys, C. Ley, O. Klein, P. Bernard, and L. Licata. De-tecting outliers: Do not use standard deviation around the mean, use absolute deviation around the median. Journal of experimental social psychology , 49(4):764–766, 2013. 2 [28] M. Lezcano Casado. Trivializations for gradient-based op-timization on manifolds. Advances in Neural Information Processing Systems , 32, 2019. 2 [29] M. Lezcano-Casado and D. Martınez-Rubio. Cheap orthogo-nal constraints in neural networks: A simple parametrization of the orthogonal and unitary group. In International Confer-ence on Machine Learning , pages 3794–3803. PMLR, 2019. 2[30] B. Li, Y. Shen, J. Yang, Y. Wang, J. Ren, T. Che, J. Zhang, and Z. Liu. Sparse mixture-of-experts are domain generaliz-able learners. In The Eleventh International Conference on Method OfficeHome TerraIncognita 
+
+Art Clipart Product Real Avg.( ↑) L100 L38 L43 L46 Avg. ( ↑)
+
+ResNet-50 Backbone 
+
+ERM † [50] (Book ’98) 61.3 ± 0.7 52.4 ± 0.3 75.8 ± 0.1 76.6 ± 0.3 66.5 ± 0.3 49.8 ± 4.4 42.1 ± 1.4 56.9 ± 1.8 35.7 ± 3.9 46.1 ± 1.8 CORAL † [46] (ECCV ’16) 65.3 ± 0.4 54.4 ± 0.5 76.5 ± 0.1 78.4 ± 0.5 68.7 ± 0.3 51.6 ± 2.4 42.2 ± 1.0 57.0 ± 1.0 39.8 ± 2.9 47.6 ± 1.0 CDANN ‡ [34] (ECCV ’18) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 
+
+DGER ‡ [58] (NeurIPS ’20) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 
+
+SelfReg ‡ [24] (ICCV ’21) 63.6 ± 1.4 53.1 ± 1.0 76.9 ± 0.4 78.1 ± 0.4 67.9 ± 0.7 48.8 ± 0.9 41.3 ± 1.8 57.3 ± 0.7 40.6 ± 0.9 47.0 ± 0.3 SagNet † [40] (CVPR ’21) 63.4 ± 0.2 54.8 ± 0.4 75.8 ± 0.4 78.3 ± 0.3 68.1 ± 0.1 53.0 ± 2.9 43.0 ± 2.5 57.9 ± 0.6 40.4 ± 1.3 48.6 ± 1.0 SWAD ‡ [8] (NeurIPS ’21) 66.1 ± 0.4 57.7 ± 0.4 78.4 ± 0.1 80.2 ± 0.2 70.6 ± 0.2 55.4 ± 0.0 44.9 ± 1.1 59.7 ± 0.4 39.9 ± 0.2 50.0 ± 0.3 ARM † [57] (NeurIPS ’21) 63.9 ± 0.8 51.0 ± 0.7 74.5 ± 0.3 78.5 ± 0.6 67.0 ± 0.3 46.9 ± 1.2 41.9 ± 2.0 54.2 ± 0.2 38.8 ± 1.0 45.4 ± 0.6 IB-ERM ‡ [1] (NeurIPS ’21) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 56.4 ± 2.1 IB-IRM ‡ [1] (NeurIPS ’21) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 54.1 ± 2.0 Transfer ‡ [55] (NeurIPS ’21) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 
+
+EQRM ‡ [13] (NeurIPS ’22) 60.5 ± 0.1 56.0 ± 0.2 76.1 ± 0.4 77.4 ± 0.3 67.5 ± 0.1 47.9 ± 1.9 45.2 ± 0.3 59.1 ± 0.3 38.8 ± 0.6 47.8 ± 0.6 EoA ‡ [3] (NeurIPS ’22) 69.1 ± N/A 59.8 ± N/A 79.5 ± N/A 81.5 ± N/A 72.5 ± N/A 57.8 ± N/A 46.5 ± N/A 61.3 ± N/A 43.5 ± N/A 52.3 ± N/A 
+
+ADRMX ‡ [12] (arXiv ’23) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 68.3 ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 47.4 ± N/A 
+
+MADG ‡ [11] (NeurIPS ’23) 68.6 ± 0.5 55.5 ± 0.2 79.6 ± 0.3 81.5 ± 0.4 71.3 ± 0.3 60.0 ± 1.2 51.8 ± 0.2 57.4 ± 0.3 45.6 ± 0.5 53.7 ± 0.5 SAGM ‡ [52] (CVPR ’23) 65.4 ± 0.4 57.0 ± 0.3 78.0 ± 0.3 80.0 ± 0.2 70.1 ± 0.2 54.8 ± 1.3 41.4 ± 0.8 57.7 ± 0.6 41.3 ± 0.4 48.8 ± 0.9 GMDG ‡ [47] (CVPR ’24) 68.9 ± 0.3 56.2 ± 1.7 79.9 ± 0.6 82.0 ± 0.4 70.7 ± 0.2 60.9 ± 2.5 47.3 ± 1.6 55.2 ± 0.5 41.0 ± 1.4 51.1 ± 0.9 RDM ‡ [41] (WACV ’24) 61.1 ± 0.4 55.1 ± 0.3 75.7 ± 0.5 77.3 ± 0.3 67.3 ± 0.4 52.9 ± 1.2 43.1 ± 1.0 58.1 ± 1.3 36.1 ± 2.9 47.5 ± 1.0 URM ‡ [25] (TMLR ’24) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 68.9 ± 0.6 N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 49.3 ± 0.9 CPCANet ‡ [10] (arXiv ’26) 68.2 ± 0.4 54.2 ± 0.6 75.5 ± 0.4 79.2 ± 0.5 69.3 ± 0.3 44.3 ± 1.4 47.9 ± 0.4 57.2 ± 1.2 40.3 ± 2.8 47.4 ± 0.9 PP-CPCANet 67.8 ± 0.4 53.5 ± 0.3 75.9 ± 0.7 79.3 ± 0.2 69.1 ± 0.2 48.6 ± 2.3 44.5 ± 2.5 59.0 ± 0.6 37.8 ± 2.2 47.5 ± 1.0 
+
+ViT-based Backbones 
+
+SDViT-S ‡ [45] (ACCV ’22) 68.3 ± 0.8 56.3 ± 0.2 79.5 ± 0.3 81.8 ± 0.1 71.5 ± 0.2 55.9 ± 1.7 31.7 ± 2.6 52.2 ± 0.3 37.4 ± 0.6 44.3 ± 1.0 GMoE-S ‡ [30] (ICLR ’23) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 74.2 ± 0.4 N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 48.5 ± 0.4 GMoE-B ‡ [30] (ICLR ’23) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 77.2 ± 0.4 N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 49.3 ± 0.3 START-M-S ‡ [18] (NeurIPS ’24) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 
+
+START-M-B ‡ [18] (NeurIPS ’24) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 
+
+CPCANet-S ‡ [10] (arXiv ’26) 70.0 ± 1.5 56.1 ± 0.7 81.0 ± 0.6 84.1 ± 0.5 72.8 ± 0.4 52.3 ± 1.3 35.9 ± 3.0 52.2 ± 0.9 38.5 ± 0.6 44.7 ± 0.8 CPCANet-B ‡ [10] (arXiv ’26) 77.9 ± 0.5 61.1 ± 0.4 83.2 ± 0.5 86.4 ± 0.3 77.1 ± 0.2 51.6 ± 0.4 33.2 ± 2.7 51.4 ± 0.5 42.4 ± 0.8 44.6 ± 0.7 PP-CPCANet-S 71.2 ± 1.0 57.0 ± 0.3 80.9 ± 0.8 83.4 ± 0.6 73.1 ± 0.4 47.2 ± 1.9 34.1 ± 1.3 49.4 ± 1.1 39.0 ± 1.2 42.4 ± 0.7 PP-CPCANet-B 77.9 ± 0.4 62.4 ± 0.7 83.3 ± 0.2 86.9 ± 0.4 77.6 ± 0.2 49.8 ± 2.0 33.4 ± 2.2 54.7 ± 1.2 37.4 ± 0.8 43.8 ± 0.8 
+
+SSM-based Backbones 
+
+DGMamba-T ‡ [36] (ACM MM ’24) 75.6 ± N/A 61.9 ± N/A 83.8 ± N/A 86.0 ± N/A 76.8 ± 0.1 62.0 ± N/A 67.7 ± N/A 61.7 ± N/A 46.9 ± N/A 54.5 ± 0.1 DGMamba-S ‡ [36] (ACM MM ’24) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 
+
+DGMamba-B ‡ [36] (ACM MM ’24) N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A N/A ± N/A 
+
+START-M ‡ [18] (NeurIPS ’24) 75.2 ± N/A 62.0 ± N/A 85.3 ± N/A 85.8 ± N/A 77.1 ± 0.2 70.1 ± N/A 50.0 ± N/A 63.0 ± N/A 49.5 ± N/A 58.2 ± 0.8 START-X ‡ [18] (NeurIPS ’24) 75.5 ± N/A 62.1 ± N/A 85.2 ± N/A 85.5 ± N/A 77.1 ± 0.1 70.7 ± N/A 49.5 ± N/A 64.0 ± N/A 49.0 ± N/A 58.3 ± 0.8 CPCANet-T ‡ [10] (arXiv ’26) 69.0 ± 0.4 54.6 ± 1.5 77.5 ± 0.3 79.8 ± 0.2 70.2 ± 0.4 60.3 ± 0.3 46.5 ± 0.8 61.9 ± 0.9 47.6 ± 1.2 54.1 ± 0.4 CPCANet-S ‡ [10] (arXiv ’26) 77.1 ± 0.7 58.6 ± 0.2 81.5 ± 0.1 84.3 ± 0.5 75.4 ± 0.2 59.7 ± 0.5 51.3 ± 0.3 64.8 ± 0.3 49.9 ± 1.1 56.4 ± 0.3 CPCANet-B ‡ [10] (arXiv ’26) 79.7 ± 0.8 61.6 ± 0.5 85.2 ± 0.3 85.8 ± 0.5 78.1 ± 0.3 66.4 ± 2.0 49.9 ± 1.4 64.3 ± 0.9 50.1 ± 1.9 57.7 ± 0.8 PP-CPCANet-T 68.0 ± 1.0 52.5 ± 1.3 76.8 ± 0.8 79.2 ± 0.6 69.1 ± 0.5 57.3 ± 4.6 47.1 ± 2.6 62.2 ± 1.4 48.9 ± 2.8 53.9 ± 1.5 PP-CPCANet-S 76.2 ± 1.4 59.0 ± 0.8 82.7 ± 0.8 84.7 ± 0.4 75.6 ± 0.5 64.5 ± 0.9 47.9 ± 1.3 63.5 ± 0.2 51.1 ± 1.3 56.8 ± 0.5 PP-CPCANet-B 79.3 ± 0.5 61.5 ± 1.0 84.4 ± 0.3 86.1 ± 0.3 77.8 ± 0.3 65.5 ± 1.5 52.5 ± 2.8 63.1 ± 0.5 49.6 ± 1.3 57.7 ± 0.9 
+
+Table 3. Detailed DG accuracies (%) on OfficeHome and TerraIncognita . N/A indicates unavailable values. † denotes results reported from DomainBed [ 17 ], and ‡ denotes results reported from CPCANet [ 10 ]. Gray rows correspond to our method under different backbone architectures. Best results within each backbone category are highlighted in bold .
+
+Initial Dim. (d1) Progressive Cascade Depths (T = 1 )32 69.0 ± 0.3 64 68.9 ± 0.2 128 69.2 ± 0.3 256 68.8 ± 0.2 512 68.7 ± 0.0 Table 4. Ablation on the initial projection dimension d1 with the progressive cascade depth fixed to T = 1 .
+
+Learning Representations , 2023. 6, 7 [31] D. Li, Y. Yang, Y.-Z. Song, and T. Hospedales. Learning to generalize: Meta-learning for domain generalization. In 
+
+Proceedings of the AAAI conference on artificial intelligence ,volume 32, 2018. 1 [32] D. Li, Y. Yang, Y.-Z. Song, and T. M. Hospedales. Deeper, broader and artier domain generalization. In Proceedings of the IEEE international conference on computer vision , pages 5542–5550, 2017. 4 [33] J. Li, F. Li, and S. Todorovic. Efficient riemannian opti-mization on the stiefel manifold via the cayley transform. In 
+
+International Conference on Learning Representations , 2020. Initial Dim. (d1) Progressive Cascade Depths (T )
+
+T = 1 T = 2 T = 3 T = 4 T = 5 T = 6 
+
+128 69.2 ± 0.3 68.3 ± 0.4 68.8 ± 0.2 68.3 ± 0.1 68.5 ± 0.4 68.6 ± 0.3 Table 5. Ablation on the progressive cascade depth T with the initial projection dimension fixed to the optimal d1 = 128 .2[34] Y. Li, X. Tian, M. Gong, Y. Liu, T. Liu, K. Zhang, and D. Tao. Deep domain generalization via conditional invariant adver-sarial networks. In Proceedings of the European conference on computer vision (ECCV) , pages 624–639, 2018. 5, 6, 7 [35] Y. Liu, Y. Tian, Y. Zhao, H. Yu, L. Xie, Y. Wang, Q. Ye, J. Jiao, and Y. Liu. Vmamba: Visual state space model. Advances in neural information processing systems , 37:103031–103063, 2024. 4 [36] S. Long, Q. Zhou, X. Li, X. Lu, C. Ying, Y. Luo, L. Ma, and S. Yan. Dgmamba: Domain generalization via generalized state space model. In Proceedings of the 32nd ACM Interna-tional Conference on Multimedia , pages 3607–3616, 2024. 6, 7[37] F. Lv, J. Liang, S. Li, B. Zang, C. H. Liu, Z. Wang, and D. Liu. Causality inspired representation learning for domain gener-alization. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 8046–8056, 2022. 1 [38] D. Mahajan, S. Tople, and A. Sharma. Domain generaliza-tion using causal matching. In International conference on machine learning , pages 7313–7324. PMLR, 2021. 1 [39] K. Muandet, D. Balduzzi, and B. Sch ¨olkopf. Domain gener-alization via invariant feature representation. In International conference on machine learning , pages 10–18. PMLR, 2013. 1[40] H. Nam, H. Lee, J. Park, W. Yoon, and D. Yoo. Reducing domain gap by reducing style bias. In Proceedings of the IEEE/CVF conference on computer vision and pattern recog-nition , pages 8690–8699, 2021. 5, 6, 7 [41] T. Nguyen, K. Do, B. Duong, and T. Nguyen. Domain gener-alisation via risk distribution matching. In Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision , pages 2790–2799, 2024. 5, 6, 7 [42] M. B. Richman et al. Rotation of principal components. J. climatol , 6(3):293–335, 1986. 2 [43] Y. Shi, J. Seely, P. Torr, A. Hannun, N. Usunier, G. Synnaeve, et al. Gradient matching for domain generalization. In In-ternational Conference on Learning Representations , 2022. 1[44] L. Sirovich and M. Kirby. Low-dimensional procedure for the characterization of human faces. Journal of the Optical Society of America A , 4(3):519–524, 1987. 2 [45] M. Sultana, M. Naseer, M. H. Khan, S. Khan, and F. S. Khan. Self-distilled vision transformer for domain generalization. In Proceedings of the Asian conference on computer vision ,pages 3068–3085, 2022. 6, 7 [46] B. Sun and K. Saenko. Deep coral: Correlation alignment for deep domain adaptation. In European conference on computer vision , pages 443–450. Springer, 2016. 1, 5, 6, 7 [47] Z. Tan, X. Yang, and K. Huang. Rethinking multi-domain generalization with a general learning objective. In proceed-ings of the IEEE/CVF conference on computer vision and pattern recognition , pages 23512–23522, 2024. 6, 7 [48] N. Tishby, F. C. Pereira, and W. Bialek. The information bottleneck method. arXiv preprint physics/0004057 , 2000. 3 [49] H. Touvron, M. Cord, M. Douze, F. Massa, A. Sablayrolles, and H. J ´egou. Training data-efficient image transformers & distillation through attention. In International conference on machine learning , pages 10347–10357. PMLR, 2021. 4 [50] V. Vapnik and V. Vapnik. Statistical learning theory wiley. 
+
+New York , 1(624):2, 1998. 5, 6, 7 [51] H. Venkateswara, J. Eusebio, S. Chakraborty, and S. Pan-chanathan. Deep hashing network for unsupervised domain adaptation. In Proceedings of the IEEE conference on com-puter vision and pattern recognition , pages 5018–5027, 2017. 4[52] P. Wang, Z. Zhang, Z. Lei, and L. Zhang. Sharpness-aware gradient matching for domain generalization. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 3769–3778, 2023. 6, 7 [53] Q. Wu, Y. Liu, H. Zhao, A. Kale, T. Bui, T. Yu, Z. Lin, Y. Zhang, and S. Chang. Uncovering the disentanglement capability in text-to-image diffusion models. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 1900–1910, 2023. 1 [54] F.-E. Yang, Y.-C. Cheng, Z.-Y. Shiau, and Y.-C. F. Wang. Ad-versarial teacher-student representation learning for domain generalization. Advances in Neural Information Processing Systems , 34:19448–19460, 2021. 1 [55] G. Zhang, H. Zhao, Y. Yu, and P. Poupart. Quantifying and improving transferability in domain generalization. Advances in Neural Information Processing Systems , 34:10957–10970, 2021. 5, 6, 7 [56] H. Zhang, Y.-F. Zhang, W. Liu, A. Weller, B. Sch ¨olkopf, and E. P. Xing. Towards principled disentanglement for do-main generalization. In Proceedings of the IEEE/CVF con-ference on computer vision and pattern recognition , pages 8024–8034, 2022. 1 [57] M. Zhang, H. Marklund, N. Dhawan, A. Gupta, S. Levine, and C. Finn. Adaptive risk minimization: Learning to adapt to domain shift. Advances in neural information processing systems , 34:23664–23678, 2021. 5, 6, 7 [58] S. Zhao, M. Gong, T. Liu, H. Fu, and D. Tao. Domain generalization via entropy regularization. Advances in neural information processing systems , 33:16096–16107, 2020. 6, 7 [59] K. Zhou, Z. Liu, Y. Qiao, T. Xiang, and C. C. Loy. Do-main generalization: A survey. IEEE transactions on pattern analysis and machine intelligence , 45(4):4396–4415, 2022. 1

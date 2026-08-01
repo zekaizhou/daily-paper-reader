@@ -1,0 +1,78 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.21978v1/fig-001.webp",
+      "caption": "Table 1: Main results across three MoE backbones on in-domain tasks (Math, Code) and out-of-domain general retention. Avg denotes the combined in-domain average over GSM8K, MATH, MBPP, HumanEval. Bold indicates the best PEFT result excluding FFT.",
+      "page": 6,
+      "index": 1,
+      "width": 946,
+      "height": 590
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21978v1/fig-002.webp",
+      "caption": "Table 2: Medical VQA accuracy and general VL retention on Qwen3.5-35B-A3B.",
+      "page": 6,
+      "index": 2,
+      "width": 941,
+      "height": 185
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21978v1/fig-003.webp",
+      "caption": "Figure 1: (I) Comparison of PEFT-on-MoE methods: (a) Per-expert LoRA, which equip each MoE expert with a LoRA adapter; (b) Static expert-subset selection methods, which select a subset of experts offline to be trained with LoRA; (c) MoELoRA-style methods, which adapt each MoE module with a MoE-style low-rank adapter; (d) MoE2. (II) Annotation. (III) LoRA Experts Preference: We present the preferred layers of LoRA experts in MoE2’s global expert pool, demonstrating the layer-specific learning and cross-layer learning capabilities of MoE2.",
+      "page": 2,
+      "index": 3,
+      "width": 945,
+      "height": 420
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21978v1/fig-004.webp",
+      "caption": "Table 4: Component ablation on DeepSeek-V2-Lite math.",
+      "page": 7,
+      "index": 4,
+      "width": 733,
+      "height": 186
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21978v1/fig-005.webp",
+      "caption": "Table 6: Training-time efficiency on DeepSeek-V2-Lite math. †Per-expert LoRA cannot be configured to a 22M budget without collapsing to rank-1; we report its native 27M configuration.",
+      "page": 13,
+      "index": 5,
+      "width": 581,
+      "height": 211
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21978v1/fig-006.webp",
+      "caption": "Figure 7: Expert-affinity matrices for the same trained adapter evaluated on GSM8K (left) and MBPP (right). Each panel is independently sorted by preferred depth. The depth-organized structure is preserved across domains.",
+      "page": 13,
+      "index": 6,
+      "width": 442,
+      "height": 365
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21978v1/fig-007.webp",
+      "caption": "Figure 5: Linear CKA between MoE block outputs across the 26 layers of DeepSeek-V2-Lite (base model, no LoRA).",
+      "page": 8,
+      "index": 7,
+      "width": 438,
+      "height": 374
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21978v1/fig-008.webp",
+      "caption": "Figure 2: Overview of the MoE2-LoRA forward pass on a single MoE layer.",
+      "page": 4,
+      "index": 8,
+      "width": 447,
+      "height": 440
+    },
+    {
+      "url": "assets/figures/arxiv/2607.21978v1/fig-009.webp",
+      "caption": "Figure 6: Expert-affinity matrices on GSM8K for MoE2-LoRA with different global pool sizes NL ∈ {128, 256, 512} on DeepSeek-V2-Lite. Rows are experts sorted by preferred depth; columns are MoE layers. A consistent depth-organized diagonal emerges across all pool sizes.",
+      "page": 12,
+      "index": 9,
+      "width": 446,
+      "height": 291
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.22355v1/fig-001.webp",
+      "caption": "Fig. 2: SiPhy VLM (Sec. 3.1). For each SAM-derived object part, the model receives three visual inputs (part mask, cropped region, full object image) alongside a text prompt and a GPT-4-generated part description. Vicuna-7B-v1.5 jointly processes all inputs and predicts the material category (e.g., “Metal”).",
+      "page": 6,
+      "index": 1,
+      "width": 725,
+      "height": 387
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22355v1/fig-002.webp",
+      "caption": "Fig. 8: Material-grounded audio generation. Mel-spectrograms for three objects under ChatGPT-only, Vanilla (VLM caption → MakeAnAudio), and Vanilla + SiPhy. SiPhy’s material prior corrects appearance-driven errors (e.g., metal locker misidentified as wood), producing spectrograms that better match the reference audio.",
+      "page": 15,
+      "index": 2,
+      "width": 725,
+      "height": 437
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22355v1/fig-003.webp",
+      "caption": "Fig. 3: 3D-aware pseudo-voxelization. (a) Depth-adaptive sampling voxels (colored rectangulars). (b) Zoomed comparison: fixed uniform spacing (top) causes voxel overlap and redundancy; our adaptive spacing (bottom) produces non-overlapping coverage that better approximates a surface voxel grid.",
+      "page": 7,
+      "index": 3,
+      "width": 725,
+      "height": 283
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22355v1/fig-004.webp",
+      "caption": "Fig. 4: Heaviness-aware thickness refinement (HAT). (a) NeRF2Physics assigns thickness based on material priors. (b) Our HAT module first classifies the object as heavy or light and refines thickness prediction toward physically plausible ranges",
+      "page": 10,
+      "index": 4,
+      "width": 725,
+      "height": 228
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22355v1/fig-005.webp",
+      "caption": "Table 1: Mass prediction evaluation on the ABO-500 test set. “M” and “S” denote multi-view and single-view inputs.",
+      "page": 10,
+      "index": 5,
+      "width": 696,
+      "height": 215
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22355v1/fig-006.webp",
+      "caption": "Fig. 7: Edge-case analysis. From left to right: the first 2 objects are transparent, the next 3 (pillows, same image) are highly textured, and the last is reflective. Predictions are bordered with a green box if correct and a red box if incorrect. SiPhy handles transparent and textured objects well; reflective surfaces remain a failure mode for both methods.",
+      "page": 14,
+      "index": 6,
+      "width": 718,
+      "height": 222
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22355v1/fig-007.webp",
+      "caption": "Fig. 6: Qualitative results on HO3D, ARCTIC, ABO500, and MVImgNET.",
+      "page": 13,
+      "index": 7,
+      "width": 725,
+      "height": 375
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22355v1/fig-008.webp",
+      "caption": "Fig. 5: Qualitative results on ABO500. Material segmentation (left) and mass density (right). SiPhy yields more coherent material segmentation than NeRF2Physics and PUGS, especially on thin structures and fine-grained parts.",
+      "page": 12,
+      "index": 8,
+      "width": 725,
+      "height": 410
+    },
+    {
+      "url": "assets/figures/arxiv/2607.22355v1/fig-009.webp",
+      "caption": "Fig. 1: Overall Architecture of the SiPhy. (1) 3D-aware 2D sampling: spatially distributed 2D points are sampled from the object surface to approximate coarse geometry from a single view. (2) Material probability estimation: CLIP visual features, guided by SAM masks, are aligned with material candidates proposed by a finetuned VLM to produce material probability maps. (3) Physical property prediction: localized material probabilities are integrated over the sampled points to infer the properties",
+      "page": 5,
+      "index": 9,
+      "width": 725,
+      "height": 410
+    }
+  ]
+}

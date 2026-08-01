@@ -1,0 +1,78 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.25239v1/fig-001.webp",
+      "caption": "Figure 3: Benchmark characterization of CD-RMOT-Bench. Refer-vKITTI provides the controlled digital-twin core, while Refer-KITTI-V2 and Refer-BDD serve as real-domain anchors. Expressioncue proportions are normalized over coarse keyword counts for visualization; categories are nonexclusive and used only for characterization, not as additional manual labels.",
+      "page": 6,
+      "index": 1,
+      "width": 664,
+      "height": 238
+    },
+    {
+      "url": "assets/figures/arxiv/2607.25239v1/fig-002.webp",
+      "caption": "Figure 1: Controlled domain shift in RMOT. (a) Under the same referring expression and target semantics, changing only the visual domain can cause the tracker to select expression-inconsistent trajectories. (b) Existing RMOT model [1] shows clear HOTA, DetA, and AssA drops across weather and viewpoint shifts relative to the in-domain vKITTI clear→clear reference.",
+      "page": 2,
+      "index": 2,
+      "width": 737,
+      "height": 336
+    },
+    {
+      "url": "assets/figures/arxiv/2607.25239v1/fig-003.webp",
+      "caption": "Figure 4: Overview of QCA as a query-centric reference method for language-conditioned UDA in RMOT. The shared RMOT backbone produces language-conditioned temporal queries, while CDT-MT, ACDA, and LGCA target three failure modes exposed by CD-RMOT-Bench: target-query instability, task-relevant source–target mismatch, and language-conditioned semantic drift.",
+      "page": 7,
+      "index": 3,
+      "width": 736,
+      "height": 399
+    },
+    {
+      "url": "assets/figures/arxiv/2607.25239v1/fig-004.webp",
+      "caption": "Table 3: Detailed construction statistics for Refer-vKITTI. Expression–track pairs and per-scene identity pairs are different counting units: the former count expression–track instances after domain expansion, while the latter count candidate identity correspondences used during scene-level matching. The automatic stage provides an auditable initial mapping; manual inspection is used only as residual quality control and is therefore described in the text rather than reported as a separate logged statistic.",
+      "page": 14,
+      "index": 4,
+      "width": 748,
+      "height": 345
+    },
+    {
+      "url": "assets/figures/arxiv/2607.25239v1/fig-005.webp",
+      "caption": "Table 6: Ablation study under two representative cross-domain transfer directions: vKITTI clear → fog and vKITTI clear→ Refer-BDD. HOTA, DetA, and AssA are reported to show how each component affects detection- and association-sensitive performance.",
+      "page": 18,
+      "index": 5,
+      "width": 702,
+      "height": 219
+    },
+    {
+      "url": "assets/figures/arxiv/2607.25239v1/fig-006.webp",
+      "caption": "Figure 2: Refer-vKITTI construction and supported protocols. Refer-KITTI-V2 provides real-domain expressions and annotations, while aligned Virtual KITTI 2 scenes provide controlled digital-twin domains. We first establish per-scene identity mappings, then transfer expression-track annotations by preserving descriptions and rewriting target identities and video names. Residual quality control handles ambiguous correspondences and visibility cases. Refer-vKITTI supports weather/viewpoint transfer and, with Refer-KITTI-V2 and Refer-BDD, bidirectional synthetic–real evaluation.",
+      "page": 4,
+      "index": 6,
+      "width": 722,
+      "height": 356
+    },
+    {
+      "url": "assets/figures/arxiv/2607.25239v1/fig-007.webp",
+      "caption": "Figure 5: Additional qualitative cases illustrating common cross-domain RMOT failures. The examples show that domain shift can induce both distractor confusion and weakened expressionconsistent temporal selectivity, even when visually plausible targets remain detectable.",
+      "page": 19,
+      "index": 7,
+      "width": 657,
+      "height": 860
+    },
+    {
+      "url": "assets/figures/arxiv/2607.25239v1/fig-008.webp",
+      "caption": "Table 5: Extended cross-domain metric decomposition under the unified evaluation protocol. Values in parentheses denote differences relative to the TempRMOT baseline.",
+      "page": 17,
+      "index": 8,
+      "width": 706,
+      "height": 431
+    },
+    {
+      "url": "assets/figures/arxiv/2607.25239v1/fig-009.webp",
+      "caption": "Table 2: Representative results on CD-RMOT-Bench. HOTA, DetA, and AssA are reported for weather, viewpoint, synthetic–real, and real–synthetic transfer. MUTR and ReferDINO are included as RVOS-style references.",
+      "page": 9,
+      "index": 9,
+      "width": 662,
+      "height": 457
+    }
+  ]
+}
