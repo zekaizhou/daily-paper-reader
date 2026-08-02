@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.23271v1/fig-001.webp",
+      "caption": "Table 1: Negation MCQ accuracy (%) on NegBench [3]. Aff, Neg, and Hyb denote affirmation, negation, and hybrid template types; Avg is computed over all samples across template types. All methods use CLIP ViT-B/32 [39] unless noted.",
+      "page": 11,
+      "index": 1,
+      "width": 725,
+      "height": 273
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23271v1/fig-002.webp",
+      "caption": "Fig. 9: Near-tie qualitative examples. Five MCQ questions where CLIP’s top-2",
+      "page": 26,
+      "index": 2,
+      "width": 725,
+      "height": 522
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23271v1/fig-003.webp",
+      "caption": "Fig. 3: Method overview. With all CLIP parameters frozen, we extract hidden states at three layers identified by the LCD analysis (Sec. 3.2): anchor la, compositional peak lp, and final layer L. The ECN (Sec. 3.3) attends over the full token sequence at lp with a learned query, fuses the result with peak- and anchor-layer embeddings, and predicts a deviation vector δ added to the collapsed layer-L embedding. The SCN (Sec. 3.3) contrasts the corrected embedding f̂T with the lp representation and the image embedding fI to predict a bounded scalar correction ∆s to the cosine similarity. Both modules are trained jointly (Sec. 3.4) while all CLIP parameters remain frozen.",
+      "page": 7,
+      "index": 3,
+      "width": 616,
+      "height": 240
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23271v1/fig-004.webp",
+      "caption": "Fig. 5: t-SNE of text embeddings for 10 object categories. Circles: affirmative captions; crosses: negated captions; colors: object categories. Left : original CLIP embeddings (affirmative and negated overlap within each object). Right : after ECN correction (affirmative captions stay in tight per-category clusters; negated captions separate into a looser shared region).",
+      "page": 14,
+      "index": 4,
+      "width": 519,
+      "height": 250
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23271v1/fig-005.webp",
+      "caption": "Table 9: Negation MCQ accuracy (%) comparing parser-dependent methods with PeakPatch on NegBench [3]. All methods use ViT-B/32 architecture.",
+      "page": 23,
+      "index": 5,
+      "width": 699,
+      "height": 222
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23271v1/fig-006.webp",
+      "caption": "Table 2: Negation retrieval (Text→Image, %) on NegBench [3]. R@k: Recall@k on negated queries. All methods use CLIP ViT-B/32 [39] unless noted. FT= encoder fine-tuning; PH=post-hoc (frozen backbone).",
+      "page": 12,
+      "index": 6,
+      "width": 725,
+      "height": 306
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23271v1/fig-007.webp",
+      "caption": "Table 14: Architecture details for the ECN and SCN modules (CLIP ViT-B/32, d=512).",
+      "page": 27,
+      "index": 7,
+      "width": 608,
+      "height": 313
+    }
+  ]
+}

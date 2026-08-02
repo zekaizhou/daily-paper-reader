@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.23052v1/fig-001.webp",
+      "caption": "Table 3. Per-constraint accuracy on FACTOR-Bench (%). Antimonotone constraints (negation, NOR) require polarity inversion, which holistic scoring does not provide.",
+      "page": 8,
+      "index": 1,
+      "width": 492,
+      "height": 290
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23052v1/fig-002.webp",
+      "caption": "Table 11. Aggregation method ablation. Power mean provides the best balance between FACTOR-Bench accuracy and NegBench performance. Softer γ values improve NegBench at the cost of FACTOR-Bench.",
+      "page": 16,
+      "index": 2,
+      "width": 506,
+      "height": 252
+    }
+  ]
+}

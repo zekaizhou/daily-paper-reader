@@ -1,0 +1,599 @@
+Title: What CLIP Knows but Cannot Say: Recovering Negation from Frozen Intermediate Features
+
+URL Source: https://arxiv.org/pdf/2607.23271v1
+
+Published Time: Tue, 28 Jul 2026 00:40:39 GMT
+
+Number of Pages: 28
+
+Markdown Content:
+# What CLIP Knows but Cannot Say: Recovering Negation from Frozen Intermediate Features 
+
+Chen-Yi Lu, Yueh-Shao Chen, and Somali Chaterji 
+
+Purdue University, West Lafayette, IN 47907, USA 
+
+Abstract. Contrastive vision-language models such as CLIP map se-mantically opposite phrases ( e.g ., “a dog” vs . “not a dog”) to nearly iden-tical embeddings, rendering them insensitive to negation. We attribute this failure to a phenomenon we call Representational Collapse : by track-ing compositional divergence and visual alignment across the CLIP text encoder, we show that middle layers build compositional syntax, but the final layers collapse this structure as visual alignment rises, producing a syntax-blind final representation. To recover the lost negation signal without altering pretrained weights, we propose PeakPatch, a lightweight post-hoc correction system that intercepts the encoder at its composi-tional peak while keeping CLIP fully frozen. An Embedding Correction Network (ECN) uses cross-attention to extract a negation-specific sig-nal from the peak layer, anchored to a stable baseline, and predicts a deviation vector that re-injects the lost syntax into the final-layer em-bedding space. A complementary Score Correction Network (SCN) pre-dicts bounded scalar score offsets for discriminative tasks. Both modules are trained jointly end-to-end while all CLIP parameters remain frozen, adding only 5.2M parameters (3.5% of the backbone) and preserving the standard cosine similarity interface. On NegBench, PeakPatch achieves 74.3% on COCO MCQ (+35.1 over CLIP, +17.8 over the best encoder fine-tuning method) and 65.5% on VOC MCQ, while outperforming all fine-tuning baselines on fully out-of-distribution negation retrieval de-spite training only 3.5% of the parameters. The corrected embeddings also transfer to text-to-image generation (+18.4 negation score) and gen-eralize across ViT-B/32, ViT-L/14, and SigLIP backbones. Project page: https://stevencylu.github.io/PeakPatch/ 
+
+## 1 Introduction 
+
+Vision-language models (VLMs) such as CLIP [39] learn a shared embedding space where images and text can be directly compared via cosine similarity. This simple yet powerful formulation has enabled a broad range of applications, including zero-shot classification [39, 61], cross-modal retrieval [33, 56], text-to-image generation [40,42], open-vocabulary detection [21,27,30,54], and semantic segmentation [32, 52]. Subsequent models such as ALIGN [18], OpenCLIP [5], SigLIP [57], and EVA-CLIP [45] have scaled this paradigm to larger datasets and architectures. arXiv:2607.23271v1 [cs.CV] 25 Jul 2026 2 Chen-Yi Lu et al.  
+
+> Fig. 1: CLIP’s negation blindness on two NegBench protocols. (Left ) Re-trieval: CLIP retrieves images containing the negated object (cup), treating “No cup is present” as similar to “cup present.” PeakPatch correctly retrieves cup-free images. (Right ) MCQ: given a cat image with no book, CLIP selects a caption mentioning both nouns while ignoring negation; PeakPatch selects the correct answer (“No book is visible in this image.”).
+
+Despite this progress, these models share a fundamental limitation: they can-not distinguish negated descriptions from affirmative ones. Semantically opposite phrases ( e.g ., “a dog” vs . “not a dog”) are mapped to nearly identical embed-dings, making the model effectively blind to negation. As Fig. 1 illustrates, this causes CLIP to retrieve images containing the negated object and to select wrong captions in multiple-choice settings. On the NegBench VOC MCQ task [3], this manifests as a universal affirmation bias : 81% accuracy on affirmative captions collapses to just 3% on negated ones, worse than random chance. This limita-tion has practical consequences: applications routinely require negation, from a radiologist searching for “bilateral consolidation with no evidence of pneumonia” to a safety inspector querying “construction sites with no barriers” to content moderation prompts such as “no weapon.” Why does this happen, and can it be fixed? Kang et al . [22] prove that the problem is fundamental: no CLIP-like joint embedding space can correctly handle even any two of basic semantics, attribute binding, spatial relations, and negation, as the geometry is overconstrained. Fine-tuning methods [37,44,56] im-prove negation accuracy without large drops in zero-shot classification, but they remain subject to this geometric ceiling—they push negation into a space that provably cannot fully accommodate it. Moreover, fine-tuning permanently alters the pretrained weights, requiring every downstream system that builds on frozen CLIP features ( e.g ., LLaVA [29], BLIP-2 [25], text-to-image generators [42]) to be re-validated or re-adapted. We therefore ask: Can we correct CLIP’s negation blindness without modifying the encoder or relying on an external model? 
+
+To answer this, we probe the frozen CLIP text encoder, layer by layer. We introduce the Layer-wise Compositional Divergence (LCD) metric, which tracks how well each layer separates negated captions from their affirmative counter-parts (Fig. 2). Jointly measuring this compositional divergence alongside per-layer visual alignment to the paired image reveals a clear trajectory. LCD rises through early and middle layers as the encoder builds compositional structure, then peaks at a compositional peak layer lp. Visual alignment, meanwhile, re-What CLIP Knows but Cannot Say 31 2 3 4 5 6 7 8 9 10 11 12           
+
+> CLIP Layer
+> 0.00
+> 0.05
+> 0.10
+> 0.15
+> 0.20
+> 0.25
+> 0.30
+> Divergence  D(l) = 1 - cos(orig, neg)
+> Divergence builds Collapse
+> Anchor la
+> (L6)
+> Peak lp
+> (L8)
+> Layer-wise Compositional Divergence (LCD)
+> DLCD (EOS divergence) Dtoken (token divergence) A(visual alignment)
+> Peak DLCD (L8)
+> 0.15
+> 0.20
+> 0.25
+> 0.30
+> Alignment  A(l) = cos(text, image)
+
+Fig. 2: Representational Collapse in CLIP’s text encoder. We track two layer-wise signals: compositional divergence (LCD; blue, left axis), defined as D(ℓ) = 1 −
+
+cos( orig , neg ), and visual alignment (red, right axis), defined as A(ℓ) = cos( text , image ).Divergence peaks at Layer lp but drops sharply as alignment rises, collapsing into a syntax-blind representation. PeakPatch extracts negation features at lp (compositional peak) and anchors them to la (L6) to correct the collapsed final-layer output. 
+
+mains low through an anchor layer la and then rises sharply. Beyond lp, visual alignment dominates while LCD drops. The final layers collapse the composi-tional structure into a syntax-blind representation optimized for cross-modal matching. We call this phenomenon Representational Collapse .Representational Collapse suggests a simple strategy: extract negation in-formation before the encoder discards it, then inject it back into the standard final embedding interface. Since the final layer is strongly visually aligned but syntax-blind, while the compositional peak is syntax-aware but not yet visually aligned, neither representation suffices alone. Based on this insight, we propose PeakPatch, a lightweight post-hoc correction system that intercepts the frozen CLIP encoder at its compositional peak and corrects the collapsed final-layer output. An Embedding Correction Network (ECN) uses cross-attention to ex-tract a negation-specific signal from Layer lp, anchors it to a stable baseline at Layer la, and predicts a deviation vector that injects the lost syntax into the final-layer embedding space. A Score Correction Network (SCN) contrasts the peak-layer representation with the ECN-corrected embedding and the image to predict bounded scalar corrections for discriminative tasks. Both modules are trained jointly end-to-end while all CLIP parameters remain frozen, adding 5.2M parameters (3.5% of the backbone) and preserving the standard cosine similarity interface. Overall, we correct CLIP’s negation blindness entirely post-hoc, with a frozen encoder and no external inference-time model. Our contributions are as follows: 1. We introduce the Layer-wise Compositional Divergence (LCD) metric and use it to identify Representational Collapse in CLIP’s text encoder: negation separability peaks at an intermediate layer and then degrades as visual align-4 Chen-Yi Lu et al. 
+
+ment increases, revealing that the encoder actively discards compositional structure in its final layers. 2. Motivated by this finding, we propose PeakPatch, a lightweight post-hoc correction system that keeps all of CLIP frozen and requires no external model. An Embedding Correction Network (ECN) extracts negation signals from the compositional peak via cross-attention and corrects the final text embedding, while a Score Correction Network (SCN) applies bounded cor-rections to the similarity score. 3. PeakPatch achieves 74.3% on COCO MCQ (+35.1 over CLIP, +17.8 over the best encoder fine-tuning method) with only 5.2M parameters (3.5% of the backbone). In the fully OOD retrieval setting, it outperforms all fine-tuning baselines despite modifying only the text side, and its corrected embeddings transfer to text-to-image generation (+18.4 negation score). 
+
+## 2 Related Work 
+
+2.1 Post-Hoc Adaptation of Vision-Language Models 
+
+Contrastive VLMs such as CLIP [39], ALIGN [18], OpenCLIP [5], SigLIP [57], and FLAVA [43] enable strong zero-shot transfer, but adapting them without damaging pretrained representations remains an open challenge. Existing ap-proaches operate at three levels of the inference pipeline. Prompt learning [19,23, 60, 61] optimizes continuous input tokens while keeping weights frozen, yielding gains on few-shot classification but leaving the similarity function unchanged. 
+
+Feature adapters [10, 49, 58] apply residual or cache-based transformations to output embeddings, demonstrating that small feature-space perturbations can produce large task-level improvements. Score- and classifier-level corrections [17, 46, 55, 62] modify classifier weights or logits to steer predictions without retrain-ing the backbone. Complementing these, WiSE-FT [51] shows that interpolating fine-tuned and zero-shot model weights preserves robustness, and parameter-efficient methods such as low-rank adaptation [15] have become standard for updating large models with minimal overhead. Notably, generative VLMs that use CLIP as a frozen visual encoder [2, 6, 25, 26, 29] inherit any compositional failure in CLIP’s representations, making upstream corrections especially conse-quential. Despite their diversity, these methods share a common assumption: the em-bedding geometry is fundamentally sound and merely needs task-specific steer-ing. PeakPatch draws on the idea of residual corrections [10, 55] but addresses a qualitatively different problem: the text encoder itself produces systematically wrong representations for negated inputs, requiring correction at the represen-tation level before any downstream scoring can be meaningful. 
+
+2.2 Negation Understanding in Vision-Language Models 
+
+Among the compositional failures exposed by recent benchmarks [8, 14, 16, 34, 48, 59], negation stands out as uniquely severe. While negation has been studied What CLIP Knows but Cannot Say 5
+
+extensively in natural language understanding [13], its impact on VLMs has only recently been quantified: NegBench [3] reveals that CLIP’s 81% affirmative accu-racy collapses to 3% on negated captions, and CC-Neg [44] confirms this failure at scale with 228K pairs. The root cause appears structural rather than data-driven: Kang et al . [22] prove a geometric impossibility theorem showing that no single embedding space can correctly handle even any two of basic semantics, attribute binding, spatial relations, and negation without overconstraining the geometry, while Quantmeyer et al . [38] provide mechanistic evidence that nega-tion processing is distributed across layers and concentrated in a small fraction of negator-selective attention heads (8%). Existing fixes fall into two camps, each with clear tradeoffs. Encoder fine-tuning methods [37, 44, 56] retrain the text encoder on negation-aware data. This improves negation understanding but risks degrading the broad representa-tions that make CLIP useful, precisely because it forces negation into an embed-ding space that provably cannot accommodate it [22,51]. Inference-time methods 
+
+avoid modifying CLIP but introduce other constraints: DCSM [22] replaces co-sine similarity with token-to-patch CNN scoring, breaking the standard CLIP interface and preventing use in downstream pipelines that rely on embeddings. Two concurrent methods fall outside these camps but introduce their own con-straints: SpaceVLM [41] and Aggarwal et al . [1] explicitly extract the negated concept at inference time, the former through an LLM parser and the latter through a rule-based parser, making them not directly comparable to methods that operate on the raw caption without external parsing. We provide detailed comparisons in Sec. F. 
+
+2.3 Interpreting CLIP’s Internal Representations 
+
+A growing body of work probes what CLIP’s layers encode. Gandelsman et al . [9] project each ViT layer’s output through CLIP’s final projection head, decomposing the image representation into per-layer contributions. On the text side, CLIP behaves largely as a bag of words [56], and Quantmeyer et al . [38] use causal tracing to establish that negation awareness does exist in intermediate layers but spans only 8% of attention heads and does not survive to the final representation. These studies reveal what CLIP fails at and where information resides, but stop short of quantifying the layer-wise dynamics or translating diagnostics into a correction strategy. Our LCD analysis (Sec. 3.2) builds on these findings. Adopting the projec-tion methodology of Gandelsman et al . [9] on the text encoder side, we track the competition between compositional divergence and visual alignment across every layer, revealing a consistent collapse of negation separability in the final layers—a phenomenon we term Representational Collapse . This directly moti-vates PeakPatch: lightweight correction modules that read negation signals from intermediate layers where prior mechanistic analyses localize them [38], sidestep the impossibility theorem [22] by operating outside the joint embedding space, and apply corrections at both the embedding and score levels—all while keeping CLIP frozen. 6 Chen-Yi Lu et al. 
+
+## 3 Method 
+
+3.1 Preliminaries 
+
+CLIP encodes images and text into a shared d-dimensional space. Given an image 
+
+I and text T , their similarity is computed as: 
+
+s(I, T ) = cos( fI , fT ) = f ⊤ 
+
+> I
+
+fT
+
+∥fI ∥ ∥ fT ∥ , (1) where fI = EI (I) ∈ Rd and fT = ET (T ) ∈ Rd are the image and text embed-dings, respectively. The text encoder is an L-layer transformer [50]; each layer applies multi-head self-attention and a feed-forward sub-network, producing hid-den states Hl ∈ RN ×d at layer l, where N is the sequence length. The final text embedding is obtained by projecting the [EOS] token of the last layer through a layer norm and linear head into the shared space: fT = WT LN( hL
+
+> [EOS]
+
+), followed by ℓ2 normalization. Following Gandelsman et al . [9], who project intermediate ViT layer outputs through CLIP’s final head to interpret per-layer contribu-tions, we extend this to the text encoder by defining f lT = WT LN( hl
+
+> [EOS]
+
+) (with 
+
+ℓ2 normalization), so that f LT ≡ fT . Because WT was trained to maximize cosine similarity between f LT and fI , the score cos( f lT , fI ) at intermediate layers measures the degree to which layer l has already specialized for cross-modal alignment. For a negated caption T − (e.g ., “not a dog”) and its affirmative counterpart 
+
+T + (e.g ., “a dog”), CLIP produces cos( fT + , fT − ) ≈ 1, meaning that the embed-dings are nearly identical despite opposite semantics. Kang et al . [22] prove that this is a geometric constraint of the shared space, not merely a training failure. However, our analysis (Sec. 3.2) reveals that compositional awareness does exist in the frozen encoder’s intermediate layers but is overwritten by the final layers. 
+
+3.2 Layer-wise Compositional Divergence 
+
+To formalize Representational Collapse , we define two complementary per-layer metrics: 
+
+Compositional divergence. Given a diagnostic set D = {(Ii, T + 
+
+> i
+
+, T − 
+
+> i
+
+)} of image–caption triples, where T + is the affirmative caption and T − its negated counterpart, we measure how well each layer separates their projected [EOS] 
+
+representations: 
+
+DLCD (l) = 1
+
+|D| 
+
+X
+
+> i
+
+
+
+1 − cos  f lT (T + 
+
+> i
+
+), f lT (T − 
+
+> i
+
+)
+
+. (2) 
+
+Visual alignment. We complement DLCD with a visual alignment score that measures how closely each layer’s projected [EOS] representation matches the paired image embedding: 
+
+A(l) = 1
+
+|D| 
+
+X
+
+> i
+
+cos  f lT (T + 
+
+> i
+
+), fIi
+
+. (3) What CLIP Knows but Cannot Say 7               
+
+> Fig. 3: Method overview. With all CLIP parameters frozen, we extract hidden states at three layers identified by the LCD analysis (Sec. 3.2): anchor la, compositional peak
+> lp, and final layer L. The ECN (Sec. 3.3) attends over the full token sequence at lp
+> with a learned query, fuses the result with peak- and anchor-layer embeddings, and predicts a deviation vector δadded to the collapsed layer-Lembedding. The SCN (Sec. 3.3) contrasts the corrected embedding ˆfTwith the lprepresentation and the image embedding fIto predict a bounded scalar correction ∆s to the cosine similarity. Both modules are trained jointly (Sec. 3.4) while all CLIP parameters remain frozen.
+
+Because both f lT and fI lie in the shared embedding space, the cosine similarity is well-defined at every layer; A(l) is not a claim about inherent visual content at layer l, but a measure of how strongly the contrastive alignment pressure has reshaped that layer’s output. 
+
+The collapse trajectory. Figure 2 plots both metrics across the L transformer layers, revealing three phases. In the early and middle layers, DLCD rises steadily as the encoder builds syntactic structure, while A(l) remains low. In the upper-middle layers, A(l) increases sharply as the encoder begins to specialize for cross-modal matching. Once alignment dominates, DLCD drops and the final layers collapse compositional distinctions into a syntax-blind, visually aligned repre-sentation. This collapse is a direct consequence of the InfoNCE [35] training objective. Because negation is largely absent from web-crawled image–caption data, the contrastive loss is dominated by object-level semantics: the final layers learn to maximize visual alignment based on what objects are present, with no gradient signal to preserve the distinction between “a dog” and “not a dog.” The com-positional structure built by the middle layers is therefore overwritten as the encoder specializes for object-driven matching. We verify that this pattern is negation-specific through a control experiment in Sec. 4.4. This trajectory identifies three functionally distinct zones that motivate our layer extraction strategy (Fig. 3): 
+
+Anchor zone (layer la). DLCD is rising but A(l) has not yet begun its steep ascent, providing a stable linguistic baseline uncontaminated by the visual prior. 
+
+Compositional peak (layer lp). DLCD reaches its maximum, the point at which syntactic and visual signals coexist before coming into conflict. 8 Chen-Yi Lu et al. 
+
+Collapse zone (layers lp+1 through L). A(l) dominates and DLCD drops sharply; by layer L, the [EOS] embedding is visually aligned but syntax-blind. 
+
+Deterministic layer selection. Both layers are read directly off the LCD curve rather than tuned: the compositional peak is lp = arg max ℓ DLCD (ℓ), and the anchor la is the latest pre-peak layer still in the rising-DLCD , pre-alignment zone—the closest stable baseline to lp, which shares the most processing context with it. Computing DLCD requires only forward passes over a small diagnostic set and takes minutes, so layer selection is a one-time characterization, not a hyperparameter search. The same rule transfers across backbones: re-running the analysis on each encoder relocates lp automatically, with no manual intervention (Sec. E reports a peak shift to Layer 4 for a LAION-2B-pretrained encoder, with comparable gains). 
+
+3.3 PeakPatch 
+
+The compositional peak retains negation information but lacks visual alignment, while the final layer is visually aligned but syntax-blind; an effective correction must bridge both representations. PeakPatch does so through two lightweight modules that operate on frozen CLIP features (Fig. 3). The Embedding Correc-tion Network (ECN) extracts a negation-specific deviation from the peak layer and injects it into the final text embedding, producing a corrected representation suitable for retrieval and generation. However, embedding correction alone may not suffice for discriminative tasks such as MCQ, where the decision hinges on the relative ranking of K candidate scores against a single image rather than on absolute embedding quality. A complementary Score Correction Network (SCN) therefore predicts a bounded scalar offset to the cosine similarity, allowing fine-grained adjustment of pairwise comparisons that the embedding shift cannot fully resolve. 
+
+Embedding Correction Network (ECN). The ECN corrects the collapsed layer-L embedding by recovering the negation signal from the compositional peak (Fig. 3, top branch). It predicts a deviation vector δ ∈ Rd that shifts the final embedding to separate negated from affirmative descriptions: 
+
+ˆfT = fT + α · δ
+
+∥fT + α · δ∥2
+
+, (4) where α is a learned scalar controlling the correction magnitude. The deviation δ is computed in two stages. All intermediate hidden states are first passed through CLIP’s final layer normalization ( LN final ) but not the text projection WT , preserving the full token-level structure while ensuring numerical compatibility across layers; for notational brevity, we continue to write Hl and 
+
+hl for these layer-normalized representations in the equations below. In the first stage, a learned query q ∈ Rd attends over the full token sequence at the peak layer via multi-head cross-attention [50] to produce a negation-aware summary: 
+
+a = LN  CrossAttn( q, Hlp , Hlp ) ∈ Rd, (5) What CLIP Knows but Cannot Say 9
+
+where LN denotes a separate learned layer normalization. Because the query is learned end-to-end, it discovers negation-relevant token positions automatically, handling negation through a single mechanism without requiring a syntactic parser. In the second stage, the cross-attention summary is concatenated with the 
+
+[EOS] tokens from the peak and anchor layers and a mean-pooled representation of the peak layer, then passed through a bottleneck MLP: 
+
+δ = MLP ECN 
+
+ [hlp
+
+> [EOS]
+
+; a; hla
+
+> [EOS]
+
+; ¯hlp ] ∈ Rd, (6) where ¯hlp is the mean-pooled token representation at the peak layer and MLP ECN :
+
+R4d → Rd. The anchor token hla 
+
+> [EOS]
+
+serves as a stable reference from before alignment pressure distorts the representation, while ¯hlp provides a global sum-mary of the peak layer’s full token sequence, complementing the query-focused cross-attention output. Since ˆfT is ℓ2-normalized (Eq. (4)), it preserves CLIP’s cosine similarity interface and can serve as a drop-in replacement for retrieval and generation tasks. 
+
+Score Correction Network (SCN). While the ECN operates in embedding space, the SCN provides a complementary correction at the score level (Fig. 3, bottom branch). For discriminative tasks such as multiple-choice question an-swering, the SCN predicts a bounded scalar adjustment to the cosine similarity between an image and a candidate caption. The SCN reads from the compositional peak region, where negation separa-bility is high but the representation is not yet dominated by alignment pressure. This provides a compositional cue complementary to the token-level features the ECN extracts, making the score correction more robust on ambiguous inputs. The SCN aggregates three sources of information. A text context encoder maps the concatenation of the projected peak-layer embedding f lp 
+
+> T
+
+and the ECN-corrected embedding ˆfT to a compact representation t ∈ Rds (where ds ≪ d is the SCN’s internal dimension), capturing the discrepancy between the compo-sitionally aware peak representation and the corrected output. A cross-modal context encoder maps the element-wise product fI ⊙ ˆfT to c ∈ Rds , encoding how the corrected text relates to the image. Finally, two scalar similarity fea-tures s = [cos( f lp 
+
+> T
+
+, fI ); cos( ˆfT , fI )] directly compare the peak-layer and corrected similarities; disagreement between these two scores signals that negation infor-mation was lost during the collapse. These three streams are concatenated and mapped to a bounded scalar correction: 
+
+∆s = αmax · tanh  MLP SCN ([ s; t; c]) , (7) where the tanh bounds the output to [−αmax , α max ], preventing the SCN from overriding the embedding-level signal. The final corrected similarity is: 
+
+ˆs(I, T ) = cos  fI , ˆfT
+
+ + ∆s.  (8) Because the SCN takes ˆfT rather than the original layer-L embedding as input, embedding-level corrections propagate into the score-level module, coupling the two streams end-to-end. 10 Chen-Yi Lu et al. 
+
+Inference. At test time, PeakPatch applies the ECN and SCN uniformly to every input: it performs no polarity classification, gating, or parsing to decide whether a caption is negated, so affirmative and negated queries pass through the identical correction path. The ECN always returns a drop-in ℓ2-normalized embedding ˆfT and the SCN always returns a bounded offset ∆s ; on affirmative inputs the learned corrections are small, preserving standard retrieval (Sec. 4.4) and zero-shot classification (Sec. C). 
+
+3.4 Joint Training 
+
+Both modules are trained jointly end-to-end while all CLIP parameters remain frozen. 
+
+ECN objective. The ECN is trained with a symmetric (image-to-text + text-to-image) InfoNCE loss [35]. For a batch of B images, each paired with an affirmative and a negated caption, the contrastive denominator sums over all 
+
+2B corrected embeddings, so negated captions act as hard negatives that the loss explicitly pushes apart. We denote this loss LECN .
+
+SCN objective. The SCN is trained with a K-way softmax cross-entropy loss over multiple-choice questions, each consisting of one correct caption and K−1
+
+negated distractors. An ℓ2 penalty on the correction magnitude (∆s )2, averaged over K options within each MCQ, regularizes the SCN to keep adjustments small. We denote this loss LSCN .
+
+Joint optimization. The total objective combines both losses: 
+
+L = LECN + λSCN LSCN . (9) Because the SCN operates on ECN-corrected embeddings, gradients from LSCN 
+
+flow back into the ECN, creating a coupled training dynamic: the ECN must produce embeddings that are useful for both retrieval (via LECN ) and discrimi-nation (via LSCN ). We use separate learning rates for the two modules to balance the contrastive and discriminative objectives. 
+
+## 4 Experiments 
+
+4.1 Setup Architecture and training. We build on CLIP ViT-B/32 [39] ( d=512 ). The ECN and SCN add ∼4.7M and ∼0.5M parameters respectively, totaling 5.2M trainable parameters (3.5% of the frozen backbone). Training data is constructed from CC12M [4] following the negation generation protocol of NegBench [3]: for each original caption, LLaMA 3.1-8B [12] generates a semantically negated counterpart by inserting explicit negation (e.g., “no,” “not,” “without”), producing 
+
+∼1.06M image–caption pairs for the ECN contrastive objective and ∼313K four-option MCQ samples for the SCN. Both modules are trained jointly for 10 epochs with AdamW [31] (weight decay 10 −2, gradient clipping at norm 1.0), cosine What CLIP Knows but Cannot Say 11 
+
+Table 1: Negation MCQ accuracy (%) on NegBench [3]. Aff, Neg, and Hyb denote affirmation, negation, and hybrid template types; Avg is computed over all samples across template types. All methods use CLIP ViT-B/32 [39] unless noted.                                                                    
+
+> COCO VOC Method Aff Neg Hyb Avg Aff Neg Hyb Avg CLIP [39] 70.0 6.6 38.4 39.2 80.9 3.0 58.0 37.9
+> Encoder fine-tuning
+> NegCLIP [56] [ICLR’23] 49.2 13.9 16.3 26.8 70.5 4.6 42.3 30.2 CoN-CLIP [44] [WACV’25] 15.6 32.9 25.3 24.4 24.8 23.2 56.7 38.2 CLIP + NF [3] [CVPR’25] 73.1 33.2 54.7 54.2 85.0 31.7 79.5 60.1 NegCLIP + NF [3] [CVPR’25] 81.0 25.9 60.1 56.5 81.0 21.1 83.7 58.2
+> Post-hoc correction
+> DCSM †[22] [ICCV’25] 71.2 6.6 68.0 48.6 68.5 5.4 73.1 49.0 PeakPatch 98.1 63.2 60.7 74.3 99.7 57.9 62.2 65.5
+> †Uses ViT-B/16 backbone. NF = NegFull [3] fine-tuning data.
+
+annealing, and separate learning rates ( 10 −5 for the ECN, 10 −4 for the SCN). Batch size is 1024; training takes ∼2.7 hours on a single NVIDIA A100. 
+
+Evaluation. We evaluate on NegBench [3] under two protocols: Negation MCQ —four-choice accuracy on COCO [28] and VOC 2007 splits (affirmation, nega-tion, hybrid templates); and Negation retrieval —text-to-image Recall@1/5 with negated queries on COCO and MSR-VTT [53]. We also evaluate on the text-to-image generation benchmark of Park et al . [37]: ECN-corrected embeddings are fed into a frozen GALIP [47] generator on 107 negation prompts; Gemma-3-27B [11] judges whether the affirmative object is present (Aff) and the negated attribute absent (Neg); combined (Comb = Aff × Neg) counts a sample as cor-rect only when both hold. Zero-shot classification on CIFAR-100 is reported in Sec. C. 
+
+Baselines. Encoder fine-tuning : NegCLIP [56], CoN-CLIP [44], NegationCLIP [37], and CLIP/NegCLIP + NF [3]. Post-hoc : DCSM [22] (dense token-to-patch match-ing, ViT-B/16). 
+
+4.2 Main Results Negation MCQ. Table 1 reports multiple-choice accuracy on the COCO and VOC splits of NegBench. Baseline CLIP scores only 39.2% on COCO, with 70.0% on affirmative captions but 6.6% on negated ones. The best fine-tuning method (NegCLIP + NF) reaches 56.5%; among post-hoc methods, DCSM achieves 48.6%. PeakPatch achieves 74.3% on COCO (+35.1 over CLIP, +17.8 over the best fine-tuning baseline) with a large negation gain (6.6% →63.2%). On VOC, PeakPatch reaches 65.5%, surpassing all fine-tuning baselines. 
+
+Negation retrieval. Table 2 reports text-to-image retrieval with negated queries. In the fully OOD setting (trained without COCO), PeakPatch outperforms all fine-tuning baselines across all metrics despite training only 5.2M parameters 
+
+vs . ∼151M for full encoder fine-tuning. In-domain, PeakPatch reaches 37.1% 12 Chen-Yi Lu et al. 
+
+Table 2: Negation retrieval (Text →Image, %) on NegBench [3]. R@ k: Recall@ k
+
+on negated queries. All methods use CLIP ViT-B/32 [39] unless noted. FT = encoder fine-tuning; PH = post-hoc (frozen backbone).                                                                
+
+> COCO MSR-VTT Method #P R@1 R@5 R@1 R@5 CLIP [39] ––25.0 47.9 23.8 45.9
+> Trained on COCO (COCO = in-domain)
+> NegCLIP [56] [ICLR’23] FT 151M 41.0 68.6 28.0 50.2 NegationCLIP [37] [ICCV’25] FT 151M 38.6 65.8 29.3 53.8
+> NegCLIP + NF [3] [CVPR’25] FT 151M 41.3 69.0 29.2 51.5 DCSM †[22] [ICCV’25] PH 3.0M 10.6 28.6 19.4 41.2 PeakPatch PH 5.2M 37.1 64.3 26.2 49.0
+> Trained w/o COCO (fully OOD)
+> CoN-CLIP [44] [WACV’25] FT 151M 25.7 50.1 23.3 45.4 CLIP + NF [3] [CVPR’25] FT 151M 30.4 55.0 28.4 51.6 PeakPatch PH 5.2M 31.4 56.9 29.1 53.7
+> †Uses ViT-B/16 backbone. NF = NegFull [3] fine-tuning data.
+
+Table 3: Text-to-image generation with negated prompts (%). Image gen-erated with frozen GALIP [47] generator on 107 prompts [37], correctness judged by Gemma-3-27B [11].                
+
+> Method Aff Neg Comb CLIP [39] 97.4 29.2 28.3 NegCLIP [56] 98.8 24.5 23.7 NegationCLIP [37] 98.8 45.2 44.5 PeakPatch (ECN only) 98.1 47.6 45.8
+
+Table 4: Generalization across architec-tures (MCQ Avg, %). PeakPatch consis-tently improves negation understanding across diverse VLM backbones without architecture-specific tuning.                  
+
+> Base + PeakPatch Architecture COCO VOC COCO VOC ViT-B/32 [39] 39.2 37.9 74.3 65.5
+> ViT-L/14 [39] 40.6 38.0 63.8 52.5
+> SigLIP [57] 28.9 30.8 66.4 55.3
+
+R@1 and 64.3% R@5 on COCO, closing much of the gap to NegCLIP + NF (41.3% R@1) while modifying only 3.5% of the backbone. The remaining gap is expected: encoder fine-tuning reshapes the joint space for both modalities, whereas our correction operates only on text embeddings. 
+
+Text-to-image generation. Table 3 evaluates ECN-corrected embeddings in a downstream generation pipeline. The corrected embeddings raise the nega-tion score from 29.2% to 47.6% (+18.4) while maintaining affirmative accuracy (98.1%), yielding a combined score of 45.8% vs . 28.3% for CLIP—surpassing NegationCLIP [37] (44.5%) without modifying encoder weights. 
+
+4.3 Ablation Study Component contribution. Table 5 isolates the contribution of each module on COCO. The standalone ECN improves MCQ Avg from 39.2% to 51.2% and retrieval R@5 from 47.9% to 58.2%, showing that embedding-level correction benefits both tasks. The standalone SCN provides a larger MCQ gain (71.6%) but barely improves retrieval (48.1%), as score-level correction does not alter What CLIP Knows but Cannot Say 13                       
+
+> MCQ Retrieval Variant Neg Avg R@5 CLIP (baseline) 6.6 39.2 47.9 ECN only 16.5 51.2 58.2 SCN only 67.3 71.6 48.1 w/o anchor ( la)61.7 68.7 60.5 Detached SCN 57.3 67.1 64.8
+> PeakPatch (joint) 63.2 74.3 64.3
+
+Table 5: Ablation study on COCO (%). Top: component contribution. Bot-tom: design choices. MCQ: negation ac-curacy and overall average. Ret: negation retrieval R@5. 4 5 6 7 8 9 10 11 12                      
+
+> Peak layer lp
+> 2
+> 4
+> 6
+> Anchor layer  la 61.7 65.0 67.6 70.4 73.5 72.8 72.4 72.2 72.0
+> 65.5 68.1 70.9 74.0 73.3 72.9 72.7 72.5
+> 71.2 74.3 73.6 73.2 73.0 72.8
+> 65
+> 70
+> MCQ Avg (%)
+
+Fig. 4: ECN layer selection. COCO MCQ Avg as a function of peak layer lp
+
+and anchor layer la. Accuracy peaks at 
+
+lp=8 , coinciding with the LCD maximum (Sec. 3.2), and is robust to the anchor choice. 
+
+the embedding space. Joint training yields the best overall system (74.3% MCQ, 64.3% R@5), with the ECN and SCN co-adapting through shared gradients. 
+
+Design choices. Table 5 also ablates two key architectural decisions. Remov-ing the anchor layer ( la) reduces accuracy by −5.6 (74.3% →68.7%), confirming that the stable baseline from the anchor zone is critical for measuring compo-sitional change. Detaching the SCN from ECN gradients reduces accuracy by 
+
+−7.2 (74.3% →67.1%), showing that the cooperative training dynamic between the two modules is essential. 
+
+Layer selection. Figure 4 sweeps the ECN peak layer lp and anchor layer la
+
+across CLIP’s text-encoder layers. Accuracy peaks at lp=8 , the same layer where the LCD trajectory reaches its maximum (Sec. 3.2), and decreases for both earlier and later choices. Performance is robust to the anchor choice, varying by 
+
+<1 pp across la ∈ { 2, 4, 6} for a fixed peak, confirming that the peak layer is the critical design decision and that the LCD analysis provides a principled criterion for selecting it. 
+
+4.4 Analysis Generalization across architectures. Table 4 evaluates PeakPatch on addi-tional backbones. Negation blindness persists regardless of scale or objective— CLIP ViT-L/14 (40.6%) and SigLIP ViT-B/16 (28.9%) match ViT-B/32 (39.2%)— and PeakPatch consistently improves COCO MCQ: +35.1 on ViT-B/32, +23.2 on ViT-L/14 (to 63.8%), and +37.5 on SigLIP (to 66.4%). The ViT-L/14 LCD trajectory shows an identical collapse pattern, and the layer-selection rule trans-fers across pretraining data and depth (OpenCLIP ViT-B/32 on LAION-2B, ViT-g/14); see Secs. D and E. 
+
+Standard (non-negation) retrieval. Because PeakPatch corrects every query without gating (Sec. 3.3), we check that it does not harm ordinary retrieval. On standard (affirmative) MSCOCO 5K and Flickr30K 1K text-to-image retrieval (Tab. 6), ECN-corrected embeddings slightly improve over frozen CLIP (R@1 
+
++2 .2/+2 .5), and zero-shot classification is likewise preserved (Sec. C). 14 Chen-Yi Lu et al. 
+
+Table 6: Standard (non-negation) text-to-image retrieval (%). ECN-corrected embeddings preserve—and slightly improve—retrieval on affirmative captions. MSCOCO 5K Flickr30K 1K Method R@1 R@5 R@1 R@5 CLIP [39] 29.9 54.1 57.9 83.0 PeakPatch (ECN) 32.1 57.0 60.4 83.9 (a) CLIP ViT-B/32 (b) EC-Corrected 
+
+> cat
+> dog
+> car
+> tree
+> house
+> bird
+> fish
+> chair
+> book
+> flower
+> affirmative
+> negated
+
+Fig. 5: t-SNE of text embeddings for 10 object categories. Circles: affirma-tive captions; crosses: negated captions; colors: object categories. Left : original CLIP embeddings (affirmative and negated overlap within each object). Right : after ECN correction (affirmative captions stay in tight per-category clusters; negated captions separate into a looser shared region). 
+
+Embedding space visualization. Figure 5 shows t-SNE projections of text embeddings for 10 object categories, each with 5 affirmative and 5 negated cap-tion templates. In the original CLIP space ( left ), affirmative and negated embed-dings for the same object cluster together, confirming that the encoder collapses the syntactic distinction. After ECN correction ( right ), the affirmative captions keep their tight per-category clusters while the negated captions separate from them into a distinct, looser region. We discuss negation’s set-valued nature in Sec. B. 
+
+LCD control experiment. To verify that the LCD trajectory reflects a negation-specific phenomenon, we compare three conditions on 1K pairs (Fig. 6): nega-tion, paraphrase (synonym rewording), and random (unrelated captions). The paraphrase curve stays near zero (meaning changes do not alter the [EOS] tra-jectory), the random curve rises monotonically, and only the negation curve exhibits the characteristic rise-and-fall, isolating Representational Collapse as unique to negation. 
+
+Attention analysis. Quantmeyer et al . [38] found that only 8% of CLIP’s at-tention heads are negator-selective. Figure 7 measures per-head attention on negation vs . content tokens across 12 negated prompts. Three of eight ECN heads (H0, H1, H5) allocate 1.8–2.6 × more attention to negation tokens (37.5% What CLIP Knows but Cannot Say 15 1 2 3 4 5 6 7 8 9 10 11 12 
+
+> CLIP Text Encoder Layer
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> DLCD (l) = 1  cos( hA, hB)
+> Negation
+> Paraphrase
+> Random (shuffled)
+> Peak (L8)
+
+Fig. 6: LCD control experiment. 
+
+LCD is measured on 1K pairs under three conditions: negation, paraphrase, and random. Only negation exhibits the rise-and-fall pattern, confirming the sig-nal is negation-specific. H0 H1 H2 H3 H4 H5 H6 H7 
+
+> Attention Head
+> 0.00
+> 0.05
+> 0.10
+> 0.15
+> 0.20
+> 0.25
+> 0.30
+> Mean Attention Weight
+> 2.6x
+> 1.8x
+> 2.0x
+> Negation tokens
+> Content tokens
+
+Fig. 7: ECN cross-attention by to-ken type. Mean attention on negation vs. content tokens. Heads H0, H1, and H5 attend preferentially to negation to-kens (> 1.5×), compared to 8% of CLIP heads [38]. 
+
+negation-selective); the remaining heads focus on content words, providing se-mantic context for what is being negated. 
+
+## 5 Conclusion 
+
+We identified Representational Collapse in CLIP’s text encoder: intermediate layers build compositional structure separating negated from affirmative descrip-tions, but later layers overwrite it as they specialize for visual alignment. Guided by this finding, we proposed PeakPatch, a post-hoc system that extracts the negation signal at the compositional peak through an Embedding Correction Network (ECN) and applies bounded score offsets through a Score Correction Network (SCN), trained jointly with all CLIP parameters frozen—adding 5.2M parameters (3.5% of the backbone). On NegBench, PeakPatch reaches 74.3% COCO MCQ (+35.1 over CLIP, +17.8 over the best fine-tuning method), out-performs all fine-tuning baselines on fully out-of-distribution retrieval, transfers to text-to-image generation (+18.4 negation score), and generalizes across ViT-B/32, ViT-L/14, and SigLIP. We discuss limitations in Sec. A. 
+
+## 6 Acknowledgements 
+
+This material is based in part upon work supported by the National Science Foundation under Grant Numbers CNS-2333487 (NSF Frontier) and CNS-2146449 (NSF CAREER). Any opinions, findings, conclusions, or recommendations ex-pressed in this material are those of the authors and do not necessarily reflect the views of the sponsors. We thank the reviewers and area chairs for their constructive feedback, which helped improve this work. 16 Chen-Yi Lu et al. 
+
+## References 
+
+1. Aggarwal, B., More, A., Soni, M., Bhat, S.D.: Seeing what’s not there: Negation understanding needs more than training. In: ICLR (2026) 2. Alayrac, J.B., Donahue, J., Luc, P., Miech, A., Barr, I., Hasson, Y., Lenc, K., Mensch, A., Millican, K., Reynolds, M., Ring, R., Rutherford, E., Cabi, S., Han, T., Gong, Z., Samangooei, S., Monteiro, M., Menick, J., Borgeaud, S., Brock, A., Nematzadeh, A., Sharifzadeh, S., Bińkowski, M., Barreira, R., Vinyals, O., Zisser-man, A., Simonyan, K.: Flamingo: a visual language model for few-shot learning. In: NeurIPS. pp. 23716–23736 (2022) 3. Alhamoud, K., Alshammari, S., Tian, Y., Li, G., Torr, P.H., Kim, Y., Ghassemi, M.: Vision-language models do not understand negation. In: CVPR. pp. 29612– 29622 (2025) 4. Changpinyo, S., Sharma, P., Ding, N., Soricut, R.: Conceptual 12M: Pushing web-scale image-text pre-training to recognize long-tail visual concepts. In: CVPR. pp. 3558–3568 (2021) 5. Cherti, M., Beaumont, R., Wightman, R., Wortsman, M., Ilharco, G., Gordon, C., Schuhmann, C., Schmidt, L., Jitsev, J.: Reproducible scaling laws for contrastive language-image learning. In: CVPR. pp. 2818–2829 (2023) 6. Dai, W., Li, J., Li, D., Tiong, A.M.H., Zhao, J., Wang, W., Li, B., Fung, P., Hoi, S.C.H.: InstructBLIP: Towards general-purpose vision-language models with instruction tuning. In: NeurIPS. pp. 49250–49267 (2023) 7. Deng, J., Dong, W., Socher, R., Li, L.J., Li, K., Fei-Fei, L.: ImageNet: A large-scale hierarchical image database. In: CVPR (2009) 8. Doveh, S., Arbelle, A., Harary, S., Herzig, R., Kim, D., Cascante-Bonilla, P., Alfassy, A., Panda, R., Giryes, R., Feris, R., Ullman, S., Karlinsky, L.: Dense and aligned captions (DAC) promote compositional reasoning in VL models. In: NeurIPS. vol. 36, pp. 76137–76150 (2023) 9. Gandelsman, Y., Efros, A.A., Steinhardt, J.: Interpreting CLIP’s image represen-tation via text-based decomposition. In: ICLR (2024) 10. Gao, P., Geng, S., Zhang, R., Ma, T., Fang, R., Zhang, Y., Li, H., Qiao, Y.: CLIP-Adapter: Better vision-language models with feature adapters. IJCV 132 , 581–595 (2024) 11. Gemma Team: Gemma 3 technical report. arXiv preprint arXiv:2503.19786 (2025) 12. Grattafiori, A., Dubey, A., Jauhri, A., Pandey, A., Kadian, A., Al-Dahle, A., Let-man, A., Mathur, A., Schelten, A., Vaughan, A., et al.: The llama 3 herd of models. arXiv preprint arXiv:2407.21783 (2024) 13. Hossain, M.M., Chinnappa, D., Blanco, E.: An analysis of negation in natural language understanding corpora. In: Proc. ACL (Short Papers). pp. 716–723 (2022) 14. Hsieh, C.Y., Zhang, J., Ma, Z., Kembhavi, A., Krishna, R.: SugarCrepe: Fixing hackable benchmarks for vision-language compositionality. In: NeurIPS. vol. 36, pp. 31096–31116 (2023) 15. Hu, E.J., Shen, Y., Wallis, P., Allen-Zhu, Z., Li, Y., Wang, S., Wang, L., Chen, W.: LoRA: Low-rank adaptation of large language models. In: ICLR (2022) 16. Huang, Y., Tang, J., Chen, Z., Zhang, R., Zhang, X., Chen, W., Zhao, Z., Zhao, Z., Lv, T., Hu, Z., Zhang, W.: Structure-CLIP: Towards scene graph knowledge to enhance multi-modal structured representations. In: AAAI. vol. 38, pp. 2417–2425 (2024) 17. Huang, Y., Shakeri, F., Dolz, J., Boudiaf, M., Bahig, H., Ben Ayed, I.: LP++: A surprisingly strong linear probe for few-shot CLIP. In: CVPR. pp. 23773–23782 (2024) What CLIP Knows but Cannot Say 17 18. Jia, C., Yang, Y., Xia, Y., Chen, Y.T., Parekh, Z., Pham, H., Le, Q.V., Sung, Y., Li, Z., Duerig, T.: Scaling up visual and vision-language representation learning with noisy text supervision. In: ICML. pp. 4904–4916 (2021) 19. Jia, M., Tang, L., Chen, B.C., Cardie, C., Belongie, S., Hariharan, B., Lim, S.N.: Visual prompt tuning. In: ECCV. pp. 709–727 (2022) 20. Jiang, A.Q., Sablayrolles, A., Mensch, A., Bamford, C., Chaplot, D.S., de Las Casas, D., Bressand, F., Lengyel, G., Lample, G., Saulnier, L., Lavaud, L.R., Lachaux, M.A., Stock, P., Le Scao, T., Lavril, T., Wang, T., Lacroix, T., El Sayed, W.: Mistral 7B. arXiv preprint arXiv:2310.06825 (2023) 21. Kamath, A., Singh, M., LeCun, Y., Synnaeve, G., Misra, I., Carion, N.: MDETR – modulated detection for end-to-end multi-modal understanding. In: ICCV. pp. 1780–1790 (2021) 22. Kang, R., Song, Y., Gkioxari, G., Perona, P.: Is CLIP ideal? No. can we fix it? Yes! In: ICCV. pp. 22436–22446 (2025) 23. Khattak, M.U., Rasheed, H., Maaz, M., Khan, S., Khan, F.S.: MaPLe: Multi-modal prompt learning. In: CVPR. pp. 19113–19122 (2023) 24. Krizhevsky, A.: Learning multiple layers of features from tiny images. Tech. rep., University of Toronto (2009) 25. Li, J., Li, D., Savarese, S., Hoi, S.: BLIP-2: Bootstrapping language-image pre-training with frozen image encoders and large language models. In: ICML. pp. 19730–19742 (2023) 26. Li, J., Selvaraju, R.R., Gotmare, A.D., Joty, S., Xiong, C., Hoi, S.: Align before fuse: Vision and language representation learning with momentum distillation. In: NeurIPS. pp. 9694–9705 (2021) 27. Li, L.H., Zhang, P., Zhang, H., Yang, J., Li, C., Zhong, Y., Wang, L., Yuan, L., Zhang, L., Hwang, J.N., Chang, K.W., Gao, J.: Grounded language-image pre-training. In: CVPR. pp. 10965–10975 (2022) 28. Lin, T.Y., Maire, M., Belongie, S., Hays, J., Perona, P., Ramanan, D., Dollár, P., Zitnick, C.L.: Microsoft COCO: Common objects in context. In: ECCV. pp. 740–755 (2014) 29. Liu, H., Li, C., Wu, Q., Lee, Y.J.: Visual instruction tuning. In: NeurIPS. pp. 34892–34916 (2023) 30. Liu, S., Zeng, Z., Ren, T., Li, F., Zhang, H., Yang, J., Jiang, Q., Li, C., Yang, J., Su, H., Zhu, J., Zhang, L.: Grounding DINO: Marrying DINO with grounded pre-training for open-set object detection. In: ECCV (2024) 31. Loshchilov, I., Hutter, F.: Decoupled weight decay regularization. In: ICLR (2019) 32. Lüddecke, T., Ecker, A.: Image segmentation using text and image prompts. In: CVPR. pp. 7086–7096 (2022) 33. Luo, H., Ji, L., Zhong, M., Chen, Y., Lei, W., Duan, N., Li, T.: CLIP4Clip: An empirical study of CLIP for end to end video clip retrieval and captioning. Neuro-computing 508 , 293–304 (2022) 34. Ma, Z., Hong, J., Gul, M.O., Gandhi, M., Gao, I., Krishna, R.: CREPE: Can vision-language foundation models reason compositionally? In: CVPR. pp. 10910–10921 (2023) 35. van den Oord, A., Li, Y., Vinyals, O.: Representation learning with contrastive predictive coding. arXiv preprint arXiv:1807.03748 (2018) 36. Parcalabescu, L., Cafagna, M., Muradjan, L., Frank, A., Calixto, I., Gatt, A.: VALSE: A task-independent benchmark for vision and language models centered on linguistic phenomena. In: Proc. Assoc. Comput. Linguistics. pp. 8253–8280 (2022) 18 Chen-Yi Lu et al. 37. Park, J., Lee, J., Song, J., Yu, S., Jung, D., Yoon, S.: Know “no” better: A data-driven approach for enhancing negation awareness in CLIP. In: ICCV. pp. 2825– 2835 (2025) 38. Quantmeyer, V., Mosteiro, P., Gatt, A.: How and where does CLIP process nega-tion? In: Proceedings of the 3rd Workshop on Advances in Language and Vision Research (ALVR). pp. 59–72 (2024) 39. Radford, A., Kim, J.W., Hallacy, C., Ramesh, A., Goh, G., Agarwal, S., Sastry, G., Askell, A., Mishkin, P., Clark, J., Krueger, G., Sutskever, I.: Learning transferable visual models from natural language supervision. In: ICML. pp. 8748–8763 (2021) 40. Ramesh, A., Dhariwal, P., Nichol, A., Chu, C., Chen, M.: Hierarchical text-conditional image generation with CLIP latents. arXiv preprint arXiv:2204.06125 (2022) 41. Ranjbar, S.K., Alhamoud, K., Ghassemi, M.: SpaceVLM: Sub-space modeling of negation in vision-language models. arXiv preprint arXiv:2511.12331 (2025) 42. Rombach, R., Blattmann, A., Lorenz, D., Esser, P., Ommer, B.: High-resolution image synthesis with latent diffusion models. In: CVPR. pp. 10684–10695 (2022) 43. Singh, A., Hu, R., Goswami, V., Couairon, G., Galuba, W., Rohrbach, M., Kiela, D.: FLAVA: A foundational language and vision alignment model. In: CVPR. pp. 15638–15650 (2022) 44. Singh, J., Shrivastava, I., Vatsa, M., Singh, R., Bharati, A.: Learning the power of “no”: Foundation models with negations. In: WACV. pp. 7991–8001 (2025) 45. Sun, Q., Fang, Y., Wu, L., Wang, X., Cao, Y.: EVA-CLIP: Improved training techniques for CLIP at scale. arXiv preprint arXiv:2303.15389 (2023) 46. Tang, Y., Lin, Z., Wang, Q., Zhu, P., Hu, Q.: AMU-Tuning: Effective logit bias for CLIP-based few-shot learning. In: CVPR. pp. 23323–23333 (2024) 47. Tao, M., Bao, B.K., Tang, H., Xu, C.: GALIP: Generative adversarial CLIPs for text-to-image synthesis. In: CVPR. pp. 14214–14223 (2023) 48. Thrush, T., Jiang, R., Bartolo, M., Singh, A., Williams, A., Kiela, D., Ross, C.: Winoground: Probing vision and language models for visio-linguistic composition-ality. In: CVPR. pp. 5238–5248 (2022) 49. Udandarao, V., Gupta, A., Albanie, S.: SuS-X: Training-free name-only transfer of vision-language models. In: ICCV. pp. 2725–2736 (2023) 50. Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A.N., Kaiser, Ł., Polosukhin, I.: Attention is all you need. In: NeurIPS. pp. 5998–6008 (2017) 51. Wortsman, M., Ilharco, G., Kim, J.W., Li, M., Kornblith, S., Roelofs, R., Lopes, R.G., Hajishirzi, H., Farhadi, A., Namkoong, H., Schmidt, L.: Robust fine-tuning of zero-shot models. In: CVPR. pp. 7959–7971 (2022) 52. Xu, J., De Mello, S., Liu, S., Byeon, W., Breuel, T., Kautz, J., Wang, X.: GroupViT: Semantic segmentation emerges from text supervision. In: CVPR. pp. 18134–18144 (2022) 53. Xu, J., Mei, T., Yao, T., Rui, Y.: MSR-VTT: A large video description dataset for bridging video and language. In: CVPR. pp. 5288–5296 (2016) 54. Yao, L., Han, J., Wen, Y., Liang, X., Xu, D., Zhang, W., Li, Z., Xu, C., Xu, H.: DetCLIP: Dictionary-enriched visual-concept paralleled pre-training for open-world detection. In: NeurIPS. pp. 9125–9138 (2022) 55. Yu, T., Lu, Z., Jin, X., Chen, Z., Wang, X.: Task residual for tuning vision-language models. In: CVPR. pp. 10899–10909 (2023) 56. Yuksekgonul, M., Bianchi, F., Kalluri, P., Jurafsky, D., Zou, J.: When and why vision-language models behave like bags-of-words, and what to do about it? In: ICLR (2023) What CLIP Knows but Cannot Say 19 57. Zhai, X., Mustafa, B., Kolesnikov, A., Beyer, L.: Sigmoid loss for language image pre-training. In: ICCV. pp. 11975–11986 (2023) 58. Zhang, R., Fang, R., Zhang, W., Gao, P., Li, K., Dai, J., Qiao, Y., Li, H.: Tip-adapter: Training-free adaption of CLIP for few-shot classification. In: ECCV. pp. 491–507 (2022) 59. Zhao, T., Zhang, T., Zhu, M., Shen, H., Lee, K., Lu, X., Yin, J.: An explain-able toolbox for evaluating pre-trained vision-language models. In: Proc. EMNLP (System Demonstrations). pp. 30–37 (2022) 60. Zhou, K., Yang, J., Loy, C.C., Liu, Z.: Conditional prompt learning for vision-language models. In: CVPR. pp. 16816–16825 (2022) 61. Zhou, K., Yang, J., Loy, C.C., Liu, Z.: Learning to prompt for vision-language models. IJCV 130 , 2337–2348 (2022) 62. Zhu, X., Zhang, R., He, B., Zhou, A., Wang, D., Zhao, B., Gao, P.: Not all features matter: Enhancing few-shot CLIP with adaptive prior refinement. In: ICCV. pp. 2605–2615 (2023) 20 Chen-Yi Lu et al. 
+
+# Appendix 
+
+## What CLIP Knows but Cannot Say: Recovering Negation from Frozen Intermediate Features 
+
+## A Limitations 
+
+PeakPatch corrects only the text side, leaving CLIP’s image encoder frozen. This is a deliberate choice—it keeps PeakPatch a low-risk, drop-in correction and preserves the visual representation—but it also explains the one setting where PeakPatch trails encoder fine-tuning: in-domain retrieval (Tab. 2), where methods that fine-tune both encoders co-adapt the image and text spaces to the target distribution, whereas PeakPatch adjusts only text. PeakPatch also requires white-box access to CLIP’s intermediate activations, so it does not ap-ply to black-box deployments that expose only the final embedding or similarity score. Finally, because negation is set-valued, PeakPatch recovers the affirma-tive/negated distinction but does not resolve a negated phrase to a specific com-plement concept. Extending the correction to image embeddings and to larger backbones and broader compositional benchmarks remains future work. 
+
+## B Set-valued Nature of Negation 
+
+In Fig. 5, because “not a car” and “not a tree” denote highly overlapping sets of referents, a faithful representation should place different negated phrases closer to one another than their affirmative counterparts; the negated side is there-fore expected to show weaker per-category structure than the affirmative side, without collapsing to a single object-specific point. NegBench’s reference embed-ding [3] exhibits exactly this signature: tight per-object affirmative clusters and a more diffuse negated region. Figure 5 (right) reproduces it—affirmative cap-tions stay in tight per-category clusters while negated captions separate into a looser shared region with no point collapse—indicating that PeakPatch recovers the affirmative/negated distinction in line with negation semantics rather than amplifying negation at the expense of meaning. 
+
+## C Zero-Shot Classification 
+
+To verify that PeakPatch’s corrections do not degrade general-purpose perfor-mance, we evaluate zero-shot classification on CIFAR-10, CIFAR-100 [24], and ImageNet [7]. We report ECN-corrected accuracy alongside the frozen CLIP baseline, since the ECN produces a drop-in replacement embedding compati-ble with any cosine-similarity pipeline; the SCN is designed for pairwise scoring tasks and does not apply to standard zero-shot classification. Table 7 shows that ECN-corrected embeddings largely preserve zero-shot per-formance: Top-1 changes by <1 pp on CIFAR-10/100 and −2.8 pp on ImageNet, a modest cost given the +35 pp gain on negation MCQ. Encoder fine-tuning methods such as NegCLIP + NF [3] incur larger zero-shot drops [1]. What CLIP Knows but Cannot Say 21 
+
+Table 7: Zero-shot classification accuracy (%). ECN-corrected embeddings pre-serve CLIP’s recognition performance. CIFAR-10 CIFAR-100 ImageNet Method Top-1 Top-5 Top-1 Top-5 Top-1 Top-5 CLIP [39] 88.3 99.2 62.5 87.0 47.4 68.1 PeakPatch (ECN) 88.5 99.3 62.9 86.9 44.6 65.7 
+
+## D LCD Validation 
+
+We provide two additional validations of the LCD analysis in Sec. 3.2. 
+
+Linear probe. We train a logistic regression classifier at each of the L trans-former layers to distinguish negated from affirmative captions, using the [EOS] 
+
+embeddings from 117K pre-extracted validation pairs (80/20 train/test split). Probe accuracy rises from 87.6% at Layer 1 to a peak of 94.0% at Layer 5, then monotonically declines to 87.9% at Layer L, confirming that the middle layers contain linearly separable negation information that is progressively destroyed as the encoder specializes for cross-modal alignment. 
+
+Generalization to ViT-L/14. Figure 8 plots the LCD trajectory for CLIP ViT-L/14’s text encoder ( L=12 , d=768 ). The pattern is qualitatively identical to ViT-B/32: DLCD rises through early layers, peaks at Layer 8 ( DLCD =0 .149 ), and then drops as the encoder specializes for visual alignment. A token-level variant of DLCD —computed by averaging the per-position cosine distances across all token positions rather than using only the [EOS] token—peaks slightly earlier at Layer 7 (0.186), consistent with the ViT-B/32 pattern. This confirms that Representational Collapse is not an artifact of the ViT-B/32 architecture but a general consequence of the contrastive training objective, motivating the same layer-extraction strategy across backbones. 1 2 3 4 5 6 7 8 9 10 11 12   
+
+> Transformer Layer
+> 0.000
+> 0.025
+> 0.050
+> 0.075
+> 0.100
+> 0.125
+> 0.150
+> 0.175
+> Divergence D(l) = 1 - cos(orig, neg)
+> ViT-B/32 best
+> (L6-L8)
+> LCD Analysis: CLIP ViT-L/14 (12 text layers, 768-dim)
+> Dcls (EOS-level)
+> Dtoken (target noun)
+
+Fig. 8: LCD trajectory for CLIP ViT-L/14. DLCD peaks at the compositional peak lp (Layer 8), mirroring the ViT-B/32 pattern (Fig. 2) and confirming that Rep-resentational Collapse is architecture-agnostic. 22 Chen-Yi Lu et al. 
+
+## E Cross-Pretraining and Deeper Backbones 
+
+To test whether PeakPatch’s layer-selection rule and corrections transfer beyond the OpenAI ViT-B/32 encoder used in our main experiments, we apply the full pipeline to encoders that differ in pretraining data and depth. For each encoder we first re-run the LCD analysis (Sec. 3.2) to locate the compositional peak lp
+
+automatically, then train PeakPatch with no other changes. 
+
+Pretraining data. On OpenCLIP ViT-B/32 pretrained on LAION-2B [5] ( vs .the WIT data behind OpenAI CLIP), the LCD peak shifts from Layer 8 to Layer 4, detected by the analysis without manual intervention. With the relo-cated peak, PeakPatch raises COCO negation accuracy from 14.0% to 70.2% and VOC from 5.4% to 64.6%—gains ( +56 .2/+59 .2) comparable to or larger than those on OpenAI CLIP ( +56 .6/+54 .9). 
+
+Encoder depth. On OpenCLIP ViT-g/14 ( ∼1B vision parameters, LAION-2B), the 14.2% COCO baseline is consistent with NegBench’s [3] finding that scaling LAION-pretrained CLIP does not by itself improve negation; PeakPatch lifts it to 68.9%, confirming that the correction transfers to substantially deeper encoders.                              
+
+> Table 8: Cross-pretraining and deeper backbones. Negation-subset MCQ accu-racy (%), CLIP →+ PeakPatch. The compositional peak lpis re-detected automatically per encoder by the LCD analysis. Backbone Pretrain COCO Neg VOC Neg ViT-B/32 WIT 6.6 →63.2 3.0 →57.9
+> ViT-B/32 LAION-2B 14.0 →70.2 5.4 →64.6
+> ViT-g/14 LAION-2B 14.2 →68.9 6.1 →57.9
+
+These results address three points: the selection rule transfers without re-tuning, per-backbone peak shifts are detected by LCD itself, and the framework benefits from—rather than is hindered by—per-backbone characterization. 
+
+## F Comparison with Parser-Dependent Methods 
+
+Two concurrent methods explicitly extract the negated concept from each cap-tion at inference time, making them not directly comparable to approaches that operate on the raw caption. We compare with both in detail. 
+
+SpaceVLM [41] models negation through spherical cap intersections in CLIP’s embedding space and requires Mistral-7B [20] at inference time to parse the nega-tion structure of each input caption. Aggarwal et al . [1] propose a training-free approach via vector arithmetic: given a caption embedding ec and the embedding of the negated concept eneg , they compute e∗ = ec −λ(proj( ec, eneg )−a), where a
+
+is a fixed anchor (mean embedding of semantically neutral words) and λ a scaling What CLIP Knows but Cannot Say 23                                                                                
+
+> Table 9: Negation MCQ accuracy (%) comparing parser-dependent methods with PeakPatch on NegBench [3]. All methods use ViT-B/32 architecture. COCO VOC Method Parser Aff Neg Hyb Avg Aff Neg Hyb Avg CLIP [39] –70.0 6.6 38.4 39.2 80.9 3.0 58.0 37.9 SpaceVLM ‡[41] LLM 77.4 71.8 50.0 66.3 85.8 84.2 76.8 81.1
+> Aggarwal et al .†[1] Rule 77.8 64.3 74.8 72.5 96.4 63.3 87.8 78.6 PeakPatch None 98.1 63.2 60.7 74.3 99.7 57.9 62.2 65.5
+> ‡Requires Mistral-7B (7B params) at inference. †Our reimplementation; uses OpenCLIP ViT-B/32 (LAION-2B).
+> Table 10: Negation retrieval (T →I, %)
+> including SpaceVLM. Method R@1 R@5 CLIP [39] 25.0 47.9 SpaceVLM ‡[41] 29.9 55.1 PeakPatch 31.4 56.9 Table 11: T2I generation (%) in-cluding SpaceVLM. Method Aff Neg Comb CLIP [39] 97.4 29.2 28.3 SpaceVLM ‡[41] 98.8 60.9 59.7
+> PeakPatch (ECN only) 98.1 47.6 45.8
+> ‡Requires Mistral-7B at inference time.
+
+factor. This method requires a rule-based parser to identify the negated concept. 
+
+PeakPatch requires no parser at all: the ECN’s learned cross-attention reads negation signals directly from CLIP’s intermediate token sequences, handling all negation forms (explicit, implicit, morphological) without external parsing. Table 9 compares all three methods on NegBench MCQ. 
+
+MCQ results. On COCO MCQ, PeakPatch leads overall (74.3%), outperform-ing SpaceVLM (66.3%) and Aggarwal et al . (72.5%). On VOC, both parser-dependent methods achieve higher accuracy (SpaceVLM 81.1%, Aggarwal et al .78.6%) than PeakPatch (65.5%). VOC contains only 20 object classes, so most negation captions follow a narrow set of patterns ( e.g ., “not a cat,” “no bicycle”) with limited lexical variation. In this setting, explicit parsing is highly reliable: the negated concept is almost always a single, unambiguous noun that the parser extracts correctly, yielding a precise correction. PeakPatch, which learns nega-tion signals from CLIP’s intermediate representations without access to a parser, must handle the same disambiguation implicitly. Because PeakPatch is trained on CC12M-derived negation pairs (Sec. J)—a broad web-crawled distribution—it does not specialize for VOC’s narrow category set. On COCO, where 80 classes, compound objects, and more varied negation structures ( e.g ., multi-clause, im-plicit) make parsing less reliable, PeakPatch’s learned correction generalizes bet-ter. 
+
+Retrieval and generation. Tables 10 and 11 report retrieval and T2I re-sults (Aggarwal et al . do not evaluate T2I generation). PeakPatch outperforms 24 Chen-Yi Lu et al.                 
+
+> Table 12: External benchmark evaluation (%). Pairwise accuracy on VALSE Existence and selection accuracy on NegRefCOCOg. PeakPatch results shown for ECN-only, SCN-only, and full hybrid (ECN+SCN). PeakPatch Benchmark CLIP ECN SCN Hybrid NegationCLIP VALSE Existence 69.5 79.8 73.3 80.4 80.2 NegRefCOCOg 59.6 62.5 61.1 64.3 64.1
+
+SpaceVLM on retrieval (R@1 31.4 vs . 29.9, R@5 56.9 vs . 55.1) despite not using an external parser. On T2I generation, SpaceVLM leads (Neg 60.9 vs . 47.6) by leveraging Mistral-7B to parse negation structure explicitly. 
+
+Key differences. Parser dependency : SpaceVLM requires Mistral-7B at infer-ence; Aggarwal et al . require a rule-based parser that cannot handle implicit or morphological negation. PeakPatch uses no external parser. Inference cost :SpaceVLM adds a 7B LLM forward pass per caption; PeakPatch adds only 5.2M parameters (3.5% of CLIP). Operating space : both baselines operate in CLIP’s final embedding space, subject to the geometric impossibility of Kang et al . [22]; PeakPatch extracts features from intermediate layers and applies corrections via the SCN. Downstream compatibility : PeakPatch produces a drop-in CLIP embedding; parser-dependent methods require integrating the parser into each downstream system. 
+
+## G External Benchmark Evaluation 
+
+To assess generalization beyond NegBench, we evaluate on two additional nega-tion benchmarks used by NegationCLIP [37]. 
+
+Benchmarks. VALSE Existence [36] contains 505 validated pairwise samples where a caption and its foil differ by the word “no” ( e.g ., “There are giraffes” 
+
+vs . “There are no giraffes”); the metric is pairwise accuracy. NegRefCOCOg [37] contains 440 region-selection samples where a negation phrase must be matched to the correct bounding-box crop from two candidates; the metric is selection accuracy. Both benchmarks use COCO images. NegationCLIP [37] is trained on 229K pairs from COCO captions (147K) and VQAv2 (82K, also COCO images). 
+
+Results. Table 12 reports results. On VALSE Existence, the PeakPatch hy-brid (80.4%) slightly exceeds NegationCLIP (80.2%), showing that the post-hoc correction architecture can match encoder fine-tuning even on short templated sentences. On NegRefCOCOg, the hybrid (64.3%) again slightly exceeds Nega-tionCLIP (64.1%). Notably, the SCN contributes on this region-selection task despite not being designed for it: the hybrid outperforms ECN-only by +1.8 pp. Both results confirm that PeakPatch achieves competitive or superior perfor-mance on external benchmarks without modifying CLIP’s weights. What CLIP Knows but Cannot Say 25 
+
+## H Near-Tie Stress Test 
+
+To better understand when score-level correction helps, we construct a near-tie 
+
+subset of the NegBench COCO MCQ evaluation. For each four-option question, we compute the frozen CLIP cosine similarities for all candidate captions and record the margin between the top-1 and top-2 scores. We then select the hardest questions—those with the smallest margins (bottom 25%)—where CLIP is least confident and most susceptible to negation confusion.                
+
+> Table 13: Near-tie stress test on COCO MCQ (%). The near-tie subset selects questions where frozen CLIP’s top-1 and top-2 cosine scores have the smallest margin (bottom 25%, n=1 ,479 ). Full set Near-tie Method (n=5 ,914 )(n=1 ,479 )CLIP [39] 39.6 29.1 NegCLIP [56] 26.5 17.6 NegCLIP + NF [3] 56.8 53.5 ECN only 54.6 45.5 PeakPatch (joint) 67.2 62.3
+
+Table 13 reports accuracy on the full set alongside this hard subset. Neg-CLIP degrades below CLIP on this MCQ task (26.5%), consistent with doc-umented limitations in distinguishing semantically close alternatives [3]. Neg-CLIP + NF is a strong baseline (56.8% full, 53.5% near-tie) but still falls short of our joint system. On the near-tie subset, PeakPatch (joint) achieves 62.3%, dropping only 4.9 pp from the full set, compared to a 9.1 pp drop for the ECN alone (54.6% →45.5%). This confirms that the SCN’s score-level correction is most valuable precisely when the embedding-level signal is insufficient to resolve close calls. 
+
+Qualitative examples. Figure 9 shows five near-tie questions where CLIP selects the wrong answer but PeakPatch corrects the ranking. In each case, the correct caption and the top-scoring distractor mention the same objects with opposite negation polarity, producing CLIP cosine scores that differ by less than 0.005. Our joint model re-ranks the options correctly by leveraging the compositional signal from intermediate layers. 
+
+## I Architecture Details 
+
+Table 14 summarizes the key architectural hyperparameters and parameter counts for both modules. 
+
+ECN details. The cross-attention module uses 8 heads with a single learned query q ∈ R512 , attending over all N token positions at the peak layer. A post-attention LayerNorm stabilizes the output before concatenation with the [EOS] 26 Chen-Yi Lu et al.                          
+
+> Hybrid
+> CLIP Ours
+> (a) Contains a sports ball, but no car. .208 .175
+> (b) Features a car, but no sports ball. .227 −.218
+> Positive
+> CLIP Ours
+> (a) This image depicts a banana and a bowl. .201 .231
+> (d) No banana appears in this image. .216 −.072
+> Negative
+> CLIP Ours
+> (a) There is no truck in this image. .196 .042
+> (c) This image features a truck. .211 −.229
+> Hybrid
+> CLIP Ours
+> (a) Shows a frisbee, but no handbag. .265 .150
+> (d) No frisbee is present. .270 .006
+> Hybrid
+> CLIP Ours
+> (a) A car is included, but there’s no truck. .240 .049
+> (c) This image features a truck. .258 −.319
+
+Fig. 9: Near-tie qualitative examples. Five MCQ questions where CLIP’s top-2 scores differ by ≤ 0.005 . CLIP selects the wrong answer ( red ); PeakPatch corrects the ranking ( green = correct). Two score columns show the ranking flip: CLIP assigns near-identical scores to both options, while our joint model clearly separates them. 
+
+and mean-pooled features. The resulting 4d-dimensional vector passes through a three-layer bottleneck MLP ( 2048 → 1024 → 1024 → 512 ) with GELU activa-tions, LayerNorm, and dropout (0.1) after each hidden layer. The learned scalar 
+
+α = exp(log αinit ) (initialized to e−0.7 ≈ 0.5) controls the correction magnitude in Eq. (4). 
+
+SCN details. The SCN’s 258-dimensional input concatenates two scalar co-sine similarities (peak-layer and corrected similarities to the image), a 128-dimensional text context vector encoding the discrepancy between peak and corrected embeddings, and a 128-dimensional cross-modal context vector from the element-wise product of image and corrected text embeddings. A single hid-den layer ( 258 → 128 → 1) with GELU activation maps this to a scalar correction bounded by tanh and αmax =0 .20 .
+
+Training hyperparameters. Both modules are optimized jointly with AdamW [31] (β1=0 .9, β2=0 .999 , weight decay 0.01 ) for 10 epochs. The ECN uses a learning rate of 1×10 −5 and the SCN uses 1×10 −4 (a 10 × ratio), both with cosine an-nealing to 1% of the initial rate. Gradients are clipped at norm 1.0. The joint loss weight is λSCN =1 .0 (Eq. (9)), and the InfoNCE logit scale is fixed at 100 .0.What CLIP Knows but Cannot Say 27                                                      
+
+> Table 14: Architecture details for the ECN and SCN modules (CLIP ViT-B/32,
+> d=512 ). ECN SCN Input layers la=6 ,lp=8 {8,12 }
+> Input features hlp
+> [EOS] ,a,hla
+> [EOS] ,¯hlpflT,fI,ˆfT
+> Cross-attention 8 heads, d=512 –MLP dims 2048 →1024 →1024 →512 258 →128 →1
+> Activation GELU GELU Normalization LayerNorm (post-attn + MLP) –Dropout 0.1 –Output δ∈R512 ∆s ∈[−0.2,0.2]
+> Learned scalar α(init e−0.7≈0.5)–#Parameters 4.7M 494K Total trainable parameters 5.2M (3.5% of CLIP)
+
+Training uses a batch size of 1024 on a single NVIDIA A100 (40 GB) and com-pletes in approximately 2.7 hours. 
+
+## J Training Data Construction 
+
+Both training data streams are derived from CC12M [4] captions using LLaMA 3.1-8B [12] as a negation generator, following the protocol introduced by Neg-Bench [3]. CC12M is disjoint from NegBench’s evaluation sources (COCO, VOC2007, MSR-VTT): no evaluation image or caption appears in training, and we use Neg-Bench’s published generation protocol—identical to the fine-tuning baselines—so any negation-style regularity in the data is shared with the methods we compare against, not specific to PeakPatch. 
+
+Negation generation. For each original CC12M caption, we prompt LLaMA 3.1 to produce a semantically negated counterpart by inserting explicit negation cues (“no,” “not,” “without,” or restructuring the sentence). The prompt instructs the model to negate one salient visual attribute or object while keeping the rest of the caption intact, producing captions such as “a dog sitting on a bench” → “a dog sitting on a bench without a collar.” We filter out generations that are ex-act copies, excessively long ( >77 tokens after CLIP tokenization), or that fail a round-trip consistency check (the negated caption must differ from the original by at least one negation token). 
+
+ECN data (contrastive pairs). Each original caption and its negated counter-part form a contrastive pair, associated with the original image. This produces 
+
+∼1.06M training pairs. During training, both the affirmative and negated cap-tions for each image appear in the same batch, so negated captions serve as hard negatives in the InfoNCE loss. 
+
+SCN data (MCQ samples). We construct four-option multiple-choice ques-tions by pairing each image with its correct caption and three distractor cap-28 Chen-Yi Lu et al. 
+
+tions (the negated version plus two randomly sampled captions from other im-ages). This produces ∼313K MCQ training samples (78K validation). The SCN is trained with cross-entropy over the four options plus an ℓ2 penalty on (∆s )2
+
+to keep corrections small. 
+
+Feature pre-extraction. To avoid running the frozen CLIP encoder during training, we pre-extract and cache all required features: layer-L [EOS] embed-dings, layer-lp full token sequences, layer-la [EOS] embeddings, image embed-dings, and projected [EOS] features at each SCN input layer. This reduces train-ing to lightweight forward passes through the ECN and SCN modules, enabling the full joint training to complete in ∼2.7 hours on a single NVIDIA A100. 
+
+Data statistics. After filtering, the final training set contains 1.06M contrastive pairs for the ECN and 313K four-option MCQ samples for the SCN, with a held-out validation split of 78K MCQ samples used for early stopping and hy-perparameter selection. The CC12M source captions cover a broad distribution of visual scenes, objects, and attributes, providing diverse negation patterns that range from simple object absence (“no dog”) to attribute modification (“without the red hat”) and implicit negation (“the empty plate”). The best checkpoint is selected based on the SCN’s validation accuracy on the held-out MCQ split (peak at epoch 8 of 10, 86.65% 4-way accuracy).

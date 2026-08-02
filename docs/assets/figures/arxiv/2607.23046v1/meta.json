@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.23046v1/fig-001.webp",
+      "caption": "Table 3: Main Results on Video MLLM Benchmarks. Performance comparison using the LLaVA-Video-7B model across multiple frames. Relative performance (Rel. (%)) is normalized to the unpruned baseline. Light blue rows indicate heuristic-based methods, and light green rows represent optimizationbased methods.",
+      "page": 11,
+      "index": 1,
+      "width": 677,
+      "height": 331
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23046v1/fig-002.webp",
+      "caption": "Fig. 1:Conceptual comparison of token selection frameworks. (a)Heuristic (Top-K) relies on isolated scores, lacking structural redundancy control. (b) Traditional sequential search mitigates redundancy but introduces iterative dependencies. (c) Our framework enables efficient single-pass selection via SG-RLS and directional masking, eliminating iteration overhead.",
+      "page": 2,
+      "index": 2,
+      "width": 652,
+      "height": 479
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23046v1/fig-003.webp",
+      "caption": "Table 2: Main Results on Qwen2.5-VL-7B. Performance comparison across various token pruning methods at different retention ratios. Relative performance (Rel. (%)) is normalized to the unpruned baseline. Light blue rows indicate heuristic-based methods, and light green rows represent optimizationbased methods.",
+      "page": 10,
+      "index": 3,
+      "width": 681,
+      "height": 365
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23046v1/fig-004.webp",
+      "caption": "Fig. 3: End-to-end latency and peak memory analysis across varying numbers of input tokens (N). While existing token pruning methods (DivPrune, CDPruner) incur severe time overheads as sequence length increases, ours maintains exceptionally low overhead even at a high resolution of N = 16384. It closely approaches the pure inference time of the 16K baseline (1,531 ms), delivering practical computational acceleration. Bar charts indicate total latency, and line plots represent peak memory.",
+      "page": 14,
+      "index": 4,
+      "width": 616,
+      "height": 362
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23046v1/fig-005.webp",
+      "caption": "Table 1: Performance comparison on LLaVA-NeXT-7B at different token retention budgets. Relative performance (Rel.) is normalized to the unpruned vanilla model. Light blue rows indicate heuristic-based methods, and light green rows indicate optimization-based methods.",
+      "page": 9,
+      "index": 5,
+      "width": 681,
+      "height": 377
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23046v1/fig-006.webp",
+      "caption": "Fig. 2: Pipeline of the non-iterative token pruning framework. (Top) Semantics-Guided RLS (SG-RLS): The semantic guidance (Sguide) is modulated by the leverage score map (ℓ) to suppress redundant background features, yielding a covariance-aware score (SSG-RLS). (Bottom) Ranking-Based Directional Masking: A ranking mask (M) is applied to the pairwise similarity matrix. Tokens receive a directional suppression penalty (Pi) based on their maximum similarity to higher-priority competitors, extracting the final pruned subset through single-pass tensor operations.",
+      "page": 5,
+      "index": 6,
+      "width": 690,
+      "height": 398
+    }
+  ]
+}
