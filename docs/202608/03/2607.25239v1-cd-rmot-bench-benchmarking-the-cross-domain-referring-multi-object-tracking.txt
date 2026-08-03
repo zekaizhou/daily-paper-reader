@@ -1,0 +1,720 @@
+Title: CD-RMOT-Bench: Benchmarking the Cross-Domain Referring Multi-Object Tracking
+
+URL Source: https://arxiv.org/pdf/2607.25239v1
+
+Published Time: Wed, 29 Jul 2026 00:33:05 GMT
+
+Number of Pages: 19
+
+Markdown Content:
+# CD-RMOT-Bench: Benchmarking the Cross-Domain Referring Multi-Object Tracking 
+
+Xiangqun Zhang 1 Likai Wang 1 Zekun Qian 1
+
+Ruize Han 2,∗ Wei Feng 1
+
+> 1
+
+School of Computer Science and Technology, Tianjin University, Tianjin, China 
+
+> 2
+
+Faculty of Computer Science and Artificial Intelligence, Shenzhen University of Advanced Technology, Shenzhen, China 
+
+> {clzxq,kkww,clarkqian,wfeng}@tju.edu.cn hanruize@suat-sz.edu.cn
+
+Abstract 
+
+Referring multi-object tracking (RMOT) extends tracking from category-driven perception to language-guided understanding by grounding object trajectories in natural-language expressions. Despite recent progress, existing RMOT studies are largely conducted under in-domain settings, leaving the robustness of language-conditioned tracking under inevitable visual domain shifts unexplored. In this paper, we study Cross-Domain Referring Multi-Object Tracking (CD-RMOT) ,a new and challenging problem that evaluates whether an RMOT model trained on a labeled source domain can reliably follow natural-language expressions in an unlabeled target domain with different visual conditions. To support systematic study, we construct CD-RMOT-Bench , a unified benchmark that combines real clear-domain referring tracking data, aligned digital-twin variants, and real adverse-domain videos. CD-RMOT-Bench enables both controlled weather/viewpoint shift analysis and realistic synthetic–real transfer evaluation under a shared RMOT protocol. Further, we provide a Query-Centric Adaptation (QCA) framework, designed to stabilize the query space that bridges visual trajectories and referring expressions. Extensive experiments reveal that domain shifts severely degrade RMOT performance, where the failure is not merely caused by object detection errors but more critically by unstable expression-conditioned temporal association and target selection. QCA establishes a strong baseline, while CD-RMOT-Bench opens a new direction for robust language-guided tracking across visual domains. 
+
+1 Introduction 
+
+Multi-Object Tracking (MOT) is undergoing a paradigm shift from passive, category-based percep-tion towards active, language-guided understanding, formalized as Referring Multi-Object Tracking. Unlike traditional MOT, RMOT aims to simultaneously locate and track specific targets in video se-quences based on natural language expressions, and has shown immense potential in human-computer interaction, Embodied AI, autonomous driving, etc. , where intelligent agents must comprehend and seamlessly track specific targets driven by complex human intentions in highly dynamic environments. Recent RMOT benchmarks and methods have made encouraging progress under the standard in-domain setting, where training and testing videos are usually drawn from the same visual distribution. However, when deployed in real-world scenarios, perception systems inevitably encounter severe domain shifts, including extreme weather variations, unpredictable sensor viewpoint changes, and inherent synthetic-to-real realism gaps. As shown in Fig. 1, such shifts pose a critical challenge to existing RMOT models. Fig. 1(a) presents a controlled case where the referring expression and target        
+
+> *Corresponding author. Preprint. arXiv:2607.25239v1 [cs.CV] 28 Jul 2026 Reference: vKITTI clear→clear = 28.69 HOTA , 17.38 DetA , 47.39 AssA
+> (a) Controlled domain-shift setting for RMOT (b) Performance drop relative to vKITTI clear→clear reference
+> same expression same target
+> identity / semantics
+> changed
+> domain only
+> “cars going opposite ways.”
+> rain fog
+> clear 30 °L...
+> true false
+
+Figure 1: Controlled domain shift in RMOT. (a) Under the same referring expression and target semantics, changing only the visual domain can cause the tracker to select expression-inconsistent trajectories. (b) Existing RMOT model [ 1] shows clear HOTA, DetA, and AssA drops across weather and viewpoint shifts relative to the in-domain vKITTI clear →clear reference. semantics remain unchanged, while only the visual domain varies across weather and viewpoint conditions. Although the model can still detect visually plausible objects, its selected trajectories may deviate from the language-specified targets. Fig. 1(b) further quantifies this effect, showing consistent performance drops relative to the in-domain reference. These observations indicate that current RMOT evaluation largely overlooks a fundamental question: can a language-conditioned tracker remain reliable when the visual domain changes ?To address this gap, we introduce a novel and challenging problem, Cross-Domain Referring Multi-Object Tracking, which evaluates whether an RMOT model trained in a labeled source domain can generalize to an unlabeled target domain with different visual conditions. The core challenge of CD-RMOT lies in maintaining the semantic fidelity of language-guided tracking trajectories when the underlying visual distribution shifts dramatically, without access to target-domain tracking annotations. A principled benchmark for this new problem is difficult to build. Real-world videos naturally contain domain variations, but they also change scene layout, object population, camera motion, and target interactions, making it hard to determine whether failure comes from domain shift or from different semantic content. Conversely, purely synthetic benchmarks can provide controllable variations, but they may not reflect the realism gap faced by practical tracking systems. What is needed is a benchmark that combines controlled domain shift with realistic cross-domain transfer , so that models can be evaluated along both axes. To this end, we introduce CD-RMOT-Bench, a unified benchmark for CD-RMOT, which integrates real-world referring annotations, aligned digital-twin variants, and adverse real-domain videos into a single evaluation suite. Its controlled part enables weather and viewpoint changes to be studied while preserving the underlying scene structure and referring semantics, while its real-domain part evaluates generalization across synthetic–real domains. Further, we propose a Query-Centric Adaptation framework for CD-RMOT. The method is motivated by the observation that domain shift can destabilize language-conditioned temporal queries, causing representation mismatch and semantic drift during target selection. To address this issue, we introduce temporal teacher-student consistency to stabilize target-domain queries, adaptive domain adversarial learning to align transferable query representations, and language-guided adaptation to preserve the semantic correspondence between queries and referring expressions. Extensive experiments on CD-RMOT-Bench reveal critical insights: visual domain shifts severely degrade expression-conditioned tracking, and this degradation is driven primarily by temporal association and selection failures rather than mere detection errors. The proposed QCA significantly recovers these performance drops across weather, viewpoint, and synthetic–real transfer settings, establishing a strong and reliable baseline. The main contributions are summarized as follows: • We pioneer the problem of Cross-Domain Referring Multi-Object Tracking , highlighting the critical need for robust visual-language tracking under domain shifts. 2• We construct CD-RMOT-Bench , a unified CD-RMOT benchmark covering controlled weather and viewpoint variations and realistic synthetic–real domain transfer under a shared evaluation protocol. Its controlled core, Refer-vKITTI, is built through per-scene identity mapping, domain-specific expression-track transfer, and residual quality control. • We provide a query-centric adaptation method that improves CD-RMOT through reliable query stabilization, task-relevant query alignment, and language-anchored query calibration. Extensive experiments demonstrate the severe limitations of existing methods under domain shifts and validate the effectiveness of the proposed framework as a strong baseline for future research. 
+
+2 Related Work 
+
+Referring Multi-Object Tracking. Language-guided tracking extends object tracking by selecting targets through natural-language expressions. Modern MOT has developed strong detection, asso-ciation, and temporal reasoning mechanisms, from online tracking-by-detection methods [ 2– 8 ] to transformer/query-based trackers [ 9– 13 ]. These methods provide useful tracking foundations, but they do not determine trajectories from open-ended referring expressions. Referring multi-object tracking requires the model to track only the objects specified by a natural-language query. TransRMOT [14] establishes the RMOT task and benchmark, and TempRMOT [1] expands linguistic difficulty through Refer-KITTI-V2. Recent RMOT studies further improve language fusion, plug-and-play referring control, multimodal cues, fine-grained semantic guidance, and reasoning-oriented target selection, including iKUN [ 15 ], EchoTrack [ 16 ], DeepRMOT [ 17 ], MGLT [ 18 ], DKGTrack [ 19 ], and recent reasoning or zero-shot variants [ 20 , 21 ]. These works mainly evaluate closed or nearly in-domain behavior, leaving cross-domain robustness of expression-conditioned trajectories underexplored. A related line is referring video object segmentation (RVOS), where language guides temporally grounded mask prediction. Representative methods include MTTR [ 22 ], ReferFormer [ 23 ], On-lineRefer [ 24 ], MUTR [ 25 ], and ReferDINO [ 26 ]. RVOS provides useful cross-task references, and we adapt MUTR and ReferDINO as baselines. Yet RVOS outputs masks rather than identity-aware multi-object trajectories, and its standard protocol does not diagnose tracking association or referring consistency under domain shift. 
+
+Cross-Domain Adaptation. Cross-domain adaptation has been widely studied for recognition, de-tection, and structured prediction. General adaptation methods reduce distribution mismatch through discrepancy minimization or adversarial learning, including DAN [ 27 ], DANN [ 28 ], ADDA [ 29 ], CDAN [ 30 ], and MCD [ 31 ]. For object detection, DA-Faster R-CNN [ 32 ], SWDA [ 33 ], MTOR [ 34 ], Unbiased Mean Teacher [ 35 ], Adaptive Teacher [ 36 ], Probabilistic Teacher [ 37 ], and recent prompt-based adaptation methods [ 38 ] show that instance-level alignment and teacher–student training can improve transfer under unlabeled target domains. Video and test-time adaptation further address temporal and non-stationary shifts. TA 3N [ 39 ]studies temporal attentive alignment for video domain adaptation, while Tent [ 40 ], CoTTA [ 41 ], EATA [ 42 ], PETAL [ 43 ], and related synthetic-to-real video studies [ 44 , 45 ] show that adaptation remains challenging beyond static images. These works motivate target-query consistency, query-level alignment, and language-guided correction in our reference method. However, they do not define a benchmark protocol for expression-conditioned multi-object trajectories, where detection, association, and language-conditioned target selection must be evaluated jointly. 
+
+Benchmarks for Visual Domain Shift. Driving and tracking benchmarks such as KITTI [ 46 ], MOTChallenge [ 47 ], Cityscapes [ 48 ], BDD100K [ 49 ], and nuScenes [ 50 ] have shaped progress in perception, but they do not provide controlled variants where scene semantics and referring expressions remain fixed while the visual domain changes. Synthetic and digital-twin datasets, including Virtual KITTI [ 51 ], Virtual KITTI 2 [ 52 ], SYNTHIA [ 53 ], GTA5 [ 54 ], and SHIFT [ 55 ], support structured domain variation, but are not designed for referring-expression-conditioned tracking. General domain-shift benchmarks such as VisDA [ 56 ], DomainNet [ 57 ], and WILDS [ 58 ]similarly do not evaluate language-conditioned multi-object trajectories. Existing RMOT datasets provide language-conditioned trajectories, while controlled synthetic datasets provide domain variation. Recent extensions broaden RMOT-style evaluation toward reasoning-3intensive or aerial scenarios [ 20 , 59 ], but they do not provide controlled paired domain shifts for driving RMOT. CD-RMOT-Bench connects these two sides by transferring Refer-KITTI-V2 expressions to aligned Virtual KITTI 2 digital-twin scenes and combining the resulting controlled core with real-domain anchors. 
+
+3 CD-RMOT-Bench Overview 
+
+3.1 Motivation and Design 
+
+CD-RMOT-Bench is designed as a comprehensive testbed for language-conditioned UDA in RMOT. In this setting, target-domain videos and referring expressions are available as task inputs during adaptation, but target-domain boxes, track identities, masks, and expression-object associations are reserved for evaluation only. This distinction is important: target expressions specify what should be tracked, but they do not reveal the target-domain answer. Evaluating domain shift in dynamic video environments is difficult because visual changes are often entangled with changes in scene layout, object population, camera motion, target interaction, and expression semantics. CD-RMOT-Bench therefore evaluates CD-RMOT along two complementary axes. The first is controlled domain shift , where weather and viewpoint changes can be studied under shared scene structure and stable referring semantics. The second is realistic cross-domain transfer , where models are evaluated across synthetic–real and clear–adverse domain gaps that better reflect deployment conditions. CD-RMOT-Bench addresses these axes by organizing three complementary resources into a unified benchmark family. Refer-KITTI-V2 [ 1 ] serves as the real clear-domain anchor and provides real-domain referring expressions and trajectories. Refer-vKITTI forms the controlled digital-twin core, where aligned Virtual KITTI 2 [ 52 ] variants isolate weather and viewpoint shifts while preserving scene structure as much as possible. Refer-BDD [ 16 ] provides a real adverse-domain anchor that complements the controlled setting with realistic domain variation. Together, these resources enable controlled weather/viewpoint analysis and bidirectional synthetic–real evaluation under a shared RMOT protocol. 
+
+3.2 Benchmark Construction Stage 2             
+
+> Aligned Virtual KITTI 2
+> digital twins
+> Scene a lignment /
+> correspondence
+> Stage 1
+> Refer-KITTI-V2
+> “cars located on the right ”
+> “automobiles driving in
+> reverse directions ”
+> Real-domain referring
+> expressions & annotations
+> Stage 4
+> Residual QC
+> Ambiguous cases
+> checked and corrected
+> Supported
+> protocols Synthetic
+> (weather)
+> SYN
+> ☀
+> ☔
+> SYN
+> Synthetic
+> (viewpoint)
+> SYN SYN
+> ……
+> Stage 3
+> Annotation transfer
+> target ID rewritten
+> video name rewritten
+> {
+> “target_id”: 42,
+> “video_name”: “Scene01_fog”
+> }
+> “automobiles driving
+> in reverse directions”
+> Stage 5
+> Refer-vKITTI
+> clear morning
+> sunset overcast
+> rain fog
+> 15 °L / 15 °R30 °L/ 30 °R
+> Drop invalid frames
+> Real Synthetic fog
+> Synthetic 30 °R
+> Real
+> Synthetic → Real
+> SYN
+> Real → Synthetic
+> SYN
+> ID mapping 1
+> KITTI
+> ID 22
+> vKITTI
+> ID 42
+> KITTI
+> ID 17
+> vKITTI
+> ID 31
+> Expression carry-over 2
+> “cars located on the right ”
+> (expression unchanged)
+
+Figure 2: Refer-vKITTI construction and supported protocols. Refer-KITTI-V2 provides real-domain expressions and annotations, while aligned Virtual KITTI 2 scenes provide controlled digital-twin domains. We first establish per-scene identity mappings, then transfer expression-track annotations by preserving descriptions and rewriting target identities and video names. Residual quality control handles ambiguous correspondences and visibility cases. Refer-vKITTI supports weather/viewpoint transfer and, with Refer-KITTI-V2 and Refer-BDD, bidirectional synthetic–real evaluation. Fig. 2 shows how CD-RMOT-Bench realizes the two axes introduced above. Stages 1–5 construct Refer-vKITTI as the controlled digital-twin core for weather/viewpoint shift analysis, while the 4bottom protocol row connects it with Refer-KITTI-V2 and Refer-BDD for synthetic–real transfer evaluation. 
+
+Stage 1–2: source annotations and aligned digital twins. We start from Refer-KITTI-V2 [ 1], which provides real driving scenes with referring expressions and expression-conditioned trajectories. We then use aligned Virtual KITTI 2 scenes [ 52 ], whose digital-twin structure provides controlled weather and viewpoint variants of KITTI-like scenes. These two stages implement the controlled domain shift axis: real-domain expressions and trajectories are carried to aligned synthetic domains where weather or viewpoint can change while the scene structure remains comparable. 
+
+Stage 3: mapping-based annotation transfer. The core construction follows a mapping-then-transfer procedure. For each aligned real/synthetic scene, we first establish per-scene KITTI-to-vKITTI identity correspondences. Candidate correspondences are supported by frame-level IoU evidence and aggregated into track-level scores that incorporate geometric consistency, area similarity, and temporal overlap. The final one-to-one correspondences provide an auditable identity mapping between real and synthetic scenes. Using this mapping, we transfer Refer-KITTI-V2 expression-track annotations to vKITTI domains: the natural-language expression is preserved, while the target identity and video name are rewritten according to the mapped vKITTI identity and target domain. Each mapped expression-track pair is instantiated across clear , rain , fog , morning , overcast , sunset , 15 ◦L,
+
+15 ◦R, 30 ◦L, and 30 ◦R, where L/R denote left/right viewpoint shifts. 
+
+Stage 4–5: residual quality control and Refer-vKITTI. After automatic transfer, residual quality control handles ambiguous cases, including weak correspondence evidence, identity ambiguity, expression–target inconsistency, localization anomalies, and visibility-induced invalidations. Frame-level annotations are retained only when the mapped target is present in the corresponding vKITTI labels. The resulting dataset, Refer-vKITTI, forms the controlled digital-twin core of CD-RMOT-Bench, supporting synthetic weather and viewpoint transfer. Together with Refer-KITTI-V2 and Refer-BDD, it further enables synthetic-to-real and real-to-synthetic evaluation, as summarized in the bottom protocol row of Fig. 2. 
+
+Real adverse-domain anchor. To support the realistic cross-domain transfer axis, Refer-BDD provides a BDD100K-based referring tracking set following recent AR-MOT/RMOT evaluation practice [ 16 , 18 ]. Built from the BDD100K tracking source [ 49 ], it is not part of the digital-twin transfer pipeline. Instead, it serves as a complementary real adverse-domain anchor for realism-shift evaluation. To enable direct comparison, Refer-KITTI-V2, Refer-vKITTI, and Refer-BDD are normalized into a shared evaluation structure, where each expression is represented by a sentence and a frame-indexed set of target track identities. 
+
+Construction quality. The automatic pipeline yields 285,160 initially transferred expression–track pairs after expanding five aligned Refer-KITTI-V2 sequences to 10 vKITTI domains. After visibility filtering and format normalization, 272,043 pairs are retained, corresponding to a 95.40% retention rate. At the identity-mapping level, 6,887 temporally overlapping source–target identity candidates are reduced to 374 IoU-supported candidates, and the final scene-level mapping contains 251 matched identity correspondences reused across the 10 vKITTI domains. Detailed scoring and construction statistics are provided in Appendix A .
+
+3.3 Statistics and Evaluation Protocol 
+
+Table 1 reports the scale, role, and domain coverage of each subset and the overall benchmark. Table 1: Overview of CD-RMOT-Bench. Refer-KITTI-V2, Refer-vKITTI, and Refer-BDD respec-tively serve as the real clear-domain anchor, controlled digital-twin core, and real adverse-domain anchor for unified CD-RMOT evaluation.                                    
+
+> Dataset Type Videos Frames Exprs. Expr./Video Words/Expr. Coverage Refer-KITTI-V2 [1] Real 21 8,008 9,778 465.62 6.64 Real clear scenes Refer-vKITTI Synthetic 50 20,560 27,730 554.60 7.26 10 controlled domains Refer-BDD [16] Real 50 10,005 4,610 92.20 6.30 Real adverse scenes CD-RMOT-Bench Mixed 121 38,573 42,118 348.08 6.91 Weather/viewpoint; synthetic–real transfer
+
+5Figure 3: Benchmark characterization of CD-RMOT-Bench. Refer-vKITTI provides the controlled digital-twin core, while Refer-KITTI-V2 and Refer-BDD serve as real-domain anchors. Expression-cue proportions are normalized over coarse keyword counts for visualization; categories are non-exclusive and used only for characterization, not as additional manual labels. 
+
+Scale and expression cues. As shown in Table 1, CD-RMOT-Bench contains 121 videos, 38,573 frames, and 42,118 expressions. The three subsets serve complementary roles: Refer-KITTI-V2 provides the real clear-domain anchor, Refer-vKITTI forms the controlled digital-twin core, and Refer-BDD contributes the real adverse-domain anchor. In particular, Refer-vKITTI contains 50 videos across 10 controlled domains, including clear , fog , rain , morning , overcast , sunset , 15 ◦L,
+
+15 ◦R, 30 ◦L, and 30 ◦R, supporting controlled evaluation without conflating visual shift with unrelated scene changes. Fig. 3 characterizes the benchmark composition and expression cues. Fig. 3(a) shows the composition of Refer-KITTI-V2, Refer-vKITTI, and Refer-BDD across real clear-domain, controlled digital-twin, and real adverse-domain settings. Fig. 3(b) reports coarse expression-cue statistics over four non-exclusive categories: color/appearance , spatial/layout , motion/direction , and relational/group . Here, relational/group cues include object–object relations, scene-relative references, ordinal descriptions, and group-level target semantics. The distribution shows that CD-RMOT-Bench covers diverse referring evidence rather than only simple appearance-based descriptions. 
+
+Evaluation protocols. CD-RMOT-Bench supports four evaluation modes under a shared RMOT protocol. Weather transfer evaluates changes from vKITTI clear to weather variants such as fog 
+
+and rain , isolating appearance and visibility changes under shared scene semantics. Viewpoint transfer evaluates geometric sensitivity from vKITTI clear to shifted camera viewpoints such as 30 ◦L. Synthetic-to-real transfer evaluates realism gaps from virtual scenes to Refer-KITTI-V2 or Refer-BDD. Real-to-synthetic transfer provides the reverse direction by using real clear-domain data as source and controlled synthetic domains as targets. Together, Refer-vKITTI supports controlled weather/viewpoint analysis, while Refer-KITTI-V2 and Refer-BDD complement it with cross-boundary synthetic–real and clear–adverse evaluation. Detailed protocol splits, frame counts, and expression counts are provided in Appendix A.2 .
+
+4 QCA: A Query-Centric Adaptation Reference Method 
+
+4.1 Overview 
+
+QCA is used as a query-centric reference method for probing the gap exposed by CD-RMOT-Bench. The benchmark diagnosis suggests that cross-domain degradation is not only caused by missing detections. Under domain shift, visually plausible candidates may remain available, while the language-conditioned temporal queries that determine the final trajectories become unstable, mismatched across domains, or semantically drifted from the referring expression. QCA therefore operates on temporal object queries produced by a shared RMOT backbone, while the overall setting remains language-conditioned UDA for RMOT. Let Ds = {(Vs, E s, Y s)} denote the labeled source-domain RMOT training set, where Vs is a video clip, Es is the referring expression, and Ys contains expression-conditioned tracking annotations. Let Dt = {(Vt, E t)} denote the target-domain adaptation set, where target videos and referring expressions are available as task inputs but target boxes, identities, masks, and expression-object associations are not used as supervised labels. Given a video clip and a referring expression, the 6Source query Target query     
+
+> (Student)
+> Target query
+> (Teacher) Refined query Unselected
+> ACDA CDT-MT LGCA
+> Representation
+> mismatch
+> Semantic
+> drift
+> Query
+> instability
+> Source (labeled)
+> Target ( no GT labels )
+
+…
+
+… 
+
+> Shared RMOT
+> Backbone
+> Input Language-Conditioned
+> Temporal Queries
+> Source queries
+
+…
+
+…
+
+> Selected / reliable
+
+…
+
+…
+
+…   
+
+> Target queries
+> ACDA
+> alignment of task-relevant queries train
+> Alignment space
+> GRL
+> Domain
+> classifier
+> ℒacda
+> LGCA
+> language-guided correction train & infer
+
+…      
+
+> CDT-MT
+> stabilize target queries train
+> Training losses
+> ℒtotal=
+> ℒrmots+λmtℒmt
+> +λacdaℒacda
+> +λlgcaℒlgca
+> ℒlgca
+> Inference
+
+↔
+
+> EMA update
+> ℒmt
+> Consistency
+> Reliable
+> selection
+> Language
+> anchor
+> Prototype
+> (memory)
+> Refine
+> LGCA
+> expression
+
+…
+
+> QCA  Refine
+> expression
+
+…
+
+> Visual
+> encoder
+> Text
+> encoder
+
+…
+
+> Temporal decoder
+> (track queries)
+
++…  
+
+> ×√
+> “right vehicles”
+> videos + expressions,
+> GT labels
+> videos + expressions,
+> no GT labels fusion
+> Corrected
+
+Figure 4: Overview of QCA as a query-centric reference method for language-conditioned UDA in RMOT. The shared RMOT backbone produces language-conditioned temporal queries, while CDT-MT, ACDA, and LGCA target three failure modes exposed by CD-RMOT-Bench: target-query instability, task-relevant source–target mismatch, and language-conditioned semantic drift. shared RMOT backbone outputs a set of language-conditioned temporal queries 
+
+Q = {q1, . . . , q N }, qi ∈ Rd, (1) where each query is associated with an objectness logit oi, a box prediction bi, and a referring logit 
+
+ri.As illustrated in Fig. 4, QCA adds three query-level adaptation mechanisms on top of the supervised source-domain RMOT objective. Cross-Domain Temporal Mean Teacher (CDT-MT) stabilizes reliable target-domain queries through teacher–student consistency. Adaptive Curricular Domain Adversarial (ACDA) aligns task-relevant source and target queries using naturally available domain labels from the source/target split. Language-Guided Continuous Adaptation (LGCA) uses the referring expression as a semantic anchor to reduce query drift and preserve expression-consistent selection. The overall objective is 
+
+Ltotal = Ls
+
+rmot + λmt Lmt + λacda Lacda + λlgca Llgca , (2) where Ls
+
+rmot is the supervised RMOT loss on the source domain, and λmt , λ acda , λ lgca are trade-off weights. 
+
+4.2 Query-Centric Adaptation Learning 
+
+CDT-MT addresses target-query instability. Under domain shift, a query may remain associated with a plausible object but fluctuate in feature representation, box prediction, or referring confidence across training updates. We maintain a student model fθ and an EMA teacher f¯θ , updated as 
+
+¯θ(k+1) = α¯θ(k) + (1 − α)θ(k), (3) and optimize selective consistency over reliable target queries: 
+
+Lmt = X
+
+i∈Ωt
+
+wi
+
+
+
+λf ∥qstu 
+
+i − qtea 
+
+i ∥22 + λb ℓsmooth-L1 (bstu 
+
+i , b tea 
+
+i ) + λr ∥σ(rstu 
+
+i ) − σ(rtea 
+
+i )∥22
+
+
+
+, (4) where Ωt denotes the retained reliable subset and wi its associated soft weights. ACDA addresses task-relevant source–target mismatch at the query level. Instead of aligning global scene features, it focuses on object queries that are likely to matter for RMOT. The source/target split naturally provides domain labels, so this adversarial signal does not require additional manual domain annotation. For query i, the task-relevance score is 
+
+ci = σ(oi) · σ(ri), (5) 7and the resulting adversarial objective is 
+
+Lacda = 1
+
+M
+
+> M
+
+X
+
+> i=1
+
+wacda  
+
+> i
+
+ℓce 
+
+ g(GRL( zi)) , d i
+
+, (6) where {zi}Mi=1 are the retained task-relevant query features, g(·) is the domain classifier, di is the source/target domain label, and wacda  
+
+> i
+
+is the curriculum weight. LGCA addresses language-conditioned semantic drift. Even when detections remain plausible, the selected query may move away from the referring expression over time. Given query embeddings 
+
+{qi}Ni=1 , tracking confidences {νi}Ni=1 , and a pooled text anchor ℓ ∈ Rd, we define language-guided confidence as 
+
+κi = 1 + cos( qi, ℓ )2 · νi. (7) Let P denote the selected confident subset. The current prototype estimate and its momentum update are 
+
+ˆp = X
+
+> i∈P
+
+¯κiqi, ¯κi = κi
+
+P 
+
+> j∈P
+
+κj + ε , (8) 
+
+p(n) = m p (n−1) + (1 − m)ˆ p, (9) and apply the residual refinement 
+
+qout  
+
+> i
+
+= (1 − αi)qi + αiq∗ 
+
+> i
+
+, (10) where q∗ 
+
+> i
+
+denotes the refined query feature and αi is modulated by the current quality score. In this way, LGCA uses language not as an additional label source, but as a semantic anchor for maintaining expression-consistent temporal selection. Additional module details, schedules, and hyperparameters are provided in Appendix B .
+
+5 Experiments 
+
+5.1 Experimental Setup 
+
+We instantiate the protocols defined in Sec. 3 under a unified TrackEval-based RMOT evaluation setting. The main experiments cover weather transfer from vKITTI clear to fog and rain , viewpoint transfer from vKITTI clear to 30 ◦L, synthetic-to-real transfer to Refer-KITTI-V2 and Refer-BDD, and the reverse real-to-synthetic direction from Refer-KITTI-V2 to vKITTI fog . All settings use fixed protocol splits. All experiments follow language-conditioned UDA for RMOT. Source-domain videos, referring expressions, and tracking annotations are used for supervised RMOT training. Target-domain videos and referring expressions are used as task-conditioned inputs for adaptation, but target-domain bounding boxes, track identities, masks, and expression-object associations are not used in the supervised RMOT loss. Target annotations are used only for evaluation. We use HOTA as the primary metric and DetA/AssA as the main diagnostic decomposition in the main paper. Unless otherwise specified, all methods are trained with AdamW for 60 epochs on 4 NVIDIA RTX 3090 GPUs. QCA adds the objectives in Eq. (2) on top of the source-domain supervised RMOT loss. 
+
+5.2 Main Results and Findings 
+
+The in-domain TempRMOT reference on vKITTI clear → clear reaches 28.69 HOTA, 17.38 DetA, and 47.39 AssA, serving as the reference for the controlled degradation shown in Fig. 1. Changing only the target visual domain already causes clear drops under shared scene semantics, confirming that language-conditioned UDA for RMOT is challenging even before moving to real-domain transfer. Table 2 reports representative results across weather, viewpoint, synthetic-to-real, and real-to-synthetic transfer. The adapted RVOS baselines remain far behind native RMOT methods under the trajectory protocol. Since RVOS predicts language-conditioned masks rather than identity-aware trajectories, this gap suggests that video-language segmentation does not directly solve CD-RMOT. Details of the pseudo-mask adaptation are provided in Appendix C.1 .8Table 2: Representative results on CD-RMOT-Bench. HOTA, DetA, and AssA are reported for weather, viewpoint, synthetic–real, and real–synthetic transfer. MUTR and ReferDINO are included as RVOS-style references.                                                                                                                                       
+
+> Family Method vKITTI clear
+> →fog vKITTI clear
+> →rain vKITTI clear
+> →30 ◦LHOTA DetA AssA HOTA DetA AssA HOTA DetA AssA RVOS MUTR [25] 4.81 3.25 7.11 4.76 3.81 5.95 6.34 3.55 11.34 ReferDINO [26] 5.88 4.19 8.25 5.58 4.41 7.07 6.78 4.03 11.43 RMOT TransRMOT [14] 11.67 4.10 33.95 11.91 3.95 36.67 9.99 3.06 33.53 MGLT [18] 10.37 4.09 26.36 12.40 4.49 34.39 9.73 2.47 38.58 TempRMOT [1] 16.00 8.79 29.20 19.50 10.30 37.05 20.43 10.08 41.79 QCA (ours) 21.37 11.04 41.38 24.20 13.48 43.49 25.25 14.43 44.31
+> Family Method vKITTI clear
+> →Refer-KITTI-V2 vKITTI clear
+> →Refer-BDD Refer-KITTI-V2
+> →vKITTI fog HOTA DetA AssA HOTA DetA AssA HOTA DetA AssA RVOS MUTR [25] 5.33 2.38 11.90 4.91 2.45 9.86 3.48 2.15 5.63 ReferDINO [26] 5.85 2.64 12.94 6.29 3.02 13.09 4.28 2.68 6.84 RMOT TransRMOT [14] 9.87 3.10 31.79 12.74 4.33 38.52 10.59 4.56 24.64 MGLT [18] 12.88 4.95 33.84 13.04 5.87 28.96 11.28 4.95 25.73 TempRMOT [1] 17.17 7.97 37.60 14.32 6.29 33.95 11.47 5.44 24.57 QCA (ours) 18.92 8.76 41.32 19.09 8.17 44.91 14.86 5.10 43.98
+
+Among the controlled vKITTI variants, fog is the most difficult target for TempRMOT, reducing HOTA from 28.69 to 16.00 relative to the in-domain vKITTI clear → clear reference. The degradation is not confined to a single metric component: DetA also drops under domain shift, while AssA shows especially large degradation in fog and rain. This pattern indicates that controlled shifts affect both target localization under the RMOT protocol and expression-consistent temporal selection. It also supports the design of Refer-vKITTI as a controlled digital-twin benchmark core rather than a generic heterogeneous dataset collection. Across all reported transfer settings, QCA achieves the strongest HOTA and AssA among the evaluated methods. The gains are particularly informative because QCA does not use target-domain boxes, identities, masks, or expression-object associations as supervised labels; it improves transfer by stabilizing and refining language-conditioned queries. At the same time, the results remain below the in-domain reference, indicating that CD-RMOT-Bench exposes substantial remaining room for language-conditioned CD-RMOT rather than a saturated comparison. The synthetic–real and reverse directions further show that the difficulty is not limited to controlled synthetic variants. Both vKITTI clear → Refer-BDD and Refer-KITTI-V2 → vKITTI fog remain challenging, supporting the need to evaluate weather, viewpoint, and realism shifts within a unified protocol. Full metric decompositions are reported in Appendix C.2 .
+
+5.3 Ablation and Qualitative Analysis 
+
+Ablation results are reported in Appendix C.3 . The three QCA modules correspond to complementary failure modes exposed by CD-RMOT-Bench: CDT-MT improves target-query stability, ACDA reduces task-relevant source–target query mismatch using naturally available domain labels, and LGCA uses language as a semantic anchor to reduce expression-conditioned drift. The stronger two-module and full-model variants indicate that language-conditioned UDA for RMOT requires joint treatment of query stability, domain alignment, and language-guided correction. Qualitative cases are provided in Appendix C.4 , further illustrating that visually plausible predictions can still drift to expression-inconsistent trajectories under domain shift. 96 Conclusion 
+
+We introduced CD-RMOT-Bench for language-conditioned UDA in RMOT, where target-domain expressions are available as task inputs while target tracking annotations are used only for evaluation. Built from Refer-KITTI-V2, Refer-vKITTI, and Refer-BDD, the benchmark supports controlled weather/viewpoint shifts and bidirectional synthetic–real transfer under a unified RMOT protocol. Refer-vKITTI is constructed through per-scene identity mapping, domain-specific annotation transfer, and residual quality control. Experiments show that cross-domain degradation involves not only detection-sensitive errors, but also failures in expression-consistent temporal association and target selection. QCA provides a strong query-centric baseline, while the remaining gaps highlight the need for robust language-guided tracking across visual domains. 10 References 
+
+[1] Yani Zhang, Dongming Wu, Wencheng Han, and Xingping Dong. Bootstrapping referring multi-object tracking. arXiv preprint arXiv:2406.05039 , 2024. 2, 3, 4, 5, 9 [2] Alex Bewley, Zongyuan Ge, Lionel Ott, Fabio Ramos, and Ben Upcroft. Simple online and realtime tracking. In ICIP , 2016. 3 [3] Nicolai Wojke, Alex Bewley, and Dietrich Paulus. Simple online and realtime tracking with a deep association metric. In ICIP , 2017. [4] Philipp Bergmann, Tim Meinhardt, and Laura Leal-Taixé. Tracking without bells and whistles. In ICCV , 2019. [5] Xingyi Zhou, Vladlen Koltun, and Philipp Krähenbühl. Tracking objects as points. In ECCV ,2020. [6] Yifu Zhang, Chunyu Wang, Xinggang Wang, Wenjun Zeng, and Wenyu Liu. FairMOT: On the fairness of detection and re-identification in multiple object tracking. International Journal of Computer Vision , 129:3069–3087, 2021. [7] Yifu Zhang, Peize Sun, Yi Jiang, Dongdong Yu, Fucheng Weng, Zehuan Yuan, Ping Luo, Wenyu Liu, and Xinggang Wang. ByteTrack: Multi-object tracking by associating every detection box. In ECCV , 2022. [8] Jinkun Cao, Jiangmiao Pang, Xinshuo Weng, Rawal Khirodkar, and Kris Kitani. Observation-centric SORT: Rethinking SORT for robust multi-object tracking. In CVPR , 2023. 3 [9] Peize Sun, Jinkun Cao, Yi Jiang, Rufeng Zhang, Enze Xie, Zehuan Yuan, Changhu Wang, and Ping Luo. TransTrack: Multiple object tracking with transformer. arXiv preprint arXiv:2012.15460 , 2020. 3 [10] Tim Meinhardt, Alexander Kirillov, Laura Leal-Taixé, and Christoph Feichtenhofer. Track-Former: Multi-object tracking with transformers. In CVPR , 2022. [11] Fangao Zeng, Bin Dong, Yuang Zhang, Tiancai Wang, Xiangyu Zhang, and Yichen Wei. MOTR: End-to-end multiple-object tracking with transformer. In ECCV , 2022. [12] Yuang Zhang, Tiancai Wang, and Xiangyu Zhang. MOTRv2: Bootstrapping end-to-end multi-object tracking by pretrained object detectors. In CVPR , 2023. [13] Bin Yan, Yi Jiang, Peize Sun, Dong Wang, Zehuan Yuan, Ping Luo, and Huchuan Lu. Towards grand unification of object tracking. In ECCV , 2022. 3 [14] Dongming Wu, Wencheng Han, Tiancai Wang, Xingping Dong, Xiangyu Zhang, and Jianbing Shen. Referring multi-object tracking. In CVPR , 2023. 3, 9 [15] Yunhao Du, Cheng Lei, Zhicheng Zhao, and Fei Su. iKUN: Speak to trackers without retraining. In CVPR , 2024. 3 [16] Jiacheng Lin, Jiajun Chen, Kunyu Peng, Xuan He, Zhiyong Li, Rainer Stiefelhagen, and Kailun Yang. EchoTrack: Auditory referring multi-object tracking for autonomous driving. IEEE Transactions on Intelligent Transportation Systems , 25(11):18964–18977, 2024. 3, 4, 5 [17] Wenyan He, Yajun Jian, Yang Lu, and Hanzi Wang. Visual-linguistic representation learning with deep cross-modality fusion for referring multi-object tracking. In ICASSP , 2024. 3 [18] Jiajun Chen, Jiacheng Lin, Guojin Zhong, You Yao, and Zhiyong Li. Multigranularity local-ization transformer with collaborative understanding for referring multiobject tracking. IEEE Transactions on Instrumentation and Measurement , 74:1–13, 2025. 3, 5, 9 [19] Guangyao Li, Siping Zhuang, Yajun Jian, Yan Yan, and Hanzi Wang. Language decoupling with fine-grained knowledge guidance for referring multi-object tracking. In ICCV , 2025. 3 [20] Sijia Chen, Yanqiu Yu, En Yu, and Wenbing Tao. ReaMOT: A benchmark and framework for reasoning-based multi-object tracking. arXiv preprint arXiv:2505.20381 , 2025. 3, 4 11 [21] Tzoulio Chamiti, Leandro Di Bella, Adrian Munteanu, and Nikos Deligiannis. ReferGPT: Towards zero-shot referring multi-object tracking. In CVPRW , 2025. 3 [22] Adam Botach, Evgenii Zheltonozhskii, and Chaim Baskin. End-to-end referring video object segmentation with multimodal transformers. In CVPR , 2022. 3 [23] Jiannan Wu, Yi Jiang, Peize Sun, Zehuan Yuan, and Ping Luo. Language as queries for referring video object segmentation. In CVPR , 2022. 3 [24] Dongming Wu, Tiancai Wang, Yuang Zhang, Xiangyu Zhang, and Jianbing Shen. OnlineRefer: A simple online baseline for referring video object segmentation. In ICCV , 2023. 3 [25] Shilin Yan, Renrui Zhang, Ziyu Guo, Wenchao Chen, Wei Zhang, Hongyang Li, Yu Qiao, Hao Dong, Zhongjiang He, and Peng Gao. Referred by multi-modality: A unified temporal transformer for video object segmentation. In AAAI , 2024. 3, 9 [26] Tianming Liang, Kun-Yu Lin, Chaolei Tan, Jianguo Zhang, Wei-Shi Zheng, and Jian-Fang Hu. ReferDINO: Referring video object segmentation with visual grounding foundations. In ICCV ,2025. 3, 9 [27] Mingsheng Long, Yue Cao, Jianmin Wang, and Michael I. Jordan. Learning transferable features with deep adaptation networks. In ICML , 2015. 3 [28] Yaroslav Ganin, Evgeniya Ustinova, Hana Ajakan, Pascal Germain, Hugo Larochelle, François Laviolette, Mario Marchand, and Victor Lempitsky. Domain-adversarial training of neural networks. Journal of Machine Learning Research , 17(59):1–35, 2016. 3 [29] Eric Tzeng, Judy Hoffman, Kate Saenko, and Trevor Darrell. Adversarial discriminative domain adaptation. In CVPR , 2017. 3 [30] Mingsheng Long, Zhangjie Cao, Jianmin Wang, and Michael I. Jordan. Conditional adversarial domain adaptation. In NeurIPS , 2018. 3 [31] Kuniaki Saito, Kohei Watanabe, Yoshitaka Ushiku, and Tatsuya Harada. Maximum classifier discrepancy for unsupervised domain adaptation. In CVPR , 2018. 3 [32] Yuhua Chen, Wen Li, Christos Sakaridis, Dengxin Dai, and Luc Van Gool. Domain adaptive Faster R-CNN for object detection in the wild. In CVPR , 2018. 3 [33] Kuniaki Saito, Yoshitaka Ushiku, Tatsuya Harada, and Kate Saenko. Strong-weak distribution alignment for adaptive object detection. In CVPR , 2019. 3 [34] Qi Cai, Yingwei Pan, Chong-Wah Ngo, Xinmei Tian, Lingyu Duan, and Ting Yao. Exploring object relation in mean teacher for cross-domain detection. In CVPR , 2019. 3 [35] Jinhong Deng, Wen Li, Yuhua Chen, and Lixin Duan. Unbiased mean teacher for cross-domain object detection. In CVPR , 2021. 3 [36] Yu-Jhe Li, Xiaoliang Dai, Chih-Yao Ma, Yen-Cheng Liu, Kan Chen, Bichen Wu, Zijian He, Kris Kitani, and Peter Vajda. Cross-domain adaptive teacher for object detection. In CVPR ,2022. 3 [37] Meilin Chen, Weijie Chen, Shicai Yang, Jie Song, Xinchao Wang, Lei Zhang, Yunfeng Yan, Donglian Qi, Yueting Zhuang, Di Xie, et al. Learning domain adaptive object detection with probabilistic teacher. In ICML , 2022. 3 [38] Xiao Zhang, Fei Wei, Yong Wang, Wenda Zhao, Feiyi Li, and Xiangxiang Chu. UPRE: Zero-shot domain adaptation for object detection via unified prompt and representation enhancement. In ICCV , 2025. 3 [39] Min-Hung Chen, Zsolt Kira, Ghassan AlRegib, Jaekwon Yoo, Ruxin Chen, and Jian Zheng. Temporal attentive alignment for large-scale video domain adaptation. In ICCV , 2019. 3 [40] Dequan Wang, Evan Shelhamer, Shaoteng Liu, Bruno Olshausen, and Trevor Darrell. Tent: Fully test-time adaptation by entropy minimization. In ICLR , 2021. 3 12 [41] Qin Wang, Olga Fink, Luc Van Gool, and Dengxin Dai. Continual test-time domain adaptation. In CVPR , 2022. 3 [42] Shuaicheng Niu, Jiaxiang Wu, Yifan Zhang, Yaofo Chen, Shijian Zheng, Peilin Zhao, and Mingkui Tan. Efficient test-time model adaptation without forgetting. In ICML , 2022. 3 [43] Dhanajit Brahma and Piyush Rai. A probabilistic framework for lifelong test-time adaptation. In CVPR , 2023. 3 [44] Xiangqun Zhang, Ruize Han, Likai Wang, Linqi Song, Junhui Hou, and Wei Feng. Synthetic-to-real video person Re-ID. IEEE Transactions on Information Forensics and Security , 20: 5438–5450, 2025. 3 [45] Likai Wang, Xiangqun Zhang, Ruize Han, Yanjie Wei, Song Wang, and Wei Feng. A new bench-mark and algorithm for clothes-changing video person re-identification. IEEE Transactions on Information Forensics and Security , 20:1993–2005, 2025. 3 [46] Andreas Geiger, Philip Lenz, and Raquel Urtasun. Are we ready for autonomous driving? the KITTI vision benchmark suite. In CVPR , 2012. 3 [47] Anton Milan, Laura Leal-Taixé, Ian Reid, Stefan Roth, and Konrad Schindler. MOT16: A benchmark for multi-object tracking. arXiv preprint arXiv:1603.00831 , 2016. 3 [48] Marius Cordts, Mohamed Omran, Sebastian Ramos, Timo Rehfeld, Markus Enzweiler, Rodrigo Benenson, Uwe Franke, Stefan Roth, and Bernt Schiele. The Cityscapes dataset for semantic urban scene understanding. In CVPR , 2016. 3 [49] Fisher Yu, Haofeng Chen, Xin Wang, Wenqi Xian, Yingying Chen, Fangchen Liu, Vashisht Madhavan, and Trevor Darrell. BDD100K: A diverse driving dataset for heterogeneous multitask learning. In CVPR , 2020. 3, 5 [50] Holger Caesar, Varun Bankiti, Alex H. Lang, Sourabh Vora, Venice Erin Liong, Qiang Xu, Anush Krishnan, Yu Pan, Giancarlo Baldan, and Oscar Beijbom. nuScenes: A multimodal dataset for autonomous driving. In CVPR , 2020. 3 [51] Adrien Gaidon, Qiao Wang, Yohann Cabon, and Eleonora Vig. Virtual worlds as proxy for multi-object tracking analysis. In CVPR , 2016. 3 [52] Yohann Cabon, Naila Murray, and Martin Humenberger. Virtual KITTI 2. arXiv preprint arXiv:2001.10773 , 2020. 3, 4, 5 [53] German Ros, Laura Sellart, Joanna Materzynska, David Vazquez, and Antonio M. Lopez. The SYNTHIA dataset: A large collection of synthetic images for semantic segmentation of urban scenes. In CVPR , 2016. 3 [54] Stephan R. Richter, Vibhav Vineet, Stefan Roth, and Vladlen Koltun. Playing for data: Ground truth from computer games. In ECCV , 2016. 3 [55] Tao Sun, Mattia Segu, Janis Postels, Yuxuan Wang, Luc Van Gool, Bernt Schiele, Federico Tombari, and Fisher Yu. SHIFT: A synthetic driving dataset for continuous multi-task domain adaptation. In CVPR , 2022. 3 [56] Xingchao Peng, Ben Usman, Neela Kaushik, Dequan Wang, Judy Hoffman, and Kate Saenko. VisDA: The visual domain adaptation challenge. arXiv preprint arXiv:1710.06924 , 2017. 3 [57] Xingchao Peng, Qinxun Bai, Xide Xia, Zijun Huang, Kate Saenko, and Bo Wang. Moment matching for multi-source domain adaptation. In ICCV , 2019. 3 [58] Pang Wei Koh, Shiori Sagawa, Henrik Marklund, Sang Michael Xie, Marvin Zhang, Akshay Balsubramani, Weihua Hu, Michihiro Yasunaga, Richard Lanas Phillips, Sara Beery, et al. WILDS: A benchmark of in-the-wild distribution shifts. In ICML , 2021. 3 [59] Chenglizhao Chen, Shaofeng Liang, Runwei Guan, Xiaolou Sun, Haocheng Zhao, Haiyun Jiang, Tao Huang, Henghui Ding, and Qing-Long Han. AerialMind: Towards referring multi-object tracking in UAV scenarios. In AAAI , 2026. 4 13 A Benchmark Construction and Protocols 
+
+A.1 Alignment, Matching, and Residual Calibration 
+
+Refer-vKITTI is constructed from the five Refer-KITTI-V2 sequences that have aligned Virtual KITTI 2 counterparts. For each paired real/synthetic scene, the construction pipeline loads the Refer-KITTI-V2 frame-level labels and the vKITTI bounding boxes, converts them into a common box representation, and enumerates source–target identity candidates after scene and frame alignment. This formulation turns expression transfer into a constrained identity-mapping problem rather than an unconstrained annotation task, which is essential for preserving referential semantics under controlled domain changes. Candidate evidence is collected through frame-level matching with an IoU threshold of 0.02. This threshold is intentionally permissive because it is used to collect correspondence evidence before scene-level assignment, not as a standalone acceptance rule. For each source–target identity pair, the pipeline computes frame-match count, mean frame-level IoU, direct track IoU over overlapping frames, center similarity, area similarity, and temporal IoU. These terms define the per-scene matching score 
+
+s(i, j ) = 4 Nij + 30 ¯Iframe 
+
+ij + 6 ¯Itrack 
+
+ij + 2 Cij + Aij + 3 Tij , (11) where Nij is the number of IoU-filtered frame matches, ¯Iframe 
+
+ij is the mean frame-level IoU, ¯Itrack 
+
+ij 
+
+is the direct track IoU over overlapping frames, Cij and Aij denote center and area similarity, and 
+
+Tij denotes temporal IoU. The resulting scene-level identity correspondences are selected under a one-to-one assignment constraint, yielding auditable per-scene KITTI-to-vKITTI identity mappings. The resulting mappings are then used to transfer Refer-KITTI-V2 expression-track annotations to all vKITTI domains. During normalization, the natural-language expression is preserved, video identifiers are rewritten to the corresponding vKITTI domain, target identities are remapped according to the per-scene correspondence, and frame-level targets are removed when the mapped vKITTI identity is absent in the target-domain frame. This accounts for visibility changes, viewpoint-induced invalidation, and domain-specific object absence, while keeping the final annotations compatible with the unified RMOT evaluation protocol. Table 3: Detailed construction statistics for Refer-vKITTI. Expression–track pairs and per-scene identity pairs are different counting units: the former count expression–track instances after domain expansion, while the latter count candidate identity correspondences used during scene-level matching. The automatic stage provides an auditable initial mapping; manual inspection is used only as residual quality control and is therefore described in the text rather than reported as a separate logged statistic.                                   
+
+> Item Value Evidence / Notes Total transferred videos 50 Five aligned KITTI/vKITTI scenes expanded to 10 vKITTI domains Total transferred expressions 27,730 Final Refer-vKITTI expression directory Total transferred expression–track pairs 285,160 Source expression–track pairs expanded across 10 target domains Candidate identity pairs after alignment 6,887 Per-scene source–target identity pairs with temporal frame overlap Candidate pairs with IoU evidence 374 Frame-level candidate evidence collected with IoU ≥0.02
+> Matched identity pairs after one-to-one assignment 251 Per-scene identity mappings summed over five aligned scenes Unmatched source identities in build summary 0Reported by scene-level mapping summaries Frame-level visibility invalidations 806,110 Dropped target mentions when mapped vKITTI identities are absent in target-domain frames Discarded expression–track pairs 13,117 Initial transferred pairs minus final retained pairs Final retained expression–track pairs 272,043 Expression–track pairs retained after visibility filtering and normal-ization Final retention rate 95.40% Final retained pairs divided by initially transferred pairs IoU threshold for evidence collection 0.02 Used before scene-level assignment, not as a standalone acceptance rule Per-scene matching score Composite score Frame-match count, frame IoU, direct track IoU, center similarity, area similarity, and temporal IoU Temporal consistency cue Soft score term Temporal IoU contributes to the matching score Lightweight consistency check 306,505 checks, 0 flagged Post-construction consistency validation on generated labels
+
+Manual quality control is used only as a residual calibration step after automatic matching and transfer. We inspect ambiguous cases with weak correspondence evidence, short temporal overlap, frequent target disappearance, or dense same-class distractors. Each inspected case is checked against the source frame, the target-domain frame, the referring expression, and the mapped target identity. When necessary, identity assignments are corrected, invisible frame-level targets are removed, or expression– target pairs are invalidated when their semantics no longer hold after domain transfer. This keeps the 14 main construction process automatic and auditable while allowing limited human calibration for cases where correspondence evidence is ambiguous. The procedure is used for quality control rather than large-scale manual annotation. Table 3 summarizes the scale, identity-matching evidence, retained annotations, and post-construction consistency checks of the Refer-vKITTI construction pipeline. 
+
+A.2 Splits, Protocols, and Implementation 
+
+For controlled vKITTI transfer, we use three clear-domain Refer-vKITTI scenes for source training, containing 1,407 frames and 1,710 expressions. Each reported target setting, including fog , rain , and 
+
+30 ◦L, uses two held-out aligned scenes with 659 frames and 1,063 expressions. The real clear-domain setting follows the same cross-scene principle in Refer-KITTI-V2, using three videos for training with 1,359 frames and 1,710 expressions and two held-out videos for evaluation with 646 frames and 1,063 expressions. For synthetic-to-real transfer, Refer-BDD provides 8,385 training frames and 3,937 expressions for adaptation, and 1,619 test frames with 673 expressions for evaluation. Refer-vKITTI is designed as a controlled digital-twin domain-shift protocol rather than a scene-disjoint or identity-disjoint generalization benchmark. Its purpose is to isolate weather and viewpoint changes under shared scene geometry and transferred language annotations. We complement this controlled setting with synthetic-to-real and real-to-synthetic experiments involving Refer-KITTI-V2 and Refer-BDD. Table 4: Clarification of the language-conditioned UDA setting used in CD-RMOT-Bench. Target-domain referring expressions are available as task inputs, but target-domain boxes, identities, masks, and expression-object associations are not used as supervised training labels.                                
+
+> Component Source training Target adaptation Evaluation Videos ✓✓✓
+> Referring expressions ✓✓task inputs ✓
+> Bounding boxes ✓–✓
+> Track identities ✓–✓
+> Masks / pseudo masks optional –optional Expression-object associations ✓–✓
+> Supervised RMOT loss ✓––Prediction-level consistency –✓–Source–target domain alignment ✓✓–
+
+All experiments follow language-conditioned UDA for RMOT. Source-domain videos, referring expressions, and tracking annotations are used for supervised RMOT training. Target-domain videos and referring expressions are used as task-conditioned inputs during adaptation, but target-domain bounding boxes, track identities, masks, and expression-object associations are not used as supervised training labels. Target annotations are reserved for evaluation. Table 4 summarizes this distinction. Unless otherwise specified, all methods are trained under the same optimization and evaluation setting. We use AdamW for 60 epochs, with the learning rate decayed after epoch 40, and batch size 1 per GPU on 4 NVIDIA RTX 3090 GPUs. For QCA, we use EMA decay α = 0 .999 in CDT-MT, retain top-M = 16 query features in ACDA, and set prototype momentum m = 0 .9 in LGCA. Additional schedule details are provided in Appendix B. 
+
+B Reference Method Details 
+
+B.1 CDT-MT: Reliable Query Selection 
+
+The main paper summarizes CDT-MT as selective temporal self-distillation over reliable target-domain queries. Here we provide the reliability estimation and subset selection details. For target query i, we compute the teacher reliability score 
+
+ρi = σ(otea  
+
+> i
+
+) · σ(rtea  
+
+> i
+
+), (12) which measures whether the teacher regards the query as both object-like and expression-relevant. We further quantify student–teacher agreement in three complementary spaces: 
+
+afeat  
+
+> i
+
+= 1 + cos( qstu  
+
+> i
+
+, q tea  
+
+> i
+
+)2 , (13) 15 abox  
+
+> i
+
+= exp  −4∥bstu  
+
+> i
+
+− btea  
+
+> i
+
+∥1
+
+ , (14) 
+
+aref  
+
+> i
+
+= 1 − σ(rstu  
+
+> i
+
+) − σ(rtea  
+
+> i
+
+) , (15) and combine them as 
+
+ai = afeat  
+
+> i
+
++ abox  
+
+> i
+
++ aref 
+
+> i
+
+3 . (16) The final selection score is 
+
+ψi = (1 − γ)ρi + γa i, (17) where γ ∈ [0 , 1] balances teacher reliability and cross-model agreement. Queries with high ψi are retained in Ωt for consistency regularization. To avoid over-regularizing early training, we apply the warmup factor 
+
+Lmt ← η(e)Lmt , η(e) = min 
+
+
+
+1, e + 1 
+
+Ew
+
+
+
+. (18) 
+
+B.2 ACDA: Adversarial Schedule and Curriculum 
+
+ACDA performs query-level adversarial alignment over task-relevant object queries. The domain supervision does not require additional manual annotation: each sample naturally belongs to the source or target split, so the split identity provides the domain signal used by the discriminator. Let 
+
+τe = max(0 , e − Ew)max(1 , E − Ew) , (19) denote normalized training progress after warmup, where E is the total number of epochs. The adversarial strength is scheduled as 
+
+λgrl (e) = λmin + ( λmax − λmin )
+
+ 21 + exp( −10 τe) − 1
+
+
+
+. (20) To avoid forcing severely degraded target queries into early adversarial matching, ACDA introduces a curriculum driven by three signals: domain uncertainty, distance to a running source prototype, and RMOT task difficulty. Let πi = g(zi) denote the domain posterior over Kd domains, and let μs
+
+denote the running source prototype. We compute 
+
+hent  
+
+> i
+
+= − 1log KdKdX
+
+> k=1
+
+πik log πik , (21) 
+
+hproto  
+
+> i
+
+= ∥zi − μs∥2 − min j ∥zj − μs∥2
+
+max j ∥zj − μs∥2 − min j ∥zj − μs∥2 + ε , (22) 
+
+htask  
+
+> i
+
+= 1 − eci, (23) where eci is the normalized task confidence. The final difficulty score is 
+
+hi = 0 .5 hent  
+
+> i
+
++ 0 .25 hproto  
+
+> i
+
++ 0 .25 htask  
+
+> i
+
+, (24) and the resulting curriculum weight is 
+
+wacda  
+
+> i
+
+= ωmin + (1 − ωmin )
+
+
+
+τe + (1 − τe)(1 − hi)
+
+
+
+. (25) 
+
+B.3 LGCA: Fusion and Auxiliary Objectives 
+
+LGCA uses the referring expression as a semantic anchor for prototype-based query correction. The main paper provides the language-guided confidence, prototype update, and residual refinement. Here we include the omitted fusion rule and auxiliary training terms. LGCA decomposes the corrected representation into appearance-oriented and motion-oriented an-chors, producing qapp  
+
+> i
+
+and qmot  
+
+> i
+
+. Their combination is controlled by a quality-aware gate: 
+
+q∗ 
+
+> i
+
+= ga(ζ) qapp  
+
+> i
+
++ gm(ζ) qmot  
+
+> i
+
+, ga(ζ) + gm(ζ) = 1 , (26) 16 where ζ denotes sequence quality estimated from prototype-query agreement. During training, LGCA uses the compact objective 
+
+Llgca = Lalign + λcons Lcons + λqual Lqual + λgate Lgate , (27) with 
+
+Lalign = 1 − 1
+
+N
+
+X
+
+> i
+
+cos( q∗ 
+
+> i
+
+, ℓ ), (28) 
+
+Lcons = 1
+
+N
+
+X
+
+> i
+
+∥q∗ 
+
+> i
+
+− qi∥22. (29) The remaining terms regularize prototype quality and gate behavior. During inference, the corrected representation is injected through the residual blend in Eq. (10) of the main paper. 
+
+C Additional Experimental Results 
+
+C.1 Adapted RVOS Baselines 
+
+RVOS methods predict language-conditioned mask sequences rather than RMOT trajectories. To include them as cross-task references, we adapt MUTR and ReferDINO through a pseudo-mask interface. For each video-expression pair, the RMOT bounding boxes associated with the referred track identities are rasterized into rectangular pseudo masks, yielding RVOS-style training samples without introducing extra mask annotation. The RVOS models are trained under the same source-domain splits and applied to the corresponding target-domain videos. At inference time, predicted masks are thresholded and converted back into bounding boxes by taking the tight enclosing rectangle of the foreground region in each frame. Empty predictions are treated as missed detections. When multiple foreground components are present, we use the tight bounding box enclosing all foreground pixels. The resulting predictions are written into the same TrackEval-compatible trajectory format as native RMOT methods. These baselines should be interpreted as adapted comparison references rather than native RMOT trackers, because their association behavior is induced by per-expression mask-to-box conversion rather than explicit multi-object identity management. This adaptation is used only to provide additional cross-task reference points rather than direct competition with native RMOT methods. 
+
+C.2 Extended Metric Decompositions 
+
+Table 5: Extended cross-domain metric decomposition under the unified evaluation protocol. Values in parentheses denote differences relative to the TempRMOT baseline.                                                                       
+
+> Setting Method HOTA Detection Association LocA DetA DetRe DetPr AssA AssRe AssPr vKITTI clear
+> →fog TempRMOT 16.00 8.79 14.20 18.58 29.20 34.45 70.61 88.87
+> QCA 21.37 (+5.37) 11.04 (+2.25) 18.02 (+3.82) 21.80 (+3.22) 41.38 (+12.18) 47.86 (+13.41) 72.10 (+1.49) 87.14 (-1.73) vKITTI clear
+> →rain TempRMOT 19.50 10.30 20.95 16.64 37.05 43.49 68.89 86.39 QCA 24.20 (+4.70) 13.48 (+3.18) 16.44 (-4.51) 41.93 (+25.29) 43.49 (+6.44) 51.04 (+7.55) 71.11 (+2.22) 89.90 (+3.51) vKITTI clear
+> →30 ◦LTempRMOT 20.43 10.08 23.92 14.65 41.79 53.74 67.46 85.45 QCA 25.25 (+4.82) 14.43 (+4.35) 19.85 (-4.07) 33.77 (+19.12) 44.31 (+2.52) 49.76 (-3.98) 78.42 (+10.96) 88.21 (+2.76) vKITTI clear
+> →Refer-KITTI-V2 TempRMOT 17.17 7.97 21.33 11.03 37.60 47.52 61.29 78.76 QCA 18.92 (+1.75) 8.76 (+0.79) 15.63 (-5.70) 16.11 (+5.08) 41.32 (+3.72) 49.19 (+1.67) 67.68 (+6.39) 79.28 (+0.52) vKITTI clear
+> →Refer-BDD TempRMOT 14.32 6.29 10.88 12.61 33.95 41.19 62.45 77.16 QCA 19.09 (+4.77) 8.17 (+1.88) 9.13 (-1.75) 42.83 (+30.22) 44.91 (+10.96) 51.84 (+10.65) 72.68 (+10.23) 88.61 (+11.45) Refer-KITTI-V2
+> →vKITTI fog TempRMOT 11.47 5.44 8.46 13.00 24.57 28.98 62.66 82.40 QCA 14.86 (+3.39) 5.10 (-0.34) 16.18 (+7.72) 6.83 (-6.17) 43.98 (+19.41) 54.74 (+25.76) 63.00 (+0.34) 78.45 (-3.95)
+
+17 Table 5 reports extended metric decompositions for TempRMOT and QCA under the reported transfer settings. The main paper focuses on HOTA, DetA, and AssA, while this appendix further reports detection, association, and localization components to support the diagnostic analysis. 
+
+C.3 Ablation Details 
+
+Table 6: Ablation study under two representative cross-domain transfer directions: vKITTI clear 
+
+→ fog and vKITTI clear → Refer-BDD. HOTA, DetA, and AssA are reported to show how each component affects detection- and association-sensitive performance.                                                                           
+
+> Method CDT-MT ACDA LGCA vKITTI clear →fog vKITTI clear →Refer-BDD HOTA DetA AssA HOTA DetA AssA TempRMOT baseline 16.00 8.79 29.20 14.32 6.29 33.95 LGCA only ✓16.17 8.62 30.34 15.14 6.21 36.80 ACDA only ✓16.34 8.25 32.36 14.79 5.90 37.05 CDT-MT only ✓16.25 8.48 31.14 14.61 6.03 35.35 CDT-MT + ACDA ✓✓16.58 7.92 34.89 15.69 6.34 38.83 CDT-MT + LGCA ✓✓17.59 8.19 38.02 16.73 6.92 40.50 ACDA + LGCA ✓✓18.73 8.98 39.08 17.84 7.46 42.70 CDT-MT + ACDA + LGCA ✓✓✓21.37 11.04 41.38 19.09 8.17 44.91
+
+Table 6 reports ablations under two representative transfer directions. The three components target complementary failure modes exposed by CD-RMOT-Bench: unreliable target queries, task-relevant source–target query mismatch, and language-conditioned semantic drift. Their combination gives the strongest overall performance, supporting the interpretation that language-conditioned UDA for RMOT requires joint treatment of query stability, domain alignment, and language-guided correction. 
+
+C.4 Additional Qualitative Cases 
+
+Fig. 5 provides qualitative comparisons under representative weather, viewpoint, real-domain, and motion-dependent settings. These cases support the diagnostic finding in the main paper: under domain shift, plausible objects may remain detectable while expression-consistent target selection drifts over time. 18 Expression: vehicles in soft tones 
+
+(c) Refer-BDD 
+
+Ground 
+
+Truth 
+
+Baseline 
+
+Ours 
+
+(a) Fog 
+
+Ground 
+
+Truth 
+
+Baseline 
+
+Ours 
+
+(b) 30 °L
+
+Expression: cars traveling in the opposite direction to ours 
+
+Expression: person who stands on the street 
+
+Ground 
+
+Truth 
+
+Baseline 
+
+Ours 
+
+Expression: cars traveling in reverse directions 
+
+Ground 
+
+Truth 
+
+Baseline 
+
+Ours 
+
+(d) Refer-KITTI-V2 Figure 5: Additional qualitative cases illustrating common cross-domain RMOT failures. The examples show that domain shift can induce both distractor confusion and weakened expression-consistent temporal selectivity, even when visually plausible targets remain detectable. 19

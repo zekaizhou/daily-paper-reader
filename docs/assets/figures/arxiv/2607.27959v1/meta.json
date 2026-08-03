@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.27959v1/fig-001.webp",
+      "caption": "Table 1: Performance comparison on CIRR in terms of 𝑅@𝑘 (%) and 𝑅subset@𝑘 (%), and on CIRCO in terms of mAP@𝑘 (%). The best results are shown in bold, and – denotes unavailable results. We also report the absolute performance improvements of our model over dedicated ZS-CIR models and universal retrieval models.",
+      "page": 6,
+      "index": 1,
+      "width": 1056,
+      "height": 440
+    },
+    {
+      "url": "assets/figures/arxiv/2607.27959v1/fig-002.webp",
+      "caption": "Figure 1: Illustration of complex image retrieval tasks: (a) Composed Image Retrieval, (b) Long-Text-to-Image Retrieval, and (c) Dialog-based Image Retrieval.",
+      "page": 2,
+      "index": 2,
+      "width": 502,
+      "height": 381
+    },
+    {
+      "url": "assets/figures/arxiv/2607.27959v1/fig-003.webp",
+      "caption": "Table 2: Performance comparison on FashionIQ in terms of 𝑅@𝑘 (%). The best results are shown in bold. We also report the absolute performance improvements of our model over dedicated ZS-CIR models and universal retrieval models.",
+      "page": 7,
+      "index": 3,
+      "width": 940,
+      "height": 400
+    },
+    {
+      "url": "assets/figures/arxiv/2607.27959v1/fig-004.webp",
+      "caption": "Figure 2: Illustration of Our Method. (a) illustrates the data generation pipeline, (b) presents our fine-tuning strategy: FiRE, and (c) provides inferencing with fine-tuned MLLM.",
+      "page": 3,
+      "index": 4,
+      "width": 1052,
+      "height": 470
+    },
+    {
+      "url": "assets/figures/arxiv/2607.27959v1/fig-005.webp",
+      "caption": "Figure 3: Illustration of instructions involved in: (a) CoTbased Instruction and (b) Vagueness-guided Instruction.",
+      "page": 4,
+      "index": 5,
+      "width": 502,
+      "height": 247
+    },
+    {
+      "url": "assets/figures/arxiv/2607.27959v1/fig-006.webp",
+      "caption": "Figure 5: Illustration of CIR and Long-Text-to-Image Retrieval results, with ground-truth images highlighted in green boxes.",
+      "page": 9,
+      "index": 6,
+      "width": 506,
+      "height": 277
+    }
+  ]
+}

@@ -1,0 +1,329 @@
+Title: Test-Time Adaptation via Dual Distillation for Videos Under Severe Distribution Shifts
+
+URL Source: https://arxiv.org/pdf/2607.24611v1
+
+Published Time: Tue, 28 Jul 2026 02:23:08 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# Test-Time Adaptation via Dual Distillation for Videos Under Severe Distribution Shifts 
+
+# André Sacilotti 
+
+andre.sacilotti@alumni.usp.br University of São Paulo São Carlos, São Paulo, Brazil 
+
+# Samuel Felipe dos Santos 
+
+samuel.felipe@ufscar.br Federal University of São Carlos Sorocaba, São Paulo, Brazil 
+
+# Jurandy Almeida 
+
+jurandy.almeida@ufscar.br Federal University of São Carlos Sorocaba, São Paulo, Brazil 
+
+## Abstract 
+
+Deep learning models have achieved state-of-the-art performance in several computer vision tasks. However, they experience severe performance degradation when applied to real-world scenarios due to unanticipated distribution shifts. Test-Time Adaptation (TTA) attempts to solve this problem by using unlabeled data from the target domain to dynamically adapt to the test distribution at in-ference time, without access to the source data. However, TTA remains a challenging problem when adapting to continuous, tem-porally correlated data, such as videos, and in scenarios where the target domain contains severe domain shifts. For this reason, few works in the literature explore TTA for videos under such extreme conditions. To overcome these limitations, we propose Test-time Adaptation via Dual Distillation (TADD) , an online adapta-tion framework that relies on a lightweight projection adapter to bridge the domain gap. The adapter module is pre-trained on the source domain and then adapted to the target using our proposed complementary losses: ( i) zero-shot distillation , which encourages alignment with the domain-agnostic features from a pre-trained vision-language model (VLM); and ( ii ) target distillation , which retains the source domain discriminative knowledge encoded in the pre-trained adapter. Built upon a frozen CLIP backbone, our method introduces this lightweight projection adapter as the sole updatable component during inference. We conducted extensive evaluations on three well-known video action recognition bench-marks: UCF-HMDB, Daily-DA, and Sports-DA. Our experiments in the closed-set scenario demonstrate that our method consis-tently outperforms state-of-the-art TTA baselines. Notably, our TTA approach improves upon previous methods by up to +3.81% on UCF-HMDB, +2.63% on Daily-DA, and +3.03% on Sports-DA. 
+
+## CCS Concepts 
+
+• Computing methodologies → Transfer learning ; Action recog-nition .
+
+## Keywords 
+
+Test-Time Adaptation, Video Action Recognition, Domain Adapta-tion, Vision-Language Model  
+
+> Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. Copyrights for components of this work owned by others than the author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee. Request permissions from permissions@acm.org.
+> MM ’26, Rio de Janeiro, Brazil
+> ©2026 Copyright held by the owner/author(s). Publication rights licensed to ACM. ACM ISBN 978-x-xxxx-xxxx-x/YYYY/MM https://doi.org/10.1145/nnnnnnn.nnnnnnn
+
+ACM Reference Format: 
+
+André Sacilotti, Samuel Felipe dos Santos, and Jurandy Almeida. 2026. Test-Time Adaptation via Dual Distillation for Videos Under Severe Distribution Shifts. In Proceedings of the 34rd ACM International Conference on Multimedia (MM ’26), November 10–14, 2026, Rio de Janeiro, Brazil. ACM, New York, NY, USA, 10 pages. https://doi.org/10.1145/nnnnnnn.nnnnnnn 
+
+## 1 Introduction 
+
+Deep learning models, and particularly the recent wave of Vision-Language Models (VLMs), have achieved unprecedented perfor-mance across a wide array of visual and language tasks [ 7]. How-ever, this success heavily relies on the assumption that the training and testing data share an identical distribution [ 8]. When deployed in the wild, these models frequently encounter unanticipated distri-bution gaps—such as those caused by varying lighting conditions, weather effects, sensor degradation, or lossy data compression. These shifts cause severe performance degradation, critically hin-dering the reliability of these models in practical applications [8]. To mitigate the impact of distribution shifts, several transfer learning paradigms have emerged. Unsupervised Domain Adap-tation (UDA) aligns a model trained on a labeled source domain with a target domain by adapting it with labeled source and unla-beled target data [ 8]. However, UDA requires access to source data during the adaptation stage, which is often infeasible due to strict privacy restrictions or impractical due to the data being stored in a decentralized manner [9]. Source-Free Domain Adaptation (SFDA) is a more challenging paradigm that adapts a source-trained model to the target domain without any access to the original source data [ 23 ]. However, SFDA methods typically operate offline, where the adaptation requires multiple iterative passes over the target dataset prior to inference. Test-Time Adaptation (TTA) extends the principles of SFDA into a strictly online setting, dynamically adjusting the pre-trained model to each new batch of the continuous stream of unlabeled test data during inference [17]. While TTA has seen rapid advancement in the image domain, ex-tending it to videos introduces significant difficulties. Video streams exhibit complex temporal dynamics and high inter-frame correla-tion [ 10 ]. Consequently, standard image-based adaptation strate-gies, particularly those based on entropy minimization, suffer from severe performance drops, model degeneration, and catastrophic forgetting when dealing with temporally correlated features and continual distribution shifts [ 2]. Furthermore, the limited existing literature on video TTA predominantly evaluates methods against synthetically added noise (e.g., simulated illumination changes or motion blur) rather than actual cross-domain benchmarks featuring significant, natural distribution gaps. arXiv:2607.24611v1 [cs.CV] 27 Jul 2026 MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil Sacilotti, Santos, and Almeida 
+
+To overcome these critical limitations, we propose Test-time Adaptation via Dual Distillation (TADD) , a fully online adapta-tion framework tailored for videos under severe, real-world distri-bution shifts. Our approach leverages the robust priors of founda-tion VLMs to anchor the adaptation process. Built upon a frozen CLIP [ 14 ] backbone, our method utilizes a lightweight projection adapter as the sole updatable component during inference. To optimize this target adapter without catastrophic forgetting, we introduce a pair of complementary distillation losses: ( i) the 
+
+zero-shot distillation loss, which aligns the adapter’s predictions with the frozen CLIP’s zero-shot predictions, preserving domain-agnostic vision-language knowledge and preventing semantic col-lapse; and ( ii ) the target distillation loss, which distills the source domain’s discriminative knowledge, encoded within a frozen, pre-trained source adapter, directly to the target adapter. We conduct extensive experiments on three challenging video action recognition benchmarks under natural domain shift: UCF-HMDB, Daily-DA, and Sports-DA. Our experiments show that TADD consistently outperforms state-of-the-art TTA baselines. Fur-thermore, we demonstrate that our method maintains exceptional robustness and high accuracy in more challenging classification scenarios, including partial-set and multi-target domain adaptation. In summary, our main contributions are: 
+
+• We introduce TADD, a novel test-time adaptation framework for video action recognition designed to address severe, nat-ural distribution shifts rather than synthetic corruptions. 
+
+• We propose a complementary dual distillation loss that suc-cessfully balances alignment with a domain-agnostic vision-language model (via zero-shot distillation) alongside source-specific discriminative knowledge (via target distillation). 
+
+• We establish state-of-the-art test-time adaptation perfor-mance across multiple realistic video TTA benchmarks, im-proving upon previous methods by up to +3.81% on UCF-HMDB, +2.63% on Daily-DA, and +3.03% on Sports-DA. The remainder of this paper is organized as follows. Section 2 re-views related work in source-free domain adaptation and test-time adaptation. Section 3 details our proposed TADD framework, out-lining the problem definition, architecture, and the dual distillation objective. Section 4 presents the experimental setup, benchmark results, and comprehensive ablation studies. Finally, Section 5 con-cludes the paper and discusses future directions. 
+
+## 2 Related Work 
+
+In real-world deployments, deep learning models frequently en-counter unanticipated distribution shifts that severely degrade their performance [ 8]. SFDA mitigates this by aligning source and tar-get distributions without requiring access to the original source data [ 23 ]. For instance, in the image domain, SHOT [ 9 ] tackles SFDA by freezing the source classifier and training target-specific fea-ture extractors via information maximization and self-supervised pseudo-labeling. In the video domain, ATCoN [ 20 ] addresses SFDA by enforcing temporal consistency across video clips and atten-tively aggregating them based on their confidence relative to a frozen source classifier. EXTERN [ 22 ] optimizes temporal features using endo- and exo-temporal regularizations, relying solely on the output predictions from a black-box source model, a more re-strictive scenario, known as black-box SFDA, where models are deployed as opaque APIs. DALL-V [ 23 ] leverages VLMs by training separate source and target adapters on a frozen CLIP backbone, subsequently distilling the knowledge from both adapters and the frozen backbone into a student network. While SFDA successfully eliminates the need for source data, it remains an offline, iterative fine-tuning process that must be completed prior to inference. TTA extends the principles of SFDA into a strictly online setting, achieving model adaptation during or alongside inference. This online paradigm reduces computational cost and improves gen-eralization [ 17 ]. In the image domain, TENT [ 16 ] minimizes the entropy of the predictions by estimating normalization statistics and updating channel-wise affine transformations in each batch. WATT [ 13 ] adapts the visual encoder of CLIP with pseudo-labels generated by a diverse set of text prompt templates, averaging the weights to consolidate global information. BATCLIP [ 11 ] proposes a bimodal approach that updates the parameters of normalization layers of both the visual and text encoders of CLIP, reinforcing multimodal alignment by associating image class prototypes and the text features. Despite rapid advancements in image-based TTA, adapting video models at test time remains highly challenging. Video streams in-herently contain complex temporal dynamics, high inter-frame correlation, and severe natural distribution shifts [ 2, 10 ] Conse-quently, only a few methods have successfully tackled video TTA. ViTTA [ 10 ] aligns the online statistical estimates of the test set with source training values, enforcing prediction consistency across multiple augmented views of a single test sample. Alternatively, ST2ST [ 2 ] introduces a self-distillation approach where the network undergoes an intra-video logit minimization phase, dynamically updating its predictions for temporally correlated incoming data. Our proposed method, TADD, advances this nascent group of video TTA approaches. TADD introduces an efficient dual distilla-tion framework on a frozen vision-language backbone. By anchor-ing the adaptation to a robust zero-shot prior while simultaneously distilling source-specific discriminative knowledge, TADD provides a stable, fully online solution tailored for severe distribution shifts in videos. 
+
+## 3 Our Approach 
+
+In this section, we describe TTAD, our proposed method for tack-ling TTA in videos under severe distribution changes. Section 3.1 presents a formal definition of the video TTA problem. Section 3.2 details the architectural framework and how the VLM backbone is used for videos. Section 3.3 introduces our dual distillation ap-proach. Finally, Section 3.4 provides the core intuition driving this methodology. 
+
+## 3.1 Problem Definition 
+
+In this work, we study test-time adaptation for video action recogni-tion under domain shift. Formally, there is a source joint distribution 
+
+S = 𝑝 (𝑥 𝑠 , 𝑦 𝑠 ) and a target joint distribution T = 𝑝 (𝑥 𝑡 , 𝑦 𝑡 ), where 
+
+(𝑥, 𝑦 ) are pairs sampled from the joint space X × Y . Here, X rep-resents the input data feature space and Y represents the label space. Test-Time Adaptation via Dual Distillation for Videos Under Severe Distribution Shifts MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil Prompt   
+
+> Walk Run Jump
+
+# …
+
+Vision Encoder 
+
+Text Encoder 
+
+Source Adapter     
+
+> (a) Source-domain pre-training of 𝐺 𝑠 on labeled video, with CLIP’s visual encoder frozen. Prompt
+> Walk Run Jump
+
+# …
+
+Vision Encoder 
+
+Text Encoder 
+
+Target Adapter 
+
+Source Adapter     
+
+> (b) Online test-time adaptation with dual distillation, which updates 𝐺 𝑡 on unlabeled target batches while 𝐺 𝑠 and CLIP stay fixed.
+
+Figure 1: Overview of TADD. (a) The source adapter 𝐺 𝑠 is trained on the source domain. (b) At test time, only the target adapter 
+
+𝐺 𝑡 is updated via Lzs and Lpl , and inference uses 𝐺 𝑡 with frozen text embeddings. 
+
+During the initial training phase, only data from S is available. We assume a scenario characterized by a distribution gap between 
+
+S and T , such that 𝑝 (𝑥 𝑠 , 𝑦 𝑠 ) ≠ 𝑝 (𝑥 𝑡 , 𝑦 𝑡 ). Consequently, the predic-tions from a model trained solely on data from S can be highly unreliable when applied to data from T . To mitigate this, TTA adapts the model at test time while strictly having access only to unlabeled data 𝑥 𝑡 from T . Furthermore, adaptation and inference must occur concurrently—either online or batch-by-batch—without accessing large amounts of target samples at any given step. The ultimate goal is to improve recognition accuracy on the tar-get distribution while keeping computational and storage overhead suitable for online deployment. 
+
+## 3.2 Model Architecture and Initialization 
+
+To establish a robust anchor against domain shifts, we build our method upon a frozen VLM backbone, specifically, CLIP ViT-B/32. Drawing inspiration from the DALL-V [ 23 ] framework for SFDA, we mitigate the domain gap without fine-tuning the CLIP backbone by placing a lightweight projection adapter on top of its visual encoder. We utilize two distinct adapters in our pipeline: a source-pretrained adapter, denoted as 𝐺 𝑠 , and a target-updated adapter, denoted as 𝐺 𝑡 .The source adapter 𝐺 𝑠 is trained entirely offline on labeled source videos and is subsequently frozen. Conversely, 𝐺 𝑡 is the only mod-ule that receives gradient updates during TTA. At the onset of test-time adaptation, we initialize the weights of 𝐺 𝑡 as a direct copy MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil Sacilotti, Santos, and Almeida 
+
+of the pre-trained 𝐺 𝑠 . Following [ 3 ], we implement the adapters as two-layer MLPs with a ReLU activation function. Since CLIP was originally developed for static images, we adapt it for video inputs 𝑉 ∈ R𝑇 ×𝐶 ×𝐻 ×𝑊 by encoding each frame using the frozen visual encoder 𝑓 , and then averaging the resulting features over time to obtain a video-level representation z:
+
+z = 1
+
+𝑇 
+
+> 𝑇
+
+∑︁ 
+
+> 𝑡 =1
+
+𝑓 (𝑉 𝑡 )|𝑓 (𝑉 𝑡 )| (1) where 𝑉 𝑡 denotes the 𝑡 -th frame of the video. To obtain the clas-sification logits, we embed 𝐾 class names with CLIP’s frozen text encoder using prompts such as “a video of a [CLASS]” , yielding a set of text embeddings {w𝑐 }𝐾 𝑐 =1. The logits ℓ𝑐 are defined as the scaled cosine similarities: 
+
+ℓ𝑐 = ⟨ℎ(z), w𝑐 ⟩ (2) where ℎ represents the identity function for zero-shot CLIP, the frozen source adapter 𝐺 𝑠 , or the updatable target adapter 𝐺 𝑡 .
+
+## 3.3 Test-time Adaptation via Dual Distillation 
+
+Unlike DALL-V [ 23 ], which relies on offline pseudo-labeling, TADD adapts 𝐺 𝑡 dynamically by minimizing a dual distillation objective built from two Kullback-Leibler (KL) divergence terms. First, the 
+
+zero-shot distillation loss matches the student distribution to CLIP’s zero-shot predictions. This preserves the domain-agnostic vision-language alignment inherent to the VLM backbone: 
+
+Lzs = 𝐷 KL 
+
+
+
+𝐺 𝑡 (z) · W⊤ z · W⊤ 
+
+. (3) Second, the target distillation loss distills knowledge from the frozen source adapter 𝐺 𝑠 . This ensures that the discriminative class structures and task-specific boundaries learned on the source domain are not erased during continuous adaptation: 
+
+Lpl = 𝐷 KL 
+
+ 𝐺 𝑡 (z) · W⊤ 𝐺 𝑠 (z) · W⊤ 
+
+(4) where W stacks the text embeddings containing the classes and prompt variations. The total loss is defined as: 
+
+L = Lzs + 𝜆 Lpl (5) where 𝜆 weights the contribution of the target distillation term. Adaptation is fully online: each arriving mini-batch of unlabeled target videos drives one or more optimization steps on 𝐺 𝑡 , and the updated target adapter immediately classifies that same batch. We do not reinitialize 𝐺 𝑡 between batches; instead, it accumulates target-domain signals across the stream. During the evaluation of the batch, predictions are generated strictly using 𝐺 𝑡 after the updates are applied. 
+
+## 3.4 Intuition 
+
+Figure 1 summarizes the complete TADD pipeline. As shown in (a), the process begins with the offline source-domain pre-training of the projection adapter 𝐺 𝑠 , keeping the CLIP visual encoder frozen. During deployment, as depicted in (b), the online TTA pipeline is activated: unlabeled target batches drive updates to 𝐺 𝑡 through the dual distillation losses, while the backbone and 𝐺 𝑠 stay fixed. Although these two distillation losses are straightforward, they play vital, complementary roles. The zero-shot distillation regular-izes the network against forgetting CLIP’s global vision-language semantics, which serve as a stable reference under severe domain shifts. Concurrently, the target distillation transfers the class-specific structure learned by 𝐺 𝑠 on the source domain. This prevents the adaptation process from collapsing into solutions that are well-aligned with text but poorly separated in the visual feature space (and vice versa). Together, these losses steer 𝐺 𝑡 toward representa-tions that remain semantically grounded in CLIP’s generalization capabilities while precisely matching the distinct characteristics of the target video distribution. 
+
+## 4 Experiments and Results 
+
+In this section, we comprehensively evaluate our TADD framework. Section 4.1 details our experimental setup. Section 4.2 presents the main results obtained for standard closed-set test-time adaptation. Section 4.3 explores the extended settings of partial-set and sequen-tial multi-target adaptation, demonstrating the robustness of our approach. Finally, Section 4.4 provides extensive ablation studies to validate our architectural choices, analyzing the impact of our dual distillation loss components, batch size variations, computational efficiency, and hyperparameter sensitivity. 
+
+## 4.1 Experimental Setup 
+
+This section describes the experimental protocol adopted to evalu-ate our TADD framework. First, we outline the three video action recognition benchmarks utilized in our study: UCF-HMDB, Daily-DA, and Sports-DA. Then, we introduce the baseline approaches selected for comparison. Lastly, we specify our implementation details, including the configuration of the frozen CLIP backbone and hyperparameters. 
+
+Datasets. We first report results on UCF-HMDB full [ 1], which contains 3,205 videos spanning 12 action categories derived from HMDB51 [ 6] and UCF101 [ 15 ]. Additionally, we consider UCF-HMDB partial [ 18 ], where the source domain contains 14 classes and the target domain contains 7 classes from HMDB51 [ 6] and UCF101 [ 15 ], following the official training and validation splits. We also evaluate on Daily-DA [ 21 ], which comprises 18,949 videos from 8 daily action classes, constructed from four action recognition datasets: HMDB51 [ 6 ], ARID [ 19 ], MIT [ 12 ], and Kinetics [ 5 ]. Finally, we evaluate on Sports-DA [ 21 ], which aggregates three datasets, UCF101 [ 15 ], Sports-1M [ 4], and Kinetics [ 5 ] into a benchmark of 40,715 videos across 23 sports-related classes. For brevity in our tables and subsequent text, we denote the domains by their initial letters: U (UCF101), H (HMDB51), A (ARID), M (MIT), K (Kinetics), and S (Sports-1M). 
+
+Baselines. Initially, we compare our methods against a Lower Bound , that denotes the source-trained adapter evaluated on the tar-get domain without any adaptation, and the Zero-shot , that denotes the frozen CLIP model without any adapter. Then, we compare our method against five representative TTA approaches spanning both image-based and video-specific settings, including TENT [ 16 ], SHOT (online) [ 9], ST2ST [ 2], ViTTA [ 10 ], and BATCLIP [ 11 ]. Orig-inally a SFDA, SHOT (online) is adapted for TTA by minimizing entropy and information maximization regularization at test-time, following Lin et al. [ 10 ]. TENT, SHOT and BATCLIP are originally designed for image-based adaptation, while ST2ST and ViTTA are Test-Time Adaptation via Dual Distillation for Videos Under Severe Distribution Shifts MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil 
+
+tailored for video action recognition. BATCLIP is the closest to our approach, as it adapts CLIP at test time. Finally, we also com-pare against three SFDA methods: ATCoN [ 20 ], EXTERN [ 22 ], and DALL-V [ 23 ]. These methods operate under a less restrictive set-ting, having access to the entire unlabeled target dataset for offline adaptation, whereas TTA must adapt online using only the current test batch. We adopted the same hyperparameters and training pro-tocols as the original works. For the image-based TTA methods, we applied the strategy described in Section 3.2 to obtain video-level predictions. 
+
+Implementation details. We build upon the CLIP ViT-B/32 model with pre-trained weights from OpenAI. For each video, we uniformly sample 16 frames and resize to 224 × 224 pixels, forming a single clip per video. Frame-level features are extracted indepen-dently using the frozen CLIP visual encoder and then temporally aggregated via mean pooling to obtain a video-level representation. The source adapter 𝐺 𝑠 is pre-trained on the source domain for 30 epochs. At test time, the CLIP backbone remains frozen and only the target adapter 𝐺 𝑡 is updated. We use SGD with a fixed learning rate of 10 −4 and perform 𝑡 gradient steps per batch. The target distillation weight 𝜆 is set to 0.1, and the batch size is fixed at 8 across all experiments. All experiments are conducted on a single machine with an AMD Ryzen Threadripper PRO 5975WX 32-core CPU, 256 GB of DDR4 memory, and four NVIDIA RTX 5000 Ada Generation GPUs. The system runs Ubuntu 22.04.4 LTS with Linux kernel 6.8.0 and the ext4 file system. 
+
+## 4.2 Closed-set Test-Time Adaptation 
+
+In this section, we present closed-set TTA results, reporting top-1 accuracy across all source →target directions. 
+
+Results on HMDB51 ↔UCF101. As shown in Table 1, the frozen CLIP model (zero-shot) establishes a strong baseline of 85.2% on average, surpassing all standard TTA baselines. Our TADD achieves the best TTA average at 87.4%, outperforming the strongest TTA baseline (BATCLIP) and zero-shot by +2.2 points. The improvement is most pronounced on H →U, where TADD obtain 91.6%—more than 9 points above BATCLIP and more than 4 points above zero-shot. On U →H, BATCLIP attains the best TTA score, slightly above zero-shot, while TADD remains competitive at 83.2%. Notably, image-based TTA methods improve only marginally over the lower bound, and ST2ST and ViTTA stay below the zero-shot average, suggesting that video TTA without a strong vision-language anchor fails to fully exploit this benchmark. We also compare against SFDA methods. Even with the frozen CLIP model (zero-shot) at 85.2% average, offline SFDA still reaches higher accuracy; under the stricter online constraint, our TADD surpasses ATCoN by +4.9 points and narrows the gap to stronger SFDA approaches, like EXTERN and DALL-V. This highlights the effectiveness of our TADD framework, achieving competitive per-formance with SFDA methods while operating under significantly stricter adaptation conditions. 
+
+Results on Daily-DA. . Table 2 reports results across all 12 source →target directions on Daily-DA, the most challenging bench-mark due to the severe illumination gaps introduced by the ARID domain. Our TADD achieves the highest average accuracy among 
+
+Table 1: Domain adaptation results on closed-set HMDB51 ↔UCF101. Method H→U U→H Avg. 
+
+Lower Bound 85.6 73.9 79.8 Zero-shot 87.5 82.8 85.2 
+
+> SFDA
+
+ATCoN [20] 85.3 79.7 82.5 EXTERN [22] 91.9 88.9 90.4 DALL-V [23] 93.1 88.9 91.0 
+
+> TTA
+
+TENT [16] 78.1 78.3 78.2 SHOT [9] 77.8 79.4 78.6 ST2ST [2] 80.9 78.6 79.8 ViTTA [10] 82.0 78.7 80.3 BATCLIP [11] 82.0 85.3 83.6 TADD (ours) 91.6 83.2 87.4 
+
+TTA methods at 46.3%, outperforming BATCLIP by +2.6 points and the best non-CLIP baseline (ST2ST) by +7.5 points. Our method achieves the best accuracy in 8 out of 12 directions, while BAT-CLIP leads on 3 directions (A →K, A →H, K →H). Image-based TTA methods (TENT, SHOT) and even ViTTA and ST2ST provide only marginal improvements over the lower bound and zero-shot base-lines on this benchmark, highlighting the difficulty of adapting under extreme domain shifts without leveraging CLIP’s vision-language alignment. Compared to the offline SFDA baselines, TADD remarkably surpasses both ATCoN (+12.8 points) and EXTERN (+6.7 points), despite operating in the strictly online TTA setting. 
+
+Results on Sports-DA. . Table 3 details results on the Sports-DA benchmark. A distinctive feature here is that CLIP’s zero-shot performance substantially exceeds the source-trained lower bound, indicating strong representation of sports classes in CLIP’s pre-training data. Consequently, conventional TTA methods that do not leverage knowledge of the CLIP model degrade performance relative to the zero-shot baseline. In contrast, our dual distillation approach explicitly anchors the source adapter to CLIP’s zero-shot predictions, allowing it to benefit from this strong prior while in-corporating source-domain knowledge. Our TADD achieves the best overall average accuracy of 88.4%, improving over BATCLIP by +3.0 points and over the zero-shot baseline by +1.3 points. No-tably, on this benchmark, our strictly online TTA approach (TADD) surpasses all offline SFDA baselines (ATCoN, EXTERN, DALL-V). 
+
+## 4.3 Partial-set and Multi-target Adaptation 
+
+Beyond the standard closed-set scenario, we evaluate our TADD framework under two more challenging adaptation settings, partial-set and multi-target, where the source and target label spaces do not fully overlap. These settings test the robustness of TTA methods when faced with category mismatch between domains. 
+
+Partial-set Adaptation. In this setting, the source domain con-tains 14 overlapping classes between UCF101 and HMDB51, while the target domain uses only a strict subset of 7 classes (the first 7 in alphabetical order), yielding two adaptation tasks: U-14 →H-7 and H-14 →U-7. This evaluates whether TTA methods can adapt to MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil Sacilotti, Santos, and Almeida 
+
+Table 2: Domain adaptation results on closed-set Daily-DA. Method H→K H→M H→A A→M A→K A→H M→K M→A M→H K→A K→H K→M Avg. 
+
+Lower Bound 40.0 36.8 20.5 26.5 31.3 35.4 67.1 25.9 45.0 26.1 42.9 37.0 36.1 Zero-shot 63.1 37.5 25.2 37.5 63.1 39.2 63.1 25.2 39.2 25.2 39.2 37.5 38.3 
+
+> SFDA
+
+ATCoN [20] 48.5 30.7 17.9 17.2 31.0 26.7 57.7 27.2 47.3 17.2 48.2 32.5 33.5 EXTERN [22] 57.6 40.7 26.2 18.2 51.4 26.2 68.1 18.1 53.7 23.9 55.8 35.2 39.6 DALL-V [23] 76.7 47.0 24.0 45.7 75.0 57.9 78.1 24.0 65.4 24.0 52.5 47.0 51.4 
+
+> TTA
+
+TENT [16] 40.7 36.5 27.7 25.5 33.4 40.4 71.1 25.9 57.1 25.6 41.7 39.3 37.9 SHOT [9] 42.9 38.0 24.5 25.8 29.0 42.5 71.0 29.3 59.6 22.7 42.9 39.0 38.5 ST2ST [2] 40.8 36.8 27.9 25.0 31.4 43.3 69.9 30.0 59.6 25.5 40.8 41.3 38.8 ViTTA [10] 42.2 37.3 26.5 25.3 32.8 41.3 70.8 27.5 57.5 25.1 42.1 38.8 38.0 BATCLIP [11] 65.9 39.5 24.3 39.5 65.9 47.9 65.9 24.3 47.9 24.3 47.9 39.5 43.7 TADD (ours) 69.3 46.4 31.1 44.3 63.6 46.3 69.0 31.3 47.8 31.6 47.4 44.9 46.3 Table 3: Domain adaptation results on closed-set Sports-DA. Method S→K S→U U→S U→K K→S K→U Avg.                                                                              
+
+> Lower Bound 66.6 80.1 68.0 73.6 73.5 72.2 72.8 Zero-shot 87.1 89.1 79.5 87.1 79.5 89.1 87.1
+> SFDA  ATCoN [20] 76.0 90.6 47.9 65.2 69.7 93.6 73.8 EXTERN [22] 82.2 95.4 72.7 81.2 73.8 93.7 83.2 DALL-V [23] 82.3 88.8 75.9 81.2 77.7 88.0 82.3
+> TTA
+> TENT [16] 82.0 89.1 72.7 76.7 55.6 70.3 74.7 SHOT [9] 81.1 88.8 73.6 76.9 63.2 71.3 75.2 ST2ST [2] 80.2 92.6 71.0 74.3 61.9 66.2 72.7 ViTTA [10] 80.6 89.7 71.8 75.9 62.7 72.0 74.0 BATCLIP [11] 85.4 91.5 80.0 85.4 80.0 91.5 85.4 TADD (ours) 88.5 91.0 80.5 88.3 80.4 91.3 88.4
+
+a target domain whose label space is a strict subset of the source domain. As shown in Table 4, the CLIP model (zero-shot) performs strongly here, since the 7 target classes are a clean subset that CLIP’s text embeddings can discriminate well. Most conventional TTA methods (TENT, SHOT, ST2ST, ViTTA) fail to match zero-shot performance, with accuracies ranging from 69.3% to 79.9%, likely because adapting without awareness of the label space mismatch introduces noise from the irrelevant source classes. BATCLIP per-forms competitively at 89.3%, leveraging CLIP’s vision-language alignment. Our TADD achieves the highest accuracy of 93.7%, sur-passing even the zero-shot baseline. This demonstrates that the dual distillation objective successfully combines the target’s dis-criminative knowledge with CLIP’s zero-shot prior: the zero-shot signal provides a clean class structure over the 7 target categories, while the target distillation contributes source-domain visual dis-crimination, yielding complementary gains. 
+
+Multi-target Adaptation. We evaluate our TADD in a a sequen-tial multi-target setting, where the model is exposed to multiple target domains continuously. Table 5 reports results on Daily-DA under three data orderings: ( i) Sequential Domain (S.D.), where domains are observed one at a time; ( ii ) Sequential Class (S.C.), where samples are grouped by class across domains; and ( iii ) Ran-dom (Rnd.), where samples are fully shuffled. TADD achieves the best performance across most settings, outperforming BATCLIP on average. Also, TADD demonstrates stable performance across differ-ent orderings, with lower variance than prior methods. In contrast, 
+
+Table 4: Domain adaptation results on partial-set UCF ↔HMDB 𝑝𝑎𝑟𝑡𝑖𝑎𝑙 .Method U→H H→U Avg. 
+
+Lower Bound 54.8 86.1 70.4 Zero-shot 88.1 94.5 91.3 TENT [16] 69.1 87.2 78.1 SHOT [9] 67.6 71.1 69.3 ST2ST [2] 70.0 89.9 79.9 ViTTA [10] 69.1 88.6 78.8 BATCLIP [11] 83.8 94.7 89.3 TADD (ours) 88.6 98.9 93.7 
+
+conventional TTA methods struggle under sequential domain shifts, often performing close to the lower bound. While BATCLIP remains competitive, its performance degrades under certain orderings. Our TADD framework mitigates this by leveraging both zero-shot and target distillation, improving robustness and generalization across multiple target domains. 
+
+## 4.4 Ablation Studies 
+
+In this section, we conduct comprehensive ablation studies to vali-date the architectural choices and to evaluate the robustness of our TADD framework. We begin analyzing the effects of our proposed loss components. Next, we evaluate the stability of our method to variations of test-time batch sizes. We then assess the computa-tional efficiency of TADD. Finally, we examine the sensitivity of our framework to key hyperparameters. 
+
+Effect of Loss Components . Table 6 isolates the impact of align-ing adapted logits solely with CLIP’s frozen zero-shot predictions (L𝑧𝑠 ) versus adding distillation from the source-trained adapter (L𝑝𝑙 ). The zero-shot-only setup ( L𝑧𝑠 ) degrades performance on H→A and H →M relative to the frozen CLIP model (zero-shot), while providing only marginal gains on H →K, indicating that global CLIP alignment alone is insufficient under strong domain shifts. In contrast, combining both loss terms yields the best performance across all splits and matches the closed-set results for the same di-rections. Overall, while zero-shot distillation ( L𝑧𝑠 ) provides a stable Test-Time Adaptation via Dual Distillation for Videos Under Severe Distribution Shifts MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil 
+
+Table 5: Multi-target adaptation results on Daily-DA under different data orderings. We report mean ± std across orderings. A→{K,M,H} K→{A,M,H} H→{A,K,M} Method S.D. S.C. Rnd. Avg. S.D. S.C. Rnd. Avg. S.D. S.C. Rnd. Avg. Lower Bound 30.3 27.0 32.1 Zero-shot 52.3 34.9 43.6 TENT [16] 30.9 31.8 30.9 31.4 ±0.6 28.7 26.3 29.9 29.8 ±0.1 24.6 30.1 25.6 25.6 ±2.9 
+
+ST2ST [2] 30.3 32.5 31.1 31.1 ±1.1 30.1 31.9 20.9 30.1 ±5.9 31.7 35.5 32.5 32.5 ±2.0 
+
+ViTTA [10] 30.0 29.7 29.8 29.8 ±0.1 29.9 30.5 29.1 29.9 ±0.7 32.2 33.1 33.8 33.1 ±0.9 
+
+BATCLIP [11] 55.6 55.4 55.4 55.4 ±0.1 31.2 32.7 30.7 31.2 ±1.0 40.5 40.0 39.5 40.0 ±0.5 
+
+TADD (ours) 56.5 58.7 56.3 56.5 ±1.3 32.6 34.6 32.1 32.6 ±1.3 45.3 48.7 44.8 45.3 ±2.1 
+
+semantic anchor, the adapter-to-adapter distillation term ( L𝑝𝑙 ) is crucial for preserving source-specific discrimination. 
+
+Table 6: Ablation studies of loss components on Daily-DA. Method H→A H→K H→M
+
+Zero-shot 30.2 67.3 43.8 + L𝑧𝑠 25.4 68.4 41.8 + L𝑝𝑙 31.1 69.3 46.4 
+
+Impact of Batch Size . Because TTA relies on whatever un-labeled batch arrives at inference, stability across batch sizes is critical. Table 7 reports closed-set accuracy on HMDB →UCF for batch sizes ranging from 1 to 16. Our TADD improves steadily as the batch grows, peaking at a batch size of 16. This suggests that larger batches provide more stable gradient estimates for the adapter updates. BATCLIP peaks early and then loses ground as the batch increases, while ST2ST collapses with a single sample per step and only becomes competitive once the batch is at least two. TENT stays nearly flat, whereas ViTTA drifts down modestly as the batch grows. TADD remains highly robust even at a batch size of 1 and scales favorably as more target samples become available. 
+
+Table 7: Impact of batch size on HMDB →UCF. Batch Size Method 1 2 4 8 16 Avg. 
+
+TENT [16] 80.4 80.4 80.6 80.1 81.5 80.6 ST2ST [2] 17.2 79.7 80.9 80.9 81.3 68.0 ViTTA [10] 83.2 82.8 82.1 82.0 81.6 82.3 BATCLIP [11] 66.4 89.0 86.7 83.7 84.4 82.0 TADD (ours) 88.6 89.0 90.7 91.6 91.7 90.3 
+
+Computational Efficiency . As shown in Table 8, our TADD is highly efficient in terms of adaptation time per batch. Although TADD contains more trainable parameters than BATCLIP (131K vs 65K), it achieves lower runtime (0.143s vs 0.179s). This is because TADD updates only a lightweight adapter on top of frozen visual features, whereas BATCLIP requires gradient propagation through the entire CLIP backbone to update its LayerNorm parameters, resulting in a higher per-iteration computational cost. 
+
+Table 8: Computational complexity of TTA models Method Time/Batch (s) #Train. Params           
+
+> SHOT [9] 0.189 151M ST2ST [2] 0.297 151M ViTTA [10] 0.282 151M BATCLIP [11] 0.179 65K TADD (ours) (iter=20) 0.143 131K
+
+Sensitivity to Hyperparameter . The number of gradient steps applied to each target batch is a key hyperparameter, where more iterations can improve adaptation quality but also increase latency. Figure 2 reports, on HMDB →UCF, how accuracy varies with this iteration budget (a) and how the average time per batch scales with the same setting (b). While our TADD achieves higher accuracy with more iterations, it remains faster than state-of-the-art methods even at higher iteration counts due to its lightweight architectural design. 
+
+## 5 Conclusions 
+
+Adapting video action recognition models at test time is notori-ously challenging, especially when target video streams exhibit complex temporal dynamics and severe domain shifts. In spite of all the advances, existing TTA methods often transfer poorly to these restrictive settings. To address this critical gap, we introduced 
+
+Test-time Adaptation via Dual Distillation (TADD) , a strictly online, parameter-efficient TTA framework. By leveraging a frozen CLIP backbone and updating only a lightweight projection adapter during inference, TADD effectively circumvents catastrophic for-getting and computational bottlenecks. This stability is driven by a novel dual distillation objective: zero-shot distillation acts as a se-mantic anchor to preserve CLIP’s domain-agnostic vision-language alignment, while target distillation serves as a discriminative an-chor to retain the task-specific boundaries learned from the source domain. Empirical evaluations across three diverse benchmarks—UCF-HMDB, Daily-DA, and Sports-DA—demonstrate that our TADD consistently sets a new state-of-the-art for video TTA. TADD not only outperforms standard image-based TTA baselines but also MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil Sacilotti, Santos, and Almeida 1 4 8 12 16 20 
+
+# Iterations 
+
+88 
+
+90 
+
+92 
+
+> Accuracy (%)
+
+(a) Accuracy as a function of the number of iterations 1 4 8 12 16 20 
+
+# Iterations 
+
+0.11 
+
+0.12 
+
+0.13 
+
+> Time per Batch (s)
+
+(b) Time per batch as a function of the number of iterations. 
+
+Figure 2: Sensitivity to the per-batch adaptation iteration count on HMDB →UCF. 
+
+rivals or surpasses complex SFDA methods, despite the latter oper-ating under much less restrictive offline settings. Furthermore, our TADD framework exhibits exceptional robustness in restrictive and complex scenarios, including partial-set and sequential multi-target adaptation, maintaining stable accuracy across varying batch sizes and streaming orderings. For future work, we plan to extend the principles of TADD to the paradigm of universal TTA, where the exact nature of the target distribution shift (e.g., concurrent covariate, label, and open-set shifts) is completely unknown prior to deployment. Additionally, exploring tighter integration with explicit temporal modeling archi-tectures—moving beyond simple temporal frame pooling—presents a promising avenue to further enhance online video TTA. 
+
+## Acknowledgments 
+
+This research was supported by São Paulo Research Foundation -FAPESP (grants 2023/17577-0, 2024/04500-2, and 2024/22985-3) and National Council for Scientific and Technological Development -CNPq (grants 315220/2023-6, 420442/2023-5, and 444982/2024-8). 
+
+## References 
+
+[1] Min-Hung Chen, Zsolt Kira, Ghassan AlRegib, Jaekwon Yoo, Ruxin Chen, and Jian Zheng. 2019. Temporal Attentive Alignment for Large-Scale Video Domain Adaptation. In International Conference on Computer Vision . IEEE, 9028–9037. [2] Masud An-Nur Islam Fahim, Mohammed Innat, and Jani Boutellier. 2024. ST2ST: Self-Supervised Test-time Adaptation for Video Action Recognition. In Conference on Computer Vision and Pattern Recognition . IEEE, 1057–1066. [3] Peng Gao, Shijie Geng, Renrui Zhang, Teli Ma, Rongyao Fang, Yongfeng Zhang, Hongsheng Li, and Yu Qiao. 2024. Clip-adapter: Better vision-language models with feature adapters. International Journal of Computer Vision 132, 2 (2024), 581–595. [4] Andrej Karpathy, George Toderici, Sanketh Shetty, Thomas Leung, Rahul Suk-thankar, and Li Fei-Fei. 2014. Large-scale Video Classification with Convolutional Neural Networks. In Conference on Computer Vision and Pattern Recognition . IEEE, 1725–1732. [5] Will Kay, Joao Carreira, Karen Simonyan, Brian Zhang, Chloe Hillier, Sudheendra Vijayanarasimhan, Fabio Viola, Tim Green, Trevor Back, Paul Natsev, Mustafa Suleyman, and Andrew Zisserman. 2017. The Kinetics Human Action Video Dataset. CoRR abs/1705.06950 (2017). [6] Hildegard Kuehne, Hueihan Jhuang, Estíbaliz Garrote, Tomaso Poggio, and Thomas Serre. 2011. HMDB: a large video database for human motion recognition. In International Conference on Computer Vision . IEEE, 2556–2563. [7] Zongxia Li, Xiyang Wu, Hongyang Du, Fuxiao Liu, Huy Nghiem, and Guangyao Shi. 2025. A survey of state of the art large vision language models: Benchmark evaluations and challenges. In Computer Vision and Pattern Recognition Conference .IEEE, 1587–1606. [8] Jian Liang, Ran He, and Tieniu Tan. 2025. A comprehensive survey on test-time adaptation under distribution shifts. International Journal of Computer Vision 
+
+133, 1 (2025), 31–64. [9] Jian Liang, Dapeng Hu, and Jiashi Feng. 2020. Do we really need to access the source data? source hypothesis transfer for unsupervised domain adaptation. In 
+
+International Conference on Machine Learning . PMLR, 6028–6039. [10] Wei Lin, Muhammad Jehanzeb Mirza, Mateusz Kozinski, Horst Possegger, Hilde Kuehne, and Horst Bischof. 2023. Video test-time adaptation for action recog-nition. In Conference on Computer Vision and Pattern Recognition . IEEE, 22952– 22961. [11] Sarthak Maharana, Baoming Zhang, Leonid Karlinsky, Rogerio Feris, and Yunhui Guo. 2025. Batclip: Bimodal online test-time adaptation for clip. In International Conference on Computer Vision . IEEE, 1569–1579. [12] Mathew Monfort, Alex Andonian, Bolei Zhou, Kandan Ramakrishnan, Sarah Adel Bargal, Tom Yan, Lisa Brown, Quanfu Fan, Dan Gutfreund, Carl Vondrick, and Aude Oliva. 2019. Moments in time dataset: one million videos for event under-standing. Transactions on Pattern Analysis and Machine Intelligence 42, 2 (2019), 502–508. [13] David Osowiechi, Mehrdad Noori, Gustavo A Hakim, Moslem Yazdanpanah, Ali Bahri, Milad Cheraghalikhani, Sahar Dastani, Farzad Beizaee, Ismail B Ayed, and Christian Desrosiers. 2024. Watt: Weight average test time adaptation of clip. 
+
+Advances in neural information processing systems 37 (2024), 48015–48044. [14] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, et al . 2021. Learning transferable visual models from natural language supervision. In International Conference on Machine Learning . PMLR, 8748–8763. [15] Khurram Soomro, Amir Roshan Zamir, and Mubarak Shah. 2012. Ucf101: A dataset of 101 human actions classes from videos in the wild. CoRR abs/1212.0402 (2012). [16] Dequan Wang, Evan Shelhamer, Shaoteng Liu, Bruno Olshausen, and Trevor Darrell. 2021. Tent: Fully Test-Time Adaptation by Entropy Minimization. In 
+
+International Conference on Learning Representations . https://openreview.net/ forum?id=uXl3bZLkr3c [17] Zehao Xiao and Cees GM Snoek. 2024. Beyond model adaptation at test time: A survey. CoRR abs/2411.03687 (2024). [18] Yuecong Xu, Jianfei Yang, Haozhi Cao, Zhenghua Chen, Qi Li, and Kezhi Mao. 2021. Partial video domain adaptation with partial adversarial temporal attentive network. In International Conference on Computer Vision . IEEE, 9332–9341. [19] Yuecong Xu, Jianfei Yang, Haozhi Cao, Kezhi Mao, Jianxiong Yin, and Simon See. 2021. ARID: A New Dataset for Recognizing Action in the Dark. In International Workshop on Deep Learning for Human Activity Recognition . Springer, 70–84. [20] Yuecong Xu, Jianfei Yang, Haozhi Cao, Keyu Wu, Min Wu, and Zhenghua Chen. 2022. Source-free video domain adaptation by learning temporal consistency for action recognition. In European Conference on Computer Vision . Springer, 147–164. [21] Yuecong Xu, Jianfei Yang, Haozhi Cao, Keyu Wu, Min Wu, Zhengguo Li, and Zhenghua Chen. 2023. Multi-source video domain adaptation with temporal attentive moment alignment network. Transactions on Circuits and Systems for Video Technology 33, 8 (2023), 3860–3871. [22] Yuecong Xu, Jianfei Yang, Haozhi Cao, Min Wu, Xiaoli Li, Lihua Xie, and Zhenghua Chen. 2024. Leveraging Endo- and Exo-Temporal Regularization for Black-box Video Domain Adaptation. Transactions on Machine Learning Research (2024). https://openreview.net/forum?id=icoP08mrQJ [23] Giacomo Zara, Alessandro Conti, Subhankar Roy, Stéphane Lathuilière, Paolo Rota, and Elisa Ricci. 2023. The unreasonable effectiveness of large language-vision models for source-free video domain adaptation. In International Conference on Computer Vision . IEEE, 10307–10317. Test-Time Adaptation via Dual Distillation for Videos Under Severe Distribution Shifts MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil 
+
+## A Sensitivity to Data Ordering in Test-Time Adaptation 
+
+In real-world deployments, unlabeled target data rarely arrives in a purely random order. Video streams often exhibit strong temporal or categorical correlation. To rigorously evaluate the robustness of our method against such non-i.i.d. data streams, we repeat the closed-set adaptation experiments while varying only how mini-batches are formed from the target stream. Tables 9 and 10 report the top-1 accuracy under four distinct batch construction strategies, alongside their overall average. The streaming protocols are defined as follows: (1) Random (default): Target examples are drawn uniformly at random into each batch. (2) Sequential (linear): Examples are visited in a fixed class order (e.g., all of class 0, then all of class 1). (3) Sequential Group (double linear): Each class is split into two halves, 𝐴 and 𝐵 . All 𝐴 segments are streamed across all classes before any 𝐵 segments are introduced. (4) Batch-Class: Each batch contains instances from a single class, with the order of classes randomized across the stream. For reference, we also report the results for the Zero-shot (frozen CLIP) baseline. As it performs no adaptation at test time, its accuracy remains completely invariant to the batch construction strategy. As shown in Table 9, TADD achieves the highest accuracy on HMDB51 →UCF101 under every batch ordering. Notably, there is only a narrow performance spread between the strictly random set-ting and the highly structured streams. By contrast, prior TTA base-lines fall well below zero-shot performance on average, whereas TADD surpasses the zero-shot baseline by several points. For the UCF101 →HMDB51 benchmark, the results in Table 10 show a more asymmetric picture. While BATCLIP attains the high-est accuracy on strictly random batches (slightly ahead of our method), TADD achieves vastly superior results under the linear, double-linear, and single-class-per-batch streams. Averaged across all four orderings, our approach leads by a substantial margin. This suggests that TADD’s overall gains stem from its exceptional stability when the stream exhibits strong class structure—a set-ting frequently encountered when video frames or clips are orga-nized temporally. In summary, our approach combines competitive random-batch performance with markedly more robust behavior on highly structured streams. 
+
+## B Additional Visualizations 
+
+Figure 3 provides two-dimensional t-SNE projections of the video-level features extracted by each model on the HMDB51 →UCF101 benchmark. The top row ((a)–(d)) colors points by action class to reflect how well each representation separates categories on the target domain. Zero-shot CLIP (a) provides a reasonable semantic layout inherited from vision-language pre-training, but the clusters are not always compact, and some categories remain entangled because the visual encoder was never tuned on HMDB-style video statistics. Video TTA baselines like ViTTA (b) and BATCLIP (c) alter the feature ge-ometry through test-time optimization. However, without a strong global anchor, adaptation stresses batch norms and auxiliary losses, which can introduce irregular and fractured layouts. In contrast, TADD (d) is trained to respect both CLIP’s zero-shot predictions and the source adapter’s discriminative structure. Qualitatively, this yields tighter, more class-cohesive neighborhoods than the baselines, directly aligning with the quantitative closed-set gains reported. The bottom row ((e)–(h)) retains the source data but colors points by domain rather than by class, exposing domain structure inde-pendently of semantic grouping. Zero-shot CLIP (e) shows visible domain separation, as the backbone features still carry biases from large-scale pre-training. After adaptation, ViTTA (f) and BATCLIP (g) either preserve a substantial domain split or rearrange the em-beddings in ways that fail to translate into cleaner class manifolds. TADD (h), however, successfully combines zero-shot regulariza-tion with source-knowledge distillation. Target updates reshape the adapter without drifting away from CLIP’s domain-agnostic semantics. Consequently, within the class-consistent clusters, the domain labels remain comparatively mixed rather than forming a dominant axis of variation. Taken together, these two rows reinforce the findings drawn from the quantitative results: effective video TTA must simultane-ously sharpen class structure on the target stream while preventing domain identity from becoming an overly dominant factor in the learned embedding. MM ’26, November 10–14, 2026, Rio de Janeiro, Brazil Sacilotti, Santos, and Almeida 
+
+Table 9: Sensitivity to data ordering on HMDB51 →UCF101 (closed-set). Accuracy (%) for each batch construction strategy. Method Random Sequential Sequen. Group Batch-Class Avg. 
+
+Zero-shot 89.5 TENT [16] 78.1 80.9 81.8 81.1 81.0 ST2ST [2] 80.9 83.7 79.3 83.4 82.1 ViTTA [10] 82.0 81.3 81.8 81.3 81.5 BATCLIP [11] 82.0 85.1 88.8 85.8 85.5 TADD (ours) 91.6 93.7 93.3 93.2 93.3 Table 10: Sensitivity to data ordering on UCF101 →HMDB51 (closed-set). Accuracy (%) for each batch construction strategy. Method Random Sequential Sequen. Group Batch-Class Avg. 
+
+Zero-shot 82.8 TENT [16] 78.3 78.1 79.8 78.1 78.2 ST2ST [2] 78.6 80.0 76.1 77.7 78.2 ViTTA [10] 78.7 78.1 78.3 78.1 78.2 BATCLIP [11] 85.3 85.1 82.5 82.2 83.8 TADD (ours) 83.2 90.3 88.7 90.5 89.5       
+
+> (a) Zero-shot (CLIP [14]) (b) ViTTA [10] (c) BATCLIP [11] (d) TADD (ours)
+> (e) Zero-shot (CLIP [14]) (f) ViTTA [10] (g) BATCLIP [11] (h) TADD (ours)
+
+Figure 3: Visualization of features learned by each method on the HMDB51 →UCF101 target stream (settings reflected in the file names). Subpanels (a)–(d) are class-colored t-SNE (zero-shot CLIP, ViTTA, BATCLIP, TADD, left to right); (e)–(h) are domain-colored t-SNE for the same methods in the same order.

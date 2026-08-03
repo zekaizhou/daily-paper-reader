@@ -1,0 +1,78 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.24611v1/fig-001.webp",
+      "caption": "Table 3: Domain adaptation results on closed-set Sports-DA.",
+      "page": 6,
+      "index": 1,
+      "width": 498,
+      "height": 260
+    },
+    {
+      "url": "assets/figures/arxiv/2607.24611v1/fig-002.webp",
+      "caption": "Table 2: Domain adaptation results on closed-set Daily-DA.",
+      "page": 6,
+      "index": 2,
+      "width": 940,
+      "height": 284
+    },
+    {
+      "url": "assets/figures/arxiv/2607.24611v1/fig-003.webp",
+      "caption": "Table 5: Multi-target adaptation results on Daily-DA under different data orderings. We report mean ± std across orderings.",
+      "page": 7,
+      "index": 3,
+      "width": 836,
+      "height": 246
+    },
+    {
+      "url": "assets/figures/arxiv/2607.24611v1/fig-004.webp",
+      "caption": "Table 9: Sensitivity to data ordering on HMDB51→UCF101 (closed-set). Accuracy (%) for each batch construction strategy.",
+      "page": 10,
+      "index": 4,
+      "width": 656,
+      "height": 194
+    },
+    {
+      "url": "assets/figures/arxiv/2607.24611v1/fig-005.webp",
+      "caption": "Table 10: Sensitivity to data ordering on UCF101→HMDB51 (closed-set). Accuracy (%) for each batch construction strategy.",
+      "page": 10,
+      "index": 5,
+      "width": 1056,
+      "height": 462
+    },
+    {
+      "url": "assets/figures/arxiv/2607.24611v1/fig-006.webp",
+      "caption": "Figure 3: Visualization of features learned by each method on the HMDB51→UCF101 target stream (settings reflected in the file names). Subpanels (a)–(d) are class-colored t-SNE (zero-shot CLIP, ViTTA, BATCLIP, TADD, left to right); (e)–(h) are domain-colored t-SNE for the same methods in the same order.",
+      "page": 10,
+      "index": 6,
+      "width": 1056,
+      "height": 256
+    },
+    {
+      "url": "assets/figures/arxiv/2607.24611v1/fig-007.webp",
+      "caption": "Figure 1: Overview of TADD. (a) The source adapter 𝐺𝑠 is trained on the source domain. (b) At test time, only the target adapter 𝐺𝑡 is updated via Lzs and Lpl, and inference uses 𝐺𝑡 with frozen text embeddings.",
+      "page": 3,
+      "index": 7,
+      "width": 1056,
+      "height": 872
+    },
+    {
+      "url": "assets/figures/arxiv/2607.24611v1/fig-008.webp",
+      "caption": "Figure 2: Sensitivity to the per-batch adaptation iteration count on HMDB→UCF.",
+      "page": 8,
+      "index": 8,
+      "width": 453,
+      "height": 568
+    },
+    {
+      "url": "assets/figures/arxiv/2607.24611v1/fig-009.webp",
+      "caption": "Table 1: Domain adaptation results on closed-set HMDB51↔UCF101.",
+      "page": 5,
+      "index": 9,
+      "width": 368,
+      "height": 329
+    }
+  ]
+}

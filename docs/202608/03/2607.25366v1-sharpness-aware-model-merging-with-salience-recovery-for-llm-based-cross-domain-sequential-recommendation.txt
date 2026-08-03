@@ -1,0 +1,1086 @@
+Title: Sharpness-aware Model Merging with Salience Recovery for LLM-based Cross-Domain Sequential Recommendation
+
+URL Source: https://arxiv.org/pdf/2607.25366v1
+
+Published Time: Wed, 29 Jul 2026 00:36:40 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# Sharpness-aware Model Merging with Salience Recovery for LLM-based Cross-Domain Sequential Recommendation 
+
+## Huwei Ji 
+
+Zhejiang University Hangzhou, China jihuwei@zju.edu.cn 
+
+## Jiajie Su 
+
+Zhejiang University Hangzhou, China sujiajie@zju.edu.cn 
+
+## Yuyuan Li 
+
+Hangzhou Dianzi University Hangzhou, China y2li@hdu.edu.cn 
+
+## Xiaohua Feng 
+
+Zhejiang University Hangzhou, China fengxiaohua@zju.edu.cn 
+
+## Chaochao Chen ∗
+
+Zhejiang University Hangzhou, China zjuccc@zju.edu.cn 
+
+## Abstract 
+
+LLM-based Cross-Domain Sequential Recommendation (CDSR) leverages LLMs to enhance target performance via deep semantic reasoning, alleviating the dependency on overlapping users. Among LLM-based paradigms, model merging is particularly promising for multi-domain scenarios due to its superior scalability and flexibility in integrating diverse knowledge sources. However, our empiri-cal investigations reveal two critical bottlenecks: (1) cross-domain knowledge conflict; and (2) performance saturation in multi-domain fusion. Our analysis attributes these phenomena to parameter-level misalignment and statistical homogenization during the merg-ing process. To address these bottlenecks, we propose SharpRec, Sharpness-aware Model Merging with Salience Recovery for LLM-based CDSR, a framework designed to lift the performance upper bound of merged models. SharpRec incorporates two synergistic modules: Sharpness-aware Geometric Alignment to establish a stable geometric foundation for interference-free fusion; and Pref-erence Salience Activation to effectively recover the distinctive features essential for bolstering target domain performance. Exten-sive experiments in both dual-domain and multi-domain scenarios demonstrate that SharpRec consistently outperforms state-of-the-art baselines. 
+
+## CCS Concepts 
+
+• Information systems → Recommender systems .
+
+## Keywords 
+
+Cross-Domain Sequential Recommendation, Large Language Mod-els, Model Merging 
+
+ACM Reference Format: 
+
+Huwei Ji, Jiajie Su, Yuyuan Li, Xiaohua Feng, and Chaochao Chen. 2026. Sharpness-aware Model Merging with Salience Recovery for LLM-based Cross-Domain Sequential Recommendation. In Proceedings of the 32nd ACM SIGKDD Conference on Knowledge Discovery and Data Mining V.2 (KDD ’26),  
+
+> ∗Corresponding Author.
+> This work is licensed under a Creative Commons Attribution 4.0 International License.
+> KDD ’26, Jeju Island, Republic of Korea
+> ©2026 Copyright held by the owner/author(s). ACM ISBN 979-8-4007-2259-2/2026/08 https://doi.org/10.1145/3770855.3817945
+
+August 09–13, 2026, Jeju Island, Republic of Korea. ACM, New York, NY, USA, 12 pages. https://doi.org/10.1145/3770855.3817945 
+
+## 1 Introduction 
+
+Cross-Domain Sequential Recommendation (CDSR) has attracted significant attention for its capability to enhance recommendation performance in the target domain by transferring knowledge from rich auxiliary domain interactions. Most early CDSR approaches [ 1,30 ] operate under the strict assumption of fully overlapping users, relying on them to align cross-domain feature spaces. But real-world applications typically present a hybrid user scenario , which consists of a small fraction of overlapping users and a vast major-ity of non-overlapping users active in only a single domain. To tackle the hybrid user scenario, recent studies [ 6, 20 , 44 , 45 ] have employed advanced mechanisms, such as heterogeneous graphs or meta-learning, to mine latent cross-domain correlations. A key limitation is that these approaches predominantly rely on ID-based representations that lack deep semantic understanding, making them ineffective at bridging domain gaps for non-overlapping users where explicit co-occurrence signals are scarce. To bridge this semantic gap, emerging research integrates LLMs to empower CDSR with rich open-world knowledge. By leveraging their robust reasoning capabilities, LLMs can infer implicit item correlations and uncover shared cross-domain features, effectively aligning domains for non-overlapping users even without interac-tion links. Current research integrating LLMs into CDSR can be broadly categorized into LLM-enhanced approaches [ 26 , 33 , 39 , 42 ]and LLM-based approaches [ 3 , 9 , 27 , 32 , 38 ]. LLM-enhanced meth-ods focus on aligning cross-domain feature distributions by pro-jecting items into a unified semantic space via adapters or con-trastive learning. However, this paradigm suffers from semantic-collaborative misalignment, where forced spatial mapping leads to information distortion and negative transfer in dynamic pref-erence modeling. LLM-based approaches aggregate multi-domain recommendation data into unified instruction-tuning datasets to train a single comprehensive model under a one model paradigm. While effective, this method often leads to data distribution con-flicts across domains in real-world scenarios, and lacks flexibility, as domain updates necessitate costly full-model retraining. To overcome these inherent limitations, Model Merging [ 37 , 47 ]has emerged as a more advantageous paradigm. By directly integrat-ing domain-specific models (e.g., LoRA adapters) in the parameter arXiv:2607.25366v1 [cs.IR] 28 Jul 2026 KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Huwei Ji, Jiajie Su, Yuyuan Li, Xiaohua Feng, & Chaochao Chen Book Movie Movie Book Sport Toy Toy Sport 
+
+> Cross Domain Task
+> 0.30
+> 0.35
+> 0.40
+> 0.45
+> 0.50
+> 0.55
+> 0.60
+> NDCG@5
+> Single-Domain Model
+> Data Merging
+> WeaveRec
+
+(a) Performance Disparity 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9    
+
+> 0.44
+> 0.46
+> 0.48
+> 0.50
+> 0.52
+> 0.54
+> 0.56
+> 0.58
+> 0.60
+> 0.62
+> NDCG@5
+> Single-Domain Model
+> Single-Domain Model
+> Toy Sport
+> Sport Toy
+
+(b) Weight Tuning Failure 1 2 3 4 5 6 7 
+
+> Source Domain Number
+> 0.32
+> 0.34
+> 0.36
+> 0.38
+> 0.40
+> 0.42
+> 0.44
+> 0.46
+> 0.48
+> NDCG@5
+> Saturation Zone
+> Sat.@3
+> Sat.@4
+> Target Domain: Sport
+> Target Domain: Food
+
+(c) Performance Saturation 0.002 0.001 0.000 0.001 0.002  
+
+> Parameter Value (Delta W)
+> 0
+> 250
+> 500
+> 750
+> 1000
+> 1250
+> 1500
+> 1750
+> Density
+> Statistical
+> Homogenization
+> Salient Preference
+> Signals
+> Single: N=1
+> Merged: N=3
+> Merged: N=7
+
+(d) Statistical Homogenization 
+
+Figure 1: Empirical evidence of negative transfer and scalability bottlenecks in CDSR. (a) & (b) show that merging heterogeneous domains causes negative transfer which cannot be resolved by weight tuning. (c) & (d) reveal that multi-domain fusion leads to performance saturation due to statistical parameter homogenization. 
+
+space, such approaches enable cross-domain knowledge transfer in a flexible and efficient manner, without enforcing representation-space alignment or requiring retraining. For instance, X-Cross [ 12 ]employs a dynamic integration mechanism to linearly merge mul-tiple expert models at the layer level, while WeaveRec [ 14 ] applies a linear weight average to merge LoRA parameters. Despite the promise of model merging in enabling flexible knowl-edge transfer, its direct application in realistic CDSR scenarios is constrained by two bottlenecks, as revealed by our preliminary investigation (detailed in Sec. 4.1). 
+
+• B1: Cross-Domain Knowledge Conflict. Merging heteroge-neous domains inevitably triggers parameter interference , leading to severe cross-domain knowledge conflict. As illustrated in Fig-ure 1(a), while compatible pairs (e.g., Book-Movie ) show gains, merging divergent domains (e.g., Sport-Toy ) yields performance inferior to the single-domain baseline. Figure 1(b) further con-firms that even through exhaustive optimization on the linear merging weight 𝜆 , the cross-domain performance still fails to sur-pass the single-domain model. Our empirical analysis (detailed in Sec. 4.1, Figure 2) finds that this failure stems from geometric incompatibility, where independent fine-tuning traps models in conflicting sharp minima. 
+
+• B2: Rapid Saturation in Multi-domain Fusion. Scaling up source domains triggers statistical parameter homogenization , as linear aggregation dilutes salient coefficients, causing rapid per-formance saturation. As illustrated in Figure 1(c), performance gains on targets like Sport and Food exhibit diminishing returns, hitting a distinct plateau after integrating 3 or 4 source domains. Figure 1(d) reveals that this saturation stems from linear aggrega-tion functioning as a mean filter, which systematically smooths out distributional outliers into a generic, feature-poor Gaussian distribution. Consequently, this erosion of parameter saliency destroys the high-order signals essential for capturing subtle cross-domain preference correlations in CDSR tasks. Taken together, these observations suggest that the effectiveness of existing model merging methods in CDSR is fundamentally con-strained by the geometric parameter interference and statisti-cal homogenization of preference signals. 
+
+To address the fundamental bottlenecks of geometric incompati-bility and statistical homogenization, we propose SharpRec , a novel framework designed to break the scalability ceiling of LLM-based CDSR. The core insight of SharpRec lies in the synergy between geometric alignment for interference-free knowledge fusion and distributional reshaping for salient signal reactivation. Specifically, our framework consists of two collaborative modules: (1) Sharpness-aware Geometric Alignment (SGA) . To eliminate the root cause of parameter interference ( B1 ), we introduce a sharpness-aware tun-ing mechanism during the domain-specific fine-tuning. By guiding models toward flat minima rather than sharp ones, SGA ensures that diverse domain models reside in geometrically connected low-loss basins, thereby securing a stable geometric foundation for the seamless transfer of user preference structures. (2) Preference Salience Activation (PSA) . To overcome the performance ceiling im-posed by statistical homogenization ( B2 ), we propose a post-fusion non-linear reparameterization strategy. Instead of converging to the mediocre Gaussian distribution induced by linear aggregation, PSA reconstructs the merged parameters to restore heavy-tailed characteristics. By reactivating the salient preference signals eroded during fusion, this mechanism effectively captures high-order user heterogeneity, amplifying the model’s capacity to bolster target domain performance. The main contributions are summarized: (1) We propose a novel and efficient LLM-based CDSR framework SharpRec which intro-duces a new paradigm by integrating sharpness-aware optimization and distributional recovery for robust and scalable knowledge trans-fer. (2) To address the challenges, we propose: i) SGA guides models into flat minima to resolve geometric incompatibility, thereby mit-igating cross-domain parameter interference; ii) PSA reactivates salient preference signals through non-linear reparameterization, lifting the performance upper bound and alleviating the saturation effect in multi-domain fusion. (3) Extensive experiments in both dual-domain and multi-domain scenarios comprehensively validate the effectiveness and scalability of SharpRec .
+
+## 2 Related Works 2.1 Cross-Domain Sequential Recommendation 
+
+Cross-Domain Sequential Recommendation (CDSR) [ 2 ] enhances target-domain performance by exploiting historical interactions across multiple related domains. By integrating cross-domain rec-ommendation [ 8 , 40 , 49 ] with sequential modeling [ 19 , 25 , 50 ], CDSR frameworks must capture temporal interest evolution while effectively transferring cross-domain preferences. Early studies [ 1,Sharpness-aware Model Merging with Salience Recovery for LLM-based Cross-Domain Sequential Recommendation KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea 
+
+30 , 43 ] primarily facilitate knowledge transfer via overlapping users or items. For instance, 𝜋 -Net [ 30 ] and PSJNet [ 34 ] employ RNNs or attention mechanisms to map source-domain representations into target models. Subsequent research incorporates dual atten-tion [ 16 , 21 ], parallel architectures [ 28 , 36 ], and multi-interest mod-eling [ 5, 22 , 29 ] to enrich cross-domain sequential patterns. To capture finer-grained dependencies, recent methods utilize Graph Neural Networks (GNNs) [ 11 , 29 , 46 ] and contrastive learning [ 15 ,44 , 48 ] to model complex interaction structures and cross-domain relationships. Furthermore, CDSR has expanded to handle realis-tic constraints, such as partial user overlap [ 7, 20 , 44 ] and multi-domain scenarios [ 4, 10 , 45 ], using auxiliary behaviors and meta-learning [ 20 , 23 , 35 ] to alleviate data sparsity and enhance scalabil-ity. Despite these advances, most existing CDSR methods remain constrained by limited collaborative signals and shallow represen-tations, failing to capture the complex, dynamic interest transfer inherent in multi-domain environments. 
+
+## 2.2 LLM for Cross-Domain Sequential Recommendation 
+
+The emergence of Large Language Models (LLMs) has introduced strong semantic reasoning to CDSR. Recent studies leverage LLMs to alleviate data sparsity and enhance preference modeling without relying on explicit overlap. M6-Rec [ 3] supports open-ended do-mains by unifying multi-domain data within a generative pretrain-ing framework. LLM-Rec [ 38 ] treats cross-domain recommendation as a language modeling task to directly capture user behavior se-quences. URLLM [ 33 ] integrates user retrieval signals into LLMs to improve performance under sparse interaction settings. LLM-CDSR [ 42 ] constructs unified semantic item representations and user profiles to bridge domains. LeCDSR [ 39 ] fuses LLM-generated semantic embeddings with ID-based representations to enhance se-quential modeling. LLM4CDSR [ 26 ] employs hierarchical profiling to capture item relations and global preferences, addressing over-lap scarcity. X-Cross [ 12 ] utilizes parameter-efficient fine-tuning and layer-wise integration of domain-specific LLMs for scalable adaptation. WeaveRec [ 14 ] investigates model merging by weaving domain-specific LoRA adapters to stabilize knowledge transfer and maintain efficiency. Despite this progress, fundamental challenges remain: most methods rely on shallow semantic fusion or direct knowledge ag-gregation without explicitly modeling preference complementarity. This limits their ability to capture dynamic interest transfer in real-istic settings. This motivates us to revisit CDSR from a preference-space modeling perspective, focusing on more effective and scalable knowledge integration. 
+
+## 3 Preliminaries 3.1 Problem Formulation of CDSR 
+
+Given a set of 𝐾 distinct domains denoted as D = {𝐷 1, 𝐷 2, . . . , 𝐷 𝐾 },each domain 𝐷 𝑘 is characterized by its own user set U𝑘 and item set V𝑘 . In a realistic hybrid user scenario, user sets may partially overlap ( U𝑖 ∩ U 𝑗 ≠ ∅), though most users remain domain-specific. For a specific user 𝑢 ∈ U 𝑘 in domain 𝐷 𝑘 , the interaction history is represented as a chronological sequence S𝑘 𝑢 = [𝑣 1, 𝑣 2, . . . , 𝑣 𝑇 ],where 𝑣 𝑡 ∈ V 𝑘 denotes the item interacted with at time step 𝑡 ,and 𝑇 is the current sequence length. The objective of CDSR is to accurately predict the next item 𝑣 𝑇 +1 by leveraging both the intra-domain sequential patterns and the inter-domain transferable knowledge. Formally, let M = {𝜙 1, 𝜙 2, . . . , 𝜙 𝐾 } represent the ensemble of knowledge representations (e.g., model parameters or adapters) derived from all 𝐾 domains. The task is to learn a unified predictive framework that maximizes the following joint log-likelihood across all domains: 
+
+max 
+
+> M
+> 𝐾
+
+∑︁ 
+
+> 𝑘 =1
+
+∑︁ 𝑢 ∈ U 𝑘 
+
+log 𝑃 (𝑣 𝑇 +1 | S 𝑘 𝑢 ; M) , (1) where 𝑃 (𝑣 𝑇 +1 | S 𝑘 𝑢 ; M) denotes the probability of the next-item interaction, conditioned on the historical sequence S𝑘 𝑢 and the cross-domain collaborative knowledge M.
+
+## 3.2 LLM-based CDSR 
+
+Generative Modeling for CDSR. To bridge the semantic gap across 𝐾 domains, the CDSR task is reformulated within a genera-tive language modeling paradigm. Specifically, for a user 𝑢 ∈ U 𝑘 ,the interaction history S𝑘 𝑢 and the target item 𝑣 𝑇 +1 ∈ V 𝑘 are trans-formed into textual representations (e.g., item titles or descriptions) via a template-based serialization function T (·) .The input sequence S𝑘 𝑢 is encapsulated into a textual prompt 
+
+𝑥 = T (S 𝑘 𝑢 ), while the ground-truth next item is represented as a tar-get string 𝑦 = T ( 𝑣 𝑇 +1). This transformation maps domain-specific behaviors into a shared semantic space, enabling the LLM to lever-age its inherent open-world knowledge for cross-domain reasoning. Given the prompt 𝑥 , the model estimates the probability of gener-ating the target sequence 𝑦 token by token. The instruction-tuning dataset for each domain is defined as D𝑘 = {(T (S 𝑘 𝑢 ), T ( 𝑣 𝑇 +1)) | 
+
+𝑢 ∈ U 𝑘 }.Following the objective defined in Eq. (1), the training process optimizes the parameters Φ (representing the ensemble M) to max-imize the conditional log-likelihood: 
+
+max 
+
+> Φ
+> 𝐾
+
+∑︁ 
+
+> 𝑘 =1
+
+∑︁ (𝑥,𝑦 ) ∈ D 𝑘  
+
+> |𝑦 |
+
+∑︁ 
+
+> 𝑖 =1
+
+log 𝑃 Φ (𝑦 𝑖 | 𝑥, 𝑦 <𝑖 ), (2) where 𝑦 𝑖 denotes the 𝑖 -th token of the target sequence 𝑦 , and D𝑘 
+
+represents the instruction-tuning dataset derived from domain 𝐷 𝑘 .In this generative setup, the knowledge representations 𝜙 𝑘 ∈ M 
+
+are manifested as domain-specific model states or adapters. 
+
+Parameter-Efficient Fine-Tuning. In practice, full-parameter fine-tuning of LLMs for each domain is often computationally pro-hibitive. To materialize the domain-specific knowledge ensemble 
+
+M = {𝜙 1, . . . , 𝜙 𝐾 }, Low-Rank Adaptation (LoRA) is commonly em-ployed. For a pre-trained weight matrix 𝑊 within the LLM backbone 
+
+Φ, LoRA introduces a low-rank update: 
+
+𝑊 ′ = 𝑊 + Δ𝑊 = 𝑊 + 𝛼 𝑟 𝐵𝐴, (3) where 𝐴 ∈ R𝑟 ×𝑑 and 𝐵 ∈ R𝑑 ×𝑟 are trainable matrices of rank 𝑟 ≪ 𝑑 .In the CDSR setting, the shared backbone Φ is frozen, while domain-specific LoRA parameters 𝜃 𝑘 = {𝐴 𝑘 , 𝐵 𝑘 } are independently optimized for each domain 𝐷 𝑘 . Building upon Eq. (2), the objective KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Huwei Ji, Jiajie Su, Yuyuan Li, Xiaohua Feng, & Chaochao Chen 
+
+for acquiring the 𝑘 -th knowledge representation 𝜙 𝑘 is: 
+
+max 
+
+> 𝜃 𝑘
+
+∑︁ (𝑥,𝑦 ) ∈ D 𝑘  
+
+> |𝑦 |
+
+∑︁ 
+
+> 𝑖 =1
+
+log 𝑃 Φ,𝜃 𝑘 (𝑦 𝑖 | 𝑥, 𝑦 <𝑖 ), (4) where the resulting ensemble Θ = {𝜃 1, . . . , 𝜃 𝐾 } encapsulates mod-ular knowledge from all domains, serving as the prerequisite for subsequent model merging. 
+
+## 4 Methodology 4.1 Empirical Study 
+
+4.1.1 Model Merging for CDSR. To integrate knowledge across multiple domains efficiently, model merging is introduced as a flexible paradigm for LLM-based CDSR. Building upon the PEFT framework in Sec. 3.2, the process of model merging is typically conducted in two stages: 
+
+• Domain-Specific Adaptation. For each domain 𝐷 𝑘 ∈ D , a domain-specific knowledge representation 𝜙 𝑘 is first acquired to capture its unique sequential patterns. Following Eq. (4), this involves optimizing the LoRA parameters 𝜃 𝑘 = {𝐴 𝑘 , 𝐵 𝑘 } while keeping the backbone Φ frozen. The resulting effective adapter up-date Δ𝑊 𝑘 = 𝛼 𝑟 𝐵 𝑘 𝐴 𝑘 , induced by the LoRA factors 𝜃 𝑘 = {𝐴 𝑘 , 𝐵 𝑘 },captures the specialized sequential patterns of domain 𝐷 𝑘 .
+
+• Parameter-Space Fusion. Once the ensemble of adapters Θ =
+
+{𝜃 1, . . . , 𝜃 𝐾 } is obtained, a unified merged model is formed by aggregating these domain-specific updates directly in the param-eter space. Formally, for a cross-domain recommendation task, the parameters of the merged model Φ𝑚𝑒𝑟𝑔𝑒 are defined as the combination of the frozen backbone Φ and the weighted average of all domain-specific adapters: 
+
+Φ𝑚𝑒𝑟𝑔𝑒 = Φ +
+
+> 𝐾
+
+∑︁ 
+
+> 𝑘 =1
+
+𝜆 𝑘 · Δ𝑊 𝑘 = Φ +
+
+> 𝐾
+
+∑︁ 
+
+> 𝑘 =1
+
+𝜆 𝑘 ·
+
+ 𝛼 𝑟 𝐵 𝑘 𝐴 𝑘 
+
+
+
+, (5) where 𝜆 𝑘 ∈ [ 0, 1] represents the merging coefficient (e.g., layer-wise or module-wise) assigned to the 𝑘 -th domain, subject to the constraint Í𝐾 𝑘 =1 𝜆 𝑘 = 1. This operation is applied to each LoRA-equipped weight matrix. This fusion process allows the model to leverage collaborative signals from both the target domain and multiple auxiliary source domains without the necessity of costly joint retraining. Despite its efficiency, current model merging paradigms for CDSR predominantly operate under the ideal assumption of merging a few closely related domains . However, real-world recommendation scenarios often involve diverse domain pairs with inherent semantic conflicts and the necessity of integrating knowl-edge from a large number of auxiliary sources. This discrepancy between ideal assumptions and complex realities significantly lim-its the practical applicability and scalability of existing methods. Through empirical studies, we identify two fundamental bottle-necks that limit the scalability of current methods: (i) Cross-Domain Knowledge Conflict, and (ii) Performance Saturation. 
+
+4.1.2 Cross-Domain Knowledge Conflict. Our empirical investi-gation reveals that the efficacy of cross-domain enhancement is heavily contingent on domain compatibility. As illustrated in Fig-ure 1(a), merging highly correlated domains yields significant gains, 1.00 0.75 0.50 0.25 0.00 0.25 0.50 0.75 1.00              
+
+> Cosine Similarity
+> 0
+> 1
+> 2
+> 3
+> 4
+> 5
+> 6
+> 7
+> 8
+> Density
+> SFT
+> SFT Mean: 0.019
+> (a) Book →Movie 1.00 0.75 0.50 0.25 0.00 0.25 0.50 0.75 1.00
+> Cosine Similarity
+> 0
+> 1
+> 2
+> 3
+> 4
+> 5
+> Density
+> SFT
+> SFT Mean: 0.265
+> Ours
+> Ours Mean: 0.042 (b) Sport →Toy
+
+Figure 2: Visualization of parameter geometric compatibility. 
+
+whereas heterogeneous pairs suffer from negative transfer that cannot be resolved even by an exhaustive grid search over fusion weights (Figure 1(b)). This persistent failure rules out linear weight-ing as a bottleneck, pointing instead towards intrinsic conflicts within the parameter space. To further explore the underlying mechanism of this conflict, we visualize parameter interference by analyzing the distribution of cosine similarities between the parameter row vectors of the two models. For the compatible Book-Movie pair (Figure 2(a)), the distribution approximates a zero-mean Gaussian, indicating that most parameter vectors are orthogonal, thereby allowing differ-ent domain knowledge to coexist with minimal interference. In stark contrast, the divergent Sport-Toy pair (Figure 2(b)) exhibits a right-skewed distribution with a mean of 0.265. This significant deviation from orthogonality reveals that the parameter vectors are geometrically entangled, causing severe collision when linearly superimposed and destroying the specialized preference structures of the target domain. Therefore, it is imperative to address the following challenge: 
+
+Challenge 1: How to align geometrically incompatible sharp minima to mitigate parameter interference and negative transfer? 
+
+4.1.3 Rapid Saturation in Multi-domain Fusion. Practical CDSR scenarios often necessitate integrating diverse auxiliary domains to bolster the target domain. However, our empirical investigation uncovers a significant scalability bottleneck. As illustrated in Fig-ure 1(c), simply increasing the number of source domains yields diminishing returns, with performance gains rapidly hitting a dis-tinct plateau. This saturation suggests an inherent upper bound in existing model merging paradigms, where incorporating more diverse data fails to translate into sustained improvements. To investigate the root cause of this saturation, we visualize the evolution of parameter distributions as more domains are integrated. Specifically, we plot the density of the LoRA parameter updates (Δ𝑊 ) for merged models with 𝑁 = 1, 3, 7 source domains. As shown in Figure 1(d), the results reveal a distinct trend toward statistical homogenization. For the single-domain model ( 𝑁 = 1), the parame-ter distribution is relatively flat with heavy tails, indicating a rich presence of high-magnitude weights that encode domain-specific knowledge. However, as 𝑁 increases to 7, the distribution progres-sively converges to a sharp, narrow Gaussian form concentrated around zero. This implies that linear aggregation functions as a mean filter, effectively smoothing out distributional outliers—the Sharpness-aware Model Merging with Salience Recovery for LLM-based Cross-Domain Sequential Recommendation KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea 
+
+salient parameters essential for complex reasoning. The erosion of these salient signals restricts the model’s expressive capacity, highlighting that the performance ceiling is imposed by the linear fusion mechanism itself. Therefore, it is necessary to address the following challenge: 
+
+Challenge 2: How to counteract statistical homogenization and reactivate salient preference signals to surmount the performance ceiling in multi-domain fusion? 
+
+## 4.2 Sharpness-aware Geometric Alignment 
+
+To address Challenge 1, we propose Sharpness-aware Geometric Alignment (SGA), which minimizes the discrepancy between the merged model and individual domain experts to mitigate parameter interference. We define this objective as ensuring that aggregated parameters remain within the low-loss regions of each constituent model. Specifically, for a domain 𝐷 𝑘 , the ideal adapter 𝜃 𝑘 should not only minimize the empirical risk on its local dataset D𝑘 but also main-tain stability under the parameter shifts Δ𝜃 induced by merging. Formally, the optimization objective for SGA is defined as: 
+
+min 
+
+> 𝜃 𝑘
+
+(L( Φ, 𝜃 𝑘 + Δ𝜃 ; D𝑘 ) − L( Φ, 𝜃 𝑘 ; D𝑘 )) 
+
+| {z }
+
+> Merging Interference Resistance
+
++ L( Φ, 𝜃 𝑘 ; D𝑘 )
+
+| {z }
+
+> Domain-Specific Accuracy
+
+,
+
+(6) where 𝜃 𝑘 = {𝐴 𝑘 , 𝐵 𝑘 } represents the LoRA parameters. Since Δ𝜃 
+
+is unpredictable during independent fine-tuning, we treat it as a worst-case stochastic perturbation 𝝐 within a radius 𝜌 . As proven in Appendix A, this formulation allows us to reformulate Eq. (6) into a sharpness-aware min-max objective: 
+
+min 
+
+> 𝜃 𝑘
+
+max    
+
+> |𝝐 |2≤𝜌
+
+L ( Φ, 𝜃 𝑘 + 𝝐 ; D𝑘 ) . (7) To handle the scale variance across Transformer layers, we employ an adaptive perturbation ˆ𝜖 to approximate the inner maximization: 
+
+ˆ𝜖 = 𝜌 𝜃 2 
+
+> 𝑘
+
+∇𝜃 𝑘 L( 𝜃 𝑘 ; D𝑘 )|∇ 𝜃 𝑘 L( 𝜃 𝑘 ; D𝑘 )| . (8) By updating the adapters using gradients at the perturbed state 
+
+𝜃 𝑘 + ˆ𝜖 , SGA effectively guides the optimization toward a flat mini-mum . This geometric alignment ensures that diverse domain ex-perts converge to connected low-loss basins, preventing the de-struction of shared user preference structures during fusion. Conse-quently, SGA facilitates the seamless transfer of sequential behav-ioral patterns across heterogeneous domains, effectively resolving the parameter interference (Challenge 1) that typically hinders robust CDSR. 
+
+Theoretical Analysis. To elucidate the efficacy of SGA, we analyze how geometric flatness mitigates negative transfer by defining the merging interference error ( 𝛿 ): 
+
+𝛿 = L( Φ, 𝜆𝜃 𝐴 +( 1−𝜆 )𝜃 𝐵 ; D)−[ 𝜆 L( Φ, 𝜃 𝐴 ; D) + ( 1 − 𝜆 )L( Φ, 𝜃 𝐵 ; D)] .
+
+(9) A positive 𝛿 indicates that the merged parameters reside in a high-loss barrier, signifying severe interference. We establish an upper bound for this error (proof in Appendix B): 
+
+Theorem 4.1 (Bound on Merging Interference). Assuming the loss function L is twice differentiable, the interference error 𝛿 for merging domain-specific LoRA adapters is strictly bounded by: 
+
+|𝛿 | ≤ 12 𝜆 (1 − 𝜆 ) ( 𝜎 (𝜃 𝐴 ) + 𝜎 (𝜃 𝐵 )) 
+
+| {z }
+
+> Sharpness
+
+· ∥𝜃 𝐴 − 𝜃 𝐵 ∥2
+
+| {z }
+
+> Domain Divergence
+
++O( 𝜖 ), (10) 
+
+where 𝜎 (𝜃 ) = 𝜆 𝑚𝑎𝑥 (∇ 2 
+
+> 𝜃
+
+L) represents the spectral norm of the Hessian, quantifying local sharpness. 
+
+The theorem reveals that interference in CDSR is driven by the product of domain divergence ∥𝜃 𝐴 − 𝜃 𝐵 ∥2 and Loss Sharpness 𝜎 (𝜃 ).While divergence is an inherent trait of data heterogeneity, sharp-ness is a controllable geometric property. By explicitly minimizing 
+
+𝜎 (𝜃 ) during adaptation, SGA ensures the merging path remains within a low-loss basin, theoretically guaranteeing robust cross-domain knowledge fusion. 
+
+## 4.3 Preference Salience Activation 
+
+To address Challenge 2, we propose Preference Salience Activation (PSA), which reconstructs the parameter distribution from a homog-enized Gaussian form into a heavy-tailed distribution. By increasing the probability density of distributional outliers, this transformation effectively preserves and amplifies the salient weights encoding domain-specific expertise that are otherwise eroded by the linear ensemble average. Specifically, let 𝜃 𝑚𝑒𝑟𝑔𝑒 = Í𝐾 𝑘 =1 𝜆 𝑘 𝜃 𝑘 be the aggregated LoRA pa-rameters from the SGA phase. To break the over-smoothed conver-gence center, we implement a stochastic disentanglement procedure by introducing an independent Gaussian noise 𝐺 ∼ N ( 0, 𝜎 2 
+
+> 𝑔
+
+𝐼 ):
+
+˜𝜃 = 𝜃 𝑚𝑒𝑟𝑔𝑒 − 𝐺. (11) This operation shifts the parameters away from the high-density mean, expanding the geometric capacity required for the subse-quent non-linear activation of preference signals. To reactivate the sparse, high-order neurons suppressed by linear averaging, we apply an element-wise non-linear projection 𝑇 (·) 
+
+to ˜𝜃 , inducing a heavy-tailed distribution that preserves salient parameters distant from the mean: 
+
+𝜃 𝑃𝑆𝐴 = 𝑇 ( ˜𝜃 ) = sign ( ˜𝜃 ) · | ˜𝜃 |𝛾 ·
+
+
+
+1 + 𝛼𝑒 −𝛽 | ˜𝜃 | 
+
+, (12) where 0 < 𝛾 < 1 regulates tail heaviness, and 𝛼, 𝛽 > 0 control smoothness. The proof that this transformation induces a heavy-tailed distribution is provided in Appendix C. By amplifying large-magnitude outliers while suppressing near-zero noise, PSA restores the saliency of domain-specific features. This mechanism ensures high-fidelity knowledge fusion as domains scale, effectively sur-mounting the performance ceiling identified in Challenge 2. 
+
+Theoretical Analysis. To theoretically justify how PSA mitigates performance saturation, we analyze the relationship between the parameter distribution and the model’s functional capacity. 
+
+Theorem 4.2 (PSA Expands Preference Coverage). Let the model function space coverage be defined as 
+
+C(F ) =
+
+∫
+
+> W
+
+| det (𝐽 Φ (w))| 𝑝 w (w)𝑑 w, (13) 
+
+where 𝐽 Φ (w) is the Jacobian matrix. If the initial parameter distri-bution 𝑝 w is Gaussian, the heavy-tailed distribution 𝑝 w′′ induced by PSA ensures that the coverage of the transformed model C2 is strictly KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Huwei Ji, Jiajie Su, Yuyuan Li, Xiaohua Feng, & Chaochao Chen 
+
+greater than the original model C1, i.e., C2 > C1. Proof in Appendix D. 
+
+The Jacobian determinant | det (𝐽 Φ (w))| reflects the model’s func-tional sensitivity to parameter variations. In deep recommendation architectures, parameters in the tail region W𝑇 (outliers) typically evoke more diverse functional forms and stronger activations, rep-resenting complex, long-tail user interests. While linear merging triggers Gaussianization that concentrates probability mass in the low-sensitivity center, PSA redistributes density toward the tail region where the Jacobian determinant is larger. This redistribution maximizes the coverage integral C(F ) , theoretically guaranteeing that the merged model recovers the capacity to capture intricate cross-domain preferences and surmounts the performance ceiling of multi-domain fusion. 
+
+## 5 Experiments 
+
+To evaluate the effectiveness of SharpRec , we conduct experiments to answer the following Research Questions (RQ): 
+
+• RQ1 : How does SharpRec perform against CDSR baselines? 
+
+• RQ2 : Can SharpRec mitigate performance saturation as source domains increase? 
+
+• RQ3 : How do the SGA and PSA modules contribute to model performance? 
+
+• RQ4 : Does SharpRec effectively enhance single-domain sequen-tial recommenders? 
+
+• RQ5 : Is SharpRec robust to varying ratios of overlapping users? 
+
+• RQ6 : How do key hyperparameters affect SharpRec ’s sensitivity? 
+
+## 5.1 Experimental Setup 
+
+5.1.1 Datasets. We conduct experiments on the Amazon Review 2023 dataset, selecting seven distinct domains (Sport, Clothing, Movie, Book, Food, Kitchen, and Toy). We construct three pri-mary dual-domain pairs for the main performance comparison: Book ↔Movie, Kitchen ↔Food, and Sport ↔Toy, each simulating a realistic hybrid user scenario. We apply a 5-core filtering strategy to ensure data quality, repre-sent each item by its textual “title” attribute, and truncate interaction sequences to a length of 6–20 items. Following the leave-one-out protocol [ 9, 24 ], we split the sequences into training, validation, and testing sets at an 8:1:1 ratio, where the last item of each valida-tion/test sequence serves as the prediction target and the preceding items form the historical context. For the scalability analysis (RQ2), we extract 10,000 interaction sequences per domain. For the overlap robustness analysis (RQ5), we follow [ 26 ] to generate controlled datasets with overlap ratios of 80%, 60%, 40%, and 20%. During eval-uation, each target item is ranked against a candidate pool of 30 items, comprising the ground truth, 10 hard negatives selected by global co-occurrence frequency, and 19 randomly sampled items. To adapt the sequential interaction data for LLM-based inputs, we encapsulate each user’s historical context and the candidate pool into a structured conversational prompt, as illustrated in Figure 3. Detailed dataset statistics are summarized in Table 1. 
+
+5.1.2 Baselines. To evaluate the effectiveness of our proposed framework, we compare it against four categories of state-of-the-art methods, including Single-Domain Sequential Recommendation System: You are a helpful recommendation assistant .
+
+User:         
+
+> Given the following purchase history of auser :
+
+[History 
+
+Sequence] . Please select the top 5 most likely products to be                    
+
+> purchased by the user based on the user’s purchase history .And
+> sort them from highest to lowest likelihood of purchasing .
+> Candidates :
+
+[Candidate Pool] . The top 5 most likely products       
+
+> to be purchased by the user are :
+
+Assistant: [RECOMMENDATION LIST] 
+
+Figure 3: The prompt template for our SharpRec framework, illustrating the integration of historical sequences and can-didate pools within a conversational LLM structure. Table 1: Dataset statistics.                                           
+
+> Domain # Users # Items # Interactions Sparsity # Overlap Users # Overlap Ratio Book 31,271 23,133 343,514 99.95% 13,182 42.15% Movie 31,544 25,861 471,520 99.94% 13,182 41.79% Kitchen 22,127 9,758 149,019 99.93% 10,015 45.26% Food 22,150 11,009 190,274 99.92% 10,015 45.21% Sport 10,177 6,605 115,388 99.82% 2,171 21.33% Toy 12,104 8,940 128,046 99.88% 2,171 17.94%
+
+(SDSR), Traditional Cross-Domain Sequential Recommendation (CDSR), LLM-enhanced CDSR, and Model Merging approaches. 
+
+• Single-Domain Sequential Recommendation (SDSR). (1) 
+
+GRU4Rec [13 ] employs Gated Recurrent Units (GRU) to model sequential interactions within a session. (2) SASRec [ 17 ] utilizes self-attention mechanisms to capture long-term dependencies in behavior sequences. 
+
+• Traditional CDSR. (3) 𝜋 -Net [ 30 ] introduces a shared account filter unit and a gating mechanism to transfer knowledge for overlapping users. (4) C2DSR [1] employs graph neural networks to jointly learn intra-domain and inter-domain item relationships. (5) SyNCRec [31 ] mitigates negative transfer via a mixture-of-experts framework equipped with a gradient stop mechanism. 
+
+• LLM-based CDSR. (6) URLLM [ 33 ] integrates LLM-generated semantic representations with traditional collaborative models. (7) LLM4CDSR [ 26 ] aligns LLM-derived knowledge with col-laborative signals to enhance cross-domain accuracy. (8) LLM-CDSR [42 ] leverages LLMs to model universal user preferences to bridge the domain gap. 
+
+• Model Merging Methods. (9) Data-Merge is an instruction-tuning baseline that fine-tunes a single LLM using a unified SFT dataset aggregated from multi-domain interactions. (10) X-Cross [ 12 ] integrates fine-tuned domain-specific LoRA modules to facilitate knowledge transfer. (11) WeaveRec [14 ] utilizes LLMs to synthesize cross-domain recommendations through par-allel reasoning chains and linear model merging. 
+
+5.1.3 Evaluation Metrics. Following previous works [ 1 , 17 ], we adopt commonly used Top-𝑘 metrics, specifically Hit Rate (HR@ 𝑘 ), Normalized Discounted Cumulative Gain (NDCG@ 𝑘 ), and Mean Reciprocal Rank (MRR), with 𝑘 ∈ { 3, 5} to evaluate recommenda-tion performance. For the main experiments, we repeat them five times and report the average results 1. 
+
+> 1Our code is available at https://github.com/muyiahhh/SharpRec. Sharpness-aware Model Merging with Salience Recovery for LLM-based Cross-Domain Sequential Recommendation KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea
+
+5.1.4 Implementation Details. All experiments are implemented using PyTorch and conducted on a high-performance computa-tional cluster equipped with 8 NVIDIA A100 (80GB) and 8 NVIDIA RTX 4090 (24GB) GPUs. We utilize the pre-trained Llama-2-7b as the backbone model for all LLM-based methods. To ensure fair com-parison, the configurations of all baselines are strictly aligned with the optimal settings reported in their respective original papers. Regarding training configuration and hyperparameters, we em-ploy a global batch size of 8 and a fixed learning rate of 2 × 10 −4.All models are fine-tuned for 2 epochs to ensure convergence while mitigating overfitting. For SharpRec , the balancing coefficients of the PSA module are set to 𝛼 = 0.1 and 𝛽 = 10 . For the core opti-mization modules, we configure the sharpness-aware perturbation radius at 𝜌 = 0.01 , the salience activation factor at 𝛾 = 0.98 , and the noise injection parameter at 𝜎 𝑔 = 0.0001 . Sensitivity analyses on 𝜌 , 𝛾 , and 𝜎 𝑔 are further conducted to verify the stability of these configurations, with results reported in Section 5.5. 
+
+## 5.2 Results and Discussions 
+
+5.2.1 Overall Performance Comparison (RQ1). Table 2 reports the performance of SharpRec and competing baselines across three cross-domain datasets. Key observations are summarized below: 
+
+• SharpRec consistently yields the best performance across all six cross-domain tasks. The significant improvement over all baselines validates that our sharpness-aware alignment and salience recovery mechanisms successfully mitigate interference and enhance knowledge transfer. 
+
+• Traditional CDSR models struggle to outperform single-domain baselines in hybrid user scenarios. Their reliance on explicit user overlap leads to ineffective knowledge transfer when co-occurrence signals are sparse, as evidenced by 𝜋 -Net and 𝐶 2DSR often lagging behind SASRec. 
+
+• LLM-enhanced methods generally outperform traditional baselines by leveraging semantic reasoning to address the hybrid user scenario. By utilizing open-world knowledge, these methods effectively bridge domain gaps even without explicit overlap. However, URLLM remains an exception, performing poorly due to its dependence on fragile user retrieval mecha-nisms. 
+
+• Current model merging paradigms are limited by statisti-cal homogenization and rapid saturation. Linear aggregation in methods like WeaveRec dilutes distinct domain-specific fea-tures into a mediocre Gaussian distribution. In contrast, SharpRec 
+
+reactivates these salient signals through non-linear reparameter-ization, effectively lifting the performance ceiling. 
+
+5.2.2 Scalability Analysis (RQ2). We evaluate the scalability of 
+
+SharpRec by incrementally increasing the number of source do-mains. As illustrated in Figure 4, we conclude that SharpRec ef-fectively mitigates the performance saturation bottleneck inherent in multi-domain fusion. Specifically, while baseline methods (e.g., WeaveRec) rapidly plateau entering the Saturation Zone after integrating 3-4 domains, SharpRec maintains a robust upward trajectory, achieving continuous gains. This saturation in baselines stems from the statistical homogenization caused by linear aggregation, which tends to dilute high-order cross-domain sig-nals into a mediocre Gaussian distribution. In contrast, SharpRec 1 2 3 4 5 6 7           
+
+> Source Domain Number
+> 0.30
+> 0.35
+> 0.40
+> 0.45
+> 0.50
+> 0.55
+> NDCG@5
+> Saturation Zone
+> WeaveRec
+> Ours (SharpRec)
+> 0.45
+> 0.47
+> 0.49
+> 0.51
+> 0.53
+> 0.55 NDCG@5 (Ours)
+> +51.4%
+> (a) Food 1234567
+> Source Domain Number
+> 0.38
+> 0.44
+> 0.50
+> 0.56
+> 0.62
+> 0.68
+> NDCG@5
+> Saturation Zone
+> WeaveRec
+> Ours (SharpRec)
+> 0.52
+> 0.56
+> 0.60
+> 0.64
+> 0.68
+> 0.72 NDCG@5 (Ours)
+> +55.7% (b) Sport
+
+Figure 4: Performance comparison w.r.t. the number of merged source domains on Food and Sport tasks. 
+
+overcomes this limitation by employing the PSA mechanism to reconstruct the merged parameters into a heavy-tailed distribution, thereby reactivating the salient features essential for sustained knowledge transfer and scalability. 
+
+## 5.3 Ablation Study 
+
+5.3.1 Component Analysis (RQ3). To evaluate the individual con-tributions of our proposed modules, we conduct ablation studies across both dual-domain and multi-domain scenarios. As reported in Table 3, we compare SharpRec with two variants: (1) w/o SGA ,which removes the sharpness-aware geometric alignment; and (2) 
+
+w/o PSA , which excludes the preference salience activation. Our findings are as follows: 
+
+• SGA serves as the foundation for resolving geometric in-compatibility. The performance degradation observed in the 
+
+w/o SGA variant confirms that direct merging leads to severe parameter interference. By guiding domain-specific models into a unified flat loss landscape, SGA ensures a stable initialization, preventing parameter interference and negative transfer. 
+
+• PSA alleviates statistical homogenization to prevent perfor-mance saturation in multi-domain fusion. While less critical in dual-domain settings, PSA becomes essential as domains in-crease by preventing merged parameters from converging to a mediocre average that dilutes domain-specific characteristics. It employs non-linear reparameterization to recover heavy-tailed distributions, preserving distinct preference signals required for robust cross-domain transfer. 
+
+5.3.2 Cross-domain Gain Analysis (RQ4). To verify the effective-ness of cross-domain knowledge transfer via model merging, we compare SharpRec with single-domain baselines. As shown in Ta-ble 4, we conclude that SharpRec consistently enhances rec-ommendation performance across all target domains com-pared to single-domain baselines. Results demonstrate substan-tial performance lift in every CDSR task, validating the fundamental premise of CDSR that leveraging auxiliary domain interactions pro-vides complementary preference signals inaccessible to isolated single-domain models. This superiority confirms that SharpRec 
+
+effectively mitigates the negative transfer often seen in vanilla merging, employing sharpness-aware alignment and salience re-covery to filter interference while distilling synergistic knowledge. 
+
+## 5.4 Robustness to Overlap Ratios (RQ5) 
+
+To evaluate whether SharpRec maintains stable performance under varying data constraints, we investigate its robustness by adjusting KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Huwei Ji, Jiajie Su, Yuyuan Li, Xiaohua Feng, & Chaochao Chen 
+
+Table 2: Performance comparison on Cross-Domain Sequential Recommendation tasks. Best results are typeset in bold with a colored background, e.g., 80.13 ±1.32 . Runner-up results use a different background color, e.g., 62.34 ±0.66 . We run all models 5 times and report the average results and standard deviation. Results are expressed as percentages (%). 
+
+Dataset 𝑩𝒐𝒐𝒌 −→ 𝑴𝒐𝒗 𝒊𝒆 𝑴𝒐𝒗 𝒊𝒆 −→ 𝑩𝒐𝒐𝒌 
+
+Methods HR@3 NDCG@3 HR@5 NDCG@5 MRR HR@3 NDCG@3 HR@5 NDCG@5 MRR GRU4Rec 25.75 ±2.12 16.52 ±0.56 38.60 ±1.34 28.82 ±0.87 22.24 ±1.90 27.52 ±0.45 18.27 ±2.32 41.16 ±1.11 27.91 ±0.99 23.84 ±1.54 SASRec 28.42 ±0.98 20.21 ±1.65 43.57 ±2.45 26.42 ±1.23 20.82 ±0.67 30.71 ±2.76 21.27 ±1.09 47.66 ±0.34 28.23 ±1.87 21.89 ±2.21 
+
+𝜋 -Net 18.32 ±0.25 14.64 ±1.78 26.72 ±0.99 18.08 ±1.56 15.27 ±2.32 20.09 ±0.88 15.77 ±1.90 28.00 ±0.54 19.03 ±0.76 16.09 ±2.21 C2DSR 25.60 ±2.10 18.99 ±0.34 37.80 ±1.67 24.00 ±0.88 24.51 ±1.23 30.36 ±1.54 23.02 ±0.45 41.90 ±1.89 28.16 ±2.11 28.17 ±0.65 SyNCRec 28.41 ±0.92 24.43 ±2.45 39.22 ±1.10 28.84 ±0.67 31.47 ±1.76 29.27 ±2.01 25.12 ±1.32 39.29 ±0.98 29.62 ±0.43 32.35 ±1.87 URLLM 21.33 ±2.11 16.99 ±0.76 30.81 ±1.43 20.14 ±0.55 23.29 ±1.90 22.82 ±2.22 18.23 ±0.33 31.36 ±1.67 22.18 ±0.88 25.29 ±2.76 LLM4CDSR 62.34 ±0.66 53.91 ±1.78 71.60 ±2.65 57.72 ±1.54 53.11 ±0.32 71.75 ±2.43 63.51 ±1.09 79.61 ±0.87 66.77 ±1.98 62.48 ±0.44 LLMCDSR 35.84 ±0.76 26.36 ±2.12 49.18 ±0.45 29.88 ±1.34 24.26 ±1.11 33.62 ±2.56 24.16 ±1.09 49.59 ±0.32 31.56 ±1.87 25.02 ±2.32 X-Cross 44.92 ±1.25 42.15 ±0.85 50.35 ±1.45 44.38 ±1.22 42.45 ±1.12 40.18 ±1.10 37.65 ±0.98 46.02 ±1.55 40.05 ±1.32 38.09 ±0.95 WeaveRec 41.33 ±2.89 38.57 ±1.54 46.71 ±0.65 40.77 ±2.76 38.84 ±1.34 36.57 ±0.23 34.03 ±1.87 42.38 ±2.10 36.41 ±1.12 34.47 ±0.88 Data-Merge 42.51 ±0.55 39.48 ±2.67 47.91 ±1.45 41.69 ±0.32 39.66 ±2.45 38.83 ±1.99 36.24 ±0.76 44.15 ±1.54 38.41 ±2.22 36.55 ±1.23 
+
+SharpRec 80.13 ±1.32 78.98 ±0.67 82.46 ±2.11 79.93 ±1.05 79.11 ±0.44 73.24 ±1.87 72.15 ±0.98 75.29 ±2.56 72.98 ±1.34 72.23 ±0.56 
+
+Dataset 𝑲 𝒊𝒕𝒄𝒉𝒆𝒏 −→ 𝑭 𝒐𝒐𝒅 𝑭 𝒐𝒐𝒅 −→ 𝑲 𝒊𝒕𝒄𝒉𝒆𝒏 
+
+Methods HR@3 NDCG@3 HR@5 NDCG@5 MRR HR@3 NDCG@3 HR@5 NDCG@5 MRR GRU4Rec 19.74 ±0.78 12.82 ±1.45 31.06 ±0.33 20.70 ±2.01 15.00 ±1.10 21.58 ±0.82 14.21 ±1.15 33.85 ±0.43 19.07 ±2.12 14.22 ±1.65 SASRec 22.39 ±1.12 16.04 ±0.67 35.95 ±2.45 21.56 ±1.34 16.89 ±0.55 22.21 ±1.44 16.21 ±0.56 33.53 ±2.89 20.85 ±0.21 16.72 ±0.98 
+
+𝜋 -Net 20.33 ±2.56 15.37 ±1.11 33.50 ±0.76 20.71 ±2.01 16.58 ±0.98 18.17 ±1.78 13.26 ±0.56 27.50 ±2.89 17.06 ±1.45 13.67 ±0.43 C2DSR 19.85 ±1.23 14.68 ±0.22 30.83 ±2.67 19.18 ±1.45 21.84 ±0.54 20.47 ±0.98 15.34 ±2.32 31.32 ±1.54 19.78 ±0.67 21.41 ±1.89 SyNCRec 23.83 ±0.89 19.47 ±1.78 35.72 ±0.45 23.35 ±2.34 25.95 ±1.21 22.82 ±2.11 18.54 ±1.45 34.23 ±0.66 22.17 ±2.89 25.44 ±1.32 URLLM 20.63 ±1.21 17.87 ±0.76 31.89 ±1.99 22.12 ±0.55 20.36 ±2.22 19.78 ±1.32 16.29 ±0.98 26.86 ±1.87 21.76 ±0.43 19.79 ±2.56 LLM4CDSR 49.27 ±1.78 40.46 ±0.56 60.44 ±2.89 45.03 ±0.99 39.95 ±1.21 35.58 ±0.65 26.83 ±1.99 45.47 ±1.11 33.13 ±0.45 29.08 ±2.32 LLMCDSR 31.90 ±2.12 25.66 ±1.45 41.76 ±0.54 30.12 ±2.34 25.07 ±1.65 33.74 ±1.34 26.80 ±0.76 47.89 ±2.54 32.04 ±1.89 26.90 ±0.88 X-Cross 43.15 ±1.34 40.22 ±1.15 48.85 ±1.56 42.55 ±1.89 40.50 ±1.05 32.12 ±1.12 29.45 ±0.98 38.05 ±1.45 31.85 ±1.23 29.15 ±1.15 WeaveRec 44.47 ±2.21 41.60 ±1.45 50.15 ±0.54 43.95 ±1.98 41.91 ±0.90 30.43 ±0.88 26.86 ±2.56 36.67 ±1.32 29.40 ±0.65 27.03 ±1.89 Data-Merge 40.62 ±1.78 37.86 ±2.34 45.79 ±1.21 39.98 ±0.76 38.07 ±1.65 31.61 ±1.45 28.91 ±0.99 37.40 ±2.87 31.28 ±1.56 29.30 ±0.87 
+
+SharpRec 55.27 ±0.89 53.17 ±1.76 60.19 ±0.44 55.19 ±2.32 53.56 ±1.11 44.71 ±2.22 42.26 ±0.45 50.96 ±1.67 44.82 ±2.98 42.84 ±1.34 
+
+Dataset 𝑻 𝒐𝒚 −→ 𝑺𝒑𝒐𝒓 𝒕 𝑺𝒑𝒐𝒓 𝒕 −→ 𝑻 𝒐𝒚 
+
+Methods HR@3 NDCG@3 HR@5 NDCG@5 MRR HR@3 NDCG@3 HR@5 NDCG@5 MRR GRU4Rec 28.59 ±1.56 22.04 ±0.34 39.12 ±2.11 27.44 ±1.67 23.62 ±0.55 27.77 ±1.12 19.97 ±0.45 41.30 ±2.31 31.56 ±1.05 29.01 ±0.89 SASRec 25.79 ±0.23 18.34 ±1.89 40.71 ±0.78 24.45 ±2.45 19.15 ±1.32 31.20 ±0.98 22.97 ±1.21 45.93 ±2.67 29.02 ±0.43 23.50 ±2.01 
+
+𝜋 -Net 21.84 ±1.54 16.74 ±0.65 34.10 ±2.87 21.82 ±1.11 17.84 ±0.99 17.70 ±2.34 13.34 ±0.56 26.84 ±1.78 17.09 ±0.88 13.91 ±1.45 C2DSR 26.97 ±0.87 21.41 ±2.12 37.11 ±1.34 25.58 ±0.21 27.35 ±1.98 32.18 ±1.05 24.13 ±0.32 43.57 ±2.54 28.83 ±1.65 28.90 ±0.76 SyNCRec 28.48 ±2.45 23.66 ±1.67 39.00 ±0.54 25.41 ±2.32 30.68 ±1.10 26.78 ±0.89 21.93 ±1.45 37.48 ±0.22 26.31 ±2.10 27.76 ±1.32 URLLM 22.76 ±1.23 17.27 ±2.54 30.28 ±1.89 20.31 ±0.87 21.27 ±2.65 24.11 ±1.12 20.28 ±0.56 33.68 ±1.90 22.87 ±0.33 24.82 ±1.67 LLM4CDSR 62.23 ±2.34 50.83 ±0.89 73.40 ±1.56 55.44 ±1.12 49.46 ±2.01 60.74 ±1.76 52.20 ±0.55 70.54 ±2.34 56.25 ±0.67 51.51 ±1.45 LLMCDSR 40.98 ±1.99 29.99 ±0.55 50.88 ±1.23 34.91 ±2.87 29.41 ±1.45 37.20 ±0.67 28.42 ±2.12 53.92 ±1.54 34.70 ±0.90 27.44 ±1.76 X-Cross 53.98 ±1.32 50.85 ±1.87 61.50 ±1.56 55.63 ±1.22 51.20 ±1.65 49.85 ±1.45 45.20 ±1.12 57.50 ±1.34 48.35 ±0.98 45.40 ±1.55 WeaveRec 53.68 ±0.54 50.99 ±2.56 59.95 ±1.45 53.55 ±0.32 51.47 ±1.89 48.58 ±2.32 43.52 ±1.21 55.26 ±0.65 46.29 ±1.77 43.33 ±2.65 Data-Merge 51.28 ±1.76 48.56 ±0.88 57.86 ±2.98 51.25 ±1.65 49.11 ±0.77 48.65 ±1.32 43.94 ±2.54 56.39 ±1.09 47.13 ±0.45 44.10 ±1.90 
+
+SharpRec 76.14 ±2.32 74.26 ±0.43 78.78 ±1.56 75.34 ±2.87 74.21 ±1.21 66.34 ±0.98 63.88 ±1.67 71.66 ±0.34 66.05 ±2.11 64.23 ±1.05 
+
+the ratio of overlapping users from 20% to 80%. The experimental results demonstrate that SharpRec consistently achieves su-perior and stable performance regardless of the user overlap ratio, effectively circumventing the overlap dilemma. As illus-trated in Figure 5, while traditional methods like 𝐶 2DSR exhibit no-table performance degradation at low overlap ratios (e.g., 20%) due to their heavy reliance on dense co-occurrence signals, SharpRec 
+
+maintains a substantial lead across all settings. This robustness con-firms that by leveraging semantic alignment and resolving geomet-ric incompatibility in the parameter space, our framework ensures effective knowledge transfer even in scenarios with minimal user overlap, decoupling performance from cross-domain data density. 
+
+## 5.5 Hyper-parameter Sensitivity (RQ6) 
+
+To investigate the robustness of SharpRec , we conduct sensitivity analyses on three key hyperparameters: the perturbation radius 
+
+𝜌 , the salience activation factor 𝛾 , and the noise variance 𝜎 𝑔 . As illustrated in Figure 6, our observations are as follows: 
+
+• Impact of Perturbation Radius 𝜌 . SharpRec exhibits robust performance within the range of [0.001 , 0.05 ]. Values below this range fail to propel the model out of domain-specific sharp min-ima, hindering effective alignment in the shared preference space. Conversely, 𝜌 > 0.05 introduces excessive perturbation that dis-rupts the semantic coherence required for cross-domain transfer. Sharpness-aware Model Merging with Salience Recovery for LLM-based Cross-Domain Sequential Recommendation KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea 
+
+Table 3: Impact of SGA and PSA on model performance. 
+
+Method NDCG@3 HR@3 NDCG@5 HR@5 MRR 
+
+𝑺𝒑𝒐𝒓 𝒕 −→ 𝑻 𝒐𝒚 
+
+SharpRec 0.6388 0.6634 0.6605 0.7166 0.6423 
+
+w/o SGA 0.4564 0.5014 0.4817 0.5632 0.4548 w/o PSA 0.6110 0.6442 0.6290 0.6889 0.6094 
+
+𝑩𝒐𝒐𝒌, 𝑴𝒐𝒗 𝒊𝒆, 𝑲 𝒊𝒕𝒄𝒉𝒆𝒏, 𝑻 𝒐𝒚, 𝑭 𝒐𝒐𝒅, 𝑪𝒍𝒐𝒕𝒉 −→ 𝑺𝒑𝒐𝒓 𝒕 
+
+SharpRec 0.6757 0.7344 0.6900 0.7638 0.6749 
+
+w/o SGA 0.4384 0.5094 0.4673 0.5500 0.4451 w/o PSA 0.6328 0.6959 0.6485 0.7219 0.6295 
+
+Table 4: Performance comparison of SharpRec and single-domain baselines under different domain transfer settings. 
+
+Domain Method NDCG@3 HR@3 NDCG@5 HR@5 MRR 
+
+𝑩𝒐𝒐𝒌 ←→ 𝑴𝒐𝒗 𝒊𝒆 𝑩𝒐𝒐𝒌 Book-only 0.7128 0.7253 0.7199 0.7425 0.7125 
+
+SharpRec 0.7215 0.7324 0.7298 0.7529 0.7223 
+
+𝑴𝒐𝒗 𝒊𝒆 Movie-only 0.7827 0.7929 0.7921 0.8158 0.7844 
+
+SharpRec 0.7898 0.8013 0.7993 0.8246 0.7911 
+
+𝑲 𝒊𝒕𝒄𝒉𝒆𝒏 ←→ 𝑭 𝒐𝒐𝒅 𝑲 𝒊𝒕𝒄𝒉𝒆𝒏 Kitchen-only 0.3988 0.4291 0.4192 0.4792 0.3996 
+
+SharpRec 0.4226 0.4471 0.4482 0.5096 0.4284 
+
+𝑭 𝒐𝒐𝒅 Food-only 0.5171 0.5380 0.5377 0.5887 0.5211 
+
+SharpRec 0.5317 0.5527 0.5519 0.6019 0.5356 
+
+𝑺𝒑𝒐𝒓 𝒕 ←→ 𝑻 𝒐𝒚 𝑺𝒑𝒐𝒓 𝒕 Sport-only 0.7263 0.7428 0.7350 0.7645 0.7254 
+
+SharpRec 0.7426 0.7614 0.7534 0.7878 0.7421 
+
+𝑻 𝒐𝒚 Toy-only 0.6015 0.6300 0.6222 0.6804 0.6032 
+
+SharpRec 0.6388 0.6634 0.6605 0.7166 0.6423 C2DSR SyNCRec LLM4CDSR WeaveRec SharpRec 20% 40% 60% 80% 
+
+> Overlap User Ratio
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> NDCG@5
+
+(a) Book Domain 20% 40% 60% 80%  
+
+> Overlap User Ratio
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> NDCG@5
+
+(b) Movie Domain 
+
+Figure 5: Impact of user overlap ratios (ranging from 20% to 80%) on recommendation performance (NDCG@5). 
+
+• Effect of Salience Factor 𝛾 . Performance peaks as 𝛾 approaches 
+
+[0.94 , 0.98 ], confirming that a moderate degree of reparameteriza-tion is optimal for preserving the preference manifold. Deviating from this range (e.g., 𝛾 < 0.90 ) leads to over-amplification, which distorts the structure of transferable user interests and compro-mises the fidelity of the merged model. 
+
+• Sensitivity of Noise Variance 𝜎 𝑔 . Small-scale Gaussian noise acts as an effective regularizer, facilitating the learning of domain-invariant representations during salience activation. However, HR@5 NDCG@5 0.0001 0.001 0.005 0.01 0.05 0.1 0.2  
+
+> 0.50
+> 0.60
+> 0.70
+> 0.80
+> HR@5
+> 0.50
+> 0.60
+> 0.70
+> 0.80 NDCG@5
+
+(a) 𝜌 , Book Domain 0.0001 0.001 0.005 0.01 0.05 0.1 0.2   
+
+> 0.60
+> 0.68
+> 0.76
+> 0.84
+> HR@5
+> 0.60
+> 0.68
+> 0.76
+> 0.84 NDCG@5
+
+(b) 𝜌 , Movie Domain 0.88 0.9 0.92 0.94 0.96 0.98 1.0  
+
+> 0.35
+> 0.50
+> 0.65
+> 0.80
+> HR@5
+> 0.35
+> 0.50
+> 0.65
+> 0.80 NDCG@5
+
+(c) 𝛾 , Book Domain 0.84 0.88 0.9 0.92 0.94 0.96 0.98 1.0   
+
+> 0.35
+> 0.52
+> 0.68
+> 0.85
+> HR@5
+> 0.35
+> 0.50
+> 0.65
+> 0.80 NDCG@5
+
+(d) 𝛾 , Movie Domain 0 1e-06 1e-05 0.0001 0.001 0.005 0.01  
+
+> 0.68
+> 0.71
+> 0.74
+> 0.77
+> HR@5
+> 0.68
+> 0.71
+> 0.74
+> 0.77 NDCG@5
+
+(e) 𝜎 𝑔 , Book Domain 0 1e-06 1e-05 0.0001 0.001 0.005 0.01   
+
+> 0.72
+> 0.77
+> 0.82
+> 0.87
+> HR@5
+> 0.72
+> 0.77
+> 0.82
+> 0.87 NDCG@5
+
+(f) 𝜎 𝑔 , Movie Domain 
+
+Figure 6: Impact of hyperparameters 𝜌 , 𝛾 , and 𝜎 𝑔 on recom-mendation performance (HR@5 and NDCG@5). 
+
+once 𝜎 𝑔 surpasses a critical threshold (e.g., 𝜎 𝑔 > 0.01 ), the exces-sive variance destabilizes the feature alignment between domains, resulting in a consistent drop in accuracy. 
+
+## 6 Conclusion 
+
+In this work, we explore the potential of model merging for CDSR. Our empirical studies identify two critical bottlenecks in existing paradigms, i.e., cross-domain knowledge conflict arising from geo-metric incompatibility and performance saturation caused by sta-tistical homogenization. To address these bottlenecks, we proposed 
+
+SharpRec , a novel framework designed to lift the performance upper bound of CDSR. Specifically, SharpRec leverages Sharpness-aware Geometric Alignment to resolve parameter interference via connected flat minima, and Preference Salience Activation to reac-tivate salient signals by reconstructing heavy-tailed distributions. Extensive experiments verify that SharpRec effectively mitigates cross-domain conflicts and alleviates performance saturation, sig-nificantly enhancing target domain recommendation performance while enabling continuous scalability as source domains increase. Our work provides a robust and scalable solution for LLM-based CDSR, paving the way for more efficient utilization of open-world knowledge in recommender systems. 
+
+## Acknowledgments 
+
+This work was supported in part by the National Natural Science Foundation of China (No. 62522217, No. 62402148) and the Zhejiang Provincial Natural Science Foundation of China (No. LZYQ25F020002). KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Huwei Ji, Jiajie Su, Yuyuan Li, Xiaohua Feng, & Chaochao Chen 
+
+## References 
+
+[1] Jiangxia Cao, Xin Cong, Jiawei Sheng, Tingwen Liu, and Bin Wang. 2022. Con-trastive cross-domain sequential recommendation. In Proceedings of the 31st ACM International Conference on Information & Knowledge Management . 138–147. [2] Shu Chen, Zitao Xu, Weike Pan, Qiang Yang, and Zhong Ming. 2024. A survey on cross-domain sequential recommendation. arXiv preprint arXiv:2401.04971 
+
+(2024). [3] Zeyu Cui, Jianxin Ma, Chang Zhou, Jingren Zhou, and Hongxia Yang. 2022. M6-rec: Generative pretrained language models are open-ended recommender systems. arXiv preprint arXiv:2205.08084 (2022). [4] Jiabao Dong, Lingyuan Yang, Pengji Fang, Shixiang Li, Yusheng Kong, and Lei Ren. 2026. IEI-TIA: Industrial Embodied Intelligence Trustworthy Interpretable Agent for Robotic Long-Horizon and Repetitive Tasks. IEEE Transactions on Automation Science and Engineering 23 (2026), 9211–9222. [5] Tianyu Du, Shouling Ji, Lujia Shen, Yao Zhang, Jinfeng Li, Jie Shi, Chengfang Fang, Jianwei Yin, Raheem Beyah, and Ting Wang. 2021. Cert-rnn: Towards certifying the robustness of recurrent neural networks. In Proceedings of the 2021 ACM SIGSAC Conference on Computer and Communications Security .[6] Wei Feng and Zongyuan Ge. 2025. Generalized Category Discovery under Do-main Shift: A Frequency Domain Perspective. Advances in Neural Information Processing Systems 38 (2025), 111721–111749. [7] Yuqian Fu, Runze Wang, Bin Ren, Guolei Sun, Biao Gong, Yanwei Fu, Danda Pani Paudel, Xuanjing Huang, and Luc Van Gool. 2025. Objectrelator: Enabling cross-view object relation understanding across ego-centric and exo-centric perspec-tives. In Proceedings of the IEEE/CVF International Conference on Computer Vision .6530–6540. [8] Jingtong Gao, Xiangyu Zhao, Bo Chen, Fan Yan, Huifeng Guo, and Ruiming Tang. 2023. AutoTransfer: Instance transfer for cross-domain recommendations. In Proceedings of the 46th international ACM SIGIR conference on research and development in information retrieval . 1478–1487. [9] Shijie Geng, Shuchang Liu, Zuohui Fu, Yingqiang Ge, and Yongfeng Zhang. 2022. Recommendation as language processing (rlp): A unified pretrain, personalized prompt & predict paradigm (p5). In Proceedings of the 16th ACM conference on recommender systems . 299–315. [10] Biao Gong, Chenggang Yan, Junjie Bai, Changqing Zou, and Yue Gao. 2020. Ham-ming embedding sensitivity guided fusion network for 3D shape representation. 
+
+IEEE Transactions on Image Processing 29 (2020), 8381–8390. [11] Lei Guo, Li Tang, Tong Chen, Lei Zhu, Quoc Viet Hung Nguyen, and Hongzhi Yin. 2021. DA-GCN: A domain-aware attentive graph convolution network for shared-account cross-domain sequential recommendation. arXiv preprint arXiv:2105.03300 (2021). [12] Guy Hadad, Haggai Roitman, Yotam Eshel, Bracha Shapira, and Lior Rokach. 2025. X-Cross: Dynamic Integration of Language Models for Cross-Domain Sequential Recommendation. In Proceedings of the 48th International ACM SIGIR Conference on Research and Development in Information Retrieval . 1497–1507. [13] Balázs Hidasi, Alexandros Karatzoglou, Linas Baltrunas, and Domonkos Tikk. 2015. Session-based recommendations with recurrent neural networks. arXiv preprint arXiv:1511.06939 (2015). [14] Min Hou, Xin Liu, Le Wu, Chenyi He, Hao Liu, Zhi Li, Xin Li, and Si Wei. 2025. WeaveRec: An LLM-Based Cross-Domain Sequential Recommendation Framework with Model Merging. arXiv preprint arXiv:2510.26546 (2025). [15] Ruijie Hou, Zhaoyang Yang, Yu Ming, Hongyu Lu, Zhuobin Zheng, Yu Chen, Qinsong Zeng, and Ming Chen. 2024. Cross-Domain LifeLong Sequential Model-ing for Online Click-Through Rate Prediction. In Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining . 5116–5125. [16] Siteng Huang, Biao Gong, Yutong Feng, Min Zhang, Yiliang Lv, and Donglin Wang. 2024. Troika: Multi-path cross-modal traction for compositional zero-shot learning. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition . 24005–24014. [17] Wang-Cheng Kang and Julian McAuley. 2018. Self-attentive sequential recom-mendation. In 2018 IEEE international conference on data mining (ICDM) . IEEE, 197–206. [18] Yeoreum Lee, Jinwook Jung, and Sungyong Baik. 2025. Mitigating parameter interference in model merging via sharpness-aware fine-tuning. arXiv preprint arXiv:2504.14662 (2025). [19] Chengxi Li, Yejing Wang, Qidong Liu, Xiangyu Zhao, Wanyu Wang, Yiqi Wang, Lixin Zou, Wenqi Fan, and Qing Li. 2023. STRec: Sparse transformer for sequential recommendations. In Proceedings of the 17th ACM conference on recommender systems . 101–111. [20] Haipeng Li, Jiangxia Cao, Yiwen Gao, Yunhuai Liu, and Shuchao Pang. 2024. Cross-Domain Sequential Recommendation via Neural Process. arXiv preprint arXiv:2410.13588 (2024). [21] Pan Li, Zhichao Jiang, Maofei Que, Yao Hu, and Alexander Tuzhilin. 2021. Dual attentive sequential learning for cross-domain click-through rate prediction. In 
+
+Proceedings of the 27th ACM SIGKDD conference on knowledge discovery & data mining . 3172–3180. [22] Zixu Li, Yupeng Hu, Zhiwei Chen, Shiqi Zhang, Qinlei Huang, Zhiheng Fu, and Yinwei Wei. 2026. HABIT: Chrono-Synergia Robust Progressive Learning Framework for Composed Image Retrieval. In Proceedings of the AAAI Conference on Artificial Intelligence , Vol. 40. 6762–6770. [23] Zixu Li, Yupeng Hu, Zhiheng Fu, Zhiwei Chen, Yongqi Li, and Liqiang Nie. 2026. TEMA: Anchor the Image, Follow the Text for Multi-Modification Composed Image Retrieval. arXiv:2604.21806 [cs.CV] [24] Xinyu Lin, Wenjie Wang, Yongqi Li, Fuli Feng, See-Kiong Ng, and Tat-Seng Chua. 2024. Bridging items and language: A transition paradigm for large language model-based recommendation. In Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining . 1816–1826. [25] Qidong Liu, Fan Yan, Xiangyu Zhao, Zhaocheng Du, Huifeng Guo, Ruiming Tang, and Feng Tian. 2023. Diffusion augmentation for sequential recommenda-tion. In Proceedings of the 32nd ACM International conference on information and knowledge management . 1576–1586. [26] Qidong Liu, Xiangyu Zhao, Yejing Wang, Zijian Zhang, Howard Zhong, Chong Chen, Xiang Li, Wei Huang, and Feng Tian. 2025. Bridge the domains: Large language models enhanced cross-domain sequential recommendation. In Proceed-ings of the 48th International ACM SIGIR Conference on Research and Development in Information Retrieval . 1582–1592. [27] Xinyi Liu, Ruijie Wang, Dachun Sun, Dilek Hakkani Tur, and Tarek Abdelzaher. 2025. Uncovering cross-domain recommendation ability of large language models. In Companion Proceedings of the ACM on Web Conference 2025 . 2736–2743. [28] Haokai Ma, Ruobing Xie, Lei Meng, Xin Chen, Xu Zhang, Leyu Lin, and Jie Zhou. 2024. Triple sequence learning for cross-domain recommendation. ACM Transactions on Information Systems 42, 4 (2024), 1–29. [29] Muyang Ma, Pengjie Ren, Zhumin Chen, Zhaochun Ren, Lifan Zhao, Peiyu Liu, Jun Ma, and Maarten de Rijke. 2022. Mixed information flow for cross-domain sequential recommendations. ACM Transactions on Knowledge Discovery from Data (TKDD) 16, 4 (2022), 1–32. [30] Muyang Ma, Pengjie Ren, Yujie Lin, Zhumin Chen, Jun Ma, and Maarten de Rijke. 2019. 𝜋 -net: A parallel information-sharing network for shared-account cross-domain sequential recommendations. In Proceedings of the 42nd international ACM SIGIR conference on research and development in information retrieval . 685– 694. [31] Chung Park, Taesan Kim, Hyungjun Yoon, Junui Hong, Yelim Yu, Mincheol Cho, Minsung Choi, and Jaegul Choo. 2024. Pacer and runner: Cooperative learning framework between single-and cross-domain sequential recommendation. In 
+
+Proceedings of the 47th International ACM SIGIR Conference on Research and Development in Information Retrieval . 2071–2080. [32] Bo Peng, Xinyi Ling, Ziru Chen, Huan Sun, and Xia Ning. 2024. ecellm: Gen-eralizing large language models for e-commerce from large-scale, high-quality instruction data. arXiv preprint arXiv:2402.08831 (2024). [33] Tingjia Shen, Hao Wang, Jiaqing Zhang, Sirui Zhao, Liangyue Li, Zulong Chen, Defu Lian, and Enhong Chen. 2024. Exploring user retrieval integration towards large language models for cross-domain sequential recommendation. arXiv preprint arXiv:2406.03085 (2024). [34] Wenchao Sun, Muyang Ma, Pengjie Ren, Yujie Lin, Zhumin Chen, Zhaochun Ren, Jun Ma, and Maarten De Rijke. 2021. Parallel split-join networks for shared account cross-domain sequential recommendations. IEEE Transactions on Knowl-edge and Data Engineering 35, 4 (2021), 4106–4123. [35] Shuai Tan, Biao Gong, Yutong Feng, Kecheng Zheng, Dandan Zheng, Shuwei Shi, Yujun Shen, Jingdong Chen, and Ming Yang. 2025. Mimir: Improving video diffusion models for precise text understanding. In Proceedings of the Computer Vision and Pattern Recognition Conference . 23978–23988. [36] Shuai Tan, Biao Gong, Xiang Wang, Shiwei Zhang, DanDan Zheng, Ruobing Zheng, Kecheng Zheng, Jingdong Chen, and Ming Yang. 2025. Animate-X: Universal Character Image Animation with Enhanced Motion Representation. In 
+
+The Thirteenth International Conference on Learning Representations .[37] Songbai Tan, Xuerui Qiu, Yao Shu, Gang Xu, Linrui Xu, Xiangyu Xu, Huiping Zhuang, Ming Li, and Fei Yu. 2025. WMarkGPT: Watermarked Image Under-standing via Multimodal Large Language Models. In Proceedings of the 42nd International Conference on Machine Learning (Proceedings of Machine Learning Research, Vol. 267) . PMLR, 58621–58636. [38] Zuoli Tang, Zhaoxin Huan, Zihao Li, Xiaolu Zhang, Jun Hu, Chilin Fu, Jun Zhou, Lixin Zou, and Chenliang Li. 2025. One model for all: Large language models are domain-agnostic recommendation systems. ACM Transactions on Information Systems 43, 5 (2025), 1–27. [39] Shuliang Wang, Jiabao Zhu, Kaibo Wang, and Sijie Ruan. 2025. LeCDSR: Large language model enhanced cross-domain sequential recommendation. Information Fusion (2025), 103762. [40] Yuhao Wang, Xiangyu Zhao, Bo Chen, Qidong Liu, Huifeng Guo, Huanshuo Liu, Yichao Wang, Rui Zhang, and Ruiming Tang. 2023. PLATE: A prompt-enhanced paradigm for multi-scenario recommendations. In Proceedings of the 46th In-ternational ACM SIGIR Conference on Research and Development in Information Retrieval . 1498–1507. [41] Zijing Wang, Xingle Xu, Yongkang Liu, Yiqun Zhang, Peiqin Lin, Shi Feng, Xiaocui Yang, Daling Wang, and Hinrich Schütze. 2025. Why do more experts fail? a theoretical analysis of model merging. arXiv preprint arXiv:2505.21226 (2025). Sharpness-aware Model Merging with Salience Recovery for LLM-based Cross-Domain Sequential Recommendation KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea 
+
+[42] Haoran Xin, Ying Sun, Chao Wang, and Hui Xiong. 2025. Llmcdsr: Enhancing cross-domain sequential recommendation with large language models. ACM Transactions on Information Systems (2025). [43] Naen Xu, Jinghuai Zhang, Changjiang Li, Zhi Chen, Chunyi Zhou, Qingming Li, Tianyu Du, and Shouling Ji. 2025. VideoEraser: Concept Erasure in Text-to-Video Diffusion Models. In Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing . 5954–5983. [44] Wujiang Xu, Xuying Ning, Wenfang Lin, Mingming Ha, Qiongxu Ma, Qianqiao Liang, Xuewen Tao, Linxun Chen, Bing Han, and Minnan Luo. 2024. Towards open-world cross-domain sequential recommendation: A model-agnostic con-trastive denoising approach. In Joint European Conference on Machine Learning and Knowledge Discovery in Databases . Springer, 161–179. [45] Wujiang Xu, Qitian Wu, Runzhong Wang, Mingming Ha, Qiongxu Ma, Linxun Chen, Bing Han, and Junchi Yan. 2024. Rethinking cross-domain sequential recommendation under open-world assumptions. In Proceedings of the ACM Web Conference 2024 . 3173–3184. [46] Zitao Xu, Shu Chen, Weike Pan, and Zhong Ming. 2025. A multi-view graph contrastive learning framework for cross-domain sequential recommendation. 
+
+ACM Transactions on Recommender Systems 3, 4 (2025), 1–28. [47] Enneng Yang, Li Shen, Guibing Guo, Xingwei Wang, Xiaochun Cao, Jie Zhang, and Dacheng Tao. [n. d.]. Model merging in llms, mllms, and beyond: Methods, theo-ries, applications and opportunities, 2024. URL https://arxiv. org/abs/2408.07666 
+
+2408, 3 ([n. d.]). [48] Tianzi Zang, Yanmin Zhu, Ruohan Zhang, Chunyang Wang, Ke Wang, and Jiadi Yu. 2023. Contrastive multi-view interest learning for cross-domain sequential recommendation. ACM Transactions on Information Systems 42, 3 (2023), 1–30. [49] Zijian Zhang, Shuchang Liu, Jiaao Yu, Qingpeng Cai, Xiangyu Zhao, Chunxu Zhang, Ziru Liu, Qidong Liu, Hongwei Zhao, Lantao Hu, et al . 2024. M3oe: Multi-domain multi-task mixture-of experts recommendation framework. In 
+
+Proceedings of the 47th International ACM SIGIR Conference on Research and Development in Information Retrieval . 893–902. [50] Jiamu Zheng, Jinghuai Zhang, Tianyu Du, Xuhong Zhang, Jianwei Yin, and Tao Lin. 2025. CollabEdit: Towards Non-destructive Collaborative Knowledge Editing. In International Conference on Learning Representations , Vol. 2025. 29154–29174. 
+
+## A Derivation of the SGA Objective 
+
+Adapted from the proof of Eq. (6) in [ 18 ] (Appendix B), reformulated for the cross-domain LoRA adapter merging setting in CDSR. 
+
+Simplification of the Optimization Objective. We start with the proposed SGA objective function for a domain-specific adapter 
+
+𝜃 𝑘 , which aims to simultaneously minimize the empirical loss and the merging interference: 
+
+JSGA (𝜃 𝑘 ) = (L( Φ, 𝜃 𝑘 + Δ𝜃 ; D𝑘 ) − L( Φ, 𝜃 𝑘 ; D𝑘 )) 
+
+| {z }
+
+> Merging Interference Resistance
+
++ L( Φ, 𝜃 𝑘 ; D𝑘 )
+
+| {z }
+
+> Domain-Specific Accuracy
+
+.
+
+(14) By performing algebraic simplification, the term L( Φ, 𝜃 𝑘 ; D𝑘 ) can-cels out, reducing the objective to minimizing the loss at the shifted parameter state: 
+
+JSGA (𝜃 𝑘 ) = L( Φ, 𝜃 𝑘 + Δ𝜃 ; D𝑘 ) − L( Φ, 𝜃 𝑘 ; D𝑘 ) + L( Φ, 𝜃 𝑘 ; D𝑘 )
+
+= L( Φ, 𝜃 𝑘 + Δ𝜃 ; D𝑘 ).
+
+(15) This reveals that minimizing interference is equivalent to optimiz-ing the model’s performance under the parameter shift Δ𝜃 induced by the merging process. 
+
+Modeling the Parameter Shift Δ𝜃 . In linear model merging, the aggregated parameters are 𝜃 𝑚𝑒𝑟𝑔𝑒 = Í𝐾 𝑗 =1 𝜆 𝑗 𝜃 𝑗 . We decompose this sum relative to the current domain 𝜃 𝑘 to identify the shift Δ𝜃 :
+
+Δ𝜃 = 𝜃 𝑚𝑒𝑟𝑔𝑒 − 𝜃 𝑘 
+
+= ©«
+
+𝜆 𝑘 𝜃 𝑘 +∑︁ 
+
+> 𝑗 ≠𝑘
+
+𝜆 𝑗 𝜃 𝑗 ª®¬
+
+− 𝜃 𝑘 
+
+= (𝜆 𝑘 − 1)𝜃 𝑘 +∑︁ 
+
+> 𝑗 ≠𝑘
+
+𝜆 𝑗 𝜃 𝑗 .
+
+(16) Here, Δ𝜃 comprises a scaling residual of the current adapter and a linear superposition of peer domain adapters. 
+
+Equivalence to Min-Max Optimization. During the independent fine-tuning of domain 𝑘 , the parameters of other domains {𝜃 𝑗 }𝑗 ≠𝑘 
+
+are unknown and dynamic. Consequently, the term Í𝑗 ≠𝑘 𝜆 𝑗 𝜃 𝑗 in Eq. (16) acts as an unpredictable stochastic variable. To guarantee robustness against any potential configuration of other domains, we treat Δ𝜃 as a perturbation vector 𝝐 bounded within a local geometric region. We reformulate the optimization as a Min-Max problem, seeking the parameter 𝜃 𝑘 that minimizes the loss under the worst-case shift within a Euclidean ball of radius 
+
+𝜌 :
+
+min 
+
+> 𝜃 𝑘
+
+L( Φ, 𝜃 𝑘 + Δ𝜃 ; D𝑘 ) =⇒ min 
+
+> 𝜃 𝑘
+
+max    
+
+> ∥𝝐 ∥2≤𝜌
+
+L( Φ, 𝜃 𝑘 + 𝝐 ; D𝑘 ). (17) This demonstrates that minimizing the merging interference (Eq. 6) is mathematically equivalent to seeking a flat minimum via Sharpness-Aware Minimization. 
+
+## B Proof of Theorem 4.1 
+
+Following the Taylor-expansion bounding technique of [ 18 ] (Theo-rem 1, Appendix D), reformulated for the CDSR setting. 
+
+Setup and Definitions. We aim to bound the interference error 𝛿 :
+
+𝛿 = L( 𝜆𝜃 𝐴 + ( 1 − 𝜆 )𝜃 𝐵 ) − [ 𝜆 L( 𝜃 𝐴 ) + ( 1 − 𝜆 )L( 𝜃 𝐵 )] . (18) Let 𝜃 𝑚𝑒𝑟𝑔𝑒 = 𝜆𝜃 𝐴 + ( 1 −𝜆 )𝜃 𝐵 . We assume the domain experts 𝜃 𝐴 and 
+
+𝜃 𝐵 have converged to local minima, implying negligible first-order gradients: ∇L( 𝜃 𝐴 ) ≈ 0 and ∇L( 𝜃 𝐵 ) ≈ 0.
+
+Quadratic Expansion. We perform a second-order Taylor expan-sion of L( 𝜃 𝑚𝑒𝑟𝑔𝑒 ) around 𝜃 𝐴 . Noting that the displacement vector is 𝜃 𝑚𝑒𝑟𝑔𝑒 − 𝜃 𝐴 = (1 − 𝜆 )( 𝜃 𝐵 − 𝜃 𝐴 ), we have: 
+
+L( 𝜃 𝑚𝑒𝑟𝑔𝑒 ) ≈ L( 𝜃 𝐴 ) + 12 (1 − 𝜆 )2 (𝜃 𝐴 − 𝜃 𝐵 )⊤H𝐴 (𝜃 𝐴 − 𝜃 𝐵 ), (19) where H𝐴 = ∇2 L( 𝜃 𝐴 ). Rearranging terms yields the loss difference relative to 𝜃 𝐴 :
+
+L( 𝜃 𝑚𝑒𝑟𝑔𝑒 ) − L( 𝜃 𝐴 ) ≈ 12 (1 − 𝜆 )2 (𝜃 𝐴 − 𝜃 𝐵 )⊤H𝐴 (𝜃 𝐴 − 𝜃 𝐵 ). (20) By symmetry, the expansion around 𝜃 𝐵 with displacement 𝜃 𝑚𝑒𝑟𝑔𝑒 −
+
+𝜃 𝐵 = −𝜆 (𝜃 𝐴 − 𝜃 𝐵 ) yields: 
+
+L( 𝜃 𝑚𝑒𝑟𝑔𝑒 ) − L( 𝜃 𝐵 ) ≈ 12 𝜆 2 (𝜃 𝐴 − 𝜃 𝐵 )⊤H𝐵 (𝜃 𝐴 − 𝜃 𝐵 ). (21) 
+
+Deriving the Upper Bound. Substituting these quadratic forms back into the expression for 𝛿 :
+
+𝛿 ≈𝜆 
+
+ 12 (1 − 𝜆 )2 (𝜃 𝐴 − 𝜃 𝐵 )⊤H𝐴 (𝜃 𝐴 − 𝜃 𝐵 )
+
+
+
++ ( 1 − 𝜆 )
+
+ 12 𝜆 2 (𝜃 𝐴 − 𝜃 𝐵 )⊤H𝐵 (𝜃 𝐴 − 𝜃 𝐵 )
+
+
+
+.
+
+(22) Factorizing common terms 12 𝜆 (1 − 𝜆 ):
+
+𝛿 ≈ 12 𝜆 (1 − 𝜆 )
+
+h
+
+(1 − 𝜆 )( 𝜃 𝐴 − 𝜃 𝐵 )⊤H𝐴 (𝜃 𝐴 − 𝜃 𝐵 )+ 𝜆 (𝜃 𝐴 − 𝜃 𝐵 )⊤H𝐵 (𝜃 𝐴 − 𝜃 𝐵 )
+
+i
+
+.
+
+(23) To bound this scalar value, we utilize the spectral norm of the Hes-sian, denoted as 𝜎 (𝜃 ) = 𝜆 𝑚𝑎𝑥 (H). By the definition of the Rayleigh KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Huwei Ji, Jiajie Su, Yuyuan Li, Xiaohua Feng, & Chaochao Chen 
+
+quotient, for any vector 𝑣 , 𝑣 ⊤H𝑣 ≤ 𝜆 𝑚𝑎𝑥 (H)∥ 𝑣 ∥2. Applying this property: 
+
+|𝛿 | ≤ 12 𝜆 (1 − 𝜆 )∥ 𝜃 𝐴 − 𝜃 𝐵 ∥2 [( 1 − 𝜆 )𝜎 (𝜃 𝐴 ) + 𝜆𝜎 (𝜃 𝐵 )] + O( 𝜖 ). (24) Since 𝜆 ∈ [ 0, 1], the convex combination of sharpness terms is strictly bounded by their sum: (1 − 𝜆 )𝜎 (𝜃 𝐴 ) + 𝜆𝜎 (𝜃 𝐵 ) ≤ 𝜎 (𝜃 𝐴 ) + 
+
+𝜎 (𝜃 𝐵 ). This yields the final bound presented in Theorem 4.1: 
+
+|𝛿 | ≤ 12 𝜆 (1 − 𝜆 ) ( 𝜎 (𝜃 𝐴 ) + 𝜎 (𝜃 𝐵 )) 
+
+| {z }
+
+> Sharpness
+
+· ∥𝜃 𝐴 − 𝜃 𝐵 ∥2
+
+| {z }
+
+> Domain Divergence
+
++O( 𝜖 ). (25) This concludes the proof. 
+
+## C Proof of Heavy-Tailed Distribution Induction 
+
+Adapted from the proof of Theorem 5 in [ 41 ](Appendix C.5), reframed for the PSA module in SharpRec .
+
+Gaussian Property of Disentangled Parameters. Let the aggre-gated parameters 𝜃 𝑚𝑒𝑟𝑔𝑒 follow a multivariate Gaussian distribution 
+
+𝜃 𝑚𝑒𝑟𝑔𝑒 ∼ N ( 𝜇, Σ). We introduce an independent Gaussian noise variable 𝐺 ∼ N ( 0, 𝜎 2 
+
+> 𝑔
+
+𝐼 ). The disentangled representation is defined as ˜𝜃 = 𝜃 𝑚𝑒𝑟𝑔𝑒 − 𝐺 . Since the linear combination of independent Gaussian vectors remains Gaussian, we have: 
+
+˜𝜃 ∼ N ( 𝜇, Σ + 𝜎 2 
+
+> 𝑔
+
+𝐼 ). (26) Assuming a simplified diagonal covariance for element-wise analy-sis, each component 𝑥 ∈ ˜𝜃 follows N ( 0, 𝜎 2), with the probability density function: 
+
+𝑝 ˜𝜃 (𝑥 ) = 1
+
+√2𝜋𝜎 exp 
+
+
+
+− 𝑥 2
+
+2𝜎 2
+
+
+
+. (27) 
+
+Non-linear Transformation and Asymptotic Behavior. We analyze the distribution of the transformed parameter 𝜃 𝑃𝑆𝐴 after applying the element-wise projection 𝑇 (·) . Let 𝑦 = 𝑇 (𝑥 ) denote a component of 𝜃 𝑃𝑆𝐴 . The transformation is given by: 
+
+𝑦 = 𝑇 (𝑥 ) = sign (𝑥 ) · | 𝑥 |𝛾 ·
+
+
+
+1 + 𝛼𝑒 −𝛽 |𝑥 | 
+
+. (28) In the tail region where |𝑥 | is large, the term 𝑒 −𝛽 |𝑥 | decays rapidly to zero. Thus, the transformation implies the following asymptotic relationship and its inverse: 
+
+𝑦 ≈ sign (𝑥 ) · | 𝑥 |𝛾 =⇒ 𝑥 ≈ sign (𝑦 ) · | 𝑦 |1/𝛾 . (29) 
+
+Formulation of the Resulting Distribution. We derive proba-bility density function of 𝑦 , denoted as 𝑝 𝜃 𝑃𝑆𝐴 (𝑦 ), using the change of variables formula: 
+
+𝑝 𝜃 𝑃𝑆𝐴 (𝑦 ) = 𝑝 ˜𝜃 (𝑥 ) · 𝑑𝑥 𝑑𝑦 . (30) Using the asymptotic inverse |𝑥 | ≈ | 𝑦 |1/𝛾 , the Jacobian of the trans-formation is: 𝑑𝑥 𝑑𝑦 ≈ 𝑑 𝑑𝑦 
+
+
+
+|𝑦 |1/𝛾 
+
+= 1
+
+𝛾 |𝑦 | 1 
+
+> 𝛾 −1
+
+. (31) Substituting the Gaussian PDF 𝑝 ˜𝜃 (𝑥 ) and the Jacobian term into the change of variables equation: 
+
+𝑝 𝜃 𝑃𝑆𝐴 (𝑦 ) ≈ 1
+
+√2𝜋𝜎 exp 
+
+
+
+− (| 𝑦 |1/𝛾 )2
+
+2𝜎 2
+
+
+
+· 1
+
+𝛾 |𝑦 | 1 
+
+> 𝛾 −1
+
+. (32) Simplifying the expression yields the asymptotic distribution for 
+
+𝜃 𝑃𝑆𝐴 :
+
+𝑝 𝜃 𝑃𝑆𝐴 (𝑦 ) ∝ | 𝑦 | 1  
+
+> 𝛾 −1
+
+exp 
+
+
+
+− |𝑦 |2/𝛾 
+
+2𝜎 2
+
+
+
+. (33) For 0 < 𝛾 < 1, this density function belongs to the family of Gen-eralized Error Distributions (GED). The parameter 𝛾 controls the shape parameter 𝑝 = 2/𝛾 , allowing the PSA module to explicitly re-shape the statistical properties of the aggregated model parameters beyond the original Gaussian limitations. 
+
+## D Proof of Theorem 4.2 
+
+Adapted from the proof of Theorem 6 in [ 41 ](Appendix C.6), reframed for the PSA coverage analysis in SharpRec .
+
+Parameter Space Partition and Sensitivity. We define the func-tional coverage C as the volume of the function space accessible by the parameter distribution, weighted by the Jacobian determinant: 
+
+C =
+
+∫
+
+> W
+
+| det (𝐽 Φ (w))| 𝑝 (w)𝑑 w, (34) where 𝐽 Φ (w) is the Jacobian matrix of the mapping Φ : W → F .We consider the parameter space W as the union of two disjoint regions: a high-density central region W𝐶 (near zero) and a tail region W𝑇 (outliers). In deep recommendation models, parameter sensitivity is non-uniform. Parameters in W𝑇 typically represent strong activation signals or specialized preferences, inducing larger functional variations than those in the inactive central region. Math-ematically, this property implies: 
+
+| det (𝐽 Φ (w))| w∈ W 𝑇 > | det (𝐽 Φ (w))| w∈ W 𝐶 . (35) 
+
+Proof of Coverage Expansion. Let 𝑝 Gauss (w) denote the original distribution from linear merging, and 𝑝 PSA (w) denote the trans-formed heavy-tailed distribution. As derived in Appendix C, the PSA transformation functions as a mass transport mechanism: it shifts probability mass from the low-sensitivity center W𝐶 to the high-sensitivity tail W𝑇 .We compare the coverage integrals CPSA and CGauss by analyzing their difference: 
+
+ΔC =
+
+∫
+
+> W
+
+| det (𝐽 Φ (w))| ( 𝑝 PSA (w) − 𝑝 Gauss (w)) 𝑑 w. (36) Splitting the integral over the two regions: 
+
+ΔC =
+
+∫
+
+> W𝑇
+
+| det (𝐽 Φ)| ( 𝑝 PSA − 𝑝 Gauss )
+
+| {z }
+
+> >0
+
+𝑑 w
+
++
+
+∫
+
+> W𝐶
+
+| det (𝐽 Φ)| ( 𝑝 PSA − 𝑝 Gauss )
+
+| {z }
+
+> <0
+
+𝑑 w.
+
+(37) Since the total probability mass is conserved ( ∫ Δ𝑝 = 0), the mass added to the tail equals the mass removed from the center. How-ever, because the weighting factor | det (𝐽 Φ)| is strictly larger in the tail region ( W𝑇 ) than in the central region ( W𝐶 ), the positive contribution from the first integral strictly dominates the negative contribution from the second. Therefore, we have ΔC > 0, which implies: 
+
+∫
+
+> W
+
+| det (𝐽 Φ (w))| 𝑝 PSA (w)𝑑 w >
+
+∫
+
+> W
+
+| det (𝐽 Φ (w))| 𝑝 Gauss (w)𝑑 w.
+
+(38) This confirms that CPSA > CGauss , proving that the heavy-tailed distribution expands the effective model coverage.

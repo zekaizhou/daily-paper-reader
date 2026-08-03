@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.23504v1/fig-001.webp",
+      "caption": "Figure 5: Top: Different types of pyramidal resolutions. Bottom: Attention distribution. Darker colors represent closer frames, which tend to receive more attention.",
+      "page": 6,
+      "index": 1,
+      "width": 826,
+      "height": 197
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23504v1/fig-002.webp",
+      "caption": "Table 8: Augmented atomic mid-level action tokens (Aaug) used in MemVLN.",
+      "page": 15,
+      "index": 2,
+      "width": 482,
+      "height": 276
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23504v1/fig-003.webp",
+      "caption": "Table 7: Cross-dataset performance on the RxR-CE Val Unseen split. MemVLN is trained exclusively on R2R training split in this setting.",
+      "page": 14,
+      "index": 3,
+      "width": 764,
+      "height": 347
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23504v1/fig-004.webp",
+      "caption": "Table 2: Comparison with state-of-the-art methods on VLN-CE R2R and RxR Val-Unseen split. ∗ indicates methods using the waypoint predictor from [34]. ’Pano.’ stands for Panoramic Images, ’Odo.’ stands for Odometry, and ’sRGB’ refers to a single image.",
+      "page": 8,
+      "index": 4,
+      "width": 826,
+      "height": 532
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23504v1/fig-005.webp",
+      "caption": "Figure 2: Overview of the MemVLN Architecture. Given a natural language instruction and monocular RGB observations, MemVLN utilizes an Episodic Memory module to construct pyramidal resolution observation. Complementarily, the Procedural Memory maintains a set of single-token mid-level actions to enable fast navigation.",
+      "page": 4,
+      "index": 5,
+      "width": 826,
+      "height": 481
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23504v1/fig-006.webp",
+      "caption": "Figure 4: Pyramidal Resolution vs. Token Merging. Our pyramidal resolution ensures compatibility with modern LVLM design such as M-RoPE and DeepStack.",
+      "page": 5,
+      "index": 6,
+      "width": 481,
+      "height": 348
+    },
+    {
+      "url": "assets/figures/arxiv/2607.23504v1/fig-007.webp",
+      "caption": "Figure 3: Attention analysis across visual observations. Left: The final four frames account for over 50% of the total visual attention. Middle: The more recent observation receives higher concentration of attention. Right: Attention scores increase significantly as observations become more recent.",
+      "page": 5,
+      "index": 7,
+      "width": 826,
+      "height": 229
+    }
+  ]
+}

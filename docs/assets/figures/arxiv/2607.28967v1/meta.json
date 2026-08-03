@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2607.28967v1/fig-001.webp",
+      "caption": "Figure 1: Overview of VDA. Frozen semantic and domain-template classifiers hard-partition a disjoint unlabeled target pool. Confidence-ranked supports form normalized class-specific visual prototypes, which are fused with the semantic classifiers before evaluation. VDA uses no target labels, target-side optimization, uniform class-prior assumption, iterative refinement, or test queries.",
+      "page": 3,
+      "index": 1,
+      "width": 972,
+      "height": 547
+    },
+    {
+      "url": "assets/figures/arxiv/2607.28967v1/fig-002.webp",
+      "caption": "Table 1: Cross-dataset top-1 accuracy (%) with OpenAI CLIP ViT-B/16. Zero-shot CLIP and TCP are unadapted semantic references. ZLaP, the matched InMaP reproduction, and VDA receive the same unlabeled target-training pool and are evaluated on the disjoint test split without target-training labels. Published InMaP results use a different target-image and refinement protocol and are reported separately. Best matched result in each column is bold.",
+      "page": 6,
+      "index": 2,
+      "width": 966,
+      "height": 183
+    }
+  ]
+}
